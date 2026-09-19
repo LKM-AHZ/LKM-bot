@@ -378,21 +378,27 @@ gc:
 
 ### 使用 Docker Compose 部署 LKMBot 和 Shipyard
 
-如果您还没有部署 LKMBot，或者想更换为我们推荐的带沙盒环境的部署方式，推荐使用 Docker Compose 来部署 LKMBot，代码如下：
+如果您还没有部署 LKMBot，或者想更换为我们推荐的带沙盒环境的部署方式，推荐使用 Docker Compose 来部署 LKMBot。
+
+> [!NOTE]
+> 本仓库是 LKM 定制 fork，**不再自带 `compose-with-shipyard.yml`**：LKM 环境下 LKMBot 与 Shipyard
+> 由根编排仓库 **LKM-Website** 一起管理（`docker-compose.yml` 里的 `--profile bot`，见其
+> `DEPLOYMENT.md` 的「LKM Bot」一节）：
 
 ```bash
-git clone https://github.com/Alma1314/LKM-bot.git
-cd LKM-bot
-# 修改 compose-with-shipyard.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
-docker compose -f compose-with-shipyard.yml up -d
-docker pull soulter/shipyard-ship:latest
+git clone https://github.com/LKM-AHZ/LKM-Website.git
+cd LKM-Website
+docker compose --profile bot up -d --build
 ```
 
-这会启动一个包含 LKMBot 主程序和沙盒环境的 Docker Compose 服务。
+> 注意两点：①沙箱会挂载 `/var/run/docker.sock`（等价宿主机 root），仅在需要时启用、用完
+> `docker compose --profile bot down` 收掉；②根编排起的是**旧版 Bay**（`soulter/shipyard-bay`），
+> 而 bot 默认 `sandbox.booter=shipyard_neo`，需在面板「配置 → 沙箱」把 booter 改成 `shipyard`、
+> endpoint 填 `http://shipyard:8156` 并填上 access token 才会生效。
 
 ### 单独部署 Shipyard
 
-如果您已经部署了 LKMBot，但没有部署沙盒环境，可以单独部署 Shipyard。
+如果您已经部署了 LKMBot，但没有部署沙盒环境（或不想用根编排的 shipyard 服务），可以单独部署 Shipyard。
 
 代码如下：
 
@@ -400,7 +406,7 @@ docker pull soulter/shipyard-ship:latest
 mkdir astrbot-shipyard
 cd astrbot-shipyard
 wget https://raw.githubusercontent.com/AstrBotDevs/shipyard/refs/heads/main/pkgs/bay/docker-compose.yml -O docker-compose.yml
-# 修改 compose-with-shipyard.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
+# 修改 docker-compose.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
 docker compose -f docker-compose.yml up -d
 docker pull soulter/shipyard-ship:latest
 ```

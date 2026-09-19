@@ -49,10 +49,14 @@ Always reference these instructions first and fallback to search or bash command
 - Pre-commit hooks enforce ruff formatting and linting
 
 ## Docker Support
-- Primary deployment method: `docker run soulter/astrbot:latest`
-- Compose file available: `compose.yml`
+- This fork is part of the LKM stack: it has **no** compose/k8s files of its own. Both are managed by
+  the root orchestration repository `LKM-Website` (`docker compose --profile bot`, gateway route on a
+  dedicated `bot.` subdomain, `deploy/k8s/` manifests) — see its `DEPLOYMENT.md` "LKM Bot" section.
+- Standalone build/run (not using the LKM stack): `docker build -t lkmbot:latest .` then
+  `docker run -itd -p 6185:6185 -p 6199:6199 -v $PWD/data:/LKMBot/data --name lkmbot lkmbot:latest`
+  (see `docs/*/deploy/astrbot/docker.md`).
 - Exposes ports: 6185 (WebUI), 6195 (WeChat), 6199 (QQ), etc.
-- Volume mount required: `./data:/AstrBot/data`
+- Volume mount required: `./data:/LKMBot/data`
 
 ## Multi-language Support
 - Documentation in Chinese (README.md), English (README_en.md), Japanese (README_ja.md)

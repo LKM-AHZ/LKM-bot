@@ -1,190 +1,45 @@
 # 使用 Kubernetes 部署 LKMBot
 
-> [!WARNING]
-> 通过 Kubernetes (K8s) 可以将 LKMBot 以高可用的方式部署在集群环境中，当出现故障时可以自动拉起恢复。
->
-> 由于 LKMBot 当前使用 SQLite 数据库，此部署方案不支持多副本水平扩展。同时，若采用 Sidecar 模式，NapCat 的登录状态持久化需要您特别关注。
->
-> 以下教程默认您的环境已安装并配置好 `kubectl`，且能够连接到您的 K8s 集群。
+> [!NOTE]
+> **本仓库是 LKM 定制 fork，不再自带 k8s 清单**：原 `k8s/lkmbot/` 与 `k8s/lkmbot_with_napcat/`
+> 已随部署配置收编而删除，避免与根编排仓库形成第二真相源（第二套清单必然与网关/配置分叉）。
 
-## 准备工作
+## LKM 全栈（推荐）
 
-在开始之前，请确保您的 Kubernetes 集群满足以下条件：
-
-1.  **拥有默认的 StorageClass**：用于动态创建 `PersistentVolumeClaim` (PVC)。您可以通过 `kubectl get sc` 查看。如果没有，您需要手动创建 `PersistentVolume` (PV) 或安装相应的存储插件 (如 `nfs-client-provisioner`)。
-2.  **网络访问**：确保您的集群节点可以从 `docker.io` 或您指定的镜像仓库拉取镜像。
-
-## 部署方式
-
-我们提供两种部署方案：
-
-*   **集成部署 (Sidecar 模式)**：将 LKMBot 和 NapCat 部署在同一个 Pod 中，推荐用于 QQ 个人号。
-*   **独立部署**：只部署 LKMBot，适用于其他平台或您希望独立管理 NapCat 的场景。
-
----
-
-### 方式一：和 NapCatQQ 一起部署 (Sidecar)
-
-此方式位于 `k8s/lkmbot_with_napcat` 目录。
-
-#### 1. 部署
+LKM 环境的 Kubernetes 部署在根编排仓库 **LKM-Website** 的 `deploy/k8s/`（Kustomize），
+与 compose 是同一套资产、同一批配置：
 
 ```bash
-# 1. 创建命名空间
-kubectl apply -f k8s/lkmbot_with_napcat/00-namespace.yaml
-
-# 2. 创建持久化存储卷
-# 注意：lkmbot-data-shared-pvc 需要 ReadWriteMany (RWX) 访问模式。
-# 如果您的集群不支持 RWX，您需要配置 NFS 等共享存储，并修改 01-pvc.yaml 中的 storageClassName。
-kubectl apply -f k8s/lkmbot_with_napcat/01-pvc.yaml
-
-# 3. 部署应用
-kubectl apply -f k8s/lkmbot_with_napcat/02-deployment.yaml
+git clone https://github.com/LKM-AHZ/LKM-Website.git
+cd LKM-Website
+kubectl apply -f deploy/k8s/base/namespace.yaml
+sh deploy/k8s/gen-secret.sh | kubectl apply -f -
+sh deploy/k8s/gen-tls.sh    | kubectl apply -f -
+kubectl kustomize deploy/k8s/overlays/prod --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 ```
 
-#### 2. 暴露服务 (二选一)
-
-*   **方式 A: NodePort**
-
-    ```bash
-    kubectl apply -f k8s/lkmbot_with_napcat/03-service-nodeport.yaml
-    ```
-
-    服务将通过节点 IP 和一个由 Kubernetes 自动分配的端口暴露。您可以通过以下命令查看端口：
-
-    ```bash
-    kubectl get svc -n lkmbot-ns
-    ```
-
-    在输出中找到 `lkmbot-service-nodeport` 和 `napcat-web-svc` 的 `PORT(S)` 列，格式为 `<内部端口>:<NodePort端口>/TCP`。例如 `8080:30185/TCP`，则访问地址为 `http://<NodeIP>:30185`。
-
-*   **方式 B: LoadBalancer**
-
-    如果您的集群支持 `LoadBalancer` 类型的服务 (通常在云厂商的 K8s 服务中提供)，可以使用此方式。
-
-    ```bash
-    kubectl apply -f k8s/lkmbot_with_napcat/04-service-loadbalancer.yaml
-    ```
-
-    执行后，通过 `kubectl get svc -n lkmbot-ns` 查看分配到的外部 IP (EXTERNAL-IP)。
-
-#### 3. 配置连接
-
-由于 LKMBot 和 NapCat 在同一个 Pod 中，它们可以通过 `localhost` 直接通信。
-
-1.  **在 LKMBot 中添加消息平台：**
-    *   进入 LKMBot WebUI，选择 `机器人` -> `创建机器人`。
-    *   **选择消息平台类别**: `aiocqhttp`
-    *   **机器人名称**: `napcat` (或自定义)
-    *   **反向 Websocket 主机**: `0.0.0.0`
-    *   **反向 Websocket 端口**: `6199`
-    *   保存配置。
-
-
-2.  **在 NapCat 中配置 Websocket Client：**
-    *   进入 NapCat WebUI，选择 `设置` -> `反向WS` -> `添加`。
-    *   **启用**: 开启
-    *   **URL**: `ws://localhost:6199/ws`
-    *   **消息格式**: `Array`
-    *   保存配置。
-
-
----
-
-### 方式二：只部署 LKMBot (通用方式)
-
-此方式位于 `k8s/lkmbot` 目录。
-
-#### 1. 部署
+LKMBot 在其中是**可选组件**（compose 用 `--profile bot`，k8s 无 profile 机制，故用 0 副本表达
+「默认不部署」），要启用：
 
 ```bash
-# 1. 创建命名空间
-kubectl apply -f k8s/lkmbot/00-namespace.yaml
-
-# 2. 创建持久化存储卷
-kubectl apply -f k8s/lkmbot/01-pvc.yaml
-
-# 3. 部署应用
-kubectl apply -f k8s/lkmbot/02-deployment.yaml
+kubectl -n lkm scale deploy/lkmbot --replicas=1
+kubectl -n lkm logs -f deploy/lkmbot        # 首启日志里有面板初始密码或登录提示
 ```
 
-#### 2. 暴露服务 (二选一)
+需要知道的几点（细节见该仓 `DEPLOYMENT.md`「LKM Bot」与 `deploy/k8s/README.md`）：
 
-*   **方式 A: NodePort**
+- **面板不发布宿主端口**，经 APISIX 网关以 `bot.<社群域名>` 暴露；镜像 `lkm-bot:latest`
+  需自行构建并让集群可拉取（kind 用 `deploy/k8s/overlays/kind/setup.sh` 注入）。
+  证书按 `gen-tls.sh` 的键名导入（`bot.<域名>_fullchain.pem` / `_privkey.pem`）。
+- **数据走 PVC**，Deployment 用 `strategy: Recreate`：SQLite 单写者 + RWO 卷不能被两个 Pod 同时挂载。
+- **代码沙箱（Shipyard）不在集群内自托管**：Bay 依赖 Docker Engine API 在宿主 spawn 兄弟容器、
+  并把宿主路径 bind 进沙箱，与 k8s 的调度/网络模型不兼容（节点多为 containerd，没有 docker.sock）。
+  需要沙箱时，在面板「配置 → 沙箱」把 endpoint 指向**集群外**的 Bay。
+- **NapCat** 建议作为独立工作负载部署，与本 bot 同 namespace，连 `ws://lkmbot:6199/ws`；
+  或在面板里配置对应平台的连接方式。
 
-    ```bash
-    kubectl apply -f k8s/lkmbot/03-service-nodeport.yaml
-    ```
+## 上游通用示例
 
-    服务将通过节点 IP 和一个由 Kubernetes 自动分配的端口暴露。您可以通过以下命令查看端口：
-
-    ```bash
-    kubectl get svc -n lkmbot-standalone-ns
-    ```
-
-    在输出中找到 `lkmbot-service-nodeport` 的 `PORT(S)` 列，格式为 `<内部端口>:<NodePort端口>/TCP`。例如 `8080:30185/TCP`，则访问地址为 `http://<NodeIP>:30185`。
-
-*   **方式 B: LoadBalancer**
-
-    ```bash
-    kubectl apply -f k8s/lkmbot/04-service-loadbalancer.yaml
-    ```
-
-    执行后，通过 `kubectl get svc -n lkmbot-standalone-ns` 查看分配到的外部 IP (EXTERNAL-IP)。
-
----
-
-## 高级配置
-
-### 准备 LKMBot 镜像
-
-清单默认使用本地镜像 `lkmbot:latest`。请先在各集群节点构建镜像，或把镜像推送到您的镜像仓库，再将 `02-deployment.yaml` 中的 `image` 改为完整仓库地址。NapCat 镜像可按集群网络环境配置镜像加速。
-
-### 启用 Docker 沙箱代码执行器
-
-如果您需要使用沙箱代码执行器，需要将 Docker 的 socket 文件挂载到 Pod 中。
-
-编辑 `02-deployment.yaml` 文件，在 `spec.template.spec` 下添加 `volumes` 和 `volumeMounts`：
-
-1.  **在 `lkmbot` 容器的 `volumeMounts` 列表下添加以下内容：**
-
-    ```yaml
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
-    ```
-
-2.  **在 `spec.template.spec.volumes` 列表下添加以下内容：**
-
-    ```yaml
-    - name: docker-sock
-      hostPath:
-        path: /var/run/docker.sock
-        type: Socket
-    ```
-
-> [!WARNING]
-> 将 Docker socket 挂载到 Pod 中存在安全风险，请确保您了解其影响。
-
-## 查看日志
-
-*   **Sidecar 部署模式:**
-
-    ```bash
-    # 查看 LKMBot 日志
-    kubectl logs -f -n lkmbot-ns deployment/lkmbot-stack -c lkmbot
-
-    # 查看 NapCat 日志
-    kubectl logs -f -n lkmbot-ns deployment/lkmbot-stack -c napcat
-    ```
-
-*   **独立部署模式:**
-
-    ```bash
-    kubectl logs -f -n lkmbot-standalone-ns deployment/lkmbot-standalone
-    ```
-
-## 🎉 大功告成
-
-部署并暴露服务后，您就可以通过相应的 IP 和端口访问 LKMBot 管理面板了。
-
-> 首次登录请使用启动日志中打印的随机初始密码（用户名通常为 `lkmbot`）。登录后请立即修改密码。
+若你并非在 LKM 环境中部署（不使用根编排仓库），上游 AstrBot 仓库仍保留 `k8s/` 清单与配套说明，
+可按上游 `docs/*/deploy/astrbot/kubernetes.md` 操作——注意自行把清单里的命名与镜像对齐到本 fork
+（`lkmbot` / `LKMBot` 路径）。

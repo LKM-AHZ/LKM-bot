@@ -1,190 +1,51 @@
 # Deploy LKMBot with Kubernetes
 
-> [!WARNING]
-> You can deploy LKMBot in a high-availability setup using Kubernetes (K8s), allowing it to automatically recover from failures.
->
-> Due to the current use of an SQLite database, this deployment does not support horizontal scaling with multiple replicas. Additionally, if using the Sidecar mode, pay special attention to the persistence of NapCat's login state.
->
-> The following tutorial assumes that you have `kubectl` installed and configured, and that you can connect to your K8s cluster.
+> [!NOTE]
+> **This repository is the LKM fork and no longer ships k8s manifests**: the former `k8s/lkmbot/`
+> and `k8s/lkmbot_with_napcat/` directories were removed when deployment was consolidated into the
+> root orchestration repository — a second set of manifests would inevitably drift from the gateway
+> and configuration it has to stay aligned with.
 
-## Prerequisites
+## LKM Stack (Recommended)
 
-Before you begin, make sure your Kubernetes cluster meets the following conditions:
-
-1.  **Default StorageClass**: Used to dynamically create `PersistentVolumeClaim` (PVC). You can check this with `kubectl get sc`. If you don't have one, you need to manually create a `PersistentVolume` (PV) or install a corresponding storage plugin (e.g., `nfs-client-provisioner`).
-2.  **Network Access**: Ensure that your cluster nodes can pull images from `docker.io` or your specified image repository.
-
-## Deployment Methods
-
-We offer two deployment options:
-
-*   **Integrated Deployment (Sidecar Mode)**: Deploy LKMBot and NapCat in the same Pod. Recommended for personal QQ accounts.
-*   **Standalone Deployment**: Deploy only LKMBot. Suitable for other platforms or if you want to manage NapCat independently.
-
----
-
-### Method 1: Deploy with NapCatQQ (Sidecar)
-
-This method is located in the `k8s/lkmbot_with_napcat` directory.
-
-#### 1. Deploy
+Kubernetes deployment for the LKM environment lives in the root orchestration repository
+**LKM-Website** under `deploy/k8s/` (Kustomize); it reuses the same assets and configuration as compose:
 
 ```bash
-# 1. Create namespace
-kubectl apply -f k8s/lkmbot_with_napcat/00-namespace.yaml
-
-# 2. Create Persistent Volume Claim
-# Note: lkmbot-data-shared-pvc requires ReadWriteMany (RWX) access mode.
-# If your cluster does not support RWX, you need to configure shared storage such as NFS and modify the storageClassName in 01-pvc.yaml.
-kubectl apply -f k8s/lkmbot_with_napcat/01-pvc.yaml
-
-# 3. Deploy the application
-kubectl apply -f k8s/lkmbot_with_napcat/02-deployment.yaml
+git clone https://github.com/LKM-AHZ/LKM-Website.git
+cd LKM-Website
+kubectl apply -f deploy/k8s/base/namespace.yaml
+sh deploy/k8s/gen-secret.sh | kubectl apply -f -
+sh deploy/k8s/gen-tls.sh    | kubectl apply -f -
+kubectl kustomize deploy/k8s/overlays/prod --load-restrictor LoadRestrictionsNone | kubectl apply -f -
 ```
 
-#### 2. Expose Service (Choose one)
-
-*   **Option A: NodePort**
-
-    ```bash
-    kubectl apply -f k8s/lkmbot_with_napcat/03-service-nodeport.yaml
-    ```
-
-    The service will be exposed via the node IP and a port automatically assigned by Kubernetes. You can find the port with the following command:
-
-    ```bash
-    kubectl get svc -n lkmbot-ns
-    ```
-
-    In the output, find the `PORT(S)` column for `lkmbot-service-nodeport` and `napcat-web-svc`. The format is `<internal-port>:<NodePort>/TCP`. For example, if you see `8080:30185/TCP`, the access address is `http://<NodeIP>:30185`.
-
-*   **Option B: LoadBalancer**
-
-    If your cluster supports `LoadBalancer` type services (usually provided in K8s services from cloud providers), you can use this method.
-
-    ```bash
-    kubectl apply -f k8s/lkmbot_with_napcat/04-service-loadbalancer.yaml
-    ```
-
-    After execution, check the assigned external IP (EXTERNAL-IP) with `kubectl get svc -n lkmbot-ns`.
-
-#### 3. Configure Connection
-
-Since LKMBot and NapCat are in the same Pod, they can communicate directly via `localhost`.
-
-1.  **Add a message platform in LKMBot:**
-    *   Go to the LKMBot WebUI, select  `Platforms` -> `Add Adapter`.
-    *   **Select Message Platform Category**: `aiocqhttp`
-    *   **Bot Name**: `napcat` (or custom)
-    *   **Reverse Websocket Host**: `0.0.0.0`
-    *   **Reverse Websocket Port**: `6199`
-    *   Save the configuration.
-
-
-2.  **Configure Websocket Client in NapCat:**
-    *   Go to the NapCat WebUI, select `Settings` -> `Reverse WS` -> `Add`.
-    *   **Enable**: On
-    *   **URL**: `ws://localhost:6199/ws`
-    *   **Message Format**: `Array`
-    *   Save the configuration.
-
-
----
-
-### Method 2: Deploy LKMBot Only (General Purpose)
-
-This method is located in the `k8s/lkmbot` directory.
-
-#### 1. Deploy
+LKMBot is an **optional component** there (compose expresses that with `--profile bot`; k8s has no
+profile mechanism, so 0 replicas means "not deployed by default"). To enable it:
 
 ```bash
-# 1. Create namespace
-kubectl apply -f k8s/lkmbot/00-namespace.yaml
-
-# 2. Create Persistent Volume Claim
-kubectl apply -f k8s/lkmbot/01-pvc.yaml
-
-# 3. Deploy the application
-kubectl apply -f k8s/lkmbot/02-deployment.yaml
+kubectl -n lkm scale deploy/lkmbot --replicas=1
+kubectl -n lkm logs -f deploy/lkmbot        # the initial dashboard password / login hint is in the startup log
 ```
 
-#### 2. Expose Service (Choose one)
+Things worth knowing (details in that repo's `DEPLOYMENT.md` "LKM Bot" section and `deploy/k8s/README.md`):
 
-*   **Option A: NodePort**
+- **The dashboard publishes no host port**; it is exposed by the APISIX gateway as `bot.<community-domain>`.
+  The `lkm-bot:latest` image must be built and made pullable by the cluster (for kind, use
+  `deploy/k8s/overlays/kind/setup.sh`). Import the certificate using `gen-tls.sh`'s key names
+  (`bot.<domain>_fullchain.pem` / `_privkey.pem`).
+- **Data lives on a PVC**, and the Deployment uses `strategy: Recreate`: SQLite has a single writer and
+  an RWO volume cannot be mounted by two Pods at once.
+- **The code sandbox (Shipyard) is not self-hosted in-cluster**: Bay spawns sibling containers through
+  the Docker Engine API and bind-mounts host paths, which does not fit Kubernetes' scheduling/network
+  model (nodes usually run containerd and have no docker.sock). If you need the sandbox, point its
+  endpoint at a Bay running **outside** the cluster (dashboard → Configuration → Sandbox).
+- **NapCat** is best deployed as its own workload in the same namespace, connecting to
+  `ws://lkmbot:6199/ws`; alternatively configure the platform connection in the dashboard.
 
-    ```bash
-    kubectl apply -f k8s/lkmbot/03-service-nodeport.yaml
-    ```
+## Upstream Generic Example
 
-    The service will be exposed via the node IP and a port automatically assigned by Kubernetes. You can find the port with the following command:
-
-    ```bash
-    kubectl get svc -n lkmbot-standalone-ns
-    ```
-
-    In the output, find the `PORT(S)` column for `lkmbot-service-nodeport`. The format is `<internal-port>:<NodePort>/TCP`. For example, if you see `8080:30185/TCP`, the access address is `http://<NodeIP>:30185`.
-
-*   **Option B: LoadBalancer**
-
-    ```bash
-    kubectl apply -f k8s/lkmbot/04-service-loadbalancer.yaml
-    ```
-
-    After execution, check the assigned external IP (EXTERNAL-IP) with `kubectl get svc -n lkmbot-standalone-ns`.
-
----
-
-## Advanced Configuration
-
-### Prepare the LKMBot Image
-
-The manifests use the local image `lkmbot:latest` by default. Build it on every cluster node, or push it to your image registry and update the `image` field in `02-deployment.yaml` with the full registry address. Configure a mirror for the NapCat image when required by your network.
-
-### Enable Docker Sandbox Code Executor
-
-If you need to use the sandbox code executor, you need to mount the Docker socket file into the Pod.
-
-Edit the `02-deployment.yaml` file and add `volumes` and `volumeMounts` under `spec.template.spec`:
-
-1.  **Add the following to the `volumeMounts` list of the `lkmbot` container:**
-
-    ```yaml
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
-    ```
-
-2.  **Add the following to the `spec.template.spec.volumes` list:**
-
-    ```yaml
-    - name: docker-sock
-      hostPath:
-        path: /var/run/docker.sock
-        type: Socket
-    ```
-
-> [!WARNING]
-> Mounting the Docker socket into a Pod poses a security risk. Please ensure you understand the implications.
-
-## View Logs
-
-*   **Sidecar Deployment Mode:**
-
-    ```bash
-    # View LKMBot logs
-    kubectl logs -f -n lkmbot-ns deployment/lkmbot-stack -c lkmbot
-
-    # View NapCat logs
-    kubectl logs -f -n lkmbot-ns deployment/lkmbot-stack -c napcat
-    ```
-
-*   **Standalone Deployment Mode:**
-
-    ```bash
-    kubectl logs -f -n lkmbot-standalone-ns deployment/lkmbot-standalone
-    ```
-
-## 🎉 All Done!
-
-After deploying and exposing the service, you can access the LKMBot admin panel through the corresponding IP and port.
-
-> New users must use the random password printed in the startup logs for the first login. Use the username shown in the logs (usually `lkmbot`) and change it after logging in.
+If you are not deploying in the LKM environment (i.e. without the root orchestration repo), the upstream
+AstrBot repository still keeps its `k8s/` manifests and the matching instructions — follow
+`docs/*/deploy/astrbot/kubernetes.md` there, aligning names and images with this fork
+(`lkmbot` / the `/LKMBot` path).

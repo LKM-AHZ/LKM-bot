@@ -5,37 +5,44 @@
 >
 > 以下教程默认您的环境已安装 Docker。如果没有安装，请参考 [Docker 官方文档](https://docs.docker.com/get-docker/) 进行安装。
 
+> [!NOTE]
+> **本仓库是 LKM 定制 fork，不再自带 `compose.yml` / `compose-with-shipyard.yml`**——它们已并入
+> 根编排仓库 **LKM-Website**（`docker-compose.yml` 里的 `--profile bot`、APISIX 网关子域名路由、
+> `deploy/k8s/` 清单），部署以该仓 `DEPLOYMENT.md` 的「LKM Bot」一节为准。
+> 下文保留上游通用部署方式，其中「通过 Docker 部署」（`docker run`）在不接入 LKM 全栈时仍然适用。
+
 ## 通过 Docker Compose 部署
 
-::: details 只部署 LKMBot（通用方式）
+::: details 只部署 LKMBot（LKM 全栈方式）
 
-首先，需要 Clone LKMBot 仓库到本地：
+LKM 环境**不**使用本仓库的 compose 文件，请在根编排仓库里起（bot 为可选组件，默认不随主栈启动）：
 
 ```bash
+git clone https://github.com/LKM-AHZ/LKM-Website.git
+cd LKM-Website
 git clone https://github.com/Alma1314/LKM-bot.git
-cd LKM-bot
+docker compose --profile bot up -d --build
 ```
 
-然后，运行 Compose：
-
-```bash
-sudo docker compose up -d
-```
+面板不发布宿主端口，经网关以 `bot.<社群域名>` 暴露（需先给该子域加 DNS 并首签证书）。
+若只想单机跑 LKMBot、不接入 LKM 全栈，请用下面的「通过 Docker 部署」`docker run` 方式。
 :::
 
 ::: details 带 Agent 沙盒环境的部署
 
 支持原生的 Python 代码执行、Shell 代码执行等功能。
 
-部署方式如下：
+沙箱（Shipyard）在 LKM 全栈里与 bot 同属 `--profile bot`，一起起即可：
 
 ```bash
-git clone https://github.com/Alma1314/LKM-bot.git
-cd LKM-bot
-# 修改 compose-with-shipyard.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
-docker compose -f compose-with-shipyard.yml up -d
-docker pull soulter/shipyard-ship:latest
+cd LKM-Website
+docker compose --profile bot up -d --build
 ```
+
+⚠️ 沙箱会挂载 `/var/run/docker.sock`（等价宿主机 root），仅在需要时启用、用完
+`docker compose --profile bot down` 收掉。另外 bot 默认 `sandbox.booter=shipyard_neo`，
+而根编排起的是**旧版 Bay**：需在面板「配置 → 沙箱」把 booter 改成 `shipyard`、
+endpoint 填 `http://shipyard:8156` 并填上 access token 才会生效。
 
 配置和使用详见 [Agent 沙盒环境](/use/astrbot-agent-sandbox.md) 文档。
 :::

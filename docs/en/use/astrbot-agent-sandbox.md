@@ -275,21 +275,30 @@ The following content describes the older `Shipyard` driver. It is kept for comp
 
 ### Deploying LKMBot and Shipyard with Docker Compose
 
-If you have not deployed LKMBot yet, or want to use the older recommended deployment method with sandbox support, you can still deploy LKMBot with Docker Compose using the following commands:
+If you have not deployed LKMBot yet, or want to use the older recommended deployment method with sandbox support, you can still deploy LKMBot with Docker Compose.
+
+> [!NOTE]
+> This repository is the LKM fork and **no longer ships `compose-with-shipyard.yml`**: in the LKM
+> environment LKMBot and Shipyard are managed together by the root orchestration repository
+> **LKM-Website** (the `--profile bot` services in its `docker-compose.yml`; see the "LKM Bot" section
+> of its `DEPLOYMENT.md`):
 
 ```bash
-git clone https://github.com/Alma1314/LKM-bot.git
-cd LKM-bot
-# Modify the environment variables in compose-with-shipyard.yml, such as the Shipyard access token
-docker compose -f compose-with-shipyard.yml up -d
-docker pull soulter/shipyard-ship:latest
+git clone https://github.com/LKM-AHZ/LKM-Website.git
+cd LKM-Website
+docker compose --profile bot up -d --build
 ```
 
-This starts a Docker Compose stack containing the LKMBot main program and the sandbox environment.
+> Two things to note: (1) the sandbox mounts `/var/run/docker.sock` (equivalent to host root), so enable
+> it only when needed and tear it down with `docker compose --profile bot down`; (2) the root stack runs
+> the **legacy Bay** (`soulter/shipyard-bay`) while LKMBot defaults to `sandbox.booter=shipyard_neo` —
+> set the booter to `shipyard` in the dashboard (Configuration → Sandbox), point the endpoint at
+> `http://shipyard:8156` and fill in the access token for it to take effect.
 
 ### Deploying Shipyard Separately
 
-If LKMBot is already deployed but the sandbox environment is not, you can deploy Shipyard separately.
+If LKMBot is already deployed but the sandbox environment is not (or you prefer not to use the root
+stack's shipyard service), you can deploy Shipyard separately.
 
 ```bash
 mkdir astrbot-shipyard

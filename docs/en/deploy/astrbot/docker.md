@@ -5,37 +5,49 @@
 >
 > This tutorial assumes you have Docker installed in your environment. If not, please refer to the [Docker official documentation](https://docs.docker.com/get-docker/) for installation.
 
+> [!NOTE]
+> **This repository is the LKM fork and no longer ships `compose.yml` / `compose-with-shipyard.yml`** —
+> they are managed by the root orchestration repository **LKM-Website** (the `--profile bot` services in
+> its `docker-compose.yml`, the APISIX gateway route on a dedicated subdomain, and its `deploy/k8s/`
+> manifests). Deployment is defined by the "LKM Bot" section of that repo's `DEPLOYMENT.md`.
+> The generic instructions below are kept for upstream compatibility; "Deploy with Docker" (`docker run`)
+> still applies when you are not using the LKM stack.
+
 ## Deploy with Docker Compose
 
-::: details Deploy LKMBot Only (General Method)
+::: details Deploy LKMBot Only (LKM stack)
 
-First, clone the LKMBot repository to your local machine:
+The LKM environment does **not** use this repository's compose file. Use the root orchestration repo
+(LKMBot is an optional component and is not started with the main stack):
 
 ```bash
+git clone https://github.com/LKM-AHZ/LKM-Website.git
+cd LKM-Website
 git clone https://github.com/Alma1314/LKM-bot.git
-cd LKM-bot
+docker compose --profile bot up -d --build
 ```
 
-Then, run Compose:
-
-```bash
-sudo docker compose up -d
-```
+The dashboard publishes no host port; it is exposed by the gateway as `bot.<community-domain>`
+(add the DNS record for that subdomain and issue its certificate first).
+If you only want a standalone LKMBot without the LKM stack, use the "Deploy with Docker" section below.
 :::
 
 ::: details Deploy with Agent Sandbox Environment
 
 Supports native Python code execution, Shell code execution, and other features.
 
-Deployment method:
+In the LKM stack the sandbox (Shipyard) shares the same `--profile bot`, so it starts together:
 
 ```bash
-git clone https://github.com/Alma1314/LKM-bot.git
-cd LKM-bot
-# Modify the environment variable configuration in the compose-with-shipyard.yml file, such as Shipyard's access token, etc.
-docker compose -f compose-with-shipyard.yml up -d
-docker pull soulter/shipyard-ship:latest
+cd LKM-Website
+docker compose --profile bot up -d --build
 ```
+
+⚠️ The sandbox mounts `/var/run/docker.sock` (equivalent to host root). Enable it only when needed and
+tear it down with `docker compose --profile bot down`. Note that LKMBot defaults to
+`sandbox.booter=shipyard_neo` while the root stack runs the **legacy Bay**: set the booter to `shipyard`
+in the dashboard (Configuration → Sandbox), point the endpoint at `http://shipyard:8156` and fill in
+the access token for it to take effect.
 
 For configuration and usage details, see the [Agent Sandbox Environment](/en/use/astrbot-agent-sandbox.md) documentation.
 :::
