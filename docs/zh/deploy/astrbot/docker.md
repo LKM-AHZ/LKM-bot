@@ -1,19 +1,19 @@
-# 使用 Docker 部署 AstrBot
+# 使用 Docker 部署 LKMBot
 
 > [!WARNING]
-> 通过 Docker 可以方便地将 AstrBot 部署到 Windows, Mac, Linux 上。
+> 通过 Docker 可以方便地将 LKMBot 部署到 Windows, Mac, Linux 上。
 >
 > 以下教程默认您的环境已安装 Docker。如果没有安装，请参考 [Docker 官方文档](https://docs.docker.com/get-docker/) 进行安装。
 
 ## 通过 Docker Compose 部署
 
-::: details 只部署 AstrBot（通用方式）
+::: details 只部署 LKMBot（通用方式）
 
-首先，需要 Clone AstrBot 仓库到本地：
+首先，需要 Clone LKMBot 仓库到本地：
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
-cd AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
 ```
 
 然后，运行 Compose：
@@ -21,9 +21,6 @@ cd AstrBot
 ```bash
 sudo docker compose up -d
 ```
-
-> [!TIP]
-> 如果您的网络环境在中国大陆境内，上述命令将无法正常拉取。您可能需要修改 compose.yml 文件，将其中的 `image: soulter/astrbot:latest` 替换为 `image: m.daocloud.io/docker.io/soulter/astrbot:latest`。
 :::
 
 ::: details 带 Agent 沙盒环境的部署
@@ -33,8 +30,8 @@ sudo docker compose up -d
 部署方式如下：
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
-cd AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
 # 修改 compose-with-shipyard.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
 docker compose -f compose-with-shipyard.yml up -d
 docker pull soulter/shipyard-ship:latest
@@ -45,11 +42,12 @@ docker pull soulter/shipyard-ship:latest
 
 ::: details 和 NapCat 一起部署
 
-如果您想对接 NapCat，使用这种方式可以同时部署 AstrBot 和 NapCat。
+如果您想对接 NapCat，使用这种方式可以同时部署 LKMBot 和 NapCat。
 
 ```bash
-mkdir astrbot
-cd astrbot
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+docker build -t lkmbot:latest .
 wget https://raw.githubusercontent.com/NapNeko/NapCat-Docker/main/compose/astrbot.yml
 sudo docker compose -f astrbot.yml up -d
 ```
@@ -60,19 +58,11 @@ sudo docker compose -f astrbot.yml up -d
 ## 通过 Docker 部署
 
 ```bash
-mkdir astrbot
-cd astrbot
-sudo docker run -itd -p 6185:6185 -p 6199:6199 -v $PWD/data:/AstrBot/data -v /etc/localtime:/etc/localtime:ro -v /etc/timezone:/etc/timezone:ro --name astrbot soulter/astrbot:latest
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+docker build -t lkmbot:latest .
+sudo docker run -itd -p 6185:6185 -p 6199:6199 -v $PWD/data:/LKMBot/data -v /etc/localtime:/etc/localtime:ro -v /etc/timezone:/etc/timezone:ro --name lkmbot lkmbot:latest
 ```
-
-> [!TIP]
-> 如果您的网络环境在中国大陆境内，上述命令将无法正常拉取。请使用以下命令拉取镜像：
->
-> ```bash
-> sudo docker run -itd -p 6185:6185 -p 6199:6199 -v $PWD/data:/AstrBot/data -v /etc/localtime:/etc/localtime:ro -v /etc/timezone:/etc/timezone:ro --name astrbot m.daocloud.io/docker.io/soulter/astrbot:latest
-> ```
->
-> (感谢 DaoCloud ❤️)
 > 
 > Windows 下不需要加 sudo，下同
 >
@@ -83,10 +73,10 @@ Windows 同步 Host Time（需要WSL2）
 -v \\wsl.localhost\(your-wsl-os)\etc\localtime:/etc/localtime:ro
 ```
 
-通过以下命令查看 AstrBot 的日志：
+通过以下命令查看 LKMBot 的日志：
 
 ```bash
-sudo docker logs -f astrbot
+sudo docker logs -f lkmbot
 ```
 
 ## 通过 Windows Docker Desktop 部署
@@ -96,47 +86,31 @@ sudo docker logs -f astrbot
 `TZ` 的值请设置为 **IANA 时区标准格式**（地区/城市），例如中国为 `Asia/Shanghai`
 
 ```bash
-docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "%cd%\data:/AstrBot/data" --name astrbot soulter/astrbot:latest
+docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "%cd%\data:/LKMBot/data" --name lkmbot lkmbot:latest
 ```
-> [!TIP]
-> 如果您的网络环境在中国大陆境内，上述命令将无法正常拉取。请使用以下命令拉取镜像：
->
-> ```bash
-> docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "%cd%\data:/AstrBot/data" --name astrbot m.daocloud.io/docker.io/soulter/astrbot:latest
-> ```
->
-> (感谢 DaoCloud ❤️)
-> 
+
 ### 使用`PowerShell`
 
 `TZ` 的值请设置为 **IANA 时区标准格式**（地区/城市），例如中国为 `Asia/Shanghai`
 
 ```powershell
-docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "${PWD}\data:/AstrBot/data" --name astrbot soulter/astrbot:latest
+docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "${PWD}\data:/LKMBot/data" --name lkmbot lkmbot:latest
 ```
-> [!TIP]
-> 如果您的网络环境在中国大陆境内，上述命令将无法正常拉取。请使用以下命令拉取镜像：
->
-> ```powershell
-> docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "${PWD}\data:/AstrBot/data" --name astrbot m.daocloud.io/docker.io/soulter/astrbot:latest
-> ```
->
-> (感谢 DaoCloud ❤️)
-> 
+
 
 
 
 ## 🎉 大功告成
 
-如果一切顺利，你会看到 AstrBot 打印出的日志。
+如果一切顺利，你会看到 LKMBot 打印出的日志。
 
-如果没有报错，你会看到一条日志显示类似 `🌈 管理面板已启动，可访问` 并附带了几条链接。打开其中一个链接即可访问 AstrBot 管理面板。
+如果没有报错，你会看到一条日志显示类似 `🌈 管理面板已启动，可访问` 并附带了几条链接。打开其中一个链接即可访问 LKMBot 管理面板。
 
 > [!TIP]
 > 由于 Docker 隔离了网络环境，所以不能使用 `localhost` 访问管理面板。
 >
-> 首次登录请使用启动日志中打印的随机初始密码（用户名通常为 `astrbot`）。登录后请立即修改密码。
+> 首次登录请使用启动日志中打印的随机初始密码（用户名通常为 `lkmbot`）。登录后请立即修改密码。
 >
 > 如果部署在云服务器上，需要在相应厂商控制台里放行对应端口。
 
-接下来，你需要部署任何一个消息平台，才能够实现在消息平台上使用 AstrBot。
+接下来，你需要部署任何一个消息平台，才能够实现在消息平台上使用 LKMBot。

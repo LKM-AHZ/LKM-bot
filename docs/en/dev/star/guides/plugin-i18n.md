@@ -16,7 +16,7 @@ your_plugin/
 
 Locale file names use WebUI locales, such as `zh-CN.json` and `en-US.json`. Each file must contain a JSON object.
 
-When the current locale has no translation, a field is missing, or the locale file does not exist, AstrBot falls back to the default text:
+When the current locale has no translation, a field is missing, or the locale file does not exist, LKMBot falls back to the default text:
 
 - Plugin names, card short descriptions, and descriptions fall back to `display_name`, `short_desc`, and `desc` in `metadata.yaml`.
 - Configuration text falls back to `description`, `hint`, and `labels` in `_conf_schema.json`.

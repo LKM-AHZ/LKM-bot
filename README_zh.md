@@ -1,13 +1,17 @@
-![AstrBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+![LKMBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+
+> **LKMBot** 是本仓库维护的 LKM 品牌发行版，基于 AstrBot 开发。为兼容现有插件和历史数据，
+> 内部 Python 包名 `astrbot`、旧环境变量及 API 字段名暂时保留；面向用户的产品名和主命令均为
+> `LKMBot` / `lkmbot`。
 
 <div align="center">
 
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README.md">English</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh-TW.md">繁體中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ja.md">日本語</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_fr.md">Français</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_es.md">Español</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ru.md">Русский</a>
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README.md">English</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh-TW.md">繁體中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ja.md">日本語</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_fr.md">Français</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_es.md">Español</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ru.md">Русский</a>
 
 <br>
 
@@ -38,7 +42,7 @@
 
 </div>
 
-AstrBot 是一个开源的一站式 Agent 聊天机器人平台，可接入主流即时通讯应用，为个人、开发者和团队提供可靠、可扩展的对话式 AI 基础设施。无论你要构建个人 AI 伙伴、智能客服、自动化助手还是企业知识库，AstrBot 都能帮助你在即时通讯平台的工作流中快速构建可用于生产环境的 AI 应用。
+LKMBot 是一个开源的一站式 Agent 聊天机器人平台，可接入主流即时通讯应用，为个人、开发者和团队提供可靠、可扩展的对话式 AI 基础设施。无论你要构建个人 AI 伙伴、智能客服、自动化助手还是企业知识库，LKMBot 都能帮助你在即时通讯平台的工作流中快速构建可用于生产环境的 AI 应用。
 
 ![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
 
@@ -58,7 +62,7 @@ AstrBot 是一个开源的一站式 Agent 聊天机器人平台，可接入主�
 
 ### 在雨云上一键部署
 
-对于希望一键部署并让 AstrBot 24 小时在线、且不想自行管理服务器的用户，我们推荐使用雨云的一键云部署服务 ☁️：
+对于希望一键部署并让 LKMBot 24 小时在线、且不想自行管理服务器的用户，我们推荐使用雨云的一键云部署服务 ☁️：
 
 [![Deploy on RainYun](https://rainyun-apps.cn-nb1.rains3.com/materials/deploy-on-rainyun-en.svg)](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
 
@@ -68,37 +72,40 @@ AstrBot 是一个开源的一站式 Agent 聊天机器人平台，可接入主�
 > 需要安装 [uv](https://docs.astral.sh/uv/)。
 > 对于 macOS 用户：由于 macOS 安全检查，首次运行 `astrbot` 命令可能需要较长时间（约 10-20 秒）。
 
-对于想快速体验 AstrBot、且熟悉命令行并能够自行安装 `uv` 环境的用户，我们推荐使用 `uv` 一键部署方式 ⚡️。
+对于想快速体验 LKMBot、且熟悉命令行并能够自行安装 `uv` 环境的用户，我们推荐使用 `uv` 一键部署方式 ⚡️。
 
 ```bash
-uv tool install astrbot --python 3.12
-astrbot init # 仅首次执行此命令以初始化环境
-astrbot run
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+uv tool install . --python 3.12
+lkmbot init # 仅首次执行此命令以初始化环境
+lkmbot run
 ```
 
-后续更新 `astrbot`：
+后续更新 `lkmbot`：
 
 ```bash
-uv tool upgrade astrbot --python 3.12
+git pull --ff-only
+uv tool install --force . --python 3.12
 ```
 
 ### Docker 部署
 
-对于熟悉容器、希望获得更稳定且更适合生产环境部署方式的用户，我们推荐使用 Docker / Docker Compose 部署 AstrBot。
+对于熟悉容器、希望获得更稳定且更适合生产环境部署方式的用户，我们推荐使用 Docker / Docker Compose 部署 LKMBot。
 
-请参考官方文档 [使用 Docker 部署 AstrBot](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot)。
+请参考官方文档 [使用 Docker 部署 LKMBot](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot)。
 
 ### 桌面客户端部署
 
-对于希望在桌面端使用 AstrBot、并以 ChatUI 为主要入口的用户，我们推荐使用 AstrBot App。
+对于希望在桌面端使用 LKMBot、并以 ChatUI 为主要入口的用户，我们推荐使用 LKMBot App。
 
 前往 [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop) 下载并安装；该方式面向桌面使用，不推荐服务器场景。
 
 ### 启动器部署
 
-同样在桌面端，希望快速部署并实现环境隔离多开的用户，我们推荐使用 AstrBot Launcher。
+同样在桌面端，希望快速部署并实现环境隔离多开的用户，我们推荐使用 LKMBot Launcher。
 
-前往 [AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher) 下载并安装。
+前往 [LKMBot Launcher](https://github.com/Raven95676/astrbot-launcher) 下载并安装。
 
 **更多部署方式**
 
@@ -117,7 +124,7 @@ uv tool upgrade astrbot --python 3.12
 
 ## 支持的消息平台
 
-将 AstrBot 连接到你常用的聊天平台。
+将 LKMBot 连接到你常用的聊天平台。
 
 | 平台 | 维护方 |
 |---------|---------------|
@@ -189,10 +196,10 @@ uv tool upgrade astrbot --python 3.12
 
 ### 开发环境
 
-AstrBot 使用 `ruff` 进行代码格式化和检查。
+LKMBot 使用 `ruff` 进行代码格式化和检查。
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
 pip install pre-commit
 pre-commit install
 ```
@@ -209,7 +216,7 @@ pre-commit install
 
 ## ❤️ Special Thanks
 
-特别感谢所有 Contributors 和插件开发者对 AstrBot 的贡献 ❤️
+特别感谢所有 Contributors 和插件开发者对 LKMBot 的贡献 ❤️
 
 <a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />

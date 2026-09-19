@@ -360,7 +360,7 @@ class UmoAlias(TimestampMixin, SQLModel, table=True):
 
 
 class Attachment(TimestampMixin, SQLModel, table=True):
-    """This class represents attachments for messages in AstrBot.
+    """This class represents attachments for messages in LKMBot.
 
     Attachments can be images, files, or other media types.
     """
@@ -575,7 +575,7 @@ class Conversation:
     created_at: int = 0
     updated_at: int = 0
     token_usage: int = 0
-    """对话的总 token 数量。AstrBot 会保留最近一次 LLM 请求返回的总 token 数，方便统计。token_usage 可能为 0，表示未知。"""
+    """对话的总 token 数量。LKMBot 会保留最近一次 LLM 请求返回的总 token 数，方便统计。token_usage 可能为 0，表示未知。"""
 
 
 class Personality(TypedDict):

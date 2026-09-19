@@ -1,4 +1,4 @@
-# Deploy AstrBot on CasaOS
+# Deploy LKMBot on CasaOS
 
 ## Install CasaOS
 
@@ -18,11 +18,11 @@ https://play.cuse.eu.org/Cp0204-AppStore-Play.zip
 
 And add it, wait for the addition to complete.
 
-If your network environment is in mainland China, please search for and add `dkTurbo` first, otherwise you may not be able to pull the AstrBot image.
+If your network environment is in mainland China, please search for and add `dkTurbo` first, otherwise you may not be able to pull the LKMBot image.
 
 ![image](https://files.astrbot.app/docs/source/images/casaos/image-1.png)
 
-Enter `Astrbot` to find AstrBot.
+Enter `Astrbot` to find LKMBot.
 
 ![image](https://files.astrbot.app/docs/source/images/casaos/image-2.png)
 
@@ -36,4 +36,4 @@ In the Network section, select `host`.
 
 Then click `Install` to start the installation.
 
-After installation is complete, the AstrBot APP will appear on the main interface. Click it to open the dashboard.
+After installation is complete, the LKMBot APP will appear on the main interface. Click it to open the dashboard.

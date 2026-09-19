@@ -197,7 +197,7 @@ class DiscordPlatformAdapter(Platform):
     def _get_group_name(
         channel: Messageable | GuildChannel | PrivateChannel,
     ) -> str | None:
-        """Build the AstrBot group name for a Discord guild channel.
+        """Build the LKMBot group name for a Discord guild channel.
 
         Args:
             channel: Discord channel or thread associated with the message.
@@ -312,7 +312,7 @@ class DiscordPlatformAdapter(Platform):
         """Creates a Discord message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
             followup_webhook: Optional slash-command follow-up webhook.
 
         Returns:

@@ -1,6 +1,6 @@
 ---
 name: pdf
-description: Read, create, inspect, merge, split, rotate, encrypt, fill, and validate PDF files. Use when the user asks to work with a PDF or convert supported Markdown into a polished PDF in AstrBot.
+description: Read, create, inspect, merge, split, rotate, encrypt, fill, and validate PDF files. Use when the user asks to work with a PDF or convert supported Markdown into a polished PDF in LKMBot.
 ---
 
 # Work with PDFs
@@ -83,7 +83,7 @@ Official: https://github.com/googlefonts/noto-cjk/raw/main/Sans/Variable/TTF/Sub
 Proxy:   https://edgeone.gh-proxy.com/https://github.com/googlefonts/noto-cjk/raw/main/Sans/Variable/TTF/Subset/NotoSansSC-VF.ttf
 ```
 
-These proxies are not operated by the font project or AstrBot. Their availability and returned content can change. Never send credentials, private repository URLs, or other sensitive data through them. After downloading, verify that the final response used HTTPS, inspect the file type, and compare a checksum with an official checksum when one is published.
+These proxies are not operated by the font project or LKMBot. Their availability and returned content can change. Never send credentials, private repository URLs, or other sensitive data through them. After downloading, verify that the final response used HTTPS, inspect the file type, and compare a checksum with an official checksum when one is published.
 
 Do not download a font silently. Obtain user approval when network access or a new file is required, use HTTPS, and keep the downloaded font in a workspace or temporary directory rather than installing it system-wide.
 

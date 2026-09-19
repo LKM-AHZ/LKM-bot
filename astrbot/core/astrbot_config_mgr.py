@@ -30,7 +30,7 @@ DEFAULT_CONFIG_CONF_INFO = ConfInfo(
 
 
 class AstrBotConfigManager:
-    """A class to manage the system configuration of AstrBot, aka ACM"""
+    """A class to manage the system configuration of LKMBot, aka ACM"""
 
     def __init__(
         self,

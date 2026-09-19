@@ -14,9 +14,9 @@ The development team behind Satori has long worked on bot development and is fam
 
 Please refer to the deployment documentation of the chosen implementation project.
 
-## 2. Configure Satori protocol in AstrBot
+## 2. Configure Satori protocol in LKMBot
 
-1. Open AstrBot WebUI.
+1. Open LKMBot WebUI.
 2. Click `Platforms` in the left sidebar.
 3. Click `Add Adapter` above the bot list.
 4. Select `satori`.

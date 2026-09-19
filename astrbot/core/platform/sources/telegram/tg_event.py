@@ -352,11 +352,11 @@ class TelegramPlatformEvent(AstrMessageEvent):
     ) -> Group | None:
         """Get Telegram group metadata available to the bot.
 
-        Telegram topics use ``<chat_id>#<thread_id>`` inside AstrBot. The Bot API
+        Telegram topics use ``<chat_id>#<thread_id>`` inside LKMBot. The Bot API
         calls target the parent chat while the returned group keeps the topic-aware ID.
 
         Args:
-            group_id: AstrBot group ID to query. Defaults to the current group.
+            group_id: LKMBot group ID to query. Defaults to the current group.
             **kwargs: Reserved for compatibility with the platform event interface.
 
         Returns:

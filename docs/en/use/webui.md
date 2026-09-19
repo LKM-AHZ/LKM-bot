@@ -1,6 +1,6 @@
 # WebUI
 
-The AstrBot admin panel features plugin management, log viewing, visual configuration, statistics viewing, and more.
+The LKMBot admin panel features plugin management, log viewing, visual configuration, statistics viewing, and more.
 
 ## Navigation and Previous Entry Points
 
@@ -17,24 +17,24 @@ These paths use the current default sidebar. If you customized it, open `Setting
 | Config → System Config | Settings → General, Appearance, Network, or Security, depending on the setting |
 | Commands / Command Management | Extensions → Handlers → Command |
 | Standalone MCP / Skills entries | Extensions → MCP Servers / Skills |
-| Custom Rules / Future Tasks / SubAgents | More Features → The corresponding feature |
+| Custom Rules / Future Tasks | More Features → The corresponding feature |
 
 Old log, trace, conversation, and statistics URLs still redirect to the corresponding tabs. Agent runners are now saved in each profile; they are no longer created as model providers. See [Agent Runners](./agent-runner.md) for the setup steps.
 
 ## Accessing the Admin Panel
 
-After starting AstrBot, you can access the admin panel by visiting `http://localhost:6185` in your browser.
+After starting LKMBot, you can access the admin panel by visiting `http://localhost:6185` in your browser.
 
 > [!TIP]
-> - If you're deploying AstrBot on a cloud server, replace `localhost` with your server's IP address.
+> - If you're deploying LKMBot on a cloud server, replace `localhost` with your server's IP address.
 
 ## Login
 
-For first-time login, AstrBot generates a random initial password and prints it in startup logs. Please read the startup log line containing the WebUI credential and use that password to log in (username is usually `astrbot`).
+For first-time login, LKMBot generates a random initial password and prints it in startup logs. Please read the startup log line containing the WebUI credential and use that password to log in (username is usually `lkmbot`).
 
 ## Two-Factor Authentication
 
-AstrBot WebUI supports TOTP (Time-based One-Time Password) based two-factor authentication.
+LKMBot WebUI supports TOTP (Time-based One-Time Password) based two-factor authentication.
 
 ### Enabling Two-Factor Authentication
 
@@ -59,7 +59,7 @@ To replace the TOTP secret, you can do so in the TOTP management window, where y
 
 ## ChatUI
 
-AstrBot includes a built-in ChatUI for talking to configured models directly in your browser.
+LKMBot includes a built-in ChatUI for talking to configured models directly in your browser.
 
 ChatUI supports these common workflows:
 
@@ -97,15 +97,15 @@ Global settings are under `Settings` at the bottom of the sidebar:
 - `Maintenance`: backup, restore, and restart.
 - `OpenAPI`: developer access keys.
 
-System configuration changes save automatically. Check for a successful save message and restart AstrBot if the page indicates that a restart is required.
+System configuration changes save automatically. Check for a successful save message and restart LKMBot if the page indicates that a restart is required.
 
 ## Plugins
 
-Select `Extensions` in the sidebar. The top tabs are `Plugins`, `Skills`, `MCP Servers`, and `Handlers`. Within `Plugins`, switch between `Installed` and `AstrBot Plugin Market` to view local and market plugins.
+Select `Extensions` in the sidebar. The top tabs are `Plugins`, `Skills`, `MCP Servers`, and `Handlers`. Within `Plugins`, switch between `Installed` and `LKMBot Plugin Market` to view local and market plugins.
 
 On either plugin list, you can also click `Install Plugin` (+) in the bottom right corner to manually install plugins via URL or file upload.
 
-> Due to the plugin update mechanism, the AstrBot Team cannot fully guarantee the security of plugins in the plugin market. Please carefully verify them. The AstrBot Team is not responsible for any losses caused by plugins.
+> Due to the plugin update mechanism, the LKMBot Team cannot fully guarantee the security of plugins in the plugin market. Please carefully verify them. The LKMBot Team is not responsible for any losses caused by plugins.
 
 ### Handling Plugin Load Failures
 
@@ -131,14 +131,14 @@ Use the `Conversations` tab to find and manage saved conversation records:
 
 ### Logs
 
-The `Logs` tab shows AstrBot runtime logs in real time. You can filter by log level and install missing Pip packages from this page. To view DEBUG logs, first set `Console Log Level` to `DEBUG` under `Settings → General → Logs`.
+The `Logs` tab shows LKMBot runtime logs in real time. You can filter by log level and install missing Pip packages from this page. To view DEBUG logs, first set `Console Log Level` to `DEBUG` under `Settings → General → Logs`.
 
 ### Trace
 
-The `Trace` tab shows AstrBot execution traces in real time and is useful for debugging model-call paths and tool invocations. Use the switch at the top to enable or disable trace recording.
+The `Trace` tab shows LKMBot execution traces in real time and is useful for debugging model-call paths and tool invocations. Use the switch at the top to enable or disable trace recording.
 
 > [!NOTE]
-> Trace recording currently covers only some model-call paths from the AstrBot main Agent. Coverage will continue to improve.
+> Trace recording currently covers only some model-call paths from the LKMBot main Agent. Coverage will continue to improve.
 
 ## Command Management
 
@@ -150,9 +150,9 @@ You can enable/disable and rename each command.
 
 ## Updating the Admin Panel
 
-When AstrBot starts, it automatically checks if the admin panel needs updating. If it does, the first log entry (in yellow) will prompt you.
+When LKMBot starts, it automatically checks if the admin panel needs updating. If it does, the first log entry (in yellow) will prompt you.
 
-In the browser WebUI, open `⋮ → Update AstrBot` in the upper-right corner, expand `Advanced settings`, and click `Download and Update` under `Update Dashboard to Latest Version Only`. The page refreshes automatically after a successful update. In the desktop app, the update entry opens the desktop application updater.
+In the browser WebUI, open `⋮ → Update LKMBot` in the upper-right corner, expand `Advanced settings`, and click `Download and Update` under `Update Dashboard to Latest Version Only`. The page refreshes automatically after a successful update. In the desktop app, the update entry opens the desktop application updater.
 
 You can also use the `/dashboard_update` command to manually update the admin panel (admin command).
 

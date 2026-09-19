@@ -493,7 +493,7 @@ class AiocqhttpAdapter(Platform):
         """Creates an aiocqhttp message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created aiocqhttp message event.

@@ -13,7 +13,7 @@ DASHBOARD_RESET_PASSWORD_ENV = "ASTRBOT_RESET_DASHBOARD_PASSWORD"
 
 
 async def run_astrbot(astrbot_root: Path) -> None:
-    """Run AstrBot"""
+    """Run LKMBot"""
     from astrbot.core import LogBroker, LogManager, db_helper, logger
     from astrbot.core.initial_loader import InitialLoader
 
@@ -29,7 +29,7 @@ async def run_astrbot(astrbot_root: Path) -> None:
 
 
 @click.option("--reload", "-r", is_flag=True, help="Auto-reload plugins")
-@click.option("--port", "-p", help="AstrBot Dashboard port", required=False, type=str)
+@click.option("--port", "-p", help="LKMBot Dashboard port", required=False, type=str)
 @click.option(
     "--reset-password",
     is_flag=True,
@@ -37,14 +37,14 @@ async def run_astrbot(astrbot_root: Path) -> None:
 )
 @click.command()
 def run(reload: bool, port: str | None, reset_password: bool) -> None:
-    """Run AstrBot"""
+    """Run LKMBot"""
     try:
         os.environ["ASTRBOT_CLI"] = "1"
         astrbot_root = get_astrbot_root()
 
         if not check_astrbot_root(astrbot_root):
             raise click.ClickException(
-                f"{astrbot_root} is not a valid AstrBot root directory. Use 'astrbot init' to initialize",
+                f"{astrbot_root} is not a valid LKMBot root directory. Use 'lkmbot init' to initialize",
             )
 
         os.environ["ASTRBOT_ROOT"] = str(astrbot_root)
@@ -65,7 +65,7 @@ def run(reload: bool, port: str | None, reset_password: bool) -> None:
         with lock.acquire():
             asyncio.run(run_astrbot(astrbot_root))
     except KeyboardInterrupt:
-        click.echo("AstrBot has been shut down.")
+        click.echo("LKMBot has been shut down.")
     except Timeout:
         raise click.ClickException(
             "Cannot acquire lock file. Please check if another instance is running"

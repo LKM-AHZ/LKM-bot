@@ -24,18 +24,18 @@ paru -S astrbot-git
 
 # Starting
 >[!TIP]
-> You can directly use `astrbot init` (for the first run) to initialize.
-> Use `astrbot run` to run the bot.
+> You can directly use `lkmbot init` (for the first run) to initialize.
+> Use `lkmbot run` to run the bot.
 > However, it is highly recommended to use `systemctl` for starting, as it provides features like automatic restart and log rotation.
 
 ```bash
-systemctl --user start astrbot.service
+systemctl --user start lkmbot.service
 ```
 
 # Auto-start on Boot
 ```bash
 # For security reasons, it is designed to run as a user.
-systemctl --user enable astrbot.service
+systemctl --user enable lkmbot.service
 # If you need to start it immediately, add --now
-# systemctl --user enable --now astrbot.service
+# systemctl --user enable --now lkmbot.service
 ```

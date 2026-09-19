@@ -1,6 +1,6 @@
 # 接入 Discord
 
-## 创建 AstrBot Discord 平台适配器
+## 创建 LKMBot Discord 平台适配器
 
 进入 WebUI 的 `机器人` 页，点击 `创建机器人`，选择 `Discord`。填写以下配置，获取 Token 后点击 `保存`。
 
@@ -8,7 +8,7 @@
 - 启用：勾选后启用该适配器
 - Bot Token：在 Discord 创建 App 后获取的 Token（见下文）
 - Discord 代理地址：如果你需要使用代理访问 Discord，可以在这里填写代理地址（可选）
-- 是否自动将插件指令注册为 Discord 斜杠指令：勾选后，AstrBot 会自动将已安装插件中的指令注册为 Discord 斜杠指令，方便用户使用。
+- 是否自动将插件指令注册为 Discord 斜杠指令：勾选后，LKMBot 会自动将已安装插件中的指令注册为 Discord 斜杠指令，方便用户使用。
 
 ## 在 Discord 创建 App
 

@@ -1,10 +1,10 @@
 # 发布插件到插件市场
 
-在编写完插件后，你可以选择将插件发布到 AstrBot 的插件市场，让更多用户使用你的插件。
+在编写完插件后，你可以选择将插件发布到 LKMBot 的插件市场，让更多用户使用你的插件。
 
-AstrBot 使用 GitHub 托管插件，因此你需要先将插件代码推送到之前创建的 GitHub 插件仓库中。
+LKMBot 使用 GitHub 托管插件，因此你需要先将插件代码推送到之前创建的 GitHub 插件仓库中。
 
-你可以前往 [AstrBot 插件发布页面](https://cloud.astrbot.app/publish) 发布你的插件，发布插件需要注册 AstrBot Cloud 账号。
+你可以前往 [LKMBot 插件发布页面](https://cloud.astrbot.app/publish) 发布你的插件，发布插件需要注册 LKMBot Cloud 账号。
 
 <!-- ![fill out the form](https://files.astrbot.app/docs/source/images/plugin-publish/image.png) -->
 
@@ -19,7 +19,7 @@ desc: 详细描述插件的功能、特性、使用方法等信息。 # 详细�
 version: 1.0.0                               # 插件版本号（遵循语义化版本规范）
 author: 作者名称                              # 作者名称
 repo: https://github.com/your-name/repo      # 插件仓库地址
-# astrbot_version: ">=4.17.0"                # （可选）支持的 AstrBot 版本范围
+# astrbot_version: ">=4.17.0"                # （可选）支持的 LKMBot 版本范围
 # support_platforms:                         # （可选）支持的平台适配器列表
 #   - aiocqhttp
 #   - qq_official

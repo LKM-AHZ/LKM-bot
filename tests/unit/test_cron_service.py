@@ -58,7 +58,7 @@ async def test_create_job_resolves_default_timezone(
     Args:
         include_timezone: Whether the request includes the timezone field.
         payload_timezone: Timezone value supplied by the request.
-        config_timezone: Timezone returned by the applicable AstrBot config.
+        config_timezone: Timezone returned by the applicable LKMBot config.
         session: Target session supplied by the request.
         expected_timezone: Timezone expected by the cron manager.
         should_read_config: Whether configuration lookup should occur.

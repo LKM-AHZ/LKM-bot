@@ -1,6 +1,6 @@
-# Deploy with AstrBot Desktop Client
+# Deploy with LKMBot Desktop Client
 
-`AstrBot-desktop` is designed for quick local deployment of AstrBot on your personal computer, supporting Windows, macOS, and Linux.
+`AstrBot-desktop` is designed for quick local deployment of LKMBot on your personal computer, supporting Windows, macOS, and Linux.
 
 Among the various deployment options, the desktop client is best suited for personal local use. It is not recommended for long-term server operation or production environments. For production deployments, consider [Docker](/en/deploy/astrbot/docker) or [Kubernetes](/en/deploy/astrbot/kubernetes) instead.
 

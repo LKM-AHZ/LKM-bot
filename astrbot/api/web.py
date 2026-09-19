@@ -379,7 +379,7 @@ def error_response(
         headers: Optional response headers.
 
     Returns:
-        A JSON response with the AstrBot error envelope.
+        A JSON response with the LKMBot error envelope.
     """
     return json_response(
         {"status": "error", "message": message, "data": data},

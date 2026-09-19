@@ -20,22 +20,22 @@ The Lark client version must be >= 7.20. Lower versions only display the title a
 
 ## Creating a Bot
 
-Lark supports two setup methods: one-click QR creation in AstrBot, or manually creating a custom enterprise app in the Lark Developer Console.
+Lark supports two setup methods: one-click QR creation in LKMBot, or manually creating a custom enterprise app in the Lark Developer Console.
 
 ### Option 1: One-click QR Creation
 
-AstrBot version requirement: >= 4.25.0.
+LKMBot version requirement: >= 4.25.0.
 
-Open the AstrBot management panel, click `Platforms` in the left sidebar, click `Add Adapter`, and select `lark`.
+Open the LKMBot management panel, click `Platforms` in the left sidebar, click `Add Adapter`, and select `lark`.
 
-Under `Creation Method`, select `One-click QR Creation`, choose the China or international edition as needed, then scan the QR code with the Lark mobile app and confirm. After creation succeeds, AstrBot automatically fills in the app's `app_id`, `app_secret`, and domain configuration.
+Under `Creation Method`, select `One-click QR Creation`, choose the China or international edition as needed, then scan the QR code with the Lark mobile app and confirm. After creation succeeds, LKMBot automatically fills in the app's `app_id`, `app_secret`, and domain configuration.
 
 > [!IMPORTANT]
 > After an app is created through QR scanning, group chats receive only messages that @ mention the bot or messages triggered by a wake prefix such as `/` by default. If you need the bot to receive all group messages, enable the additional permissions in the Lark Developer Console.
 >
 > Replace `<APP_ID>` in the URL below with your Lark app ID, then open it to jump to the permission enablement page:
 >
-> To find the App ID, go back to AstrBot's `Platforms` page, select the Lark bot you just created, and check `app_id` under `Connection settings`.
+> To find the App ID, go back to LKMBot's `Platforms` page, select the Lark bot you just created, and check `app_id` under `Connection settings`.
 >
 > ```text
 > https://open.feishu.cn/app/<APP_ID>/auth?q=contact:contact.base:readonly,contact:user.base:readonly,im:message.p2p_msg:readonly,im:message.group_at_msg:readonly,im:message:send,im:message,im:message:send_as_bot,im:resource:upload,im:resource,cardkit:card:write,im:message.group_at_msg:readonly,im:message.group_msg&op_from=openapi&token_type=tenant
@@ -57,13 +57,13 @@ Click on "Credentials & Basic Info" to obtain your app_id and app_secret.
 
 ![Get app_id and app_secret](https://files.astrbot.app/docs/source/images/lark/image-4.png)
 
-## Configuring AstrBot
+## Configuring LKMBot
 
-1. Access the AstrBot management panel
+1. Access the LKMBot management panel
 2. Click on `Platforms` in the left sidebar
 3. Click `Add Adapter` above the bot list
 4. Select `lark`
-5. If you want AstrBot to create the app for you, select `One-click QR Creation` and complete the scan. If you already created the app yourself, select `Manual Creation`
+5. If you want LKMBot to create the app for you, select `One-click QR Creation` and complete the scan. If you already created the app yourself, select `Manual Creation`
 
 Fill in the configuration fields as follows:
 
@@ -76,7 +76,7 @@ For the domain field, if you're using Lark China, keep the default value. If you
 
 For the subscription method, `socket` uses a long connection subscription approach, while `webhook` sends events to your developer server and requires a public server. Generally, `socket` is recommended. However, if you're using Lark International or a self-hosted Lark instance, choose `webhook`. The subsequent configuration steps will differ accordingly.
 
-If you selected the `webhook` method, navigate to the Lark Developer Console, click on "Events & Callbacks," then "Encryption Policy," and fill in the Encrypt Key. While not mandatory, AstrBot takes your data security seriously, so we strongly recommend setting this up. After filling it in, copy the `Encrypt Key` and `Verification Token` to the corresponding `encrypt_key` and `verification_token` fields in AstrBot's configuration.
+If you selected the `webhook` method, navigate to the Lark Developer Console, click on "Events & Callbacks," then "Encryption Policy," and fill in the Encrypt Key. While not mandatory, LKMBot takes your data security seriously, so we strongly recommend setting this up. After filling it in, copy the `Encrypt Key` and `Verification Token` to the corresponding `encrypt_key` and `verification_token` fields in LKMBot's configuration.
 
 Click `Save`.
 
@@ -140,7 +140,7 @@ Fill in the version number, update notes, and visibility scope, then click Save 
 
 Open the Lark app (the web version doesn't support adding bots), enter a group chat, click the button in the upper right corner → Group Bots → Add Bot.
 
-Search for the bot you just created. For example, if you created the `AstrBot` bot as shown in this tutorial:
+Search for the bot you just created. For example, if you created the `LKMBot` bot as shown in this tutorial:
 
 ![Add Bot](https://files.astrbot.app/docs/source/images/lark/image-9.png)
 

@@ -599,7 +599,7 @@ class DingtalkPlatformAdapter(Platform):
                 else:
                     await send_message(
                         msg_key="sampleMarkdown",
-                        msg_param={"title": "AstrBot", "text": text},
+                        msg_param={"title": "LKMBot", "text": text},
                     )
             elif isinstance(segment, Image):
                 photo_url = segment.file or segment.url or ""
@@ -774,7 +774,7 @@ class DingtalkPlatformAdapter(Platform):
         """Creates a Dingtalk message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created Dingtalk message event.

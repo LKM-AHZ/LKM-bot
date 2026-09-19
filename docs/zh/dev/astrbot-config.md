@@ -2,17 +2,17 @@
 outline: deep
 ---
 
-# AstrBot 配置文件
+# LKMBot 配置文件
 
 ## data/cmd_config.json
 
-AstrBot 的配置文件是一个 JSON 格式的文件。AstrBot 会在启动时读取这个文件，并根据文件中的配置来初始化 AstrBot，其路径位于 `data/cmd_config.json`。
+LKMBot 的配置文件是一个 JSON 格式的文件。LKMBot 会在启动时读取这个文件，并根据文件中的配置来初始化 LKMBot，其路径位于 `data/cmd_config.json`。
 
-> 在 AstrBot v4.0.0 版本及之后，我们引入了[多配置文件](https://blog.astrbot.app/posts/what-is-changed-in-4.0.0/#%E5%A4%9A%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)的概念。`data/cmd_config.json` 作为默认配置文件 `default`。其他您在 WebUI 新建的配置文件会存储在 `data/config/` 目录下，以 `abconf_` 开头。
+> 在 LKMBot v4.0.0 版本及之后，我们引入了[多配置文件](https://blog.astrbot.app/posts/what-is-changed-in-4.0.0/#%E5%A4%9A%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6)的概念。`data/cmd_config.json` 作为默认配置文件 `default`。其他您在 WebUI 新建的配置文件会存储在 `data/config/` 目录下，以 `abconf_` 开头。
 
 WebUI 中，按机器人或会话使用的行为配置在 `配置文件` 页面管理；全局运行、日志、网络、WebUI 安全和文本转图像服务等配置在 `设置` 页面管理。模型连接和机器人连接分别在 `模型提供商` 和 `机器人` 页面管理。
 
-AstrBot 默认配置如下：
+LKMBot 默认配置如下：
 
 ```jsonc
 {
@@ -117,7 +117,7 @@ AstrBot 默认配置如下：
     "no_proxy": ["localhost", "127.0.0.1", "::1"],
     "dashboard": {
         "enable": True,
-        "username": "astrbot",
+        "username": "lkmbot",
         "password": "<your_password_md5>",
         "jwt_secret": "",
         "host": "0.0.0.0",
@@ -185,7 +185,7 @@ AstrBot 默认配置如下：
 
 ID 白名单。填写后，将只处理所填写的 ID 发来的消息事件。为空时表示不启用白名单过滤。可以使用 `/sid` 指令获取在某个平台上的会话 ID。
 
-也可在 AstrBot 日志内获取会话 ID，当一条消息没通过白名单时，会输出 INFO 级别的日志，格式类似 `aiocqhttp:GroupMessage:547540978`
+也可在 LKMBot 日志内获取会话 ID，当一条消息没通过白名单时，会输出 INFO 级别的日志，格式类似 `aiocqhttp:GroupMessage:547540978`
 
 #### `platform_settings.id_whitelist_log`
 
@@ -250,7 +250,7 @@ ID 白名单。填写后，将只处理所填写的 ID 发来的消息事件。�
 
 ### `provider`
 
-> 此配置项仅在 `data/cmd_config.json` 中生效，AstrBot 不会读取 `data/config/` 目录下的配置文件中的此项。
+> 此配置项仅在 `data/cmd_config.json` 中生效，LKMBot 不会读取 `data/config/` 目录下的配置文件中的此项。
 
 已配置的模型服务提供商的配置列表。
 
@@ -270,7 +270,7 @@ ID 白名单。填写后，将只处理所填写的 ID 发来的消息事件。�
 
 默认的图像描述模型提供商 ID。必须是 `provider` 列表中已配置的提供商 ID。如果为空，则代表不使用图像描述功能。
 
-此配置项的意思是，当用户发送一张图片时，AstrBot 会使用此提供商来生成对图片的描述文本，并将描述文本作为对话的上下文之一。这在对话模型不支持多模态输入时特别有用。
+此配置项的意思是，当用户发送一张图片时，LKMBot 会使用此提供商来生成对图片的描述文本，并将描述文本作为对话的上下文之一。这在对话模型不支持多模态输入时特别有用。
 
 #### `provider_settings.image_caption_prompt`
 
@@ -286,7 +286,7 @@ ID 白名单。填写后，将只处理所填写的 ID 发来的消息事件。�
 
 #### `provider_settings.web_search`
 
-是否启用 AstrBot 自带的网页搜索能力。默认为 `false`。启用后，LLM 可能会自动搜索网页并根据内容回答。
+是否启用 LKMBot 自带的网页搜索能力。默认为 `false`。启用后，LLM 可能会自动搜索网页并根据内容回答。
 
 #### `provider_settings.websearch_provider`
 
@@ -476,12 +476,12 @@ Added in `v4.3.5`
 
 文本转图像的渲染策略。可选值为 `local` 和 `remote`。默认为 `remote`。
 
-- `local`: 使用 AstrBot 本地的文本转图像服务进行渲染。效果较差，但不依赖外部服务。
-- `remote`: 使用远程的文本转图像服务进行渲染。默认使用 AstrBot 官方提供的服务，效果较好。
+- `local`: 使用 LKMBot 本地的文本转图像服务进行渲染。效果较差，但不依赖外部服务。
+- `remote`: 使用远程的文本转图像服务进行渲染。默认使用 LKMBot 官方提供的服务，效果较好。
 
 ### `t2i_endpoint`
 
-AstrBot API 的地址。用于渲染 Markdown 图片。当 `t2i_strategy` 为 `remote` 时生效。默认为空，表示使用 AstrBot 官方提供的服务。
+LKMBot API 的地址。用于渲染 Markdown 图片。当 `t2i_strategy` 为 `remote` 时生效。默认为空，表示使用 LKMBot 官方提供的服务。
 
 ### `t2i_use_file_service`
 
@@ -497,22 +497,22 @@ HTTP 代理。如 `http://localhost:7890`。
 
 ### `dashboard`
 
-AstrBot WebUI 配置。
+LKMBot WebUI 配置。
 
 请不要随意修改 `password` 的值。它是随机初始密码经过 `md5` 编码后的值。首次启动时请在日志中获取初始密码，并在控制面板中修改。
 
-- `enable`: 是否启用 AstrBot WebUI。默认为 `true`。
-- `username`: AstrBot WebUI 的用户名。
-- `password`: AstrBot WebUI 的密码。首次启动会随机生成初始密码（已在日志中打印），这里保存的是该密码的 `md5` 值。请勿直接修改，除非您知道自己在做什么。
-- `jwt_secret`: JWT 的密钥。AstrBot 会在初始化时随机生成。请勿修改，除非您知道自己在做什么。
-- `host`: AstrBot WebUI 监听的地址。默认为 `0.0.0.0`。
-- `port`: AstrBot WebUI 监听的端口。默认为 `6185`。
+- `enable`: 是否启用 LKMBot WebUI。默认为 `true`。
+- `username`: LKMBot WebUI 的用户名。
+- `password`: LKMBot WebUI 的密码。首次启动会随机生成初始密码（已在日志中打印），这里保存的是该密码的 `md5` 值。请勿直接修改，除非您知道自己在做什么。
+- `jwt_secret`: JWT 的密钥。LKMBot 会在初始化时随机生成。请勿修改，除非您知道自己在做什么。
+- `host`: LKMBot WebUI 监听的地址。默认为 `0.0.0.0`。
+- `port`: LKMBot WebUI 监听的端口。默认为 `6185`。
 
 ### `platform`
 
-> 此配置项仅在 `data/cmd_config.json` 中生效，AstrBot 不会读取 `data/config/` 目录下的配置文件中的此项。
+> 此配置项仅在 `data/cmd_config.json` 中生效，LKMBot 不会读取 `data/config/` 目录下的配置文件中的此项。
 
-已配置的 AstrBot 消息平台适配器的配置列表。
+已配置的 LKMBot 消息平台适配器的配置列表。
 
 ### `platform_specific`
 
@@ -520,7 +520,7 @@ AstrBot WebUI 配置。
 
 #### `platform_specific.<platform>.pre_ack_emoji`
 
-启用后，当请求 LLM 前，AstrBot 会先发送一个预回复的表情以告知用户正在处理请求。此功能目前仅在飞书平台适配器和 Telegram 中生效。
+启用后，当请求 LLM 前，LKMBot 会先发送一个预回复的表情以告知用户正在处理请求。此功能目前仅在飞书平台适配器和 Telegram 中生效。
 
 ##### lark (飞书)
 
@@ -539,10 +539,10 @@ AstrBot WebUI 配置。
 
 ### `wake_prefix`
 
-唤醒前缀。默认为 `/`。当消息以 `/` 开头时，AstrBot 会被唤醒。
+唤醒前缀。默认为 `/`。当消息以 `/` 开头时，LKMBot 会被唤醒。
 
 > [!TIP]
-> 如果唤醒的会话不在 ID 白名单中，AstrBot 将不会响应。
+> 如果唤醒的会话不在 ID 白名单中，LKMBot 将不会响应。
 
 ### `log_level`
 
@@ -550,7 +550,7 @@ AstrBot WebUI 配置。
 
 ### `trace_enable`
 
-是否启用追踪记录。默认为 `false`。启用后，AstrBot 会记录运行追踪信息，可以在管理面板的 `数据与日志 → 追踪` 页面查看。
+是否启用追踪记录。默认为 `false`。启用后，LKMBot 会记录运行追踪信息，可以在管理面板的 `数据与日志 → 追踪` 页面查看。
 
 ### `pip_install_arg`
 
@@ -572,7 +572,7 @@ PyPI 镜像源地址。默认为 `https://mirrors.aliyun.com/pypi/simple/`。
 
 ### `callback_api_base`
 
-AstrBot API 的基础地址。用于文件服务和插件回调等功能。如 `http://example.com:6185`。默认为空，表示不启用文件服务和插件回调功能。
+LKMBot API 的基础地址。用于文件服务和插件回调等功能。如 `http://example.com:6185`。默认为空，表示不启用文件服务和插件回调功能。
 
 ### `default_kb_collection`
 

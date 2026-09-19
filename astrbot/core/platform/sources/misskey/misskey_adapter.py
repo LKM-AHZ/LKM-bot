@@ -126,7 +126,7 @@ class MisskeyPlatformAdapter(Platform):
         """Creates a Misskey message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created Misskey message event.

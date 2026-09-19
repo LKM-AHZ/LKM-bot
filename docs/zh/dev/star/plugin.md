@@ -15,7 +15,7 @@ outline: deep
 
 ### 获取插件模板
 
-1. 打开 AstrBot 插件模板: [helloworld](https://github.com/Soulter/helloworld)
+1. 打开 LKMBot 插件模板: [helloworld](https://github.com/Soulter/helloworld)
 2. 点击右上角的 `Use this template`
 3. 然后点击 `Create new repository`。
 4. 在 `Repository name` 处填写您的插件名。插件名格式:
@@ -28,33 +28,33 @@ outline: deep
 
 5. 点击右下角的 `Create repository`。
 
-### Clone 插件和 AstrBot 项目
+### Clone 插件和 LKMBot 项目
 
-Clone AstrBot 项目本体和刚刚创建的插件仓库到本地。
+Clone LKMBot 项目本体和刚刚创建的插件仓库到本地。
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
-mkdir -p AstrBot/data/plugins
-cd AstrBot/data/plugins
+git clone https://github.com/Alma1314/LKM-bot.git
+mkdir -p LKMBot/data/plugins
+cd LKMBot/data/plugins
 git clone 插件仓库地址
 ```
 
-然后，使用 `VSCode` 打开 `AstrBot` 项目。找到 `data/plugins/<你的插件名字>` 目录。
+然后，使用 `VSCode` 打开 `LKMBot` 项目。找到 `data/plugins/<你的插件名字>` 目录。
 
 更新 `metadata.yaml` 文件，填写插件的元数据信息。
 
 > [!NOTE]
-> AstrBot 插件市场的信息展示依赖于 `metadata.yaml` 文件。
+> LKMBot 插件市场的信息展示依赖于 `metadata.yaml` 文件。
 
 ### 调试插件
 
-AstrBot 采用在运行时注入插件的机制。因此，在调试插件时，需要启动 AstrBot 本体。
+LKMBot 采用在运行时注入插件的机制。因此，在调试插件时，需要启动 LKMBot 本体。
 
-插件的代码修改后，在 AstrBot WebUI 的 `插件` 页找到自己的插件，点击插件卡片上的刷新图标（`重载插件`）。如果插件加载失败，可在同一页面的 `加载失败插件` 列表中点击对应插件的 `重载` 按钮。
+插件的代码修改后，在 LKMBot WebUI 的 `插件` 页找到自己的插件，点击插件卡片上的刷新图标（`重载插件`）。如果插件加载失败，可在同一页面的 `加载失败插件` 列表中点击对应插件的 `重载` 按钮。
 
 ### 插件依赖管理
 
-目前 AstrBot 对插件的依赖管理使用 `pip` 自带的 `requirements.txt` 文件。如果你的插件需要依赖第三方库，请务必在插件目录下创建 `requirements.txt` 文件并写入所使用的依赖库，以防止用户在安装你的插件时出现依赖未找到(Module Not Found)的问题。
+目前 LKMBot 对插件的依赖管理使用 `pip` 自带的 `requirements.txt` 文件。如果你的插件需要依赖第三方库，请务必在插件目录下创建 `requirements.txt` 文件并写入所使用的依赖库，以防止用户在安装你的插件时出现依赖未找到(Module Not Found)的问题。
 
 > `requirements.txt` 的完整格式可以参考 [pip 官方文档](https://pip.pypa.io/en/stable/reference/requirements-file-format/)。
 
@@ -91,7 +91,7 @@ class MyPlugin(Star):
 
 1. 插件是继承自 `Star` 基类的类实现。
 2. 该装饰器提供了插件的元数据信息，包括名称、作者、描述、版本和仓库地址等信息。（该信息的优先级低于 `metadata.yaml` 文件）
-3. 在 `__init__` 方法中会传入 `Context` 对象，这个对象包含了 AstrBot 的大多数组件
+3. 在 `__init__` 方法中会传入 `Context` 对象，这个对象包含了 LKMBot 的大多数组件
 4. 具体的处理函数 `Handler` 在插件类中定义，如这里的 `helloworld` 函数。
 5. 请务必使用 `from astrbot.api import logger` 来获取日志对象，而不是使用 `logging` 模块。
 6. 每个插件在 `__init__` 后会自动拥有独立的 `self.logger`。这个 logger 的等级可以在 WebUI 的插件配置弹窗中单独设置，不会影响其他插件和核心。也可以继续使用 `from astrbot.api import logger`，它会根据调用位置自动路由到当前插件的 logger。
@@ -104,15 +104,15 @@ class MyPlugin(Star):
 
 ### AstrMessageEvent
 
-`AstrMessageEvent` 是 AstrBot 的消息事件对象。你可以通过 `AstrMessageEvent` 来获取消息发送者、消息内容等信息。
+`AstrMessageEvent` 是 LKMBot 的消息事件对象。你可以通过 `AstrMessageEvent` 来获取消息发送者、消息内容等信息。
 
 ### AstrBotMessage
 
-`AstrBotMessage` 是 AstrBot 的消息对象。你可以通过 `AstrBotMessage` 来查看消息适配器下发的消息的具体内容。通过 `event.message_obj` 获取。
+`AstrBotMessage` 是 LKMBot 的消息对象。你可以通过 `AstrBotMessage` 来查看消息适配器下发的消息的具体内容。通过 `event.message_obj` 获取。
 
 ```py{11}
 class AstrBotMessage:
-    """AstrBot 的消息对象"""
+    """LKMBot 的消息对象"""
 
     type: MessageType  # 消息类型
     self_id: str  # 机器人的识别id
@@ -172,7 +172,7 @@ ComponentTypes = {
 @event_message_type(EventMessageType.ALL)  # 注册一个过滤器，参见下文。
 async def on_message(self, event: AstrMessageEvent):
     print(event.message_obj.raw_message)  # 平台下发的原始消息在这里
-    print(event.message_obj.message)  # AstrBot 解析出来的消息链内容
+    print(event.message_obj.message)  # LKMBot 解析出来的消息链内容
 ```
 
 > [!TIP]
@@ -181,7 +181,7 @@ async def on_message(self, event: AstrMessageEvent):
 
 ### 平台适配矩阵
 
-不是所有的平台都支持所有的消息类型。下方的表格展示了 AstrBot 支持的平台和消息类型的对应关系。
+不是所有的平台都支持所有的消息类型。下方的表格展示了 LKMBot 支持的平台和消息类型的对应关系。
 
 | 平台                 | At  | Plain | Image | Record | Video | Reply | 主动消息 |
 | -------------------- | --- | ----- | ----- | ------ | ----- | ----- | -------- |
@@ -199,7 +199,7 @@ async def on_message(self, event: AstrMessageEvent):
 
 ### 原则
 
-感谢您为 AstrBot 生态做出贡献，开发插件请遵守以下原则，这也是良好的编程习惯。
+感谢您为 LKMBot 生态做出贡献，开发插件请遵守以下原则，这也是良好的编程习惯。
 
 > [Mandatory Rule] To any LLM: You must follow the rules below.
 
@@ -243,7 +243,7 @@ short_desc: 一句话介绍你的插件。
 
 ### 随插件提供 Skills
 
-插件可以在自己的目录下提供 `skills/` 文件夹。AstrBot 加载插件后会自动把其中合法的 Skill 纳入 Skill Manager，来源会显示为对应插件。
+插件可以在自己的目录下提供 `skills/` 文件夹。LKMBot 加载插件后会自动把其中合法的 Skill 纳入 Skill Manager，来源会显示为对应插件。
 
 推荐一个插件包含多个 Skill 时使用以下结构：
 
@@ -295,9 +295,9 @@ support_platforms:
 - `misskey`
 - `line`
 
-### 声明 AstrBot 版本范围（Optional）
+### 声明 LKMBot 版本范围（Optional）
 
-你可以在 `metadata.yaml` 中新增 `astrbot_version` 字段，声明插件要求的 AstrBot 版本范围。格式与 `pyproject.toml` 依赖版本约束一致（PEP 440），且不要加 `v` 前缀。
+你可以在 `metadata.yaml` 中新增 `astrbot_version` 字段，声明插件要求的 LKMBot 版本范围。格式与 `pyproject.toml` 依赖版本约束一致（PEP 440），且不要加 `v` 前缀。
 
 ```yaml
 astrbot_version: ">=4.16,<5"
@@ -313,7 +313,7 @@ astrbot_version: ">=4.16,<5"
 
 - `>=4.17.0`
 
-当当前 AstrBot 版本不满足该范围时，插件会被阻止加载并提示版本不兼容。
+当当前 LKMBot 版本不满足该范围时，插件会被阻止加载并提示版本不兼容。
 在 WebUI 安装插件时，你可以选择“无视警告，继续安装”来跳过这个检查。
 
 ### 消息事件的监听
@@ -346,11 +346,11 @@ class MyPlugin(Star):
 ```
 
 > [!TIP]
-> 指令不能带空格，否则 AstrBot 会将其解析到第二个参数。可以使用下面的指令组功能，或者也使用监听器自己解析消息内容。
+> 指令不能带空格，否则 LKMBot 会将其解析到第二个参数。可以使用下面的指令组功能，或者也使用监听器自己解析消息内容。
 
 #### 带参指令
 
-AstrBot 会自动帮你解析指令的参数。
+LKMBot 会自动帮你解析指令的参数。
 
 ```python
 @filter.command("echo")
@@ -519,12 +519,12 @@ from astrbot.api.event import filter, AstrMessageEvent
 
 @filter.on_astrbot_loaded()
 async def on_astrbot_loaded(self):
-    print("AstrBot 初始化完成")
+    print("LKMBot 初始化完成")
 ```
 
 ##### LLM 请求时
 
-在 AstrBot 默认的执行流程中，在调用 LLM 前，会触发 `on_llm_request` 钩子。
+在 LKMBot 默认的执行流程中，在调用 LLM 前，会触发 `on_llm_request` 钩子。
 
 可以获取到 `ProviderRequest` 对象，可以对其进行修改。
 
@@ -602,7 +602,7 @@ async def on_llm_resp(
 
 ##### Agent 开始运行时
 
-> 适用于 AstrBot 版本 > v4.23.1
+> 适用于 LKMBot 版本 > v4.23.1
 
 在 Agent 开始运行时，会触发 `on_agent_begin` 钩子。
 
@@ -623,7 +623,7 @@ async def on_agent_begin(
 
 ##### LLM 工具调用前
 
-> 适用于 AstrBot 版本 > v4.23.1
+> 适用于 LKMBot 版本 > v4.23.1
 
 在 Agent 准备调用 LLM 工具时，会触发 `on_using_llm_tool` 钩子。
 
@@ -648,7 +648,7 @@ async def on_using_llm_tool(
 
 ##### LLM 工具调用后
 
-> 适用于 AstrBot 版本 > v4.23.1
+> 适用于 LKMBot 版本 > v4.23.1
 
 在 LLM 工具调用完成后，会触发 `on_llm_tool_respond` 钩子。
 
@@ -676,7 +676,7 @@ async def on_llm_tool_respond(
 
 ##### Agent 运行完成时
 
-> 适用于 AstrBot 版本 > v4.23.1
+> 适用于 LKMBot 版本 > v4.23.1
 
 在 Agent 运行完成后，会触发 `on_agent_done` 钩子。这个钩子会在 `on_llm_response` 之后触发。
 
@@ -787,11 +787,11 @@ async def helloworld(self, event: AstrMessageEvent):
 
 > [!TIP]
 > 关于 unified_msg_origin。
-> unified_msg_origin 是一个字符串，记录了一个会话的唯一 ID，AstrBot 能够据此找到属于哪个消息平台的哪个会话。这样就能够实现在 `send_message` 的时候，发送消息到正确的会话。有关 MessageChain，请参见接下来的一节。
+> unified_msg_origin 是一个字符串，记录了一个会话的唯一 ID，LKMBot 能够据此找到属于哪个消息平台的哪个会话。这样就能够实现在 `send_message` 的时候，发送消息到正确的会话。有关 MessageChain，请参见接下来的一节。
 
 #### 富媒体消息
 
-AstrBot 支持发送富媒体消息，比如图片、语音、视频等。使用 `MessageChain` 来构建消息。
+LKMBot 支持发送富媒体消息，比如图片、语音、视频等。使用 `MessageChain` 来构建消息。
 
 ```python
 import astrbot.api.message_components as Comp
@@ -919,7 +919,7 @@ async def check_ok(self, event: AstrMessageEvent):
 
 随着插件功能的增加，可能需要定义一些配置以让用户自定义插件的行为。
 
-AstrBot 提供了”强大“的配置解析和可视化功能。能够让用户在管理面板上直接配置插件，而不需要修改代码。
+LKMBot 提供了”强大“的配置解析和可视化功能。能够让用户在管理面板上直接配置插件，而不需要修改代码。
 
 ![image](https://files.astrbot.app/docs/source/images/plugin/QQ_1738149538737.png)
 
@@ -973,10 +973,10 @@ AstrBot 提供了”强大“的配置解析和可视化功能。能够让用户
 - `invisible`: 可选。配置是否隐藏。默认是 `false`。如果设置为 `true`，则不会在管理面板上显示。
 - `secret`: 可选。仅对 `string` 和字符串 `list` 生效。设置为 `true` 时，管理面板会以密码输入框展示，并允许用户临时切换可见状态。此选项只遮罩界面显示，不会加密配置文件中的值。
 - `options`: 可选。一个列表，如 `"options": ["chat", "agent", "workflow"]`。提供下拉列表可选项。
-- `editor_mode`: 可选。是否启用代码编辑器模式。需要 AstrBot >= `v3.5.10`, 低于这个版本不会报错，但不会生效。默认是 false。
+- `editor_mode`: 可选。是否启用代码编辑器模式。需要 LKMBot >= `v3.5.10`, 低于这个版本不会报错，但不会生效。默认是 false。
 - `editor_language`: 可选。代码编辑器的代码语言，默认为 `json`。
 - `editor_theme`: 可选。代码编辑器的主题，可选值有 `vs-light`（默认）， `vs-dark`。
-- `_special`: 可选。用于调用 AstrBot 提供的可视化提供商选取、人格选取、知识库选取等功能，详见下文。
+- `_special`: 可选。用于调用 LKMBot 提供的可视化提供商选取、人格选取、知识库选取等功能，详见下文。
 
 ### 敏感配置项
 
@@ -1013,7 +1013,7 @@ API Key、访问令牌和密码等敏感字符串应设置 `"secret": true`。�
 
 **使用配置**
 
-AstrBot 在载入插件时会检测插件目录下是否有 `_conf_schema.json` 文件，如果有，会自动解析配置并保存在 `data/config/<plugin_name>_config.json` 下（依照 Schema 创建的配置文件实体），并在实例化插件类时传入给 `__init__()`。
+LKMBot 在载入插件时会检测插件目录下是否有 `_conf_schema.json` 文件，如果有，会自动解析配置并保存在 `data/config/<plugin_name>_config.json` 下（依照 Schema 创建的配置文件实体），并在实例化插件类时传入给 `__init__()`。
 
 ```py
 from astrbot.api import AstrBotConfig
@@ -1033,13 +1033,13 @@ class ConfigPlugin(Star):
 
 **配置版本管理**
 
-如果您在发布不同版本时更新了 Schema，请注意，AstrBot 会递归检查 Schema 的配置项，如果发现配置文件中缺失了某个配置项，会自动添加默认值。但是 AstrBot 不会删除配置文件中**多余的**配置项，即使这个配置项在新的 Schema 中不存在（您在新的 Schema 中删除了这个配置项）。
+如果您在发布不同版本时更新了 Schema，请注意，LKMBot 会递归检查 Schema 的配置项，如果发现配置文件中缺失了某个配置项，会自动添加默认值。但是 LKMBot 不会删除配置文件中**多余的**配置项，即使这个配置项在新的 Schema 中不存在（您在新的 Schema 中删除了这个配置项）。
 
 ### 文转图
 
 #### 基本
 
-AstrBot 支持将文字渲染成图片。
+LKMBot 支持将文字渲染成图片。
 
 ```python
 @filter.command("image")  # 注册一个 /image 指令，接收 text 参数。
@@ -1055,7 +1055,7 @@ async def on_aiocqhttp(self, event: AstrMessageEvent, text: str):
 
 如果你觉得上面渲染出来的图片不够美观，你可以使用自定义的 HTML 模板来渲染图片。
 
-AstrBot 支持使用 `HTML + Jinja2` 的方式来渲染文转图模板。
+LKMBot 支持使用 `HTML + Jinja2` 的方式来渲染文转图模板。
 
 ```py{7}
 # 自定义的 Jinja2 模板，支持 CSS
@@ -1116,7 +1116,7 @@ async def custom_t2i_tmpl(self, event: AstrMessageEvent):
 ...
 ```
 
-AstrBot 提供了开箱即用的会话控制功能：
+LKMBot 提供了开箱即用的会话控制功能：
 
 导入：
 
@@ -1201,7 +1201,7 @@ async def handle_empty_mention(self, event: AstrMessageEvent):
 
 #### 自定义会话 ID 算子
 
-默认情况下，AstrBot 会话控制器会将基于 `sender_id` （发送人的 ID）作为识别不同会话的标识，如果想将一整个群作为一个会话，则需要自定义会话 ID 算子。
+默认情况下，LKMBot 会话控制器会将基于 `sender_id` （发送人的 ID）作为识别不同会话的标识，如果想将一整个群作为一个会话，则需要自定义会话 ID 算子。
 
 ```py
 import astrbot.api.message_components as Comp
@@ -1435,7 +1435,7 @@ class STTProvider(AbstractProvider):
 
 #### 函数工具
 
-函数工具给了大语言模型调用外部工具的能力。在 AstrBot 中，函数工具有多种定义方式。
+函数工具给了大语言模型调用外部工具的能力。在 LKMBot 中，函数工具有多种定义方式。
 
 ##### 以类的形式（推荐）
 
@@ -1474,7 +1474,7 @@ class HelloWorldTool(FunctionTool):
         return f"{greeting}, World!"  # 也支持 mcp.types.CallToolResult 类型
 ```
 
-要将上述工具注册到 AstrBot，可以在插件主文件的 `__init__.py` 中添加以下代码：
+要将上述工具注册到 LKMBot，可以在插件主文件的 `__init__.py` 中添加以下代码：
 
 ```py
 from .tools.search import HelloWorldTool
@@ -1493,9 +1493,9 @@ class MyPlugin(Star):
 
 ##### 以装饰器的形式
 
-这个形式定义的工具函数会被自动加载到 AstrBot Core 中，在 Core 请求大模型时会被自动带上。
+这个形式定义的工具函数会被自动加载到 LKMBot Core 中，在 Core 请求大模型时会被自动带上。
 
-请务必按照以下格式编写一个工具（包括**函数注释**，AstrBot 会解析该函数注释，请务必将注释格式写对）
+请务必按照以下格式编写一个工具（包括**函数注释**，LKMBot 会解析该函数注释，请务必将注释格式写对）
 
 ```py{3,4,5,6,7}
 @filter.llm_tool(name="get_weather")  # 如果 name 不填，将使用函数名
@@ -1519,7 +1519,7 @@ async def get_weather(
 > 对于装饰器注册的 llm_tool，如果需要调用 Provider.text_chat()，func_tool（ToolSet 类型） 可以通过以下方式获取：
 >
 > ```py
-> func_tool = self.context.get_llm_tool_manager() # 获取 AstrBot 的 LLM Tool Manager，包含了所有插件和 MCP 注册的 Tool
+> func_tool = self.context.get_llm_tool_manager() # 获取 LKMBot 的 LLM Tool Manager，包含了所有插件和 MCP 注册的 Tool
 > tool = func_tool.get_func("xxx")
 > if tool:
 >     tool_set = ToolSet()
@@ -1571,103 +1571,103 @@ class Conversation:
 
 ##### `new_conversation`
 
-- **Usage**  
+- **Usage**
   在当前会话中新建一条对话，并自动切换为该对话。
-- **Arguments**  
-  - `unified_msg_origin: str` – 形如 `platform_name:message_type:session_id`  
-  - `platform_id: str | None` – 平台标识，默认从 `unified_msg_origin` 解析  
-  - `content: list[dict] | None` – 初始历史消息  
-  - `title: str | None` – 对话标题  
+- **Arguments**
+  - `unified_msg_origin: str` – 形如 `platform_name:message_type:session_id`
+  - `platform_id: str | None` – 平台标识，默认从 `unified_msg_origin` 解析
+  - `content: list[dict] | None` – 初始历史消息
+  - `title: str | None` – 对话标题
   - `persona_id: str | None` – 绑定的 persona ID
-- **Returns**  
+- **Returns**
   `str` – 新生成的 UUID 对话 ID
 
 ##### `switch_conversation`
 
-- **Usage**  
+- **Usage**
   将会话切换到指定的对话。
-- **Arguments**  
-  - `unified_msg_origin: str`  
+- **Arguments**
+  - `unified_msg_origin: str`
   - `conversation_id: str`
-- **Returns**  
+- **Returns**
   `None`
 
 ##### `delete_conversation`
 
-- **Usage**  
+- **Usage**
   删除会话中的某条对话；若 `conversation_id` 为 `None`，则删除当前对话。
-- **Arguments**  
-  - `unified_msg_origin: str`  
+- **Arguments**
+  - `unified_msg_origin: str`
   - `conversation_id: str | None`
-- **Returns**  
+- **Returns**
   `None`
 
 ##### `get_curr_conversation_id`
 
-- **Usage**  
+- **Usage**
   获取当前会话正在使用的对话 ID。
-- **Arguments**  
+- **Arguments**
   - `unified_msg_origin: str`
-- **Returns**  
+- **Returns**
   `str | None` – 当前对话 ID，不存在时返回 `None`
 
 ##### `get_conversation`
 
-- **Usage**  
+- **Usage**
   获取指定对话的完整对象；若不存在且 `create_if_not_exists=True` 则自动创建。
-- **Arguments**  
-  - `unified_msg_origin: str`  
-  - `conversation_id: str`  
+- **Arguments**
+  - `unified_msg_origin: str`
+  - `conversation_id: str`
   - `create_if_not_exists: bool = False`
-- **Returns**  
+- **Returns**
   `Conversation | None`
 
 ##### `get_conversations`
 
-- **Usage**  
+- **Usage**
   拉取用户或平台下的全部对话列表。
-- **Arguments**  
-  - `unified_msg_origin: str | None` – 为 `None` 时不过滤用户  
+- **Arguments**
+  - `unified_msg_origin: str | None` – 为 `None` 时不过滤用户
   - `platform_id: str | None`
-- **Returns**  
+- **Returns**
   `List[Conversation]`
 
 ##### `get_filtered_conversations`
 
-- **Usage**  
+- **Usage**
   分页 + 关键词搜索对话。
-- **Arguments**  
-  - `page: int = 1`  
-  - `page_size: int = 20`  
-  - `platform_ids: list[str] | None`  
-  - `search_query: str = ""`  
+- **Arguments**
+  - `page: int = 1`
+  - `page_size: int = 20`
+  - `platform_ids: list[str] | None`
+  - `search_query: str = ""`
   - `**kwargs` – 透传其他过滤条件
-- **Returns**  
+- **Returns**
   `tuple[list[Conversation], int]` – 对话列表与总数
 
 ##### `update_conversation`
 
-- **Usage**  
+- **Usage**
   更新对话的标题、历史记录或 persona_id。
-- **Arguments**  
-  - `unified_msg_origin: str`  
-  - `conversation_id: str | None` – 为 `None` 时使用当前对话  
-  - `history: list[dict] | None`  
-  - `title: str | None`  
+- **Arguments**
+  - `unified_msg_origin: str`
+  - `conversation_id: str | None` – 为 `None` 时使用当前对话
+  - `history: list[dict] | None`
+  - `title: str | None`
   - `persona_id: str | None`
-- **Returns**  
+- **Returns**
   `None`
 
 ##### `get_human_readable_context`
 
-- **Usage**  
+- **Usage**
   生成分页后的人类可读对话上下文，方便展示或调试。
-- **Arguments**  
-  - `unified_msg_origin: str`  
-  - `conversation_id: str`  
-  - `page: int = 1`  
+- **Arguments**
+  - `unified_msg_origin: str`
+  - `conversation_id: str`
+  - `page: int = 1`
   - `page_size: int = 10`
-- **Returns**  
+- **Returns**
   `tuple[list[str], int]` – 当前页文本列表与总页数
 
 ```py
@@ -1678,7 +1678,7 @@ context = json.loads(conversation.history)
 
 #### 人格设定管理器 PersonaManager
 
-`PersonaManager` 负责统一加载、缓存并提供所有人格（Persona）的增删改查接口，同时兼容 AstrBot 4.x 之前的旧版人格格式（v3）。  
+`PersonaManager` 负责统一加载、缓存并提供所有人格（Persona）的增删改查接口，同时兼容 LKMBot 4.x 之前的旧版人格格式（v3）。
 初始化时会自动从数据库读取全部人格，并生成一份 v3 兼容数据，供旧代码无缝使用。
 
 ```py
@@ -1698,56 +1698,56 @@ persona_mgr = self.context.persona_manager
 
 ##### `get_all_personas`
 
-- **Usage**  
+- **Usage**
   一次性获取数据库中所有人格。
-- **Returns**  
+- **Returns**
   `list[Persona]` – 人格列表，可能为空
 
 ##### `create_persona`
 
-- **Usage**  
+- **Usage**
   新建人格并立即写入数据库，成功后自动刷新本地缓存。
-- **Arguments**  
-  - `persona_id: str` – 新人格 ID（唯一）  
-  - `system_prompt: str` – 系统提示词  
-  - `begin_dialogs: list[str]` – 可选，开场对话（偶数条，user/assistant 交替）  
+- **Arguments**
+  - `persona_id: str` – 新人格 ID（唯一）
+  - `system_prompt: str` – 系统提示词
+  - `begin_dialogs: list[str]` – 可选，开场对话（偶数条，user/assistant 交替）
   - `tools: list[str]` – 可选，允许使用的工具列表；`None`=全部工具，`[]`=禁用全部
-- **Returns**  
+- **Returns**
   `Persona` – 新建后的人格对象
-- **Raises**  
+- **Raises**
   `ValueError` – 若 `persona_id` 已存在
 
 ##### `update_persona`
 
-- **Usage**  
+- **Usage**
   更新现有人格的任意字段，并同步到数据库与缓存。
-- **Arguments**  
-  - `persona_id: str` – 待更新的人格 ID  
-  - `system_prompt: str` – 可选，新的系统提示词  
-  - `begin_dialogs: list[str]` – 可选，新的开场对话  
+- **Arguments**
+  - `persona_id: str` – 待更新的人格 ID
+  - `system_prompt: str` – 可选，新的系统提示词
+  - `begin_dialogs: list[str]` – 可选，新的开场对话
   - `tools: list[str]` – 可选，新的工具列表；语义同 `create_persona`
-- **Returns**  
+- **Returns**
   `Persona` – 更新后的人格对象
-- **Raises**  
+- **Raises**
   `ValueError` – 若 `persona_id` 不存在
 
 ##### `delete_persona`
 
-- **Usage**  
+- **Usage**
   删除指定人格，同时清理数据库与缓存。
-- **Arguments**  
+- **Arguments**
   - `persona_id: str` – 待删除的人格 ID
-- **Raises**  
+- **Raises**
   `ValueError` – 若 `persona_id` 不存在
 
 ##### `get_default_persona_v3`
 
-- **Usage**  
-  根据当前会话配置，获取应使用的默认人格（v3 格式）。  
+- **Usage**
+  根据当前会话配置，获取应使用的默认人格（v3 格式）。
   若配置未指定或指定的人格不存在，则回退到 `DEFAULT_PERSONALITY`。
-- **Arguments**  
+- **Arguments**
   - `umo: str | MessageSession | None` – 会话标识，用于读取用户级配置
-- **Returns**  
+- **Returns**
   `Personality` – v3 格式的默认人格对象
 
 ::: details Persona / Personality 类型定义
@@ -1813,7 +1813,7 @@ config = self.context.get_config()
 
 ##### 会话配置文件
 
-v4.0.0 后，AstrBot 支持会话粒度的多配置文件。
+v4.0.0 后，LKMBot 支持会话粒度的多配置文件。
 
 ```py
 umo = event.unified_msg_origin

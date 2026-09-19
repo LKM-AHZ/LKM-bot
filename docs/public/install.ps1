@@ -81,6 +81,6 @@ if (-not (Test-Command "uv")) {
 }
 
 Ok (& uv --version)
-Info "Installing AstrBot with Python 3.12..."
-uv tool install --python 3.12 astrbot
-Ok "AstrBot has been installed."
+Info "Installing LKMBot with Python 3.12..."
+uv tool install --python 3.12 git+https://github.com/Alma1314/LKM-bot.git
+Ok "LKMBot has been installed. Run 'lkmbot init' and then 'lkmbot run'."

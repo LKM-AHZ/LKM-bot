@@ -552,7 +552,7 @@ class ToolsService:
         builtin_config_tags = []
         if self.tool_mgr.is_builtin_tool(tool.name):
             origin = "builtin"
-            origin_name = "AstrBot Core"
+            origin_name = "LKMBot Core"
             origin_display_name = origin_name
             readonly = True
             builtin_config_statuses = get_builtin_tool_config_statuses(

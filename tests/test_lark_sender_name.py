@@ -60,7 +60,7 @@ def _adapter(user_response: SimpleNamespace) -> LarkPlatformAdapter:
     adapter.config = {"id": "lark-test"}
     adapter.appid = "cli_test"
     adapter.bot_open_id = "ou_bot"
-    adapter.bot_name = "AstrBot"
+    adapter.bot_name = "LKMBot"
     adapter._user_name_cache = {}
     adapter.handle_msg = AsyncMock()
     adapter.lark_api = SimpleNamespace(

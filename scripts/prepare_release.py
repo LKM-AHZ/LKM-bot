@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare an AstrBot release branch and release metadata."""
+"""Prepare an LKMBot release branch and release metadata."""
 
 from __future__ import annotations
 
@@ -393,7 +393,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         ReleaseError: Push is requested without commit.
     """
     parser = argparse.ArgumentParser(
-        description="Prepare an AstrBot release branch, version bump, and changelog.",
+        description="Prepare an LKMBot release branch, version bump, and changelog.",
     )
     parser.add_argument("version", help="Release version without the leading v")
     parser.add_argument("--base-branch", default="master", help="Release base branch")

@@ -372,7 +372,7 @@ class AstrMessageEvent(abc.ABC):
     def should_call_llm(self, call_llm: bool) -> None:
         """是否在此消息事件中禁止默认的 LLM 请求。
 
-        只会阻止 AstrBot 默认的 LLM 请求链路，不会阻止插件中的 LLM 请求。
+        只会阻止 LKMBot 默认的 LLM 请求链路，不会阻止插件中的 LLM 请求。
         """
         self.call_llm = call_llm
 

@@ -1,14 +1,17 @@
-![AstrBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+![LKMBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
 
+> **LKMBot** is the LKM-branded distribution maintained in this repository. It is based on
+> AstrBot and intentionally retains the internal `astrbot` Python package, legacy environment
+> variables, and API field names so existing plugins and data remain compatible.
 
 <div align="center">
 
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh.md">简体中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh-TW.md">繁體中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ja.md">日本語</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_fr.md">Français</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_es.md">Español</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ru.md">Русский</a> 
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh.md">简体中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh-TW.md">繁體中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ja.md">日本語</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_fr.md">Français</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_es.md">Español</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ru.md">Русский</a>
 
 <br>
 
@@ -38,7 +41,7 @@
 <a href="mailto:community@astrbot.app">Email Support</a>
 </div>
 
-AstrBot is an open-source all-in-one Agent chatbot platform that integrates with mainstream instant messaging apps. It provides reliable and scalable conversational AI infrastructure for individuals, developers, and teams. Whether you're building a personal AI companion, intelligent customer service, automation assistant, or enterprise knowledge base, AstrBot enables you to quickly build production-ready AI applications within your IM platform workflows.
+LKMBot is an open-source all-in-one Agent chatbot platform that integrates with mainstream instant messaging apps. It provides reliable and scalable conversational AI infrastructure for individuals, developers, and teams. Whether you're building a personal AI companion, intelligent customer service, automation assistant, or enterprise knowledge base, LKMBot enables you to quickly build production-ready AI applications within your IM platform workflows.
 
 ![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
 
@@ -66,39 +69,42 @@ For users who want one-click 24-hour-online deployment and do not want to manage
 
 > [!NOTE]
 > Requires [uv](https://docs.astral.sh/uv/) to be installed.
-> For macOS users: due to macOS security checks, the first run of the `astrbot` command may take longer (about 10-20s).
+> For macOS users: due to macOS security checks, the first run of the `lkmbot` command may take longer (about 10-20s).
 
-For users who want to quickly experience AstrBot, are familiar with command-line usage, and can install a `uv` environment on their own, we recommend the `uv` one-click deployment method ⚡️:
+For users who want to quickly experience LKMBot, are familiar with command-line usage, and can install a `uv` environment on their own, we recommend the `uv` one-click deployment method ⚡️:
 
 ```bash
-uv tool install astrbot --python 3.12
-astrbot init # Only execute this command for the first time to initialize the environment
-astrbot run
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+uv tool install . --python 3.12
+lkmbot init # Only execute this command for the first time to initialize the environment
+lkmbot run
 ```
 
-Update `astrbot`:
+Update `lkmbot`:
 
 ```bash
-uv tool upgrade astrbot --python 3.12
+git pull --ff-only
+uv tool install --force . --python 3.12
 ```
 
 ### Docker Deployment
 
-For users familiar with containers and looking for a more stable, production-ready deployment method, we recommend deploying AstrBot with Docker / Docker Compose.
+For users familiar with containers and looking for a more stable, production-ready deployment method, we recommend deploying LKMBot with Docker / Docker Compose.
 
-Please refer to the official documentation: [Deploy AstrBot with Docker](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot).
+Please refer to the official documentation: [Deploy LKMBot with Docker](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot).
 
 ### Desktop Application Deployment
 
-For users who want to use AstrBot on desktop and mainly use ChatUI, we recommend AstrBot App.
+For users who want to use LKMBot on desktop and mainly use ChatUI, we recommend LKMBot App.
 
 Visit [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop) to download and install; this method is designed for desktop usage and is not recommended for server scenarios.
 
 ### Launcher Deployment
 
-For desktop users who also want fast deployment and isolated multi-instance usage, we recommend AstrBot Launcher.
+For desktop users who also want fast deployment and isolated multi-instance usage, we recommend LKMBot Launcher.
 
-Visit [AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher) to download and install.
+Visit [LKMBot Launcher](https://github.com/Raven95676/astrbot-launcher) to download and install.
 
 **More deployment methods**
 
@@ -118,7 +124,7 @@ Welcome to sponsor us via [Afdian](https://afdian.com/a/astrbot_team) or [contac
 
 ## Supported Messaging Platforms
 
-Connect AstrBot to your favorite chat platform.
+Connect LKMBot to your favorite chat platform.
 
 | Platform | Maintainer |
 |---------|---------------|
@@ -190,10 +196,10 @@ You can contribute by reviewing issues or helping with pull request reviews. Any
 
 ### Development Environment
 
-AstrBot uses `ruff` for code formatting and linting.
+LKMBot uses `ruff` for code formatting and linting.
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
 pip install pre-commit
 pre-commit install
 ```
@@ -211,7 +217,7 @@ We have 15+ chat groups, please see: [Community](https://docs.astrbot.app/commun
 
 ## ❤️ Special Thanks
 
-Special thanks to all Contributors and plugin developers for their contributions to AstrBot ❤️
+Special thanks to all Contributors and plugin developers for their contributions to LKMBot ❤️
 
 <a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />
@@ -220,7 +226,7 @@ Special thanks to all Contributors and plugin developers for their contributions
 Open Source Friends ❤️
 
 - [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) - The amazing cat framework
-- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) - The powerful "digital life" in your QQ! 
+- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) - The powerful "digital life" in your QQ!
 
 ## ⭐ Star History
 

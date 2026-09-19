@@ -411,7 +411,7 @@ async def test_non_admin_can_send_workspace_file(tmp_path, monkeypatch, scope):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("scope", ["none", "workspace"])
 async def test_non_admin_can_send_temp_file(tmp_path, monkeypatch, scope):
-    """Non-admin users can send generated files under AstrBot temp."""
+    """Non-admin users can send generated files under LKMBot temp."""
     tool = SendMessageToUserTool()
     ctx = _make_context(
         role="member", local_permissions={"member": {"filesystem_scope": scope}}
@@ -474,7 +474,7 @@ async def test_send_message_downloads_windows_sandbox_file_with_original_name(
 
     result = await tool.call(
         ctx,
-        messages=[{"type": "file", "path": r"C:\Users\AstrBot\report.txt"}],
+        messages=[{"type": "file", "path": r"C:\Users\LKMBot\report.txt"}],
     )
 
     assert "Message sent to session" in result

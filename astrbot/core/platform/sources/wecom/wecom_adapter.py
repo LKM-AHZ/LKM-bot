@@ -519,7 +519,7 @@ class WecomPlatformAdapter(Platform):
         """Creates a WeCom message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created WeCom message event.

@@ -81,7 +81,7 @@ class HelpCommand:
         )
 
         msg_parts = [
-            f"AstrBot v{VERSION}(WebUI: {dashboard_version})",
+            f"LKMBot v{VERSION}(WebUI: {dashboard_version})",
             commands_section,
         ]
         if notice:

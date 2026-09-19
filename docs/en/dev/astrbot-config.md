@@ -2,17 +2,17 @@
 outline: deep
 ---
 
-# AstrBot Configuration File
+# LKMBot Configuration File
 
 ## data/cmd_config.json
 
-AstrBot's configuration file is a JSON format file. AstrBot reads this file at startup and initializes based on the settings within. Its path is `data/cmd_config.json`.
+LKMBot's configuration file is a JSON format file. LKMBot reads this file at startup and initializes based on the settings within. Its path is `data/cmd_config.json`.
 
-> Since AstrBot v4.0.0, we introduced the concept of [multiple configuration files](https://blog.astrbot.app/posts/what-is-changed-in-4.0.0/#%E5%A4%9A%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6). `data/cmd_config.json` serves as the default configuration `default`. Other configuration files you create in the WebUI are stored in the `data/config/` directory, starting with `abconf_`.
+> Since LKMBot v4.0.0, we introduced the concept of [multiple configuration files](https://blog.astrbot.app/posts/what-is-changed-in-4.0.0/#%E5%A4%9A%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6). `data/cmd_config.json` serves as the default configuration `default`. Other configuration files you create in the WebUI are stored in the `data/config/` directory, starting with `abconf_`.
 
 In the WebUI, manage bot and session behavior profiles under `Config`. Global runtime, logging, network, WebUI security, and text-to-image service settings are under `Settings`. Model connections and bot connections are managed under `Providers` and `Platforms`, respectively.
 
-The default AstrBot configuration is as follows:
+The default LKMBot configuration is as follows:
 
 ```jsonc
 {
@@ -117,7 +117,7 @@ The default AstrBot configuration is as follows:
     "no_proxy": ["localhost", "127.0.0.1", "::1"],
     "dashboard": {
         "enable": True,
-        "username": "astrbot",
+        "username": "lkmbot",
         "password": "<your_password_md5>",
         "jwt_secret": "",
         "host": "0.0.0.0",
@@ -185,7 +185,7 @@ Whether to enable the ID whitelist. Default is `true`. When enabled, only messag
 
 ID whitelist. If filled, only message events from the specified IDs will be processed. Empty means the whitelist filter is not enabled. You can use the `/sid` command to get the session ID on a platform.
 
-Session IDs can also be found in AstrBot logs; when a message fails the whitelist, an INFO level log is output, e.g., `aiocqhttp:GroupMessage:547540978`.
+Session IDs can also be found in LKMBot logs; when a message fails the whitelist, an INFO level log is output, e.g., `aiocqhttp:GroupMessage:547540978`.
 
 #### `platform_settings.id_whitelist_log`
 
@@ -250,7 +250,7 @@ Whether to ignore @all messages. Default is `false`. When enabled, the bot won't
 
 ### `provider`
 
-> This item only takes effect in `data/cmd_config.json`; AstrBot does not read this from configuration files in the `data/config/` directory.
+> This item only takes effect in `data/cmd_config.json`; LKMBot does not read this from configuration files in the `data/config/` directory.
 
 List of configured model service provider settings.
 
@@ -270,7 +270,7 @@ Default conversation model provider ID. Must be a provider ID already configured
 
 Default image captioning model provider ID. Must be a provider ID already configured in the `provider` list. If empty, image captioning is disabled.
 
-This means when a user sends an image, AstrBot uses this provider to generate a text description, which is then used as part of the conversation context. This is useful when the conversation model doesn't support multimodal input.
+This means when a user sends an image, LKMBot uses this provider to generate a text description, which is then used as part of the conversation context. This is useful when the conversation model doesn't support multimodal input.
 
 #### `provider_settings.image_caption_prompt`
 
@@ -286,7 +286,7 @@ Extra trigger condition for LLM chat. For example, if `chat` is filled, messages
 
 #### `provider_settings.web_search`
 
-Whether to enable AstrBot's built-in web search capability. Default is `false`. When enabled, the LLM may automatically search the web and answer based on the content.
+Whether to enable LKMBot's built-in web search capability. Default is `false`. When enabled, the LLM may automatically search the web and answer based on the content.
 
 #### `provider_settings.websearch_provider`
 
@@ -476,12 +476,12 @@ Character threshold for T2I. Default is `150`. When a message exceeds this count
 
 Rendering strategy for T2I. Options are `local` and `remote`. Default is `remote`.
 
-- `local`: Uses AstrBot's local T2I service for rendering. Lower quality but doesn't depend on external services.
-- `remote`: Uses a remote T2I service for rendering. Uses the official AstrBot service by default, which offers better quality.
+- `local`: Uses LKMBot's local T2I service for rendering. Lower quality but doesn't depend on external services.
+- `remote`: Uses a remote T2I service for rendering. Uses the official LKMBot service by default, which offers better quality.
 
 ### `t2i_endpoint`
 
-AstrBot API address. Used for rendering Markdown images. Effective when `t2i_strategy` is `remote`. Default is empty, meaning the official AstrBot service is used.
+LKMBot API address. Used for rendering Markdown images. Effective when `t2i_strategy` is `remote`. Default is empty, meaning the official LKMBot service is used.
 
 ### `t2i_use_file_service`
 
@@ -497,22 +497,22 @@ List of addresses that bypass the proxy. E.g., `["localhost", "127.0.0.1"]`.
 
 ### `dashboard`
 
-AstrBot WebUI configuration.
+LKMBot WebUI configuration.
 
 Please do not change the `password` value arbitrarily. It is an `md5` encoded password generated from the random initial password. Check the startup logs for that initial password on first run, then change it in the control panel.
 
-- `enable`: Whether to enable the AstrBot WebUI. Default is `true`.
-- `username`: Username for the AstrBot WebUI.
-- `password`: Password for the AstrBot WebUI. It is initialized from a random password generated on first startup (logged at startup). Do not modify directly unless you know what you are doing.
-- `jwt_secret`: JWT secret key. AstrBot generates this randomly at initialization. Do not modify unless you know what you are doing.
-- `host`: Address the AstrBot WebUI listens on. Default is `0.0.0.0`.
-- `port`: Port the AstrBot WebUI listens on. Default is `6185`.
+- `enable`: Whether to enable the LKMBot WebUI. Default is `true`.
+- `username`: Username for the LKMBot WebUI.
+- `password`: Password for the LKMBot WebUI. It is initialized from a random password generated on first startup (logged at startup). Do not modify directly unless you know what you are doing.
+- `jwt_secret`: JWT secret key. LKMBot generates this randomly at initialization. Do not modify unless you know what you are doing.
+- `host`: Address the LKMBot WebUI listens on. Default is `0.0.0.0`.
+- `port`: Port the LKMBot WebUI listens on. Default is `6185`.
 
 ### `platform`
 
-> This item only takes effect in `data/cmd_config.json`; AstrBot does not read this from configuration files in the `data/config/` directory.
+> This item only takes effect in `data/cmd_config.json`; LKMBot does not read this from configuration files in the `data/config/` directory.
 
-List of configured AstrBot message platform adapter settings.
+List of configured LKMBot message platform adapter settings.
 
 ### `platform_specific`
 
@@ -520,7 +520,7 @@ Platform-specific settings. Categorized by platform, then by feature group.
 
 #### `platform_specific.<platform>.pre_ack_emoji`
 
-When enabled, AstrBot sends a pre-reply emoji before requesting the LLM to inform the user that the request is being processed. This currently only takes effect in the Lark and Telegram platform adapters.
+When enabled, LKMBot sends a pre-reply emoji before requesting the LLM to inform the user that the request is being processed. This currently only takes effect in the Lark and Telegram platform adapters.
 
 ##### lark
 
@@ -539,10 +539,10 @@ When enabled, AstrBot sends a pre-reply emoji before requesting the LLM to infor
 
 ### `wake_prefix`
 
-Wake prefix. Default is `/`. When a message starts with `/`, AstrBot is awakened.
+Wake prefix. Default is `/`. When a message starts with `/`, LKMBot is awakened.
 
 > [!TIP]
-> If the awakened session is not in the ID whitelist, AstrBot will not respond.
+> If the awakened session is not in the ID whitelist, LKMBot will not respond.
 
 ### `log_level`
 
@@ -550,7 +550,7 @@ Log level. Default is `INFO`. Can be set to `DEBUG`, `INFO`, `WARNING`, `ERROR`,
 
 ### `trace_enable`
 
-Whether to enable trace recording. Default is `false`. When enabled, AstrBot records execution traces, which can be viewed under `Data & Logs → Trace` in the admin panel.
+Whether to enable trace recording. Default is `false`. When enabled, LKMBot records execution traces, which can be viewed under `Data & Logs → Trace` in the admin panel.
 
 ### `pip_install_arg`
 
@@ -572,7 +572,7 @@ Timezone setting. Please fill in an IANA timezone name, such as Asia/Shanghai. I
 
 ### `callback_api_base`
 
-Base address for the AstrBot API. Used for file services, plugin callbacks, etc. E.g., `http://example.com:6185`. Default is empty, meaning file services and plugin callbacks are disabled.
+Base address for the LKMBot API. Used for file services, plugin callbacks, etc. E.g., `http://example.com:6185`. Default is empty, meaning file services and plugin callbacks are disabled.
 
 ### `default_kb_collection`
 

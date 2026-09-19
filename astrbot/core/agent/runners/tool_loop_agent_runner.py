@@ -127,7 +127,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         "Remaining steps: 0. Stop using tools; summarize results and unfinished work. "
         "If unfinished, tell the user they can simply ask you to continue with a fresh "
         "step budget. Optionally, they can raise the tool-call round limit in "
-        "AstrBot WebUI to allow longer runs."
+        "LKMBot WebUI to allow longer runs."
     )
     SKILLS_LIKE_REQUERY_INSTRUCTION_TEMPLATE = (
         "You have decided to call tool(s): {tool_names}. Now call the tool(s) "

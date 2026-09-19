@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: astrbot-stack
-  namespace: astrbot-ns
+  name: lkmbot-stack
+  namespace: lkmbot-ns
   labels:
-    app: astrbot-stack
+    app: lkmbot-stack
 spec:
   replicas: 1
   strategy:
     type: Recreate # Use Recreate strategy for stateful applications
   selector:
     matchLabels:
-      app: astrbot-stack
+      app: lkmbot-stack
   template:
     metadata:
       labels:
-        app: astrbot-stack
+        app: lkmbot-stack
     spec:
       # 设置固定主机名，避免 Pod 重启后主机名变化触发风控
       hostname: napcat-host
-      subdomain: astrbot-stack
+      subdomain: lkmbot-stack
       # 优雅关闭时间，给 NapCat 足够时间保存状态
       terminationGracePeriodSeconds: 60
       
@@ -69,7 +69,7 @@ spec:
               cpu: "1000m"
           volumeMounts:
             - name: shared-data
-              mountPath: /AstrBot/data
+              mountPath: /LKMBot/data
             - name: napcat-config
               mountPath: /app/napcat/config
             - name: napcat-qq
@@ -83,15 +83,15 @@ spec:
               mountPath: /etc/localtime
               readOnly: true
         
-        - name: astrbot
-          image: soulter/astrbot:latest
+        - name: lkmbot
+          image: lkmbot:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
               value: "Asia/Shanghai"
           ports:
             - containerPort: 6185
-              name: astrbot-web
+              name: lkmbot-web
           resources:
             requests:
               memory: "256Mi"
@@ -101,7 +101,7 @@ spec:
               cpu: "500m"
           volumeMounts:
             - name: shared-data
-              mountPath: /AstrBot/data
+              mountPath: /LKMBot/data
             - name: localtime
               mountPath: /etc/localtime
               readOnly: true
@@ -109,7 +109,7 @@ spec:
       volumes:
         - name: shared-data
           persistentVolumeClaim:
-            claimName: astrbot-data-shared-pvc
+            claimName: lkmbot-data-shared-pvc
         - name: napcat-config
           persistentVolumeClaim:
             claimName: napcat-config-pvc

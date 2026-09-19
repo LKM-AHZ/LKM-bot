@@ -54,7 +54,7 @@ class HtmlRenderer:
                 )
             except BaseException as e:
                 logger.error(
-                    f"Failed to render image via AstrBot API: {e}. Falling back to local rendering.",
+                    f"Failed to render image via LKMBot API: {e}. Falling back to local rendering.",
                 )
                 return await self.local_strategy.render(text)
         else:

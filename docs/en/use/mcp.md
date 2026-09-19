@@ -1,11 +1,11 @@
 
 # MCP
 
-MCP (Model Context Protocol) is a new open standard protocol for establishing secure bidirectional connections between large language models and data sources. Simply put, it extracts function tools as independent services, allowing AstrBot to remotely invoke these function tools via the MCP protocol, which then return results to AstrBot.
+MCP (Model Context Protocol) is a new open standard protocol for establishing secure bidirectional connections between large language models and data sources. Simply put, it extracts function tools as independent services, allowing LKMBot to remotely invoke these function tools via the MCP protocol, which then return results to LKMBot.
 
 ![image](https://files.astrbot.app/docs/source/images/function-calling/image3.png)
 
-AstrBot v3.5.0 supports the MCP protocol, enabling you to add multiple MCP servers and use function tools from MCP servers.
+LKMBot v3.5.0 supports the MCP protocol, enabling you to add multiple MCP servers and use function tools from MCP servers.
 
 Manage MCP servers in WebUI under `Extensions → MCP Servers` (`/extension/mcp`).
 
@@ -13,21 +13,21 @@ Manage MCP servers in WebUI under `Extensions → MCP Servers` (`/extension/mcp`
 
 MCP servers are typically launched using `uv` or `npm`, so you need to install these two tools.
 
-For `uv`, you can install it directly via pip. In AstrBot WebUI, open `Data & Logs → Logs` (`/data/logs`), click `Install pip Package`, enter `uv`, and install it.
+For `uv`, you can install it directly via pip. In LKMBot WebUI, open `Data & Logs → Logs` (`/data/logs`), click `Install pip Package`, enter `uv`, and install it.
 
-If you're deploying AstrBot with Docker, you can also execute the following command for quick installation:
+If you're deploying LKMBot with Docker, you can also execute the following command for quick installation:
 
 ```bash
 docker exec astrbot python -m pip install uv
 ```
 
-If you're deploying AstrBot from source, please install it within the created virtual environment.
+If you're deploying LKMBot from source, please install it within the created virtual environment.
 
 For `npm`, you need to install `node`.
 
-If you're deploying AstrBot from source or using one-click installation, please refer to [Download Node.js](https://nodejs.org/en/download) to download to your local machine.
+If you're deploying LKMBot from source or using one-click installation, please refer to [Download Node.js](https://nodejs.org/en/download) to download to your local machine.
 
-If you're using Docker to deploy AstrBot, you need to install `node` in the container (future AstrBot Docker images will include `node` by default). Please execute the following commands:
+If you're using Docker to deploy LKMBot, you need to install `node` in the container (future LKMBot Docker images will include `node` by default). Please execute the following commands:
 
 ```bash
 sudo docker exec -it astrbot /bin/bash
@@ -44,11 +44,11 @@ npm -v
 npx -v
 ```
 
-After installing `node`, you need to restart `AstrBot` to apply the new environment variables.
+After installing `node`, you need to restart `LKMBot` to apply the new environment variables.
 
 ## Installing MCP Servers
 
-If you're deploying AstrBot with Docker, please install MCP servers in the data directory.
+If you're deploying LKMBot with Docker, please install MCP servers in the data directory.
 
 ### An Example
 
@@ -86,7 +86,7 @@ If the MCP server you need requires environment variables to configure something
 }
 ```
 
-In AstrBot WebUI, open `Extensions → MCP Servers` and click `Add Server`. Enter a server name and paste the JSON above into `Server Configuration`. You can test the connection first; enable the option to connect after saving and click `Save` to connect.
+In LKMBot WebUI, open `Extensions → MCP Servers` and click `Add Server`. Enter a server name and paste the JSON above into `Server Configuration`. You can test the connection first; enable the option to connect after saving and click `Save` to connect.
 
 Reference links:
 

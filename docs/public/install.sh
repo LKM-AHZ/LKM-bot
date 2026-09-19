@@ -63,6 +63,6 @@ if ! has "$UV_BIN"; then
 fi  
 
 ok "$("$UV_BIN" --version)"
-info "Installing AstrBot with Python 3.12..."
-"$UV_BIN" tool install --python 3.12 astrbot
-ok "AstrBot has been installed."
+info "Installing LKMBot with Python 3.12..."
+"$UV_BIN" tool install --python 3.12 git+https://github.com/Alma1314/LKM-bot.git
+ok "LKMBot has been installed. Run 'lkmbot init' and then 'lkmbot run'."

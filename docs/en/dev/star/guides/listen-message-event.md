@@ -10,21 +10,21 @@ from astrbot.api.event import filter, AstrMessageEvent
 
 ## Messages and Events
 
-AstrBot receives messages delivered by messaging platforms and encapsulates them as `AstrMessageEvent` objects, which are then passed to plugins for processing.
+LKMBot receives messages delivered by messaging platforms and encapsulates them as `AstrMessageEvent` objects, which are then passed to plugins for processing.
 
 ![message-event](https://files.astrbot.app/docs/en/dev/star/guides/message-event.svg)
 
 ### Message Events
 
-`AstrMessageEvent` is AstrBot's message event object, which stores information about the message sender, message content, etc.
+`AstrMessageEvent` is LKMBot's message event object, which stores information about the message sender, message content, etc.
 
 ### Message Object
 
-`AstrBotMessage` is AstrBot's message object, which stores the specific content of messages delivered by the messaging platform. The `AstrMessageEvent` object contains a `message_obj` attribute to retrieve this message object.
+`AstrBotMessage` is LKMBot's message object, which stores the specific content of messages delivered by the messaging platform. The `AstrMessageEvent` object contains a `message_obj` attribute to retrieve this message object.
 
 ```py{11}
 class AstrBotMessage:
-    """AstrBot's message object"""
+    """LKMBot's message object"""
 
     type: MessageType  # Message type
     self_id: str  # Bot's identification ID
@@ -66,7 +66,7 @@ Additionally, the OneBot v11 platform (QQ personal accounts, etc.) also supports
 - `Nodes`: Multiple nodes in a forward message
 - `Poke`: Poke message segment
 
-In AstrBot, message chains are represented as lists of type `List[BaseMessageComponent]`.
+In LKMBot, message chains are represented as lists of type `List[BaseMessageComponent]`.
 
 ## Commands
 
@@ -90,13 +90,13 @@ class MyPlugin(Star):
 ```
 
 > [!TIP]
-> Commands cannot contain spaces, otherwise AstrBot will parse them as a second parameter. You can use the command group feature below, or use a listener to parse the message content yourself.
+> Commands cannot contain spaces, otherwise LKMBot will parse them as a second parameter. You can use the command group feature below, or use a listener to parse the message content yourself.
 
 ## Commands with Parameters
 
 ![command-with-param](https://files.astrbot.app/docs/en/dev/star/guides/command-with-param.svg)
 
-AstrBot will automatically parse command parameters for you.
+LKMBot will automatically parse command parameters for you.
 
 ```python
 @filter.command("add")
@@ -260,12 +260,12 @@ from astrbot.api.event import filter, AstrMessageEvent
 
 @filter.on_astrbot_loaded()
 async def on_astrbot_loaded(self):
-    print("AstrBot initialization complete")
+    print("LKMBot initialization complete")
 ```
 
 #### On Waiting for LLM Request
 
-This hook is triggered when AstrBot is preparing to call the LLM but has not yet acquired the session lock.
+This hook is triggered when LKMBot is preparing to call the LLM but has not yet acquired the session lock.
 
 It is suitable for sending feedback such as "Waiting for request..." to the user, or for obtaining the LLM request outside the lock without waiting for it to be released.
 
@@ -282,7 +282,7 @@ async def on_waiting_llm(self, event: AstrMessageEvent):
 
 #### On LLM Request
 
-In AstrBot's default execution flow, the `on_llm_request` hook is triggered before calling the LLM.
+In LKMBot's default execution flow, the `on_llm_request` hook is triggered before calling the LLM.
 
 You can obtain the `ProviderRequest` object and modify it.
 
@@ -360,7 +360,7 @@ async def on_llm_resp(
 
 #### On Agent Begin
 
-> Requires AstrBot version > v4.23.1
+> Requires LKMBot version > v4.23.1
 
 When the Agent starts running, the `on_agent_begin` hook is triggered.
 
@@ -381,7 +381,7 @@ async def on_agent_begin(
 
 #### Before LLM Tool Call
 
-> Requires AstrBot version > v4.23.1
+> Requires LKMBot version > v4.23.1
 
 When the Agent is about to call an LLM tool, the `on_using_llm_tool` hook is triggered.
 
@@ -406,7 +406,7 @@ async def on_using_llm_tool(
 
 #### After LLM Tool Call
 
-> Requires AstrBot version > v4.23.1
+> Requires LKMBot version > v4.23.1
 
 After the LLM tool call completes, the `on_llm_tool_respond` hook is triggered.
 
@@ -434,7 +434,7 @@ async def on_llm_tool_respond(
 
 #### On Agent Done
 
-> Requires AstrBot version > v4.23.1
+> Requires LKMBot version > v4.23.1
 
 After the Agent finishes running, the `on_agent_done` hook is triggered. This hook is triggered after `on_llm_response`.
 

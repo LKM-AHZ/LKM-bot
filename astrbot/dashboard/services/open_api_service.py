@@ -164,7 +164,7 @@ class OpenApiService:
                 and any(str(admin_id) == effective_username for admin_id in admin_ids)
             ):
                 raise OpenApiServiceError(
-                    "username is reserved for an AstrBot administrator"
+                    "username is reserved for an LKMBot administrator"
                 )
 
         raw_session_id = post_data.get("session_id", post_data.get("conversation_id"))

@@ -1,6 +1,6 @@
 # 接入 Slack
 
-## 创建 AstrBot Slack 平台适配器
+## 创建 LKMBot Slack 平台适配器
 
 进入 `机器人` 页，点击 `+ 创建机器人`，找到 Slack 并点击进入 Slack 配置页。
 
@@ -18,7 +18,7 @@ Slack 支持两种接入方式：`Webhook` 与 `Socket`。如果您没有公网�
 
 ![image](https://files.astrbot.app/docs/source/images/slack/image.png)
 
-4. 在左边栏 Basic Information 页下，找到 App-Level Tokens，点击 「Generate Token and Scopes」。Token Name 任意输入，点击 Add Scope，选择 `connections:write`，然后点击 「Generate」，点击 Copy 将结果复制到 AstrBot 配置页的 app_token 处。
+4. 在左边栏 Basic Information 页下，找到 App-Level Tokens，点击 「Generate Token and Scopes」。Token Name 任意输入，点击 Add Scope，选择 `connections:write`，然后点击 「Generate」，点击 Copy 将结果复制到 LKMBot 配置页的 app_token 处。
 
 ![image](https://files.astrbot.app/docs/source/images/slack/image-2.png)
 
@@ -63,12 +63,12 @@ Slack 支持两种接入方式：`Webhook` 与 `Socket`。如果您没有公网�
 
 如果您使用的是 Webhook 模式：
 
-- 如果开启了 `统一 Webhook 模式`，点击保存之后，AstrBot 将会自动为你生成唯一的 Webhook 回调链接，你可以在 `数据与日志 → 日志` 中查看，或在 `机器人` 页选中该机器人，点击 `查看 Webhook 链接`，将该链接填入 `Request URL` 输入框中。
+- 如果开启了 `统一 Webhook 模式`，点击保存之后，LKMBot 将会自动为你生成唯一的 Webhook 回调链接，你可以在 `数据与日志 → 日志` 中查看，或在 `机器人` 页选中该机器人，点击 `查看 Webhook 链接`，将该链接填入 `Request URL` 输入框中。
 
 - 如果没有开启 `统一 Webhook 模式`，请在 `Request URL` 输入框中输入 `https://您的域名/astrbot-slack-webhook/callback`。
 
 > [!TIP]
-> Webhook 模式下，您需要先在 DNS 服务商处设置好域名，然后使用反向代理软件将请求转发到 AstrBot 所在服务器的 `6185` 端口（如果开启了统一 Webhook 模式）或配置指定的端口（如果没有开启统一 Webhook 模式）。或者您可以使用 Cloudflare Tunnel。具体教程请参考网络资源，本教程不赘述。
+> Webhook 模式下，您需要先在 DNS 服务商处设置好域名，然后使用反向代理软件将请求转发到 LKMBot 所在服务器的 `6185` 端口（如果开启了统一 Webhook 模式）或配置指定的端口（如果没有开启统一 Webhook 模式）。或者您可以使用 Cloudflare Tunnel。具体教程请参考网络资源，本教程不赘述。
 
 启用后，在下方的 Subscribe to bot events 处，点击 Add Bot User Event，添加如下事件：
 

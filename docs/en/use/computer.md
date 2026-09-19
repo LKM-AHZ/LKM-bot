@@ -11,20 +11,20 @@ In WebUI, open:
 The key option is `Computer Use Runtime`:
 
 - `none`: disables Computer Use; Shell, Python, filesystem, and related tools are not mounted.
-- `local`: executes on the host machine where AstrBot is running. Use this when the Agent needs local files, command-line tools, or local dependencies.
+- `local`: executes on the host machine where LKMBot is running. Use this when the Agent needs local files, command-line tools, or local dependencies.
 - `sandbox`: executes inside an isolated sandbox. Use this when you want to reduce host risk or provide automation capabilities to multiple users.
 
 If you are not sure which mode to choose, prefer `sandbox`. Use `local` only when direct host access is required.
 
 ## Local Mode
 
-`local` mode mounts Computer Use tools into the host environment where AstrBot runs. The Agent can call the host Shell, host Python, and host filesystem tools.
+`local` mode mounts Computer Use tools into the host environment where LKMBot runs. The Agent can call the host Shell, host Python, and host filesystem tools.
 
-This means the Agent's boundary is close to the AstrBot process itself. What it can access depends on the system permissions, runtime user, working directory, and operating-system restrictions of the AstrBot process.
+This means the Agent's boundary is close to the LKMBot process itself. What it can access depends on the system permissions, runtime user, working directory, and operating-system restrictions of the LKMBot process.
 
 ### Workspace
 
-In `local` mode, AstrBot prepares a workspace for each session:
+In `local` mode, LKMBot prepares a workspace for each session:
 
 ```text
 data/workspaces/{normalized_umo}
@@ -47,14 +47,14 @@ data/workspaces/{normalized_umo}/notes/todo.txt
 The local Shell tool also runs with this workspace as its current working directory.
 
 > [!NOTE]
-> The local Python tool executes code through AstrBot's current Python environment. When Python code reads or writes files, use explicit absolute paths or prepare files through filesystem tools in the workspace first.
+> The local Python tool executes code through LKMBot's current Python environment. When Python code reads or writes files, use explicit absolute paths or prepare files through filesystem tools in the workspace first.
 
 ### Local Tools
 
 `local` mode mainly provides:
 
 - `Shell`: executes host shell commands. Windows follows `cmd.exe` semantics; Linux/macOS follow Unix-like shell semantics.
-- `Python`: executes Python code in AstrBot's current Python environment.
+- `Python`: executes Python code in LKMBot's current Python environment.
 - `File read`: reads text, image, spreadsheet, and other supported files.
 - `File write`: writes UTF-8 text files; relative paths default to the current workspace.
 - `File edit`: replaces exact text in files.
@@ -66,11 +66,11 @@ The local Shell tool includes basic blocking for dangerous commands such as `rm 
 
 ### Permission Model
 
-In the local permission table, open the **File access scope** menu to read each option's description. **Workspace** restricts access to the session workspace, temporary directories, and skill files. **Entire environment** (formerly **Host files**) allows access to files permitted by the account running AstrBot. In Docker, this means files inside the container and mounted files, not all files on the Docker host. **Disabled** prevents file access through local Computer Use tools. These descriptions now appear under the corresponding menu options instead of below the table. Hover over or tap the question mark after “All files in the environment where AstrBot runs.” for details about account permissions and Docker file access.
+In the local permission table, open the **File access scope** menu to read each option's description. **Workspace** restricts access to the session workspace, temporary directories, and skill files. **Entire environment** (formerly **Host files**) allows access to files permitted by the account running LKMBot. In Docker, this means files inside the container and mounted files, not all files on the Docker host. **Disabled** prevents file access through local Computer Use tools. These descriptions now appear under the corresponding menu options instead of below the table. Hover over or tap the question mark after “All files in the environment where LKMBot runs.” for details about account permissions and Docker file access.
 
 Computer Use has a separate option:
 
-- `Require AstrBot admin permission`
+- `Require LKMBot admin permission`
 
 This option is enabled by default.
 
@@ -85,10 +85,10 @@ Allowed directories for non-admin users in `local` mode include:
 - `data/skills`
 - `data/plugins/*/skills` (read-only, for plugin-provided Skills)
 - Current session's `data/workspaces/{normalized_umo}`
-- AstrBot temporary directories
+- LKMBot temporary directories
 - `.astrbot` under the system temporary directory
 
-If `Require AstrBot admin permission` is disabled, regular users behave much closer to admins for Computer Use tools. Do not disable it unless you understand the risk.
+If `Require LKMBot admin permission` is disabled, regular users behave much closer to admins for Computer Use tools. Do not disable it unless you understand the risk.
 
 Admin IDs can be configured in:
 
@@ -98,9 +98,9 @@ Users can get their own ID with `/sid`.
 
 ## Sandbox Mode
 
-`sandbox` mode runs execution actions inside an isolated environment instead of directly on the AstrBot host.
+`sandbox` mode runs execution actions inside an isolated environment instead of directly on the LKMBot host.
 
-Inside the sandbox, the Agent can still use Shell, Python, and filesystem tools. If the selected sandbox profile supports the `browser` capability, AstrBot also mounts browser automation tools.
+Inside the sandbox, the Agent can still use Shell, Python, and filesystem tools. If the selected sandbox profile supports the `browser` capability, LKMBot also mounts browser automation tools.
 
 With Shipyard Neo, the sandbox workspace root is usually:
 
@@ -123,7 +123,7 @@ instead of:
 For sandbox deployment, profiles, TTL, persistence, and browser capabilities, see [Agent Sandbox Environment](/en/use/astrbot-agent-sandbox).
 
 > [!NOTE]
-> Even in `sandbox` mode, `Require AstrBot admin permission` still affects access to Shell, Python, browser, upload/download, and related tools. The exact behavior depends on your configuration.
+> Even in `sandbox` mode, `Require LKMBot admin permission` still affects access to Shell, Python, browser, upload/download, and related tools. The exact behavior depends on your configuration.
 
 ## Skills
 
@@ -137,6 +137,6 @@ The relationship between Skills and Computer Use is:
 For example, a Skill may ask the Agent to read files, run scripts, and generate a report. If `Computer Use Runtime` is `none`, the Agent may see the Skill instructions, but it cannot call Shell or Python to execute them.
 
 In `local` mode, the Agent reads local Skills.
-In `sandbox` mode, AstrBot attempts to sync local Skills into the sandbox so the Agent can execute them there.
+In `sandbox` mode, LKMBot attempts to sync local Skills into the sandbox so the Agent can execute them there.
 
 For more details, see [Anthropic Skills](/en/use/skills).

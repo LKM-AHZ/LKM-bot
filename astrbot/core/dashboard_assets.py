@@ -39,7 +39,7 @@ def _read_dashboard_version(dist_dir: str | Path) -> str | None:
 
 
 def _get_bundled_dist_path() -> Path:
-    """Return the Dashboard dist bundled with the AstrBot package."""
+    """Return the Dashboard dist bundled with the LKMBot package."""
     return Path(get_astrbot_path()) / "astrbot" / "dashboard" / "dist"
 
 
@@ -76,7 +76,7 @@ def _is_version_compatible(
 
     Args:
         dashboard_version: Version read from Dashboard assets.
-        current_version: Current AstrBot Core version.
+        current_version: Current LKMBot Core version.
 
     Returns:
         Whether both versions are valid and equal.
@@ -100,7 +100,7 @@ def _is_dist_compatible(dist_dir: str | Path, current_version: str) -> bool:
 
     Args:
         dist_dir: Dashboard dist directory path.
-        current_version: Current AstrBot Core version.
+        current_version: Current LKMBot Core version.
 
     Returns:
         Whether the dist contains an index and a matching version.
@@ -160,8 +160,8 @@ def _should_use_bundled_dist(user_dist: str | Path, current_version: str) -> boo
     """Check whether bundled assets should replace a managed user dist.
 
     Args:
-        user_dist: Managed Dashboard dist under the AstrBot data directory.
-        current_version: Current AstrBot Core version.
+        user_dist: Managed Dashboard dist under the LKMBot data directory.
+        current_version: Current LKMBot Core version.
 
     Returns:
         Whether the user dist is stale or incomplete and bundled assets match.
@@ -296,8 +296,8 @@ async def _download_package(
 
     Args:
         version: Release tag or exact commit hash selected by the updater.
-        path: Destination ZIP path. Defaults to the AstrBot data directory.
-        extract_path: Extraction root. Defaults to the AstrBot data directory.
+        path: Destination ZIP path. Defaults to the LKMBot data directory.
+        extract_path: Extraction root. Defaults to the LKMBot data directory.
         proxy: Optional URL-prefix mirror for the fallback download.
         progress_callback: Internal download progress callback.
         extract: Whether to extract the downloaded package.
@@ -319,7 +319,7 @@ async def _download_package(
             "https://astrbot-registry.soulter.top/download/"
             f"astrbot-dashboard/{version}/dist.zip"
         )
-        logger.info("Downloading AstrBot WebUI from %s", hosted_url)
+        logger.info("Downloading LKMBot WebUI from %s", hosted_url)
         try:
             await download_file(
                 hosted_url,
@@ -336,8 +336,8 @@ async def _download_package(
                 exc,
             )
             fallback_url = (
-                "https://github.com/AstrBotDevs/AstrBot/releases/download/"
-                f"{version}/AstrBot-{version}-dashboard.zip"
+                "https://github.com/Alma1314/LKM-bot/releases/download/"
+                f"{version}/LKMBot-{version}-dashboard.zip"
             )
             if proxy:
                 fallback_url = f"{proxy.rstrip('/')}/{fallback_url}"
@@ -355,7 +355,7 @@ async def _download_package(
         )
         if proxy:
             fallback_url = f"{proxy.rstrip('/')}/{fallback_url}"
-        logger.info("Downloading AstrBot WebUI from %s", fallback_url)
+        logger.info("Downloading LKMBot WebUI from %s", fallback_url)
         await download_file(
             fallback_url,
             str(zip_path),
@@ -417,7 +417,7 @@ def _extract_package(
         ):
             raise RuntimeError(
                 "Downloaded Dashboard version does not match "
-                f"AstrBot {expected_version}"
+                f"LKMBot {expected_version}"
             )
 
         if target_dist.exists() or target_dist.is_symlink():

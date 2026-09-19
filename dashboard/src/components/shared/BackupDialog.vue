@@ -854,7 +854,7 @@ const formatISODate = (isoString) => {
     }
 }
 
-// 重启 AstrBot
+// 重启 LKMBot
 const restartAstrBot = async () => {
     try {
         await restartAstrBotRuntime(wfr.value)

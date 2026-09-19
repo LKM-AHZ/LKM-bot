@@ -1,4 +1,4 @@
-"""AstrBot CLI entry point"""
+"""LKMBot CLI entry point."""
 
 import sys
 
@@ -8,22 +8,21 @@ from . import __version__
 from .commands import conf, init, password, plug, run
 
 logo_tmpl = r"""
-     ___           _______.___________..______      .______     ______   .___________.
-    /   \         /       |           ||   _  \     |   _  \   /  __  \  |           |
-   /  ^  \       |   (----`---|  |----`|  |_)  |    |  |_)  | |  |  |  | `---|  |----`
-  /  /_\  \       \   \       |  |     |      /     |   _  <  |  |  |  |     |  |
- /  _____  \  .----)   |      |  |     |  |\  \----.|  |_)  | |  `--'  |     |  |
-/__/     \__\ |_______/       |__|     | _| `._____||______/   \______/      |__|
+ _      _  ___  __  __ ____        _
+| |    | |/ / |/ / |  _ \  ___ | |_
+| |    | ' /| ' /  | |_) |/ _ \| __|
+| |___ | . \| . \  |  _ <| (_) | |_
+|_____||_|\_\_|\_\ |_| \_\\___/ \__|
 """
 
 
 @click.group()
-@click.version_option(__version__, prog_name="AstrBot")
+@click.version_option(__version__, prog_name="LKMBot")
 def cli() -> None:
-    """The AstrBot CLI"""
+    """The LKMBot CLI"""
     click.echo(logo_tmpl)
-    click.echo("Welcome to AstrBot CLI!")
-    click.echo(f"AstrBot CLI version: {__version__}")
+    click.echo("Welcome to LKMBot CLI!")
+    click.echo(f"LKMBot CLI version: {__version__}")
 
 
 @click.command()

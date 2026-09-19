@@ -1,6 +1,6 @@
 .PHONY: worktree worktree-add worktree-rm pr-test-neo pr-test-full pr-test-full-fast update-test-sandbox
 
-WORKTREE_DIR ?= ../astrbot_worktree
+WORKTREE_DIR ?= ../lkmbot_worktree
 BRANCH ?= $(word 2,$(MAKECMDGOALS))
 BASE ?= $(word 3,$(MAKECMDGOALS))
 BASE ?= master
@@ -38,7 +38,7 @@ pr-test-full-fast:
 
 clean-temp-deployment:
 	@set -eu; \
-	update_sandbox="$$(mktemp -d "$${TMPDIR:-/tmp}/astrbot-update-test.XXXXXX")"; \
+	update_sandbox="$$(mktemp -d "$${TMPDIR:-/tmp}/lkmbot-update-test.XXXXXX")"; \
 	echo "Copying the current workspace to $$update_sandbox"; \
 	rsync -a \
 		--exclude='.git/' \

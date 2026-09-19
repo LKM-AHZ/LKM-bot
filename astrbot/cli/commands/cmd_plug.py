@@ -24,7 +24,7 @@ def _get_data_path() -> Path:
     base = get_astrbot_root()
     if not check_astrbot_root(base):
         raise click.ClickException(
-            f"{base} is not a valid AstrBot root directory. Use 'astrbot init' to initialize",
+            f"{base} is not a valid LKMBot root directory. Use 'lkmbot init' to initialize",
         )
     return (base / "data").resolve()
 

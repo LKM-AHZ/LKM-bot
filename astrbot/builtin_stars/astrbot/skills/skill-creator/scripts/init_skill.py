@@ -1,4 +1,4 @@
-"""Initialize a minimal AstrBot Skill directory."""
+"""Initialize a minimal LKMBot Skill directory."""
 
 from __future__ import annotations
 

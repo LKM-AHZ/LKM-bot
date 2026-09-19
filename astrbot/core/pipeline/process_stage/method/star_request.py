@@ -1,4 +1,4 @@
-"""本地 Agent 模式的 AstrBot 插件调用 Stage"""
+"""本地 Agent 模式的 LKMBot 插件调用 Stage"""
 
 import traceback
 from collections.abc import AsyncGenerator

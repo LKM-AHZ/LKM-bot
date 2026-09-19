@@ -118,9 +118,6 @@ outline: deep
 | `PUT` | `/api/v1/config-routes` | — |
 | `PUT` | `/api/v1/config-routes/{umo}` | — |
 | `DELETE` | `/api/v1/config-routes/{umo}` | — |
-| `GET` | `/api/v1/subagents/available-tools` | — |
-| `GET` | `/api/v1/subagents/config` | — |
-| `PUT` | `/api/v1/subagents/config` | — |
 | `GET` | `/api/v1/system-config` | — |
 | `PUT` | `/api/v1/system-config` | `config:edit_admin` |
 | `GET` | `/api/v1/system-config/runtime` | — |
@@ -138,7 +135,7 @@ outline: deep
 
 调用对话能力，并管理 ChatUI 会话和项目。
 
-- **敏感子权限 `chat:admin`:** 允许 `username` 使用 AstrBot 中已配置的管理员 ID。该子权限必须显式授予。
+- **敏感子权限 `chat:admin`:** 允许 `username` 使用 LKMBot 中已配置的管理员 ID。该子权限必须显式授予。
 
 | 方法 | 接口 | 条件性敏感子权限 |
 | --- | --- | --- |

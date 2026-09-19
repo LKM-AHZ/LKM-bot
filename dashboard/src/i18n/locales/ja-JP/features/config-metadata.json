@@ -213,7 +213,7 @@
     },
     "persona": {
       "description": "ペルソナ",
-      "hint": "AstrBot にペルソナを設定します。",
+      "hint": "LKMBot にペルソナを設定します。",
       "agent_runner": {
         "config": {
           "persona": {
@@ -234,7 +234,7 @@
     },
     "knowledgebase": {
       "description": "ナレッジベース",
-      "hint": "AstrBot の「外部の頭脳」です。",
+      "hint": "LKMBot の「外部の頭脳」です。",
       "kb_names": {
         "description": "ナレッジベース一覧",
         "hint": "複数選択できます。"
@@ -254,7 +254,7 @@
     },
     "websearch": {
       "description": "ウェブ検索",
-      "hint": "AstrBot がインターネットへアクセスし、最新情報を取得できるようにします。",
+      "hint": "LKMBot がインターネットへアクセスし、最新情報を取得できるようにします。",
       "provider_settings": {
         "web_search": {
           "description": "ウェブ検索を有効化"
@@ -313,7 +313,7 @@
     },
     "agent_computer_use": {
       "description": "コンピューター操作機能",
-      "hint": "AstrBot がローカル環境または隔離されたサンドボックス環境へアクセスし、より複雑なタスクを実行できるようにします。詳細：[コンピューター操作](https://docs.astrbot.app/en/use/computer.html)。",
+      "hint": "LKMBot がローカル環境または隔離されたサンドボックス環境へアクセスし、より複雑なタスクを実行できるようにします。詳細：[コンピューター操作](https://docs.astrbot.app/en/use/computer.html)。",
       "provider_settings": {
         "computer_use_runtime": {
           "description": "実行環境",
@@ -325,7 +325,7 @@
         },
         "computer_use_require_admin": {
           "description": "サンドボックスに管理者権限を必須にする",
-          "hint": "有効にすると、外部サンドボックスの利用に AstrBot 管理者権限が必要になります。管理者は「プラットフォーム設定 -> 管理者」で追加できます。/sid コマンドで管理者 ID を確認できます。"
+          "hint": "有効にすると、外部サンドボックスの利用に LKMBot 管理者権限が必要になります。管理者は「プラットフォーム設定 -> 管理者」で追加できます。/sid コマンドで管理者 ID を確認できます。"
         },
         "sandbox": {
           "booter": {
@@ -357,7 +357,7 @@
           },
           "cua_idle_timeout": {
             "description": "CUA アイドルタイムアウト（秒）",
-            "hint": "CUA サンドボックスのアイドルタイムアウト（秒）です。0 より大きい場合、セッションのアイドル時間がこの値に達すると AstrBot が CUA サンドボックスを自動的に終了します。0 は無効を示します。"
+            "hint": "CUA サンドボックスのアイドルタイムアウト（秒）です。0 より大きい場合、セッションのアイドル時間がこの値に達すると LKMBot が CUA サンドボックスを自動的に終了します。0 は無効を示します。"
           },
           "cua_telemetry_enabled": {
             "description": "CUA テレメトリ",
@@ -401,10 +401,10 @@
         "scopeHints": {
           "none": "すべてのファイルへのアクセスを禁止",
           "workspace": "制限されたワークスペース、一時ディレクトリ、スキルファイル。",
-          "host": "AstrBot が動作する環境内のすべてのファイル。"
+          "host": "LKMBot が動作する環境内のすべてのファイル。"
         },
         "scopeDetails": {
-          "account": "1. AstrBot の実行アカウントに権限があるファイルにアクセスできます。",
+          "account": "1. LKMBot の実行アカウントに権限があるファイルにアクセスできます。",
           "docker": "2. Docker でデプロイした場合、コンテナ内およびマウントされたファイルのみが対象で、Docker ホストの全ファイルではありません。"
         },
         "roles": {
@@ -424,7 +424,7 @@
           "os": "OS",
           "arch": "アーキテクチャ",
           "sandbox": "ローカル隔離",
-          "unavailableHint": "サンドボックスの起動に失敗したため、制限付きの Shell/Python 実行とワークスペース内のファイル検索に影響があります。以下のエラーを参考に、システムのセキュリティポリシー（Linux の AppArmor やユーザー名前空間の制限など）またはコンテナの制限を確認し、修正後に AstrBot を再起動して再検査してください。",
+          "unavailableHint": "サンドボックスの起動に失敗したため、制限付きの Shell/Python 実行とワークスペース内のファイル検索に影響があります。以下のエラーを参考に、システムのセキュリティポリシー（Linux の AppArmor やユーザー名前空間の制限など）またはコンテナの制限を確認し、修正後に LKMBot を再起動して再検査してください。",
           "status": {
             "detected": "{backend} · 起動確認済み",
             "missing": "{dependency} が見つかりません",
@@ -436,18 +436,18 @@
     },
     "proactive_capability": {
       "description": "プロアクティブ機能",
-      "hint": "AstrBot が指定時刻にタスクを自動実行し、結果を届けられるようにします。詳細：[プロアクティブエージェント](https://docs.astrbot.app/en/use/proactive-agent.html)。",
+      "hint": "LKMBot が指定時刻にタスクを自動実行し、結果を届けられるようにします。詳細：[プロアクティブエージェント](https://docs.astrbot.app/en/use/proactive-agent.html)。",
       "provider_settings": {
         "proactive_capability": {
           "add_cron_tools": {
             "description": "有効化",
-            "hint": "有効にすると、プロアクティブエージェントに必要なツールがエージェントへ渡されます。将来の指定時刻に行うことを AstrBot に伝えると、予定どおりにタスクを実行して結果を送信します。"
+            "hint": "有効にすると、プロアクティブエージェントに必要なツールがエージェントへ渡されます。将来の指定時刻に行うことを LKMBot に伝えると、予定どおりにタスクを実行して結果を送信します。"
           }
         }
       }
     },
     "truncate_and_compress": {
-      "hint": "AstrBot が作業メモリを管理する方法を設定します。詳細：[コンテキスト管理方式](https://docs.astrbot.app/en/use/context-compress.html)。",
+      "hint": "LKMBot が作業メモリを管理する方法を設定します。詳細：[コンテキスト管理方式](https://docs.astrbot.app/en/use/context-compress.html)。",
       "description": "コンテキスト管理方式",
       "agent_runner": {
         "config": {
@@ -695,7 +695,7 @@
       },
       "discord_allow_bot_messages": {
         "description": "Bot メッセージの受信を許可",
-        "hint": "有効にすると、AstrBot が他の Discord Bot からのメッセージを受信します。メッセージ転送など、ボット間通信に適しています。デフォルトは無効です。"
+        "hint": "有効にすると、LKMBot が他の Discord Bot からのメッセージを受信します。メッセージ転送など、ボット間通信に適しています。デフォルトは無効です。"
       },
       "discord_command_register": {
         "description": "Discord コマンドを登録",
@@ -845,11 +845,11 @@
       },
       "telegram_command_auto_refresh": {
         "description": "コマンドの自動更新",
-        "hint": "有効にすると、AstrBot が実行中に Telegram コマンドを自動更新します。（この項目だけを設定しても機能しません）"
+        "hint": "有効にすると、LKMBot が実行中に Telegram コマンドを自動更新します。（この項目だけを設定しても機能しません）"
       },
       "telegram_command_register": {
         "description": "コマンド登録",
-        "hint": "有効にすると、AstrBot が Telegram コマンドを自動登録します。"
+        "hint": "有効にすると、LKMBot が Telegram コマンドを自動登録します。"
       },
       "telegram_command_register_interval": {
         "description": "コマンド自動更新間隔",
@@ -880,7 +880,7 @@
       },
       "unified_webhook_mode": {
         "description": "統合 Webhook モード",
-        "hint": "Webhook モードで AstrBot の統合 Webhook エントリーポイントを使用し、個別のポートを開く必要をなくします。コールバックアドレスは /api/v1/webhooks/platforms/{webhook_uuid} です。"
+        "hint": "Webhook モードで LKMBot の統合 Webhook エントリーポイントを使用し、個別のポートを開く必要をなくします。コールバックアドレスは /api/v1/webhooks/platforms/{webhook_uuid} です。"
       },
       "webhook_uuid": {
         "description": "Webhook UUID",
@@ -928,7 +928,7 @@
       },
       "wpp_active_message_poll": {
         "description": "プロアクティブメッセージのポーリングを有効化",
-        "hint": "WeChat メッセージが AstrBot に適時同期されない場合にのみ有効にしてください。デフォルトは無効です。"
+        "hint": "WeChat メッセージが LKMBot に適時同期されない場合にのみ有効にしてください。デフォルトは無効です。"
       },
       "wpp_active_message_poll_interval": {
         "description": "プロアクティブメッセージのポーリング間隔",
@@ -936,7 +936,7 @@
       },
       "ws_reverse_host": {
         "description": "リバース WebSocket ホスト",
-        "hint": "AstrBot がサーバーとして動作します。"
+        "hint": "LKMBot がサーバーとして動作します。"
       },
       "ws_reverse_port": {
         "description": "リバース WebSocket ポート"
@@ -1052,7 +1052,7 @@
       },
       "disable_builtin_commands": {
         "description": "組み込みコマンドを無効化",
-        "hint": "help、sid、new など、AstrBot のすべての組み込みコマンドを無効にします。"
+        "hint": "help、sid、new など、LKMBot のすべての組み込みコマンドを無効にします。"
       }
     },
     "whitelist": {
@@ -1299,7 +1299,7 @@
       },
       "t2i_endpoint": {
         "description": "テキスト画像化サービスの API アドレス",
-        "hint": "空欄の場合は AstrBot API サービスを使用します。"
+        "hint": "空欄の場合は LKMBot API サービスを使用します。"
       },
       "t2i_template": {
         "description": "テキスト画像化用カスタムテンプレート",
@@ -1319,7 +1319,7 @@
       },
       "log_file_path": {
         "description": "ログファイルのパス",
-        "hint": "相対パスは data ディレクトリを基準とします（例: logs/astrbot.log）。絶対パスにも対応しています。"
+        "hint": "相対パスは data ディレクトリを基準とします（例: logs/lkmbot.log）。絶対パスにも対応しています。"
       },
       "log_file_max_mb": {
         "description": "ログファイルの最大サイズ（MB）",
@@ -1335,7 +1335,7 @@
       },
       "trace_log_path": {
         "description": "Trace ログファイルのパス",
-        "hint": "相対パスは data ディレクトリを基準とします（例: logs/astrbot.trace.log）。絶対パスにも対応しています。"
+        "hint": "相対パスは data ディレクトリを基準とします（例: logs/lkmbot.trace.log）。絶対パスにも対応しています。"
       },
       "trace_log_max_mb": {
         "description": "Trace ログの最大サイズ（MB）",
@@ -1351,11 +1351,11 @@
       },
       "callback_api_base": {
         "description": "外部からアクセス可能なコールバック API アドレス",
-        "hint": "外部サービスは、AstrBot が生成したコールバックリンク（ファイルダウンロードリンクなど）を通じて AstrBot バックエンドへアクセスする場合があります。AstrBot はデプロイ環境で外部から到達可能なホストアドレス（ホスト）を自動判定できないため、この設定で外部サービスから AstrBot へアクセスするアドレスを明示的に指定します。例: [http://localhost:6185](http://localhost:6185)、[https://example.com](https://example.com)。"
+        "hint": "外部サービスは、LKMBot が生成したコールバックリンク（ファイルダウンロードリンクなど）を通じて LKMBot バックエンドへアクセスする場合があります。LKMBot はデプロイ環境で外部から到達可能なホストアドレス（ホスト）を自動判定できないため、この設定で外部サービスから LKMBot へアクセスするアドレスを明示的に指定します。例: [http://localhost:6185](http://localhost:6185)、[https://example.com](https://example.com)。"
       },
       "disable_metrics": {
         "description": "匿名利用統計を無効化",
-        "hint": "この設定を有効にすると、AstrBot は匿名の利用統計データをアップロードしません。"
+        "hint": "この設定を有効にすると、LKMBot は匿名の利用統計データをアップロードしません。"
       },
       "dashboard": {
         "trust_proxy_headers": {
@@ -2057,7 +2057,7 @@
       },
       "auto_save_history": {
         "description": "Coze が会話履歴を管理",
-        "hint": "有効にすると、Coze が会話履歴を管理します。この場合、AstrBot にローカル保存されたコンテキストは参照専用となり、AstrBot のコンテキストに対する操作も反映されません。無効の場合は AstrBot がコンテキストを管理します。"
+        "hint": "有効にすると、Coze が会話履歴を管理します。この場合、LKMBot にローカル保存されたコンテキストは参照専用となり、LKMBot のコンテキストに対する操作も反映されません。無効の場合は LKMBot がコンテキストを管理します。"
       }
     }
   },

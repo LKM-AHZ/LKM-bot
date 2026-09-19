@@ -241,7 +241,7 @@ window.renderTabs = renderTabs;
 
     plugin = StarMetadata(
         name=PLUGIN_PAGE_DEMO_NAME,
-        author="AstrBot Test",
+        author="LKMBot Test",
         desc="Plugin Page demo",
         version="1.0.0",
         display_name="Plugin Page Demo",
@@ -2354,55 +2354,6 @@ async def test_dashboard_ssl_missing_cert_and_key_falls_back_to_http(
         assert any("Starting WebUI at http://" in message for message in info_messages)
     finally:
         core_lifecycle_td.astrbot_config["dashboard"] = original_dashboard_config
-
-
-@pytest.mark.asyncio
-async def test_subagent_config_accepts_default_persona(
-    app: FastAPIAppAdapter,
-    authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
-):
-    test_client = app.test_client()
-    old_cfg = copy.deepcopy(
-        core_lifecycle_td.astrbot_config.get("subagent_orchestrator", {})
-    )
-    payload = {
-        "main_enable": True,
-        "remove_main_duplicate_tools": True,
-        "agents": [
-            {
-                "name": "planner",
-                "persona_id": "default",
-                "public_description": "planner",
-                "system_prompt": "",
-                "enabled": True,
-            }
-        ],
-    }
-
-    try:
-        response = await test_client.post(
-            "/api/subagent/config",
-            json=payload,
-            headers=authenticated_header,
-        )
-        assert response.status_code == 200
-        data = await response.get_json()
-        assert data["status"] == "ok"
-
-        get_response = await test_client.get(
-            "/api/subagent/config", headers=authenticated_header
-        )
-        assert get_response.status_code == 200
-        get_data = await get_response.get_json()
-        assert get_data["status"] == "ok"
-        assert get_data["data"]["agents"][0]["persona_id"] == "default"
-    finally:
-        await test_client.post(
-            "/api/subagent/config",
-            json=old_cfg,
-            headers=authenticated_header,
-        )
 
 
 @pytest.mark.asyncio

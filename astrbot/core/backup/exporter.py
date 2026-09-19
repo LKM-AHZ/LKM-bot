@@ -1,4 +1,4 @@
-"""AstrBot 数据导出器
+"""LKMBot 数据导出器
 
 负责将所有数据导出为 ZIP 备份文件。
 导出格式为 JSON，这是数据库无关的方案，支持未来向 MySQL/PostgreSQL 迁移。
@@ -37,7 +37,7 @@ CMD_CONFIG_FILE_PATH = os.path.join(get_astrbot_data_path(), "cmd_config.json")
 
 
 class AstrBotExporter:
-    """AstrBot 数据导出器
+    """LKMBot 数据导出器
 
     导出内容：
     - 主数据库所有表（data/data_v4.db）

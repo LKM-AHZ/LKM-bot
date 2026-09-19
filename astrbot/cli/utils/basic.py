@@ -7,7 +7,7 @@ _BUNDLED_DIST = Path(__file__).parent.parent.parent / "dashboard" / "dist"
 
 
 def check_astrbot_root(path: str | Path) -> bool:
-    """Check if the path is an AstrBot root directory"""
+    """Check if the path is an LKMBot root directory"""
     if not isinstance(path, Path):
         path = Path(path)
     if not path.exists() or not path.is_dir():
@@ -18,7 +18,7 @@ def check_astrbot_root(path: str | Path) -> bool:
 
 
 def get_astrbot_root() -> Path:
-    """Get the AstrBot root directory path"""
+    """Get the LKMBot root directory path"""
     return Path.cwd()
 
 

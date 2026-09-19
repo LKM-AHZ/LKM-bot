@@ -750,7 +750,7 @@ class CuaBooter(ComputerBooter):
         except ImportError as exc:
             raise RuntimeError(
                 "CUA sandbox support requires the optional `cua` package. "
-                "Install it with `pip install cua` in the AstrBot environment."
+                "Install it with `pip install cua` in the LKMBot environment."
             ) from exc
 
         image_obj = self._build_image(Image)

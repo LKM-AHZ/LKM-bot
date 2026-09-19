@@ -152,7 +152,7 @@ class Platform(abc.ABC):
         """Creates a message event for this platform.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created message event.

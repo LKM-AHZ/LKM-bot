@@ -35,7 +35,7 @@ __all__ = ["AstrBotUpdater", "UpdateProgress", "UpdateProgressCallback"]
 
 @dataclass(frozen=True, slots=True)
 class UpdateProgress:
-    """Observable progress for an AstrBot update.
+    """Observable progress for an LKMBot update.
 
     Args:
         stage: Current update stage.
@@ -60,13 +60,13 @@ UpdateProgressCallback = Callable[[UpdateProgress], Awaitable[None]]
 
 
 class AstrBotUpdater(_RepoZipUpdater):
-    """Expose the complete, high-level AstrBot Core update operations."""
+    """Expose the complete, high-level LKMBot Core update operations."""
 
     def __init__(
         self,
         verify: str | bool | None = None,
     ) -> None:
-        """Initialize the AstrBot core updater.
+        """Initialize the LKMBot core updater.
 
         Args:
             verify: TLS certificate verification configuration for HTTPX.
@@ -74,7 +74,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         super().__init__(verify=verify)
         self._main_path = get_astrbot_path()
         self._release_api = "https://api.soulter.top/releases"
-        self._repository_url = "https://github.com/AstrBotDevs/AstrBot"
+        self._repository_url = "https://github.com/Alma1314/LKM-bot"
         self._core_package_base_url = (
             "https://astrbot-registry.soulter.top/download/astrbot-core"
         )
@@ -104,7 +104,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         self,
         consider_prerelease: bool = True,
     ) -> ReleaseInfo | None:
-        """Check whether a newer AstrBot release is available.
+        """Check whether a newer LKMBot release is available.
 
         Args:
             consider_prerelease: Whether prerelease versions may be selected.
@@ -119,7 +119,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         )
 
     async def get_releases(self) -> list[ReleaseInfo]:
-        """Fetch available AstrBot releases.
+        """Fetch available LKMBot releases.
 
         Returns:
             Releases in upstream order, including prereleases. Each item contains
@@ -181,7 +181,7 @@ class AstrBotUpdater(_RepoZipUpdater):
             try:
                 await progress_callback(event)
             except Exception:
-                logger.exception("AstrBot update progress observer failed.")
+                logger.exception("LKMBot update progress observer failed.")
 
         async def dashboard_progress(payload: dict) -> None:
             await emit_progress(
@@ -196,7 +196,7 @@ class AstrBotUpdater(_RepoZipUpdater):
             await emit_progress(
                 "core",
                 "running",
-                "正在下载 AstrBot 项目代码...",
+                "正在下载 LKMBot 项目代码...",
                 45 + int(float(payload.get("percent") or 0) * 45),
                 payload,
             )
@@ -206,11 +206,11 @@ class AstrBotUpdater(_RepoZipUpdater):
         if not target_version or target_version == "latest":
             releases = await self._fetch_release_info(self._release_api)
             if not releases:
-                raise RuntimeError("No AstrBot release is available.")
+                raise RuntimeError("No LKMBot release is available.")
             target_release = releases[0]
             target_version = target_release["tag_name"]
             if self._compare_version(VERSION, target_version) >= 0:
-                raise RuntimeError("AstrBot is already up to date.")
+                raise RuntimeError("LKMBot is already up to date.")
         elif target_version.startswith("v"):
             releases = await self._fetch_release_info(self._release_api)
             target_release = next(
@@ -264,7 +264,7 @@ class AstrBotUpdater(_RepoZipUpdater):
             await emit_progress(
                 "core",
                 "running",
-                "正在下载 AstrBot 项目代码...",
+                "正在下载 LKMBot 项目代码...",
                 45,
             )
             await self._download_core_package(
@@ -378,7 +378,7 @@ class AstrBotUpdater(_RepoZipUpdater):
 
         if not _is_dist_compatible(data_dist_path, VERSION):
             raise RuntimeError(
-                f"Downloaded Dashboard is not compatible with AstrBot v{VERSION}"
+                f"Downloaded Dashboard is not compatible with LKMBot v{VERSION}"
             )
         return data_dist_path
 
@@ -391,7 +391,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         progress_callback=None,
         release_data: dict | None = None,
     ) -> Path:
-        """Download an AstrBot core update package without applying it.
+        """Download an LKMBot core update package without applying it.
 
         Args:
             latest: Whether to download the latest release.
@@ -412,17 +412,17 @@ class AstrBotUpdater(_RepoZipUpdater):
 
         if os.environ.get("ASTRBOT_CLI") or os.environ.get("ASTRBOT_LAUNCHER"):
             raise Exception(
-                "Error: You are running AstrBot via CLI, please use `pip` or `uv tool upgrade` to update AstrBot."
+                "Error: You are running LKMBot via CLI, please use `pip` or `uv tool upgrade` to update LKMBot."
             )  # 避免版本管理混乱
 
         target_version = None
         if latest:
             update_data = await self._fetch_release_info(self._release_api)
             if not update_data:
-                raise RuntimeError("No AstrBot release is available.")
+                raise RuntimeError("No LKMBot release is available.")
             latest_version = update_data[0]["tag_name"]
             if self._compare_version(VERSION, latest_version) >= 0:
-                raise Exception("AstrBot is already up to date.")
+                raise Exception("LKMBot is already up to date.")
             target_version = latest_version
             file_url = update_data[0]["zipball_url"]
         elif str(version).startswith("v"):
@@ -441,7 +441,7 @@ class AstrBotUpdater(_RepoZipUpdater):
                 raise Exception("The commit hash must be 40 characters long.")
             repository = GitHubRepository.parse(self._repository_url)
             file_url = repository.revision_archive_url(str(version))
-        logger.info(f"Preparing to update AstrBot Core to version {version}")
+        logger.info(f"Preparing to update LKMBot Core to version {version}")
 
         if proxy:
             proxy = proxy.removesuffix("/")
@@ -453,7 +453,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         if hosted_package_url:
             try:
                 logger.info(
-                    "Attempting to download the AstrBot Core update package from "
+                    "Attempting to download the LKMBot Core update package from "
                     f"hosted storage first: {hosted_package_url}"
                 )
                 await self._download_file(
@@ -468,7 +468,7 @@ class AstrBotUpdater(_RepoZipUpdater):
                 return zip_path
             except Exception as exc:
                 logger.warning(
-                    "Failed to download the AstrBot Core update package from hosted "
+                    "Failed to download the LKMBot Core update package from hosted "
                     f"storage: {exc}. Falling back to the current update source."
                 )
 
@@ -480,7 +480,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         return zip_path
 
     def _apply_core_package(self, zip_path: str | Path) -> None:
-        """Apply a previously downloaded AstrBot core update package.
+        """Apply a previously downloaded LKMBot core update package.
 
         Args:
             zip_path: Core update zip archive path.
@@ -492,5 +492,5 @@ class AstrBotUpdater(_RepoZipUpdater):
             Exception: If the archive cannot be extracted or applied.
         """
 
-        logger.info("AstrBot Core update package downloaded; extracting the archive.")
+        logger.info("LKMBot Core update package downloaded; extracting the archive.")
         self._extract_archive(str(zip_path), self._main_path)

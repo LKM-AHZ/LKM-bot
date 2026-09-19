@@ -1,24 +1,28 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: astrbot-standalone-lb
-  namespace: astrbot-standalone-ns
+  name: lkmbot-standalone-nodeport
+  namespace: lkmbot-standalone-ns
   labels:
-    app: astrbot-standalone
+    app: lkmbot-standalone
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
-    app: astrbot-standalone
+    app: lkmbot-standalone
   ports:
     - name: webui
       port: 6185
       targetPort: 6185
+      nodePort: 30185
     - name: qq-ws
       port: 6199
       targetPort: 6199
+      nodePort: 30199
     # - name: wecom-wh
     #   port: 6195
     #   targetPort: 6195
+    #   nodePort: 30195
     # - name: qq-off-wh
     #   port: 6196
     #   targetPort: 6196
+    #   nodePort: 30196

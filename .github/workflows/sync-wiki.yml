@@ -1,4 +1,4 @@
-name: Sync AstrBot Docs to GitHub Wiki
+name: Sync LKMBot Docs to GitHub Wiki
 
 on:
   workflow_dispatch:
@@ -45,7 +45,7 @@ jobs:
       - name: Validate internal doc links
         run: python docs/scripts/sync_docs_to_wiki.py --source-root docs --check-links-only
 
-      - name: Clone AstrBot wiki
+      - name: Clone LKMBot wiki
         env:
           WIKI_TOKEN: ${{ secrets.ASTRBOT_WIKI_TOKEN }}
         run: |

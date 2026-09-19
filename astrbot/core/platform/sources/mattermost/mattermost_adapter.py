@@ -313,7 +313,7 @@ class MattermostPlatformAdapter(Platform):
         """Creates a Mattermost message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created Mattermost message event.

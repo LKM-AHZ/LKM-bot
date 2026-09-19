@@ -15,7 +15,7 @@ from astrbot.core.platform.sources.wecom_ai_bot.wecomai_queue_mgr import (
 @pytest.mark.asyncio
 async def test_wecomai_group_message_includes_chat_id():
     adapter = WecomAIBotAdapter.__new__(WecomAIBotAdapter)
-    adapter.bot_name = "AstrBot"
+    adapter.bot_name = "LKMBot"
     adapter.encoding_aes_key = ""
     payload = {
         "message_data": {

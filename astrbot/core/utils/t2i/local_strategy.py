@@ -1445,7 +1445,7 @@ class MarkdownRenderer:
         self.bg_color = bg_color
 
     def _draw_masthead(self, draw: ImageDraw.ImageDraw) -> None:
-        """Draw the AstrBot mark, wordmark, and version.
+        """Draw the LKMBot mark, wordmark, and version.
 
         Args:
             draw: Pillow drawing context.
@@ -1485,7 +1485,7 @@ class MarkdownRenderer:
 
         brand_font = FontManager.get_font(28, bold=True)
         version_font = FontManager.get_font(18)
-        draw.text((CONTENT_MARGIN + 42, 27), "AstrBot", font=brand_font, fill=INK)
+        draw.text((CONTENT_MARGIN + 42, 27), "LKMBot", font=brand_font, fill=INK)
         version_text = f"v{VERSION}"
         version_width = TextMeasurer.get_text_size(version_text, version_font)[0]
         draw.text(

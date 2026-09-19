@@ -13,7 +13,7 @@ Local behavior follows each role's `filesystem_scope` permission:
   depends on host OS permissions.
 - `workspace`: read/grep are restricted to globally installed Skills,
   plugin-provided Skills, built-in plugin Skills, the current session or project
-  workspace, and AstrBot temporary directories. Write/edit are restricted to the
+  workspace, and LKMBot temporary directories. Write/edit are restricted to the
   current workspace and temporary directories. Administrators may also update
   globally installed Skills; plugin-provided and built-in Skills remain read-only.
 - Upload and download tools are not exposed in Local mode.

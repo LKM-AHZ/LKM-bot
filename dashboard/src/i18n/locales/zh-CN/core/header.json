@@ -1,7 +1,7 @@
 {
-  "logoTitle": "AstrBot WebUI",
+  "logoTitle": "LKMBot WebUI",
   "version": {
-    "hasNewVersion": "AstrBot 有新版本！",
+    "hasNewVersion": "LKMBot 有新版本！",
     "dashboardHasNewVersion": "WebUI 有新版本！"
   },
   "buttons": {
@@ -16,7 +16,7 @@
     }
   },
   "updateDialog": {
-    "title": "更新 AstrBot",
+    "title": "更新 LKMBot",
     "currentVersion": "当前版本",
     "status": {
       "checking": "正在检查更新...",
@@ -61,7 +61,7 @@
       "core": "下载项目代码",
       "dependencies": "正在更新依赖...",
       "restart": "正在准备重启...",
-      "restarting": "正在重启 AstrBot",
+      "restarting": "正在重启 LKMBot",
       "completed": "更新完成",
       "successReady": "更新成功",
       "autoReloadIn": "{seconds} 秒后自动刷新",
@@ -76,12 +76,12 @@
       "currentVersion": "当前版本：",
       "guideTitle": "跳转后建议：",
       "guideStep1": "根据你的系统架构下载对应安装包。",
-      "guideStep2": "完成安装后重启 AstrBot。",
+      "guideStep2": "完成安装后重启 LKMBot。",
       "guideStep3": "如果你使用 Docker，请优先使用镜像更新方式。"
     },
     "desktopApp": {
       "title": "更新桌面应用",
-      "message": "将检查并升级 AstrBot 桌面端程序。",
+      "message": "将检查并升级 LKMBot 桌面端程序。",
       "currentVersion": "当前版本：",
       "latestVersion": "最新版本：",
       "checking": "正在检查桌面应用更新...",
@@ -106,7 +106,7 @@
   "accountDialog": {
     "title": "修改账户",
     "securityWarning": "安全提醒: 请修改密码以确保账户安全",
-    "securityWarningMd5": "新的 AstrBot 版本强化了安全策略，请重新修改密码",
+    "securityWarningMd5": "新的 LKMBot 版本强化了安全策略，请重新修改密码",
     "securityWarningUpgrade": "检测到旧版本密码存储方式，请修改密码以完成安全升级",
     "form": {
       "currentPassword": "当前密码",
@@ -116,7 +116,7 @@
       "passwordHint": "长度至少 8 位，且包含大写字母、小写字母和数字",
       "confirmPasswordHint": "请再次输入新密码以确认",
       "usernameHint": "留空表示不修改用户名",
-      "defaultCredentials": "默认用户名为 astrbot，初始密码会在首次启动时自动生成并显示在控制台中。"
+      "defaultCredentials": "默认用户名为 lkmbot，初始密码会在首次启动时自动生成并显示在控制台中。"
     },
     "validation": {
       "passwordRequired": "请输入密码",

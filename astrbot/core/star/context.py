@@ -36,7 +36,6 @@ from astrbot.core.star.filter.platform_adapter_type import (
     ADAPTER_NAME_2_TYPE,
     PlatformAdapterType,
 )
-from astrbot.core.subagent_orchestrator import SubAgentOrchestrator
 from astrbot.core.utils.astrbot_path import get_astrbot_system_tmp_path
 
 from ..exceptions import ProviderNotFoundError
@@ -142,14 +141,13 @@ class Context:
         astrbot_config_mgr: AstrBotConfigManager,
         knowledge_base_manager: KnowledgeBaseManager,
         cron_manager: CronJobManager,
-        subagent_orchestrator: SubAgentOrchestrator | None = None,
     ) -> None:
         self._event_queue = event_queue
         """事件队列。消息平台通过事件队列传递消息事件。"""
         self._config = config
-        """AstrBot 默认配置"""
+        """LKMBot 默认配置"""
         self._db = db
-        """AstrBot 数据库"""
+        """LKMBot 数据库"""
         self.provider_manager = provider_manager
         """模型提供商管理器"""
         self.platform_manager = platform_manager
@@ -166,7 +164,6 @@ class Context:
         """知识库管理器"""
         self.cron_manager = cron_manager
         """Cron job manager, initialized by core lifecycle."""
-        self.subagent_orchestrator = subagent_orchestrator
 
     async def llm_generate(
         self,
@@ -595,13 +592,13 @@ class Context:
         return prov
 
     def get_config(self, umo: str | None = None) -> AstrBotConfig:
-        """获取 AstrBot 的配置。
+        """获取 LKMBot 的配置。
 
         Args:
             umo: unified_message_origin 值，用于获取特定会话的配置。
 
         Returns:
-            AstrBot 配置对象。
+            LKMBot 配置对象。
 
         Note:
             如果不提供 umo 参数，将返回默认配置。
@@ -727,7 +724,7 @@ class Context:
         self.registered_web_apis.append((route, view_handler, methods, desc))
 
     """
-    以下的方法已经不推荐使用。请从 AstrBot 文档查看更好的注册方式。
+    以下的方法已经不推荐使用。请从 LKMBot 文档查看更好的注册方式。
     """
 
     def get_event_queue(self) -> Queue:
@@ -745,7 +742,7 @@ class Context:
             平台适配器实例，如果未找到则返回 None。
 
         Note:
-            该方法已经过时，请使用 get_platform_inst 方法。(>= AstrBot v4.0.0)
+            该方法已经过时，请使用 get_platform_inst 方法。(>= LKMBot v4.0.0)
         """
         for platform in self.platform_manager.platform_insts:
             name = platform.meta().name
@@ -775,7 +772,7 @@ class Context:
                 return platform
 
     def get_db(self) -> BaseDatabase:
-        """获取 AstrBot 数据库。
+        """获取 LKMBot 数据库。
 
         Returns:
             数据库实例。

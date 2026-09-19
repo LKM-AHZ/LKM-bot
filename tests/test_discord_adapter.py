@@ -31,7 +31,7 @@ async def test_discord_group_message_includes_guild_and_channel_name():
     adapter = DiscordPlatformAdapter.__new__(DiscordPlatformAdapter)
     adapter.bot_self_id = "1"
     adapter.client = SimpleNamespace(user=SimpleNamespace(id=1))
-    guild = SimpleNamespace(name="AstrBot", get_member=lambda member_id: None)
+    guild = SimpleNamespace(name="LKMBot", get_member=lambda member_id: None)
     message = SimpleNamespace(
         id=42,
         content="hello",
@@ -81,16 +81,16 @@ def test_discord_group_name_falls_back_when_one_name_is_missing():
     )
     assert (
         DiscordPlatformAdapter._get_group_name(
-            SimpleNamespace(name=None, guild=SimpleNamespace(name="AstrBot"))
+            SimpleNamespace(name=None, guild=SimpleNamespace(name="LKMBot"))
         )
-        == "AstrBot"
+        == "LKMBot"
     )
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     ("guild_name", "channel_name", "expected_name"),
-    [(None, "general", "general"), ("AstrBot", None, "AstrBot")],
+    [(None, "general", "general"), ("LKMBot", None, "LKMBot")],
 )
 async def test_discord_get_group_name_falls_back_when_one_name_is_missing(
     guild_name, channel_name, expected_name
@@ -130,7 +130,7 @@ async def test_discord_get_group_fetches_uncached_guild_name():
     )
     guild = SimpleNamespace(
         id=456,
-        name="AstrBot",
+        name="LKMBot",
         icon=None,
         owner_id=None,
         member_count=None,
@@ -180,7 +180,7 @@ async def test_discord_get_group_enriches_guild_metadata_from_complete_cache():
         ),
     ]
     guild = SimpleNamespace(
-        name="AstrBot",
+        name="LKMBot",
         icon=SimpleNamespace(url="https://cdn.discordapp.com/guild.png"),
         owner_id=1,
         member_count=3,

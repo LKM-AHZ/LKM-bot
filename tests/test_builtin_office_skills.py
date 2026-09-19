@@ -43,7 +43,7 @@ def test_spreadsheet_skill_converts_inspects_and_validates_csv(tmp_path: Path) -
     source.write_text(
         "ID,Name,Amount,Date,Formula-like text\n"
         '001,测试,1200.5,2026-08-01,"=2+2"\n'
-        "002,AstrBot,875,2026-08-02,plain\n",
+        "002,LKMBot,875,2026-08-02,plain\n",
         encoding="utf-8",
     )
 
@@ -97,7 +97,7 @@ def test_document_skill_inspects_validates_scrubs_and_extracts_table(
     document = Document()
     document.core_properties.author = "Private Author"
     document.core_properties.last_modified_by = "Private Editor"
-    document.add_heading("AstrBot 文档测试", level=1)
+    document.add_heading("LKMBot 文档测试", level=1)
     paragraph = document.add_paragraph()
     run = paragraph.add_run("这是带有批注的正文。")
     document.add_comment(run, text="请复核这句话", author="Reviewer", initials="RV")
@@ -119,7 +119,7 @@ def test_document_skill_inspects_validates_scrubs_and_extracts_table(
     inspection = json.loads(inspected.stdout)
     assert inspection["comments"] == 1
     assert inspection["tables"][0]["rows"] == 2
-    assert inspection["headings"][0]["text"] == "AstrBot 文档测试"
+    assert inspection["headings"][0]["text"] == "LKMBot 文档测试"
     assert validated.returncode == 0, validated.stdout
     assert json.loads(validated.stdout)["valid"] is True
     assert scrubbed.returncode == 0, scrubbed.stderr

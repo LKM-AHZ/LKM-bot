@@ -4,7 +4,7 @@ DEFAULT_USER_AGENT = f"astrbot/{__version__}"
 
 
 def build_provider_headers(custom_headers: object = None) -> dict[str, str]:
-    """Build provider headers with an overridable AstrBot user agent.
+    """Build provider headers with an overridable LKMBot user agent.
 
     Args:
         custom_headers: Optional header mapping from provider configuration.

@@ -1,4 +1,4 @@
-"""AstrBot 数据导入器
+"""LKMBot 数据导入器
 
 负责从 ZIP 备份文件恢复所有数据。
 导入时进行版本校验：
@@ -155,9 +155,9 @@ class ImportPreCheckResult:
     can_import: bool = False
     # 版本状态: match（完全匹配）, minor_diff（小版本差异）, major_diff（主版本不同，拒绝）
     version_status: str = ""
-    # 备份文件中的 AstrBot 版本
+    # 备份文件中的 LKMBot 版本
     backup_version: str = ""
-    # 当前运行的 AstrBot 版本
+    # 当前运行的 LKMBot 版本
     current_version: str = VERSION
     # 备份创建时间
     backup_time: str = ""
@@ -221,7 +221,7 @@ class DatabaseClearError(RuntimeError):
 
 
 class AstrBotImporter:
-    """AstrBot 数据导入器
+    """LKMBot 数据导入器
 
     导入备份文件中的所有数据，包括：
     - 主数据库所有表
@@ -275,7 +275,7 @@ class AstrBotImporter:
                     manifest_data = zf.read("manifest.json")
                     manifest = json.loads(manifest_data)
                 except KeyError:
-                    result.error = "备份文件缺少 manifest.json，不是有效的 AstrBot 备份"
+                    result.error = "备份文件缺少 manifest.json，不是有效的 LKMBot 备份"
                     return result
                 except json.JSONDecodeError as e:
                     result.error = f"manifest.json 格式错误: {e}"
@@ -340,7 +340,7 @@ class AstrBotImporter:
                 "can_import": False,
                 "message": (
                     f"主版本不兼容: 备份版本 {backup_version}, 当前版本 {VERSION}。"
-                    f"跨主版本导入可能导致数据损坏，请使用相同主版本的 AstrBot。"
+                    f"跨主版本导入可能导致数据损坏，请使用相同主版本的 LKMBot。"
                 ),
             }
 

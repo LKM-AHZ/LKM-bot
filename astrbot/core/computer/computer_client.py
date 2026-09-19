@@ -159,7 +159,7 @@ def _discover_bay_credentials(endpoint: str) -> str:
     if bay_data_dir:
         candidates.append(Path(bay_data_dir) / "credentials.json")
 
-    # 2. Mono-repo layout: AstrBot/../pkgs/bay/credentials.json
+    # 2. Mono-repo layout: LKMBot/../pkgs/bay/credentials.json
     astrbot_root = Path(__file__).resolve().parents[3]  # astrbot/core/computer/ → root
     candidates.append(astrbot_root.parent / "pkgs" / "bay" / "credentials.json")
 

@@ -593,7 +593,7 @@ class QQOfficialPlatformAdapter(Platform):
         """Creates a QQ Official message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created QQ Official message event.

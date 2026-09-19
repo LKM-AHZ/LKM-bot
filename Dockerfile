@@ -1,5 +1,5 @@
 FROM python:3.12-slim
-WORKDIR /AstrBot
+WORKDIR /LKMBot
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-COPY . /AstrBot/
+COPY . /LKMBot/
 
 RUN python -m pip install uv \
     && echo "3.12" > .python-version \

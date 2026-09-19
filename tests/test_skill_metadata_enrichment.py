@@ -181,7 +181,7 @@ def test_build_skills_prompt_normalizes_windows_backslashes_in_example(monkeypat
         SkillInfo(
             name="foo",
             description="do foo",
-            path=r"C:\AstrBot\My Skills\foo\SKILL.md",
+            path=r"C:\LKMBot\My Skills\foo\SKILL.md",
             active=True,
         ),
     ]
@@ -657,7 +657,7 @@ def test_list_skills_includes_builtin_plugin_skill_as_preset(
     skill_dir.joinpath("SKILL.md").write_text(
         "---\n"
         "name: skill-creator\n"
-        "description: Create AstrBot Skills.\n"
+        "description: Create LKMBot Skills.\n"
         "---\n"
         "# Skill Creator\n",
         encoding="utf-8",

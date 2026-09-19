@@ -1,4 +1,4 @@
-"""Validate the structure and frontmatter of an AstrBot Skill."""
+"""Validate the structure and frontmatter of an LKMBot Skill."""
 
 from __future__ import annotations
 
@@ -72,7 +72,7 @@ def validate_skill(skill_dir: Path) -> tuple[list[str], list[str]]:
     extra_keys = sorted(set(metadata) - {"name", "description"})
     if extra_keys:
         warnings.append(
-            "frontmatter contains optional keys not used for AstrBot discovery: "
+            "frontmatter contains optional keys not used for LKMBot discovery: "
             + ", ".join(extra_keys)
         )
 

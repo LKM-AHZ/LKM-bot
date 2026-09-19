@@ -141,7 +141,7 @@ class DiscordPlatformEvent(AstrMessageEvent):
     ) -> Group | None:
         """Get Discord channel and guild metadata without fetching all members.
 
-        AstrBot treats a Discord channel or thread as the group. Guild metadata is
+        LKMBot treats a Discord channel or thread as the group. Guild metadata is
         attached for context, while members are exposed only when the local cache is
         known to be complete.
 

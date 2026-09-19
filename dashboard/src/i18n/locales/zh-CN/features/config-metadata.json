@@ -143,7 +143,7 @@
     },
     "persona": {
       "description": "人格",
-      "hint": "赋予 AstrBot 人格。",
+      "hint": "赋予 LKMBot 人格。",
       "agent_runner": {
         "config": {
           "persona": {
@@ -162,7 +162,7 @@
     },
     "knowledgebase": {
       "description": "知识库",
-      "hint": "AstrBot 的 “外置大脑”。",
+      "hint": "LKMBot 的 “外置大脑”。",
       "kb_names": {
         "description": "知识库列表",
         "hint": "支持多选"
@@ -182,7 +182,7 @@
     },
     "websearch": {
       "description": "网页搜索",
-      "hint": "让 AstrBot 能够访问互联网，获悉时讯。",
+      "hint": "让 LKMBot 能够访问互联网，获悉时讯。",
       "provider_settings": {
         "web_search": {
           "description": "启用网页搜索"
@@ -241,7 +241,7 @@
     },
     "agent_computer_use": {
       "description": "使用电脑能力",
-      "hint": "让 AstrBot 访问和使用本机环境或者隔离的沙盒环境，以执行更复杂的任务。详见: [电脑使用](https://docs.astrbot.app/use/computer.html)。",
+      "hint": "让 LKMBot 访问和使用本机环境或者隔离的沙盒环境，以执行更复杂的任务。详见: [电脑使用](https://docs.astrbot.app/use/computer.html)。",
       "provider_settings": {
         "computer_use_runtime": {
           "description": "运行环境",
@@ -252,8 +252,8 @@
           "description": "本地权限策略"
         },
         "computer_use_require_admin": {
-          "description": "沙箱能力需要 AstrBot 管理员权限",
-          "hint": "开启后，需要 AstrBot 管理员权限才能调用远程沙箱能力。在平台配置->管理员中可添加管理员。使用 /sid 指令查看管理员 ID。"
+          "description": "沙箱能力需要 LKMBot 管理员权限",
+          "hint": "开启后，需要 LKMBot 管理员权限才能调用远程沙箱能力。在平台配置->管理员中可添加管理员。使用 /sid 指令查看管理员 ID。"
         },
         "sandbox": {
           "booter": {
@@ -285,7 +285,7 @@
           },
           "cua_idle_timeout": {
             "description": "CUA 空闲超时(秒)",
-            "hint": "CUA 沙箱空闲超时时间（秒）。大于 0 时，AstrBot 会在会话空闲达到该时长后主动关闭 CUA 沙箱；0 表示禁用。"
+            "hint": "CUA 沙箱空闲超时时间（秒）。大于 0 时，LKMBot 会在会话空闲达到该时长后主动关闭 CUA 沙箱；0 表示禁用。"
           },
           "cua_telemetry_enabled": {
             "description": "CUA 遥测",
@@ -329,10 +329,10 @@
         "scopeHints": {
           "none": "不允许访问任何文件",
           "workspace": "受限的工作区、临时目录和技能文件。",
-          "host": "AstrBot 所在运行环境的所有文件。"
+          "host": "LKMBot 所在运行环境的所有文件。"
         },
         "scopeDetails": {
-          "account": "1. 可访问 AstrBot 运行账户有权限访问的文件。",
+          "account": "1. 可访问 LKMBot 运行账户有权限访问的文件。",
           "docker": "2. 如果通过 Docker 部署，则仅可访问容器内及挂载的文件，并非宿主机全部文件。"
         },
         "roles": {
@@ -352,7 +352,7 @@
           "os": "操作系统",
           "arch": "架构",
           "sandbox": "本地隔离",
-          "unavailableHint": "沙箱启动失败，受限 Shell/Python 执行及工作区文件搜索会受到影响。请根据下方错误检查系统安全策略（如 Linux 的 AppArmor、用户命名空间限制）或容器限制，修复后重启 AstrBot 重新检测。",
+          "unavailableHint": "沙箱启动失败，受限 Shell/Python 执行及工作区文件搜索会受到影响。请根据下方错误检查系统安全策略（如 Linux 的 AppArmor、用户命名空间限制）或容器限制，修复后重启 LKMBot 重新检测。",
           "status": {
             "detected": "{backend} · 启动检测通过",
             "missing": "缺少 {dependency}",
@@ -364,18 +364,18 @@
     },
     "proactive_capability": {
       "description": "主动型能力",
-      "hint": "让 AstrBot 能够在某一时刻自动唤醒，帮你完成任务。详见: [主动型 Agent](https://docs.astrbot.app/use/proactive-agent.html)。",
+      "hint": "让 LKMBot 能够在某一时刻自动唤醒，帮你完成任务。详见: [主动型 Agent](https://docs.astrbot.app/use/proactive-agent.html)。",
       "provider_settings": {
         "proactive_capability": {
           "add_cron_tools": {
             "description": "启用",
-            "hint": "启用后，将会传递给 Agent 相关工具来实现主动型 Agent。你可以告诉 AstrBot 未来某个时间要做的事情，它将被定时触发然后执行任务，然后将结果发送给你。"
+            "hint": "启用后，将会传递给 Agent 相关工具来实现主动型 Agent。你可以告诉 LKMBot 未来某个时间要做的事情，它将被定时触发然后执行任务，然后将结果发送给你。"
           }
         }
       }
     },
     "truncate_and_compress": {
-      "hint": "AstrBot 如何管理工作记忆。详见: [上下文管理策略](https://docs.astrbot.app/use/context-compress.html)。",
+      "hint": "LKMBot 如何管理工作记忆。详见: [上下文管理策略](https://docs.astrbot.app/use/context-compress.html)。",
       "description": "上下文管理策略",
       "agent_runner": {
         "config": {
@@ -615,7 +615,7 @@
       },
       "discord_allow_bot_messages": {
         "description": "允许接收机器人消息",
-        "hint": "启用后，AstrBot 将接收来自其他 Discord 机器人的消息。适用于机器人间通信场景（如消息转发）。默认关闭。"
+        "hint": "启用后，LKMBot 将接收来自其他 Discord 机器人的消息。适用于机器人间通信场景（如消息转发）。默认关闭。"
       },
       "discord_command_register": {
         "description": "注册 Discord 指令",
@@ -765,11 +765,11 @@
       },
       "telegram_command_auto_refresh": {
         "description": "命令自动刷新",
-        "hint": "启用后，AstrBot 将会在运行时自动刷新 Telegram 命令。(单独设置此项无效)"
+        "hint": "启用后，LKMBot 将会在运行时自动刷新 Telegram 命令。(单独设置此项无效)"
       },
       "telegram_command_register": {
         "description": "命令注册",
-        "hint": "启用后，AstrBot 将会自动注册 Telegram 命令。"
+        "hint": "启用后，LKMBot 将会自动注册 Telegram 命令。"
       },
       "telegram_command_register_interval": {
         "description": "命令自动刷新间隔",
@@ -800,7 +800,7 @@
       },
       "unified_webhook_mode": {
         "description": "统一 Webhook 模式",
-        "hint": "Webhook 模式下使用 AstrBot 统一 Webhook 入口，无需单独开启端口。回调地址为 /api/v1/webhooks/platforms/{webhook_uuid}。"
+        "hint": "Webhook 模式下使用 LKMBot 统一 Webhook 入口，无需单独开启端口。回调地址为 /api/v1/webhooks/platforms/{webhook_uuid}。"
       },
       "use_markdown": {
         "description": "主动消息使用 Markdown",
@@ -852,7 +852,7 @@
       },
       "wpp_active_message_poll": {
         "description": "是否启用主动消息轮询",
-        "hint": "只有当你发现微信消息没有按时同步到 AstrBot 时，才需要启用这个功能，默认不启用。"
+        "hint": "只有当你发现微信消息没有按时同步到 LKMBot 时，才需要启用这个功能，默认不启用。"
       },
       "wpp_active_message_poll_interval": {
         "description": "主动消息轮询间隔",
@@ -860,7 +860,7 @@
       },
       "ws_reverse_host": {
         "description": "反向 Websocket 主机",
-        "hint": "AstrBot 将作为服务器端。"
+        "hint": "LKMBot 将作为服务器端。"
       },
       "ws_reverse_port": {
         "description": "反向 Websocket 端口"
@@ -976,7 +976,7 @@
       },
       "disable_builtin_commands": {
         "description": "禁用自带指令",
-        "hint": "禁用所有 AstrBot 自带指令,如 help, sid, new 等"
+        "hint": "禁用所有 LKMBot 自带指令,如 help, sid, new 等"
       }
     },
     "whitelist": {
@@ -1223,7 +1223,7 @@
       },
       "t2i_endpoint": {
         "description": "文本转图像服务 API 地址",
-        "hint": "为空时使用 AstrBot API 服务"
+        "hint": "为空时使用 LKMBot API 服务"
       },
       "t2i_template": {
         "description": "文本转图像自定义模版",
@@ -1243,7 +1243,7 @@
       },
       "log_file_path": {
         "description": "日志文件路径",
-        "hint": "相对路径以 data 目录为基准，例如 logs/astrbot.log；支持绝对路径。"
+        "hint": "相对路径以 data 目录为基准，例如 logs/lkmbot.log；支持绝对路径。"
       },
       "log_file_max_mb": {
         "description": "日志文件大小上限 (MB)",
@@ -1259,7 +1259,7 @@
       },
       "trace_log_path": {
         "description": "Trace 日志文件路径",
-        "hint": "相对路径以 data 目录为基准，例如 logs/astrbot.trace.log；支持绝对路径。"
+        "hint": "相对路径以 data 目录为基准，例如 logs/lkmbot.trace.log；支持绝对路径。"
       },
       "trace_log_max_mb": {
         "description": "Trace 日志大小上限 (MB)",
@@ -1275,11 +1275,11 @@
       },
       "callback_api_base": {
         "description": "对外可达的回调接口地址",
-        "hint": "外部服务可能会通过 AstrBot 生成的回调链接(如文件下载链接)访问 AstrBot 后端。由于 AstrBot 无法自动判断部署环境中对外可达的主机地址(host),因此需要通过此配置项显式指定外部服务如何访问 AstrBot 的地址。如 [http://localhost:6185](http://localhost:6185),[https://example.com](https://example.com) 等。"
+        "hint": "外部服务可能会通过 LKMBot 生成的回调链接(如文件下载链接)访问 LKMBot 后端。由于 LKMBot 无法自动判断部署环境中对外可达的主机地址(host),因此需要通过此配置项显式指定外部服务如何访问 LKMBot 的地址。如 [http://localhost:6185](http://localhost:6185),[https://example.com](https://example.com) 等。"
       },
       "disable_metrics": {
         "description": "禁用匿名使用统计",
-        "hint": "禁用后，AstrBot 将不再上传匿名使用统计数据。"
+        "hint": "禁用后，LKMBot 将不再上传匿名使用统计数据。"
       },
       "dashboard": {
         "trust_proxy_headers": {
@@ -1981,7 +1981,7 @@
       },
       "auto_save_history": {
         "description": "由 Coze 管理对话记录",
-        "hint": "启用后，将由 Coze 进行对话历史记录管理, 此时 AstrBot 本地保存的上下文不会生效(仅供浏览), 对 AstrBot 的上下文进行的操作也不会生效。如果为禁用, 则使用 AstrBot 管理上下文。"
+        "hint": "启用后，将由 Coze 进行对话历史记录管理, 此时 LKMBot 本地保存的上下文不会生效(仅供浏览), 对 LKMBot 的上下文进行的操作也不会生效。如果为禁用, 则使用 LKMBot 管理上下文。"
       }
     }
   },

@@ -154,7 +154,7 @@ async def test_prepare_chat_send_rejects_configured_admin_username():
 
     with pytest.raises(
         OpenApiServiceError,
-        match="username is reserved for an AstrBot administrator",
+        match="username is reserved for an LKMBot administrator",
     ):
         await service.prepare_chat_send(
             {"username": "admin-user", "message": "hello"},

@@ -1,12 +1,12 @@
 [project]
-name = "AstrBot"
+name = "LKMBot"
 version = "4.28.1"
 description = "Easy-to-use multi-platform LLM chatbot and development framework"
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
 requires-python = ">=3.12"
 
-keywords = ["AstrBot", "Agent", "Chatbot", "IM"]
+keywords = ["LKMBot", "LKM", "Agent", "Chatbot", "IM"]
 
 dependencies = [
   "aiocqhttp>=1.4.4",
@@ -84,10 +84,11 @@ dev = [
 ]
 
 [project.scripts]
+lkmbot = "astrbot.cli.__main__:cli"
 astrbot = "astrbot.cli.__main__:cli"
 
 [project.urls]
-Repository = "https://github.com/AstrBotDevs/AstrBot"
+Repository = "https://github.com/Alma1314/LKM-bot"
 
 [tool.ruff]
 exclude = ["astrbot/core/utils/t2i/local_strategy.py", "astrbot/api/all.py", "tests"]
@@ -110,8 +111,8 @@ ignore = [
   "F403",
   "F405",
   "E501",
-  "ASYNC230", # TODO: handle ASYNC230 in AstrBot
-  "ASYNC240", # TODO: handle ASYNC240 in AstrBot
+  "ASYNC230", # TODO: handle ASYNC230 in LKMBot
+  "ASYNC240", # TODO: handle ASYNC240 in LKMBot
 ]
 
 [tool.pyright]

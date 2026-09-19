@@ -1,12 +1,12 @@
 # 插件 Pages
 
-插件 Pages 允许插件在 AstrBot WebUI 中提供自己的页面。页面文件放在插件目录的 `pages/` 下，由 Dashboard 以受限 iframe 的方式加载；页面里的脚本通过 `window.AstrBotPluginPage` bridge 和 Dashboard 通信，再由 Dashboard 转发到插件注册的后端 Web API。
+插件 Pages 允许插件在 LKMBot WebUI 中提供自己的页面。页面文件放在插件目录的 `pages/` 下，由 Dashboard 以受限 iframe 的方式加载；页面里的脚本通过 `window.AstrBotPluginPage` bridge 和 Dashboard 通信，再由 Dashboard 转发到插件注册的后端 Web API。
 
 如果只是让用户填写少量配置项，优先使用 [`_conf_schema.json`](./plugin-config.md)。Pages 更适合复杂表单、运行状态面板、日志查看、文件上传下载、SSE 实时流、图表和其他需要自定义交互的场景。
 
 ## 目录结构
 
-`pages/` 下的每个一级子目录是一个独立 Page。AstrBot 只扫描 `pages/<page_name>/index.html`，没有 `index.html` 的目录会被忽略。
+`pages/` 下的每个一级子目录是一个独立 Page。LKMBot 只扫描 `pages/<page_name>/index.html`，没有 `index.html` 的目录会被忽略。
 
 ```text
 astrbot_plugin_page_demo/
@@ -115,7 +115,7 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-不需要手动引入 bridge SDK。AstrBot 返回 HTML 时会自动插入 `/api/plugin/page/bridge-sdk.js`。如果内联脚本必须同步访问 `window.AstrBotPluginPage`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
+不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/plugin/page/bridge-sdk.js`。如果内联脚本必须同步访问 `window.AstrBotPluginPage`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
 
 ```html
 <script src="/api/plugin/page/bridge-sdk.js"></script>
@@ -572,7 +572,7 @@ bridge.onContext(render);
 
 ## 亮暗主题
 
-AstrBot 会把当前主题同步给插件 Page。bridge SDK 会维护 `<html>` 的 `data-theme` 属性：
+LKMBot 会把当前主题同步给插件 Page。bridge SDK 会维护 `<html>` 的 `data-theme` 属性：
 
 - 亮色模式：`<html data-theme="light">`
 - 暗色模式：`<html data-theme="dark">`
@@ -610,7 +610,7 @@ body {
 <img src="./assets/logo.svg" alt="" />
 ```
 
-AstrBot 会重写相对资源路径并追加短期 `asset_token`。不要手动拼接 `/api/plugin/page/content/...`，不要自行追加 `asset_token`，也不要依赖 `..` 逃逸 Page 根目录。
+LKMBot 会重写相对资源路径并追加短期 `asset_token`。不要手动拼接 `/api/plugin/page/content/...`，不要自行追加 `asset_token`，也不要依赖 `..` 逃逸 Page 根目录。
 
 会被重写的资源引用包括：
 

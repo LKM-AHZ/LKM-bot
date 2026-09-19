@@ -1,7 +1,7 @@
 # 社区提供的部署方式
 
 > [!WARNING]
-> AstrBot 官方不保证这些部署方式的安全性和稳定性。
+> LKMBot 官方不保证这些部署方式的安全性和稳定性。
 
 ## Linux 一键部署脚本
 
@@ -21,7 +21,7 @@ wget -qO- https://raw.githubusercontent.com/zhende1113/Antlia/refs/heads/main/Sc
 
 ## Linux 一键部署脚本（基于Docker）
 
-支持 AstrBot / NapCat
+支持 LKMBot / NapCat
 
 > [!TIP]
 > 权限不足时请使用 `sudo` 提权
@@ -47,6 +47,6 @@ sudo ./AstrbotScript.sh
 
 __仓库地址：[railgun19457/AstrbotScript](https://github.com/railgun19457/AstrbotScript)__
 
-## AstrBot Android 部署
+## LKMBot Android 部署
 
 参考 [zz6zz666/AstrBot-Android-App](https://github.com/zz6zz666/AstrBot-Android-App)

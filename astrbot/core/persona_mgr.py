@@ -368,7 +368,7 @@ class PersonaManager:
     def get_v3_persona_data(
         self,
     ) -> tuple[list[dict], list[Personality], Personality]:
-        """获取 AstrBot <4.0.0 版本的 persona 数据。
+        """获取 LKMBot <4.0.0 版本的 persona 数据。
 
         Returns:
             - list[dict]: 包含 persona 配置的字典列表。

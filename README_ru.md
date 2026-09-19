@@ -1,13 +1,13 @@
-![AstrBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+![LKMBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
 
 <div align="center">
 
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh.md">简体中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README.md">English</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh-TW.md">繁體中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ja.md">日本語</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_fr.md">Français</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_es.md">Español</a>
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh.md">简体中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README.md">English</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh-TW.md">繁體中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ja.md">日本語</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_fr.md">Français</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_es.md">Español</a>
 
 <br>
 
@@ -37,7 +37,7 @@
 <a href="mailto:community@astrbot.app">Email Support</a>
 </div>
 
-AstrBot — это универсальная платформа Agent-чатботов с открытым исходным кодом, которая интегрируется с основными приложениями для обмена мгновенными сообщениями. Она предоставляет надёжную и масштабируемую инфраструктуру разговорного ИИ для частных лиц, разработчиков и команд. Будь то персональный ИИ-компаньон, интеллектуальная служба поддержки, автоматизированный помощник или корпоративная база знаний — AstrBot позволяет быстро создавать готовые к использованию ИИ-приложения в рабочих процессах вашей платформы обмена сообщениями.
+LKMBot — это универсальная платформа Agent-чатботов с открытым исходным кодом, которая интегрируется с основными приложениями для обмена мгновенными сообщениями. Она предоставляет надёжную и масштабируемую инфраструктуру разговорного ИИ для частных лиц, разработчиков и команд. Будь то персональный ИИ-компаньон, интеллектуальная служба поддержки, автоматизированный помощник или корпоративная база знаний — LKMBot позволяет быстро создавать готовые к использованию ИИ-приложения в рабочих процессах вашей платформы обмена сообщениями.
 
 ![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
 
@@ -57,7 +57,7 @@ AstrBot — это универсальная платформа Agent-чатб�
 
 ### Облачное развёртывание в один клик (RainYun)
 
-Пользователям, которые хотят развернуть AstrBot в один клик, обеспечить его круглосуточную работу и не управлять сервером самостоятельно, мы рекомендуем облачный сервис развёртывания в один клик от RainYun ☁️:
+Пользователям, которые хотят развернуть LKMBot в один клик, обеспечить его круглосуточную работу и не управлять сервером самостоятельно, мы рекомендуем облачный сервис развёртывания в один клик от RainYun ☁️:
 
 [![Deploy on RainYun](https://rainyun-apps.cn-nb1.rains3.com/materials/deploy-on-rainyun-en.svg)](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
 
@@ -67,37 +67,40 @@ AstrBot — это универсальная платформа Agent-чатб�
 > Требуется установленный [uv](https://docs.astral.sh/uv/).
 > Для пользователей macOS: из-за проверок безопасности macOS первый запуск команды `astrbot` может занять больше времени (около 10-20 секунд).
 
-Для пользователей, которые хотят быстро попробовать AstrBot, знакомы с командной строкой и могут самостоятельно установить окружение `uv`, мы рекомендуем использовать развёртывание в один клик через `uv` ⚡️:
+Для пользователей, которые хотят быстро попробовать LKMBot, знакомы с командной строкой и могут самостоятельно установить окружение `uv`, мы рекомендуем использовать развёртывание в один клик через `uv` ⚡️:
 
 ```bash
-uv tool install astrbot --python 3.12
-astrbot init # Выполните эту команду только при первом запуске для инициализации окружения
-astrbot run
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+uv tool install . --python 3.12
+lkmbot init # Выполните эту команду только при первом запуске для инициализации окружения
+lkmbot run
 ```
 
 Обновить `astrbot`:
 
 ```bash
-uv tool upgrade astrbot --python 3.12
+git pull --ff-only
+uv tool install --force . --python 3.12
 ```
 
 ### Развёртывание Docker
 
-Для пользователей, знакомых с контейнерами и которым нужен более стабильный и подходящий для production способ, мы рекомендуем разворачивать AstrBot через Docker / Docker Compose.
+Для пользователей, знакомых с контейнерами и которым нужен более стабильный и подходящий для production способ, мы рекомендуем разворачивать LKMBot через Docker / Docker Compose.
 
-См. официальную документацию [Развёртывание AstrBot с Docker](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot).
+См. официальную документацию [Развёртывание LKMBot с Docker](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot).
 
 ### Развёртывание десктопного приложения
 
-Для пользователей, которые хотят использовать AstrBot на десктопе и в основном работают через ChatUI, мы рекомендуем AstrBot App.
+Для пользователей, которые хотят использовать LKMBot на десктопе и в основном работают через ChatUI, мы рекомендуем LKMBot App.
 
 Перейдите в [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop), скачайте и установите приложение; этот вариант предназначен для десктопа и не рекомендуется для серверных сценариев.
 
 ### Развёртывание через лаунчер
 
-Также на десктопе, для пользователей, которым нужен быстрый запуск и мультиинстанс с изоляцией окружений, мы рекомендуем AstrBot Launcher.
+Также на десктопе, для пользователей, которым нужен быстрый запуск и мультиинстанс с изоляцией окружений, мы рекомендуем LKMBot Launcher.
 
-Перейдите в [AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher), чтобы скачать и установить.
+Перейдите в [LKMBot Launcher](https://github.com/Raven95676/astrbot-launcher), чтобы скачать и установить.
 
 **Другие способы развёртывания**
 
@@ -115,7 +118,7 @@ uv tool upgrade astrbot --python 3.12
 
 ## Поддерживаемые платформы обмена сообщениями
 
-Подключите AstrBot к вашим любимым чат-платформам.
+Подключите LKMBot к вашим любимым чат-платформам.
 
 | Платформа | Поддержка |
 |---------|---------------|
@@ -187,10 +190,10 @@ Issues и Pull Request всегда приветствуются! Не стес�
 
 ### Среда разработки
 
-AstrBot использует `ruff` для форматирования и линтинга кода.
+LKMBot использует `ruff` для форматирования и линтинга кода.
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
 pip install pre-commit
 pre-commit install
 ```
@@ -207,7 +210,7 @@ pre-commit install
 
 ## ❤️ Особая благодарность
 
-Особая благодарность всем контрибьюторам и разработчикам плагинов за их вклад в AstrBot ❤️
+Особая благодарность всем контрибьюторам и разработчикам плагинов за их вклад в LKMBot ❤️
 
 <a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />

@@ -19,10 +19,10 @@ SOURCE_ALIASES = {
 }
 LANG_CONFIG = {
     "zh": {
-        "index_title": "# AstrBot 中文文档",
+        "index_title": "# LKMBot 中文文档",
         "index_intro": "该页面由 `AstrBot-docs` 自动同步到 GitHub Wiki。",
         "index_links": [
-            ("关于 AstrBot", "zh-what-is-astrbot"),
+            ("关于 LKMBot", "zh-what-is-astrbot"),
             ("社区", "zh-community"),
             ("常见问题", "zh-faq"),
         ],
@@ -37,10 +37,10 @@ LANG_CONFIG = {
         "sidebar_docs_entry_label": "文档入口",
     },
     "en": {
-        "index_title": "# AstrBot English Documentation",
+        "index_title": "# LKMBot English Documentation",
         "index_intro": "This page is synchronized automatically from `AstrBot-docs` to the GitHub wiki.",
         "index_links": [
-            ("What is AstrBot", "en-what-is-astrbot"),
+            ("What is LKMBot", "en-what-is-astrbot"),
             ("Community", "en-community"),
             ("FAQ", "en-faq"),
         ],
@@ -481,7 +481,7 @@ def build_language_index(language: str, page_names: set[str]) -> str:
 
 def build_home_page(language: str) -> str:
     config = LANG_CONFIG[language]
-    lines = ["# AstrBot Wiki", "", config["home_intro"], ""]
+    lines = ["# LKMBot Wiki", "", config["home_intro"], ""]
     for label, target in config["home_links"]:
         lines.append(f"- [{label}]({target})")
     return normalize_content("\n".join(lines))
@@ -608,7 +608,7 @@ def sync_docs_to_wiki(source_root: Path, wiki_root: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Sync AstrBot docs content to GitHub wiki pages."
+        description="Sync LKMBot docs content to GitHub wiki pages."
     )
     parser.add_argument(
         "--source-root",

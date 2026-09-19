@@ -1,8 +1,8 @@
 
-# AstrBot Knowledge Base
+# LKMBot Knowledge Base
 
 > [!TIP]
-> Requires AstrBot version >= 4.5.0.
+> Requires LKMBot version >= 4.5.0.
 
 ![Knowledge Base Preview](https://files.astrbot.app/docs/en/use/image-3.png)
 
@@ -10,7 +10,7 @@
 
 Open `Providers` (`/providers`), switch to the `Embedding` tab, click `Add`, and select a provider type.
 
-Currently, AstrBot supports embedding vector services compatible with OpenAI API and Gemini API.
+Currently, LKMBot supports embedding vector services compatible with OpenAI API and Gemini API.
 
 Select the provider in the left panel and fill in its API endpoint, API key, model name, and other settings in the right panel.
 
@@ -24,7 +24,7 @@ Similar to configuring the embedding model, open `Providers`, switch to the `Rer
 
 ## Creating a Knowledge Base
 
-AstrBot supports multiple knowledge base management. During chat, you can **freely specify which knowledge base to use**.
+LKMBot supports multiple knowledge base management. During chat, you can **freely specify which knowledge base to use**.
 
 Open `Knowledge Base` (`/knowledge-base`) from the sidebar and click `Create Knowledge Base`.
 

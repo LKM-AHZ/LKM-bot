@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: astrbot-data-shared-pvc
-  namespace: astrbot-ns
+  name: lkmbot-data-shared-pvc
+  namespace: lkmbot-ns
   labels:
-    app: astrbot-stack
+    app: lkmbot-stack
 spec:
   accessModes:
     - ReadWriteMany
@@ -18,9 +18,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: napcat-config-pvc
-  namespace: astrbot-ns
+  namespace: lkmbot-ns
   labels:
-    app: astrbot-stack
+    app: lkmbot-stack
 spec:
   accessModes:
     - ReadWriteOnce
@@ -34,9 +34,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: napcat-qq-pvc
-  namespace: astrbot-ns
+  namespace: lkmbot-ns
   labels:
-    app: astrbot-stack
+    app: lkmbot-stack
 spec:
   accessModes:
     - ReadWriteOnce
@@ -51,9 +51,9 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: napcat-machine-id-pvc
-  namespace: astrbot-ns
+  namespace: lkmbot-ns
   labels:
-    app: astrbot-stack
+    app: lkmbot-stack
 spec:
   accessModes:
     - ReadWriteOnce

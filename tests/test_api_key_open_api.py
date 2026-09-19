@@ -304,7 +304,7 @@ async def test_open_chat_send_auto_session_id_and_username(
     reserved_admin_data = await reserved_admin_res.get_json()
     assert reserved_admin_data["status"] == "error"
     assert reserved_admin_data["message"] == (
-        "username is reserved for an AstrBot administrator"
+        "username is reserved for an LKMBot administrator"
     )
 
 

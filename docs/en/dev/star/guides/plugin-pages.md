@@ -1,12 +1,12 @@
 # Plugin Pages
 
-Plugin Pages let a plugin provide its own pages inside the AstrBot WebUI. Page files live under the plugin's `pages/` directory and are loaded by the Dashboard in a restricted iframe. Page scripts communicate with the Dashboard through the `window.AstrBotPluginPage` bridge, and the Dashboard forwards backend calls to Web APIs registered by the plugin.
+Plugin Pages let a plugin provide its own pages inside the LKMBot WebUI. Page files live under the plugin's `pages/` directory and are loaded by the Dashboard in a restricted iframe. Page scripts communicate with the Dashboard through the `window.AstrBotPluginPage` bridge, and the Dashboard forwards backend calls to Web APIs registered by the plugin.
 
 If you only need a small set of editable settings, prefer [`_conf_schema.json`](./plugin-config.md). Pages are a better fit for complex forms, runtime dashboards, logs, file upload/download, SSE streams, charts, and other custom workflows.
 
 ## Directory Layout
 
-Each direct child directory under `pages/` is one Page. AstrBot only discovers `pages/<page_name>/index.html`; directories without `index.html` are ignored.
+Each direct child directory under `pages/` is one Page. LKMBot only discovers `pages/<page_name>/index.html`; directories without `index.html` are ignored.
 
 ```text
 astrbot_plugin_page_demo/
@@ -115,7 +115,7 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-You do not need to import the bridge SDK manually. AstrBot injects `/api/plugin/page/bridge-sdk.js` into returned HTML. If an inline script must access `window.AstrBotPluginPage` synchronously, move it to an external module file or explicitly include the SDK before your script:
+You do not need to import the bridge SDK manually. LKMBot injects `/api/plugin/page/bridge-sdk.js` into returned HTML. If an inline script must access `window.AstrBotPluginPage` synchronously, move it to an external module file or explicitly include the SDK before your script:
 
 ```html
 <script src="/api/plugin/page/bridge-sdk.js"></script>
@@ -572,7 +572,7 @@ bridge.onContext(render);
 
 ## Light/Dark Theme
 
-AstrBot syncs the current theme to Plugin Pages. The bridge SDK maintains a `data-theme` attribute on `<html>`:
+LKMBot syncs the current theme to Plugin Pages. The bridge SDK maintains a `data-theme` attribute on `<html>`:
 
 - Light mode: `<html data-theme="light">`
 - Dark mode: `<html data-theme="dark">`
@@ -610,9 +610,9 @@ Use normal relative paths:
 <img src="./assets/logo.svg" alt="" />
 ```
 
-AstrBot rewrites relative asset URLs and appends a short-lived `asset_token`. Do not hardcode `/api/plugin/page/content/...`, append `asset_token` yourself, or rely on `..` to escape the Page root.
+LKMBot rewrites relative asset URLs and appends a short-lived `asset_token`. Do not hardcode `/api/plugin/page/content/...`, append `asset_token` yourself, or rely on `..` to escape the Page root.
 
-AstrBot rewrites:
+LKMBot rewrites:
 
 - HTML `src` and `href`
 - CSS `url(...)`

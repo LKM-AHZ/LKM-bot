@@ -51,7 +51,7 @@ def make_platform_config(platform_type: str, **kwargs) -> dict:
             "telegram_command_register_interval": 300,
             "telegram_media_group_timeout": 2.5,
             "telegram_media_group_max_wait": 10.0,
-            "start_message": "Welcome to AstrBot!",
+            "start_message": "Welcome to LKMBot!",
         },
         "discord": {
             "id": "test_discord",
@@ -59,7 +59,7 @@ def make_platform_config(platform_type: str, **kwargs) -> dict:
             "discord_proxy": None,
             "discord_command_register": True,
             "discord_guild_id_for_debug": None,
-            "discord_activity_name": "Playing AstrBot",
+            "discord_activity_name": "Playing LKMBot",
         },
         "aiocqhttp": {
             "id": "test_aiocqhttp",

@@ -1,7 +1,7 @@
-# Deploy AstrBot with Kubernetes
+# Deploy LKMBot with Kubernetes
 
 > [!WARNING]
-> You can deploy AstrBot in a high-availability setup using Kubernetes (K8s), allowing it to automatically recover from failures.
+> You can deploy LKMBot in a high-availability setup using Kubernetes (K8s), allowing it to automatically recover from failures.
 >
 > Due to the current use of an SQLite database, this deployment does not support horizontal scaling with multiple replicas. Additionally, if using the Sidecar mode, pay special attention to the persistence of NapCat's login state.
 >
@@ -18,28 +18,28 @@ Before you begin, make sure your Kubernetes cluster meets the following conditio
 
 We offer two deployment options:
 
-*   **Integrated Deployment (Sidecar Mode)**: Deploy AstrBot and NapCat in the same Pod. Recommended for personal QQ accounts.
-*   **Standalone Deployment**: Deploy only AstrBot. Suitable for other platforms or if you want to manage NapCat independently.
+*   **Integrated Deployment (Sidecar Mode)**: Deploy LKMBot and NapCat in the same Pod. Recommended for personal QQ accounts.
+*   **Standalone Deployment**: Deploy only LKMBot. Suitable for other platforms or if you want to manage NapCat independently.
 
 ---
 
 ### Method 1: Deploy with NapCatQQ (Sidecar)
 
-This method is located in the `k8s/astrbot_with_napcat` directory.
+This method is located in the `k8s/lkmbot_with_napcat` directory.
 
 #### 1. Deploy
 
 ```bash
 # 1. Create namespace
-kubectl apply -f k8s/astrbot_with_napcat/00-namespace.yaml
+kubectl apply -f k8s/lkmbot_with_napcat/00-namespace.yaml
 
 # 2. Create Persistent Volume Claim
-# Note: astrbot-data-shared-pvc requires ReadWriteMany (RWX) access mode.
+# Note: lkmbot-data-shared-pvc requires ReadWriteMany (RWX) access mode.
 # If your cluster does not support RWX, you need to configure shared storage such as NFS and modify the storageClassName in 01-pvc.yaml.
-kubectl apply -f k8s/astrbot_with_napcat/01-pvc.yaml
+kubectl apply -f k8s/lkmbot_with_napcat/01-pvc.yaml
 
 # 3. Deploy the application
-kubectl apply -f k8s/astrbot_with_napcat/02-deployment.yaml
+kubectl apply -f k8s/lkmbot_with_napcat/02-deployment.yaml
 ```
 
 #### 2. Expose Service (Choose one)
@@ -47,33 +47,33 @@ kubectl apply -f k8s/astrbot_with_napcat/02-deployment.yaml
 *   **Option A: NodePort**
 
     ```bash
-    kubectl apply -f k8s/astrbot_with_napcat/03-service-nodeport.yaml
+    kubectl apply -f k8s/lkmbot_with_napcat/03-service-nodeport.yaml
     ```
 
     The service will be exposed via the node IP and a port automatically assigned by Kubernetes. You can find the port with the following command:
 
     ```bash
-    kubectl get svc -n astrbot-ns
+    kubectl get svc -n lkmbot-ns
     ```
 
-    In the output, find the `PORT(S)` column for `astrbot-webui-svc` and `napcat-web-svc`. The format is `<internal-port>:<NodePort>/TCP`. For example, if you see `8080:30185/TCP`, the access address is `http://<NodeIP>:30185`.
+    In the output, find the `PORT(S)` column for `lkmbot-service-nodeport` and `napcat-web-svc`. The format is `<internal-port>:<NodePort>/TCP`. For example, if you see `8080:30185/TCP`, the access address is `http://<NodeIP>:30185`.
 
 *   **Option B: LoadBalancer**
 
     If your cluster supports `LoadBalancer` type services (usually provided in K8s services from cloud providers), you can use this method.
 
     ```bash
-    kubectl apply -f k8s/astrbot_with_napcat/04-service-loadbalancer.yaml
+    kubectl apply -f k8s/lkmbot_with_napcat/04-service-loadbalancer.yaml
     ```
 
-    After execution, check the assigned external IP (EXTERNAL-IP) with `kubectl get svc -n astrbot-ns`.
+    After execution, check the assigned external IP (EXTERNAL-IP) with `kubectl get svc -n lkmbot-ns`.
 
 #### 3. Configure Connection
 
-Since AstrBot and NapCat are in the same Pod, they can communicate directly via `localhost`.
+Since LKMBot and NapCat are in the same Pod, they can communicate directly via `localhost`.
 
-1.  **Add a message platform in AstrBot:**
-    *   Go to the AstrBot WebUI, select  `Platforms` -> `Add Adapter`.
+1.  **Add a message platform in LKMBot:**
+    *   Go to the LKMBot WebUI, select  `Platforms` -> `Add Adapter`.
     *   **Select Message Platform Category**: `aiocqhttp`
     *   **Bot Name**: `napcat` (or custom)
     *   **Reverse Websocket Host**: `0.0.0.0`
@@ -91,21 +91,21 @@ Since AstrBot and NapCat are in the same Pod, they can communicate directly via 
 
 ---
 
-### Method 2: Deploy AstrBot Only (General Purpose)
+### Method 2: Deploy LKMBot Only (General Purpose)
 
-This method is located in the `k8s/astrbot` directory.
+This method is located in the `k8s/lkmbot` directory.
 
 #### 1. Deploy
 
 ```bash
 # 1. Create namespace
-kubectl apply -f k8s/astrbot/00-namespace.yaml
+kubectl apply -f k8s/lkmbot/00-namespace.yaml
 
 # 2. Create Persistent Volume Claim
-kubectl apply -f k8s/astrbot/01-pvc.yaml
+kubectl apply -f k8s/lkmbot/01-pvc.yaml
 
 # 3. Deploy the application
-kubectl apply -f k8s/astrbot/02-deployment.yaml
+kubectl apply -f k8s/lkmbot/02-deployment.yaml
 ```
 
 #### 2. Expose Service (Choose one)
@@ -113,39 +113,32 @@ kubectl apply -f k8s/astrbot/02-deployment.yaml
 *   **Option A: NodePort**
 
     ```bash
-    kubectl apply -f k8s/astrbot/03-service-nodeport.yaml
+    kubectl apply -f k8s/lkmbot/03-service-nodeport.yaml
     ```
 
     The service will be exposed via the node IP and a port automatically assigned by Kubernetes. You can find the port with the following command:
 
     ```bash
-    kubectl get svc -n astrbot-standalone-ns
+    kubectl get svc -n lkmbot-standalone-ns
     ```
 
-    In the output, find the `PORT(S)` column for `astrbot-webui-svc`. The format is `<internal-port>:<NodePort>/TCP`. For example, if you see `8080:30185/TCP`, the access address is `http://<NodeIP>:30185`.
+    In the output, find the `PORT(S)` column for `lkmbot-service-nodeport`. The format is `<internal-port>:<NodePort>/TCP`. For example, if you see `8080:30185/TCP`, the access address is `http://<NodeIP>:30185`.
 
 *   **Option B: LoadBalancer**
 
     ```bash
-    kubectl apply -f k8s/astrbot/04-service-loadbalancer.yaml
+    kubectl apply -f k8s/lkmbot/04-service-loadbalancer.yaml
     ```
 
-    After execution, check the assigned external IP (EXTERNAL-IP) with `kubectl get svc -n astrbot-standalone-ns`.
+    After execution, check the assigned external IP (EXTERNAL-IP) with `kubectl get svc -n lkmbot-standalone-ns`.
 
 ---
 
 ## Advanced Configuration
 
-### Image Mirror (for users in mainland China)
+### Prepare the LKMBot Image
 
-If you have difficulty pulling the `soulter/astrbot:latest` or `mlikiowa/napcat-docker:latest` images, you can manually edit the corresponding `02-deployment.yaml` file and replace the `image` field with a domestic mirror address, for example:
-
-```yaml
-# Example:
-# image: soulter/astrbot:latest
-# Replace with:
-image: m.daocloud.io/docker.io/soulter/astrbot:latest
-```
+The manifests use the local image `lkmbot:latest` by default. Build it on every cluster node, or push it to your image registry and update the `image` field in `02-deployment.yaml` with the full registry address. Configure a mirror for the NapCat image when required by your network.
 
 ### Enable Docker Sandbox Code Executor
 
@@ -153,7 +146,7 @@ If you need to use the sandbox code executor, you need to mount the Docker socke
 
 Edit the `02-deployment.yaml` file and add `volumes` and `volumeMounts` under `spec.template.spec`:
 
-1.  **Add the following to the `volumeMounts` list of the `astrbot` container:**
+1.  **Add the following to the `volumeMounts` list of the `lkmbot` container:**
 
     ```yaml
     - name: docker-sock
@@ -177,21 +170,21 @@ Edit the `02-deployment.yaml` file and add `volumes` and `volumeMounts` under `s
 *   **Sidecar Deployment Mode:**
 
     ```bash
-    # View AstrBot logs
-    kubectl logs -f -n astrbot-ns deployment/astrbot-stack -c astrbot
+    # View LKMBot logs
+    kubectl logs -f -n lkmbot-ns deployment/lkmbot-stack -c lkmbot
 
     # View NapCat logs
-    kubectl logs -f -n astrbot-ns deployment/astrbot-stack -c napcat
+    kubectl logs -f -n lkmbot-ns deployment/lkmbot-stack -c napcat
     ```
 
 *   **Standalone Deployment Mode:**
 
     ```bash
-    kubectl logs -f -n astrbot-standalone-ns deployment/astrbot-standalone
+    kubectl logs -f -n lkmbot-standalone-ns deployment/lkmbot-standalone
     ```
 
 ## 🎉 All Done!
 
-After deploying and exposing the service, you can access the AstrBot admin panel through the corresponding IP and port.
+After deploying and exposing the service, you can access the LKMBot admin panel through the corresponding IP and port.
 
-> New users must use the random password printed in the startup logs for the first login. Use the username shown in the logs (usually `astrbot`) and change it after logging in.
+> New users must use the random password printed in the startup logs for the first login. Use the username shown in the logs (usually `lkmbot`) and change it after logging in.

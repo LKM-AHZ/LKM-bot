@@ -62,29 +62,29 @@ class StaticFileService:
         "<body><main>"
         '<p class="status">404 · NOT FOUND</p>'
         "<h1>WebUI 文件缺失</h1>"
-        "<p>AstrBot 会在启动时检测并尝试下载 WebUI 文件。看到此页面说明下载失败或文件不完整，"
-        "请先尝试重启 AstrBot。</p>"
+        "<p>LKMBot 会在启动时检测并尝试下载 WebUI 文件。看到此页面说明下载失败或文件不完整，"
+        "请先尝试重启 LKMBot。</p>"
         "<h2>手动安装</h2>"
-        "<p>如果问题仍然存在，请前往 Releases 下载与当前 AstrBot 版本匹配的 "
-        "<code>AstrBot-vx.x.x-dashboard.zip</code>，解压后将 "
-        "<code>dist</code> 文件夹放入 <code>AstrBot/data/</code>。</p>"
-        '<a class="action" href="https://github.com/AstrBotDevs/AstrBot/releases">'
+        "<p>如果问题仍然存在，请前往 Releases 下载与当前 LKMBot 版本匹配的 "
+        "<code>LKMBot-vx.x.x-dashboard.zip</code>，解压后将 "
+        "<code>dist</code> 文件夹放入 <code>LKMBot/data/</code>。</p>"
+        '<a class="action" href="https://github.com/Alma1314/LKM-bot/releases">'
         "前往 Releases 下载</a>"
         '<section class="english" lang="en">'
         "<h2>WebUI files are missing</h2>"
-        "<p>AstrBot checks for WebUI files and attempts to download them at startup. "
+        "<p>LKMBot checks for WebUI files and attempts to download them at startup. "
         "If you see this page, the download failed or the files are incomplete. "
-        "Try restarting AstrBot first.</p>"
+        "Try restarting LKMBot first.</p>"
         "<h3>Manual installation</h3>"
         "<p>If the issue persists, open Releases and download "
-        "<code>AstrBot-vx.x.x-dashboard.zip</code> matching your current AstrBot version. "
+        "<code>LKMBot-vx.x.x-dashboard.zip</code> matching your current LKMBot version. "
         "Extract it and place the <code>dist</code> folder under "
-        "<code>AstrBot/data/</code>.</p>"
-        '<a class="action" href="https://github.com/AstrBotDevs/AstrBot/releases">'
+        "<code>LKMBot/data/</code>.</p>"
+        '<a class="action" href="https://github.com/Alma1314/LKM-bot/releases">'
         "Open Releases</a>"
         "</section>"
         '<p class="label">目录结构 / Directory structure</p>'
-        "<pre>AstrBot/\n└── data/\n    └── dist/\n        ├── index.html\n"
+        "<pre>LKMBot/\n└── data/\n    └── dist/\n        ├── index.html\n"
         "        └── assets/</pre>"
         '<p class="note">正在测试回调地址？看到此页面表示地址可达。<br>'
         '<span lang="en">Testing a callback URL? This page confirms that the URL is '

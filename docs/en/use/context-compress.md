@@ -1,10 +1,10 @@
 # Context Compression
 
-Starting from v4.11.0, AstrBot introduced an automatic context compression feature.
+Starting from v4.11.0, LKMBot introduced an automatic context compression feature.
 
 On the `Config` page, select the profile to edit, open `AI → Advanced → Context Management Strategy`, set the compression strategy, and click `Save Configuration` at the bottom right.
 
-AstrBot automatically compresses the context when the conversation context **reaches 82% of the maximum context window length of the conversation model being used**, ensuring that as much conversation content as possible is retained without losing key information.
+LKMBot automatically compresses the context when the conversation context **reaches 82% of the maximum context window length of the conversation model being used**, ensuring that as much conversation content as possible is retained without losing key information.
 
 ## Compression Strategies
 
@@ -21,15 +21,15 @@ Based on our full conversation history, produce a concise summary of key takeawa
 4. Write the summary in the user's language.
 ```
 
-After one round of compression, AstrBot will perform a secondary check to verify if the current context length meets the requirements. If it still doesn't meet the requirements, it will adopt a halving strategy, cutting the current context content in half until the requirements are met.
+After one round of compression, LKMBot will perform a secondary check to verify if the current context length meets the requirements. If it still doesn't meet the requirements, it will adopt a halving strategy, cutting the current context content in half until the requirements are met.
 
-- AstrBot will invoke the compressor for checking before each conversation request.
-- In the current version, AstrBot does not perform context compression during tool invocations. We will support this feature in the future, so stay tuned.
+- LKMBot will invoke the compressor for checking before each conversation request.
+- In the current version, LKMBot does not perform context compression during tool invocations. We will support this feature in the future, so stay tuned.
 
 ## ‼️ Important: Model Context Window Settings
 
-By default, when you add a model, AstrBot automatically retrieves the model's context window size from the API provided by [MODELS.DEV](https://models.dev/) based on the model's ID. However, due to the wide variety of models and the fact that some providers even modify the model IDs, AstrBot cannot automatically infer the context window size for all models you add.
+By default, when you add a model, LKMBot automatically retrieves the model's context window size from the API provided by [MODELS.DEV](https://models.dev/) based on the model's ID. However, due to the wide variety of models and the fact that some providers even modify the model IDs, LKMBot cannot automatically infer the context window size for all models you add.
 
 Open `Providers → Chat Completion`, select the model's provider in the left panel, and click an added model in the model list on the right. Edit `max_context_tokens` in the model configuration and save it.
 
-When the model context window size is set to 0, AstrBot will still automatically retrieve the model's context window size from MODELS.DEV for each request. If it remains 0, context compression will not be enabled for that request.
+When the model context window size is set to 0, LKMBot will still automatically retrieve the model's context window size from MODELS.DEV for each request. If it remains 0, context compression will not be enabled for that request.

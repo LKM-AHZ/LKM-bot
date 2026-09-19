@@ -1,10 +1,10 @@
 # Publishing Plugins to the Plugin Marketplace
 
-After completing your plugin development, you can choose to publish it to the AstrBot Plugin Marketplace, allowing more users to benefit from your work.
+After completing your plugin development, you can choose to publish it to the LKMBot Plugin Marketplace, allowing more users to benefit from your work.
 
-AstrBot uses GitHub to host plugins, so you'll need to push your plugin code to the GitHub plugin repository you created earlier.
+LKMBot uses GitHub to host plugins, so you'll need to push your plugin code to the GitHub plugin repository you created earlier.
 
-You can publish your plugin by visiting the [AstrBot Plugin Publish Page](https://cloud.astrbot.app/publish), You need to register an AstrBot Cloud account to publish plugins.
+You can publish your plugin by visiting the [LKMBot Plugin Publish Page](https://cloud.astrbot.app/publish), You need to register an LKMBot Cloud account to publish plugins.
 
 <!-- ![fill out the form](https://files.astrbot.app/docs/source/images/plugin-publish/image.png) -->
 
@@ -19,7 +19,7 @@ desc: Detailed description of your plugin's features, usage, etc.  # Detailed pl
 version: 1.0.0                               # Plugin version (follow semantic versioning)
 author: Author Name                          # Author name
 repo: https://github.com/your-name/repo      # Plugin repository URL
-# astrbot_version: ">=4.17.0"                # (Optional) AstrBot version range
+# astrbot_version: ">=4.17.0"                # (Optional) LKMBot version range
 # support_platforms:                         # (Optional) Supported platform adapter list
 #   - aiocqhttp
 #   - qq_official

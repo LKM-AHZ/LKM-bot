@@ -24,7 +24,7 @@ Mainstream models released after 2025 typically support function calling.
 
 Commonly unsupported models include older models such as DeepSeek-R1 and Gemini 2.0 thinking-type models.
 
-In AstrBot, web search, todo reminders, and code interpreter tools are provided by default. Many plugins, such as:
+In LKMBot, web search, todo reminders, and code interpreter tools are provided by default. Many plugins, such as:
 
 - astrbot_plugin_cloudmusic
 - astrbot_plugin_bilibili
@@ -34,7 +34,7 @@ In addition to providing traditional command invocation, also offer function cal
 
 Open `Extensions → Handlers → Function Tools` (`/extension/components`) in the WebUI to view and manage tool enablement. Configure the tools available to each Persona on the `Persona` page, and manage MCP servers under `Extensions → MCP Servers`.
 
-Some models may not support function calling and will return errors such as `tool call is not supported`, `function calling is not supported`, `tool use is not supported`, etc. In most cases, AstrBot can detect these errors and automatically remove function calling tools for you. If you find that a model doesn't support function calling, you can also disable all calling tools in the WebUI and try again, or switch to a model that supports function calling.
+Some models may not support function calling and will return errors such as `tool call is not supported`, `function calling is not supported`, `tool use is not supported`, etc. In most cases, LKMBot can detect these errors and automatically remove function calling tools for you. If you find that a model doesn't support function calling, you can also disable all calling tools in the WebUI and try again, or switch to a model that supports function calling.
 
 
 Below are some common tool calling demos:
@@ -46,4 +46,4 @@ Below are some common tool calling demos:
 
 ## MCP
 
-Please refer to this documentation: [AstrBot - MCP](/en/use/mcp).
+Please refer to this documentation: [LKMBot - MCP](/en/use/mcp).

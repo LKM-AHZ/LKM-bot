@@ -21,15 +21,15 @@ Message receiving mode: WebSocket
 1. Go to the [Kook Developer Center] and follow these steps:
 2. Log in and complete identity verification.
 3. Click "Create Application" and customize your Bot's nickname.
-4. Enter the application dashboard, select the **Bot** module, and enable **WebSocket connection mode**. Make sure to save the generated **Token**, as you will need it for the subsequent AstrBot configuration.
+4. Enter the application dashboard, select the **Bot** module, and enable **WebSocket connection mode**. Make sure to save the generated **Token**, as you will need it for the subsequent LKMBot configuration.
 5. Under the "Bot" page in the left sidebar, click "Invite Link" and set the role permissions (full permissions are recommended to ensure all features work).
 6. Copy the invite link, open it in your browser, and add the bot to your desired server.
 
    ![image](https://files.astrbot.app/docs/source/images/kook/image-1.png)
 
-## Configure in AstrBot
+## Configure in LKMBot
 
-1. Access the AstrBot management panel.
+1. Access the LKMBot management panel.
 2. Click **Platforms** in the left sidebar.
 3. Click `Add Adapter` above the bot list.
 4. Select the `kook` adapter.

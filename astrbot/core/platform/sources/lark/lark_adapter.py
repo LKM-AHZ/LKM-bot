@@ -708,7 +708,7 @@ class LarkPlatformAdapter(Platform):
         """Creates a Lark message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created Lark message event.

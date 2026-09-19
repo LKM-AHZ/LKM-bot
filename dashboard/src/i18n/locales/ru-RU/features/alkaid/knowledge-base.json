@@ -101,7 +101,7 @@
     },
     "messages": {
         "pluginNotAvailable": "Плагин не установлен или недоступен",
-        "pluginNotActivated": "Плагин astrbot_plugin_knowledge_base не включен. Пожалуйста, активируйте его в разделе плагинов и перезапустите AstrBot.",
+        "pluginNotActivated": "Плагин astrbot_plugin_knowledge_base не включен. Пожалуйста, активируйте его в разделе плагинов и перезапустите LKMBot.",
         "checkPluginFailed": "Не удалось проверить плагин",
         "installFailed": "Ошибка установки",
         "installPluginFailed": "Не удалось установить плагин",

@@ -4,20 +4,20 @@
 
 ### 当管理面板打开时遇到 404 错误
 
-在 [release](https://github.com/AstrBotDevs/AstrBot/releases) 页面下载 `AstrBot-vxxxxx-dashboard.zip`，解压拖到 `AstrBot/data` 下。还不行请重启电脑（来自群里的反馈）
+在 [release](https://github.com/AstrBotDevs/AstrBot/releases) 页面下载 `AstrBot-vxxxxx-dashboard.zip`，解压拖到 `LKMBot/data` 下。还不行请重启电脑（来自群里的反馈）
 
 
 ### 首次登录的默认账号和随机密码
 
-首次启动时，WebUI 的默认账号为 `astrbot`，默认密码会随机生成，不会写死为固定值。请在启动日志中查找以下内容并使用日志中的随机初始密码登录：
+首次启动时，WebUI 的默认账号为 `lkmbot`，默认密码会随机生成，不会写死为固定值。由旧版本升级的实例会保留原有账号。请在启动日志中查找以下内容并使用日志中的随机初始密码登录：
 
 ```text
 [00:27:40.590] [Core] [INFO] [dashboard.server:523]:
  ✨✨✨
-  AstrBot v4.24.3 WebUI is ready
+  LKMBot v4.24.3 WebUI is ready
 
    ➜  Local: http://localhost:6185
-   ➜  Initial username: astrbot
+   ➜  Initial username: lkmbot
    ➜  Initial password: UiYVpZxnW8k22IWqf0ru5pOy
    ➜  Change it after logging in
  ✨✨✨
@@ -28,14 +28,14 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
 
 ### 管理面板的密码忘记了
 
-如果你忘记了 AstrBot 管理面板的密码，你可以直接使用CLI工具`astrbot password`来更改密码
+如果你忘记了 LKMBot 管理面板的密码，你可以直接使用 CLI 工具 `lkmbot password` 来更改密码。
 
-另外，你也可以在 `AstrBot/data/cmd_config.json` 配置文件中找到 `"dashboard"` 字段，如下：
+另外，你也可以在 `LKMBot/data/cmd_config.json` 配置文件中找到 `"dashboard"` 字段，如下：
 
 ```json
   "dashboard": {
     "enable": true,
-    "username": "astrbot",
+    "username": "lkmbot",
     "password": "81e0c3dxxxxxxxxxxx78862e78",
     "pbkdf2_password": "pbkdf2_sha256$600000$1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "password_storage_upgraded": true,
@@ -71,45 +71,45 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
   },
 ```
 
-重启后 AstrBot 将会自动生成随机的密码以及固定的用户名 `astrbot`，请在日志查看。
+重启后 LKMBot 将会自动生成随机的密码以及固定的用户名 `lkmbot`，请在日志查看。
 
-### 升级 AstrBot 后密码正确但无法登录
+### 升级 LKMBot 后密码正确但无法登录
 
-如果你确认管理面板密码正确，但升级 AstrBot 后仍然无法登录，可能是旧版 WebUI 静态文件缓存与新版后端不兼容。
+如果你确认管理面板密码正确，但升级 LKMBot 后仍然无法登录，可能是旧版 WebUI 静态文件缓存与新版后端不兼容。
 
 解决方案：
 
-1. 停止 AstrBot。
-2. 删除 AstrBot 的 `data` 目录下的 `dist` 文件夹，即 `AstrBot/data/dist`。
-3. 重新启动 AstrBot。
+1. 停止 LKMBot。
+2. 删除 LKMBot 的 `data` 目录下的 `dist` 文件夹，即 `LKMBot/data/dist`。
+3. 重新启动 LKMBot。
 4. 访问管理面板后按 `Ctrl+Shift+R` 或 `Ctrl+F5`（macOS 用户请按 `Cmd+Shift+R`）强制刷新页面。
 
-重启后，AstrBot 会重新加载或下载匹配当前版本的 WebUI 文件。
+重启后，LKMBot 会重新加载或下载匹配当前版本的 WebUI 文件。
 
-## AstrBot 使用相关
+## LKMBot 使用相关
 
-### 如何让 AstrBot 控制我的 Mac / Windows / Linux 电脑？
+### 如何让 LKMBot 控制我的 Mac / Windows / Linux 电脑？
 
-1. 在 AstrBot WebUI 的 `配置文件` 中选择机器人使用的配置文件，进入 `AI 配置 → 能力 → 使用电脑能力`，将 `运行环境` 设为 `local`。此处需要使用 AstrBot 内置 AI。
+1. 在 LKMBot WebUI 的 `配置文件` 中选择机器人使用的配置文件，进入 `AI 配置 → 能力 → 使用电脑能力`，将 `运行环境` 设为 `local`。此处需要使用 LKMBot 内置 AI。
 2. 在同一配置文件的 `平台配置 → 基本 → 管理员 ID` 中添加你的用户 ID（可以通过 `/sid` 指令获取）。
 3. 点击右下角的 `保存配置` 按钮。
 
 > [!TIP]
-> AstrBot 为了安全起见，运行环境选择 `local` 时，默认仅允许 AstrBot 管理员使用电脑能力。
-> 运行环境可以选择 `sandbox`，此时所有用户都可以使用电脑能力（在一个隔离的沙箱中）。详情请看 [AstrBot 沙箱环境](/use/astrbot-agent-sandbox.md)
+> LKMBot 为了安全起见，运行环境选择 `local` 时，默认仅允许 LKMBot 管理员使用电脑能力。
+> 运行环境可以选择 `sandbox`，此时所有用户都可以使用电脑能力（在一个隔离的沙箱中）。详情请看 [LKMBot 沙箱环境](/use/astrbot-agent-sandbox.md)
 
-### 通过 AstrBot 桌面客户端安装的 AstrBot，data 目录在哪？
+### 通过 LKMBot 桌面客户端安装的 LKMBot，data 目录在哪？
 
 在家目录下的 `.astrbot` 目录下。
 
 - Windows: `C:\Users\你的用户名\.astrbot`
 - MacOS / Linux: `/Users/你的用户名/.astrbot` 或者 `/home/你的用户名/.astrbot`
 
-### 通过 AstrBot Launcher 安装的 AstrBot，data 目录在哪？
+### 通过 LKMBot Launcher 安装的 LKMBot，data 目录在哪？
 
-如果是旧版本的 AstrBot Launcher（Powershell），data 目录就在 Launcher bat 脚本的同级目录下。
+如果是旧版本的 LKMBot Launcher（Powershell），data 目录就在 Launcher bat 脚本的同级目录下。
 
-如果是新版本的 AstrBot Launcher（可视化），data 目录在家目录下的 `.astrbot_launcher` 目录下。
+如果是新版本的 LKMBot Launcher（可视化），data 目录在家目录下的 `.astrbot_launcher` 目录下。
 
 - Windows: `C:\Users\你的用户名\.astrbot_launcher`
 - MacOS / Linux: `/Users/你的用户名/.astrbot_launcher` 或者 `/home/你的用户名/.astrbot_launcher`
@@ -149,7 +149,7 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
 
 ![image](https://files.astrbot.app/docs/source/images/faq/image.png)
 
-这个是因为插件依赖的库没有被正常安装。一般情况下，AstrBot 会在安装好插件后自动为插件安装依赖库，如果出现了以下情况可能造成安装失败：
+这个是因为插件依赖的库没有被正常安装。一般情况下，LKMBot 会在安装好插件后自动为插件安装依赖库，如果出现了以下情况可能造成安装失败：
 
 1. 网络问题导致依赖库无法下载
 2. 插件作者没有填写 `requirements.txt` 文件
@@ -157,7 +157,7 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
 
 解决方法：
 
-结合报错信息，参考插件的 README 手动安装依赖库。你可以在 AstrBot WebUI 的 `数据与日志 → 日志 → 安装 pip 库` 中安装依赖库。
+结合报错信息，参考插件的 README 手动安装依赖库。你可以在 LKMBot WebUI 的 `数据与日志 → 日志 → 安装 pip 库` 中安装依赖库。
 
 在弹窗中填写库名，按需填写 PyPI 软件仓库链接，然后点击 `安装`。
 

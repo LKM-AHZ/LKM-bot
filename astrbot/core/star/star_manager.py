@@ -28,7 +28,7 @@ from astrbot.core import (
     pip_installer,
     sp,
 )
-from astrbot.core.agent.handoff import FunctionTool, HandoffTool
+from astrbot.core.agent.tool import FunctionTool
 from astrbot.core.config.astrbot_config import AstrBotConfig
 from astrbot.core.config.default import VERSION
 from astrbot.core.platform.register import unregister_platform_adapters_by_module
@@ -66,7 +66,7 @@ except ImportError:
 
 
 class PluginVersionUnsupportedError(Exception):
-    """Raised when plugin astrbot_version is not supported by current AstrBot."""
+    """Raised when plugin astrbot_version is not supported by current LKMBot."""
 
 
 class PluginDependencyInstallError(Exception):
@@ -691,13 +691,13 @@ class PluginManager:
         except InvalidVersion:
             return (
                 False,
-                f"Invalid current AstrBot version: {VERSION}. Cannot check plugin version range.",
+                f"Invalid current LKMBot version: {VERSION}. Cannot check plugin version range.",
             )
 
         if not specifier.contains(current_version, prereleases=True):
             return (
                 False,
-                f"AstrBot {VERSION} does not satisfy plugin astrbot_version: {normalized_spec}",
+                f"LKMBot {VERSION} does not satisfy plugin astrbot_version: {normalized_spec}",
             )
         return True, None
 
@@ -881,25 +881,6 @@ class PluginManager:
         self.failed_plugin_info = "\n".join(lines) + "\n"
 
     @staticmethod
-    def _iter_concrete_llm_tools(func_tool: FunctionTool) -> Iterable[FunctionTool]:
-        """Return concrete function tools that may belong to a plugin.
-
-        Args:
-            func_tool: A registered function tool, possibly a handoff tool.
-
-        Returns:
-            The concrete function tools to inspect for plugin ownership.
-        """
-        if isinstance(func_tool, HandoffTool):
-            agent = getattr(func_tool, "agent", None)
-            tools = getattr(agent, "tools", None) if agent else None
-            for tool in tools or []:
-                if isinstance(tool, FunctionTool):
-                    yield tool
-            return
-        yield func_tool
-
-    @staticmethod
     def _is_plugin_llm_tool(
         func_tool: FunctionTool,
         plugin_module_path: str | None,
@@ -935,14 +916,13 @@ class PluginManager:
             plugin_module_path: Plugin module path.
 
         Returns:
-            Matching function tools, including sub-tools inside handoff tools.
+            Matching function tools.
         """
         if not plugin_module_path:
             return
         for func_tool in llm_tools.func_list:
-            for concrete_tool in cls._iter_concrete_llm_tools(func_tool):
-                if cls._is_plugin_llm_tool(concrete_tool, plugin_module_path):
-                    yield concrete_tool
+            if cls._is_plugin_llm_tool(func_tool, plugin_module_path):
+                yield func_tool
 
     async def _migrate_legacy_plugin_tool_inactivation_state(
         self,
@@ -1206,7 +1186,7 @@ class PluginManager:
                         if not is_valid:
                             raise PluginVersionUnsupportedError(
                                 error_message
-                                or "The plugin does not support the current AstrBot version."
+                                or "The plugin does not support the current LKMBot version."
                             )
 
                     logger.info(metadata)
@@ -1276,36 +1256,32 @@ class PluginManager:
                             )
 
                     # Apply the same idempotent binding lifecycle to LLM tools.
-                    for func_tool in llm_tools.func_list:
-                        for ft in self._iter_concrete_llm_tools(func_tool):
-                            if ft.handler and (
-                                getattr(ft.handler, "__module__", None)
-                                == metadata.module_path
-                                or (
-                                    isinstance(ft.handler, functools.partial)
-                                    and ft.handler_module_path == metadata.module_path
+                    for ft in llm_tools.func_list:
+                        if ft.handler and (
+                            getattr(ft.handler, "__module__", None)
+                            == metadata.module_path
+                            or (
+                                isinstance(ft.handler, functools.partial)
+                                and ft.handler_module_path == metadata.module_path
+                            )
+                        ):
+                            raw_handler = (
+                                ft.handler.func
+                                if isinstance(ft.handler, functools.partial)
+                                else ft.handler
+                            )
+                            ft.handler_module_path = metadata.module_path
+                            ft.handler = raw_handler
+                            if not plugin_disabled and metadata.star_cls is not None:
+                                ft.handler = functools.partial(
+                                    raw_handler,
+                                    metadata.star_cls,
                                 )
-                            ):
-                                raw_handler = (
-                                    ft.handler.func
-                                    if isinstance(ft.handler, functools.partial)
-                                    else ft.handler
-                                )
-                                ft.handler_module_path = metadata.module_path
-                                ft.handler = raw_handler
-                                if (
-                                    not plugin_disabled
-                                    and metadata.star_cls is not None
-                                ):
-                                    ft.handler = functools.partial(
-                                        raw_handler,
-                                        metadata.star_cls,
-                                    )
-                            if self._is_plugin_llm_tool(ft, metadata.module_path):
-                                ft.active = (
-                                    not plugin_disabled
-                                    and ft.name not in inactivated_llm_tools
-                                )
+                        if self._is_plugin_llm_tool(ft, metadata.module_path):
+                            ft.active = (
+                                not plugin_disabled
+                                and ft.name not in inactivated_llm_tools
+                            )
 
                 else:
                     # v3.4.0 以前的方式注册插件
@@ -1356,7 +1332,7 @@ class PluginManager:
                         if not is_valid:
                             raise PluginVersionUnsupportedError(
                                 error_message
-                                or "The plugin does not support the current AstrBot version."
+                                or "The plugin does not support the current LKMBot version."
                             )
 
                     metadata.star_cls = obj
@@ -1459,10 +1435,9 @@ class PluginManager:
                 )
             )
             inactive_tool_names = set(inactivated_llm_tools)
-            for func_tool in llm_tools.func_list:
-                for concrete_tool in self._iter_concrete_llm_tools(func_tool):
-                    if concrete_tool.name in inactive_tool_names:
-                        concrete_tool.active = False
+            for concrete_tool in llm_tools.func_list:
+                if concrete_tool.name in inactive_tool_names:
+                    concrete_tool.active = False
 
         # 清除 pip.main 导致的多余的 logging handlers
         for handler in logging.root.handlers[:]:
@@ -1626,7 +1601,7 @@ class PluginManager:
         Args:
             repo_url: Plugin repository URL.
             proxy: Optional proxy prefix for repository downloads.
-            ignore_version_check: Whether to bypass AstrBot version compatibility.
+            ignore_version_check: Whether to bypass LKMBot version compatibility.
             download_url: Optional archive URL to download instead of the repository.
 
         Returns:
@@ -1667,7 +1642,7 @@ class PluginManager:
             Validated plugin metadata for installation decisions.
 
         Raises:
-            ValueError: If the repository is not a valid AstrBot plugin.
+            ValueError: If the repository is not a valid LKMBot plugin.
             Exception: If the repository provider cannot be reached.
         """
         return await self._updater.inspect_repository(repo_url, proxy)
@@ -1694,7 +1669,7 @@ class PluginManager:
             if not plugin:
                 raise Exception("插件不存在。")
             if plugin.reserved:
-                raise Exception("该插件是 AstrBot 保留插件，无法卸载。")
+                raise Exception("该插件是 LKMBot 保留插件，无法卸载。")
             root_dir_name = plugin.root_dir_name
             ppath = self.plugin_store_path
 
@@ -1883,7 +1858,7 @@ class PluginManager:
         if not plugin:
             raise Exception("插件不存在。")
         if plugin.reserved:
-            raise Exception("该插件是 AstrBot 保留插件，无法更新。")
+            raise Exception("该插件是 LKMBot 保留插件，无法更新。")
 
         await self._updater.update(
             plugin,
@@ -2002,7 +1977,7 @@ class PluginManager:
 
         Args:
             zip_file_path: Path to the uploaded plugin archive.
-            ignore_version_check: Whether to bypass AstrBot version compatibility.
+            ignore_version_check: Whether to bypass LKMBot version compatibility.
 
         Returns:
             Installed plugin repository, README, and name, if registered.
@@ -2041,7 +2016,7 @@ class PluginManager:
 
         Args:
             plugin_path: Extracted or cloned plugin in a temporary directory.
-            ignore_version_check: Whether to bypass AstrBot version compatibility.
+            ignore_version_check: Whether to bypass LKMBot version compatibility.
 
         Returns:
             Installed plugin repository, README, and name, if registered.
@@ -2068,7 +2043,7 @@ class PluginManager:
                 else metadata_dir_name
             )
             if plugin and plugin.reserved:
-                raise Exception("该插件是 AstrBot 保留插件，无法更新。")
+                raise Exception("该插件是 LKMBot 保留插件，无法更新。")
             if target_plugin_path.exists():
                 # Only replace a directory whose metadata identifies the same plugin.
                 if (

@@ -2,7 +2,7 @@
 
 ## Community Channels
 
-This documentation may not cover all features comprehensively. If you have any questions or suggestions regarding AstrBot or this documentation, please feel free to reach out to us through the community channels below.
+This documentation may not cover all features comprehensively. If you have any questions or suggestions regarding LKMBot or this documentation, please feel free to reach out to us through the community channels below.
 
 ### Discord
 
@@ -31,8 +31,8 @@ Welcome to submit Issues or Pull Requests:
 - Group 14: 1103419483
 - Group 15: 258637629
 - Group 16: 1044542496
-- **AstrBot Core Development Group: 975206796** (AstrBot development members are usually active here. Welcome to anyone interested in programming/AI technology~)
+- **LKMBot Core Development Group: 975206796** (LKMBot development members are usually active here. Welcome to anyone interested in programming/AI technology~)
 
-## Become an AstrBot Organization Member
+## Become an LKMBot Organization Member
 
 We welcome you to join us!

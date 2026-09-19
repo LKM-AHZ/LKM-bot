@@ -66,7 +66,7 @@ class StarTools:
         raw_message: object = None,
         group_id: str = "",
     ) -> AstrBotMessage:
-        """Creates an AstrBot message object.
+        """Creates an LKMBot message object.
 
         Args:
             type: Message type, such as "GroupMessage", "FriendMessage", or
@@ -84,7 +84,7 @@ class StarTools:
             group_id: Group ID. Empty for private chats.
 
         Returns:
-            Created AstrBot message object.
+            Created LKMBot message object.
         """
         abm = AstrBotMessage()
         abm.type = MessageType(type)

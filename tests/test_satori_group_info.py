@@ -17,7 +17,7 @@ async def _make_group_event(guild: dict):
     )
     login = {
         "platform": "discord",
-        "user": {"id": "bot-1", "name": "AstrBot"},
+        "user": {"id": "bot-1", "name": "LKMBot"},
     }
     message = await adapter.convert_satori_message(
         {"id": "message-1", "content": "hello"},
@@ -35,7 +35,7 @@ async def test_satori_group_message_maps_event_guild_metadata():
     _, message, _ = await _make_group_event(
         {
             "id": "guild-1",
-            "name": "AstrBot Users",
+            "name": "LKMBot Users",
             "avatar": "https://example.com/guild.png",
         },
     )
@@ -43,7 +43,7 @@ async def test_satori_group_message_maps_event_guild_metadata():
     assert message.type == MessageType.GROUP_MESSAGE
     assert message.group is not None
     assert message.group.group_id == "guild-1"
-    assert message.group.group_name == "AstrBot Users"
+    assert message.group.group_name == "LKMBot Users"
     assert message.group.group_avatar == "https://example.com/guild.png"
 
 

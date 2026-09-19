@@ -934,7 +934,7 @@ def fake_core_lifecycle():
         version="1.0.0",
         reserved=False,
         activated=True,
-        display_name="AstrBot Plugin Demo",
+        display_name="LKMBot Plugin Demo",
         logo=None,
         logo_path=None,
         support_platforms=[],
@@ -1090,7 +1090,7 @@ async def test_version_routes_return_startup_runtime_snapshot(
         core_lifecycle=fake_core_lifecycle, db=fake_db, jwt_secret=JWT_SECRET
     )
 
-    # Environment changes take effect in this snapshot after restarting AstrBot.
+    # Environment changes take effect in this snapshot after restarting LKMBot.
     which.return_value = "/usr/bin/bwrap"
     sandbox.run.return_value.returncode = 0
     expected_sandbox = {"backend": "bubblewrap", "status": status}
@@ -1332,7 +1332,7 @@ async def test_dashboard_static_dist_files_are_served(
     assert "/assets/index-demo.js" in page_response.text
     assert missing_response.status_code == 404
     assert missing_response.headers["content-type"].startswith("text/html")
-    assert "请先尝试重启 AstrBot" in missing_response.text
+    assert "请先尝试重启 LKMBot" in missing_response.text
     assert "<h2>手动安装</h2>" in missing_response.text
     assert "WebUI files are missing" in missing_response.text
     assert "Manual installation" in missing_response.text

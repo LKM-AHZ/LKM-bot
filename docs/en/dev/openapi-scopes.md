@@ -118,9 +118,6 @@ Manage configuration profiles, system configuration, and shared configuration, e
 | `PUT` | `/api/v1/config-routes` | — |
 | `PUT` | `/api/v1/config-routes/{umo}` | — |
 | `DELETE` | `/api/v1/config-routes/{umo}` | — |
-| `GET` | `/api/v1/subagents/available-tools` | — |
-| `GET` | `/api/v1/subagents/config` | — |
-| `PUT` | `/api/v1/subagents/config` | — |
 | `GET` | `/api/v1/system-config` | — |
 | `PUT` | `/api/v1/system-config` | `config:edit_admin` |
 | `GET` | `/api/v1/system-config/runtime` | — |
@@ -138,7 +135,7 @@ Manage configuration profiles, system configuration, and shared configuration, e
 
 Use chat capabilities and manage ChatUI sessions and projects.
 
-- **Sensitive sub-scope `chat:admin`:** Allow `username` to use a configured AstrBot administrator ID. This sub-scope must be granted explicitly.
+- **Sensitive sub-scope `chat:admin`:** Allow `username` to use a configured LKMBot administrator ID. This sub-scope must be granted explicitly.
 
 | Method | Endpoint | Conditional sensitive sub-scope |
 | --- | --- | --- |

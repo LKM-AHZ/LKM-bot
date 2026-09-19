@@ -68,7 +68,7 @@ def _write_local_test_plugin(plugin_path: Path, repo_url: str, version: str = "1
         "name": TEST_PLUGIN_NAME,
         "repo": repo_url,
         "version": version,
-        "author": "AstrBot Team",
+        "author": "LKMBot Team",
         "desc": "Local test plugin",
         "short_desc": "Local test short description",
     }
@@ -191,7 +191,7 @@ def test_load_plugin_metadata_does_not_fallback_to_legacy_info(
                 "name": TEST_PLUGIN_NAME,
                 "repo": TEST_PLUGIN_REPO,
                 "version": "1.0.0",
-                "author": "AstrBot Team",
+                "author": "LKMBot Team",
                 "desc": "Legacy plugin",
             }
 
@@ -1420,7 +1420,7 @@ async def test_load_reports_unregistered_plugin_without_index_error(
         yaml.dump(
             {
                 "name": plugin_name,
-                "author": "AstrBot Team",
+                "author": "LKMBot Team",
                 "desc": "Broken test plugin",
                 "version": "1.0.0",
             }
@@ -2506,7 +2506,7 @@ async def test_load_syncs_existing_metadata_activation_from_preferences(
     module_path = f"data.plugins.{plugin_name}.main"
     metadata = star_manager_module.StarMetadata(
         name=plugin_name,
-        author="AstrBot Team",
+        author="LKMBot Team",
         desc="Demo plugin",
         version="1.0.0",
         root_dir_name=plugin_name,
@@ -2783,7 +2783,7 @@ async def test_repeated_deactivated_loads_bind_handlers_once_when_activated(
 
     metadata = star_manager_module.StarMetadata(
         name=plugin_name,
-        author="AstrBot Team",
+        author="LKMBot Team",
         desc="Demo plugin",
         version="1.0.0",
         root_dir_name=plugin_name,

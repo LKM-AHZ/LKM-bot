@@ -2,11 +2,11 @@
 # 文转图
 
 > [!TIP]
-> 为了方便开发，您可以使用 [AstrBot Text2Image Playground](https://t2i-playground.astrbot.app/) 在线可视化编辑和测试 HTML 模板。
+> 为了方便开发，您可以使用 [LKMBot Text2Image Playground](https://t2i-playground.astrbot.app/) 在线可视化编辑和测试 HTML 模板。
 
 ## 基本
 
-AstrBot 支持将文字渲染成图片。
+LKMBot 支持将文字渲染成图片。
 
 ```python
 @filter.command("image")  # 注册一个 /image 指令，接收 text 参数。
@@ -22,7 +22,7 @@ async def on_aiocqhttp(self, event: AstrMessageEvent, text: str):
 
 如果你觉得上面渲染出来的图片不够美观，你可以使用自定义的 HTML 模板来渲染图片。
 
-AstrBot 支持使用 `HTML + Jinja2` 的方式来渲染文转图模板。
+LKMBot 支持使用 `HTML + Jinja2` 的方式来渲染文转图模板。
 
 ```py{7}
 # 自定义的 Jinja2 模板，支持 CSS

@@ -37,7 +37,7 @@ class PreProcessStage(Stage):
 
         Args:
             event: Message event whose lifecycle owns the temporary file.
-            media_path: Local media path to track when it lives under AstrBot temp.
+            media_path: Local media path to track when it lives under LKMBot temp.
         """
 
         try:

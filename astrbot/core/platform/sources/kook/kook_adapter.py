@@ -497,7 +497,7 @@ class KookPlatformAdapter(Platform):
         """Creates a KOOK message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created KOOK message event.

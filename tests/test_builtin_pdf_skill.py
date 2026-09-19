@@ -21,9 +21,9 @@ def test_builtin_pdf_skill_converts_limited_markdown(tmp_path: Path) -> None:
     source = tmp_path / "sample.md"
     output = tmp_path / "sample.pdf"
     source.write_text(
-        "# AstrBot PDF 测试\n\n"
+        "# LKMBot PDF 测试\n\n"
         "这是一个 **受限 Markdown** 转换测试，包含 `inline_code()` 和 "
-        "[AstrBot](https://astrbot.app)。\n\n"
+        "[LKMBot](https://astrbot.app)。\n\n"
         "- 第一项\n"
         "- 第二项\n\n"
         "> 引用内容需要保持清晰。\n\n"
@@ -48,9 +48,9 @@ def test_builtin_pdf_skill_converts_limited_markdown(tmp_path: Path) -> None:
     reader = PdfReader(output)
     assert len(reader.pages) == 2
     assert reader.metadata is not None
-    assert reader.metadata.title == "AstrBot PDF 测试"
+    assert reader.metadata.title == "LKMBot PDF 测试"
     extracted = "\n".join(page.extract_text() or "" for page in reader.pages)
-    assert "AstrBot PDF" in extracted
+    assert "LKMBot PDF" in extracted
     assert "受限 Markdown" in extracted
     assert "print('hello')" in extracted
     assert "第二页" in extracted

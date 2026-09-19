@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/auth';
 
 const { tm: t } = useModuleI18n('features/auth');
 
-const username = ref('astrbot');
+const username = ref('lkmbot');
 const password = ref('');
 const confirmPassword = ref('');
 const showPassword = ref(false);

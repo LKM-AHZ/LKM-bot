@@ -3,7 +3,7 @@ from astrbot.core.provider.sources.mirarouter_source import ProviderMiraRouter
 
 
 def test_mirarouter_template_and_attribution_header():
-    """Verify the MiraRouter preset and AstrBot attribution header."""
+    """Verify the MiraRouter preset and LKMBot attribution header."""
     templates = CONFIG_METADATA_2["provider_group"]["metadata"]["provider"][
         "config_template"
     ]

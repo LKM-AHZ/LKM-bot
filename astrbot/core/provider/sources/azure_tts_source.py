@@ -97,7 +97,7 @@ class OTTSProvider:
                     },
                     headers={
                         **self.request_headers,
-                        "UAK": "AstrBot/AzureTTS",
+                        "UAK": "LKMBot/AzureTTS",
                     },
                 )
                 response.raise_for_status()

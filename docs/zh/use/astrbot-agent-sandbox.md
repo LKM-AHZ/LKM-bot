@@ -3,19 +3,19 @@
 > [!TIP]
 > 此功能目前处于技术预览阶段，可能会存在一些 Bug。如果您遇到了问题，请在 [GitHub](https://github.com/AstrBotDevs/AstrBot/issues) 上提交 issue。
 
-在 `v4.12.0` 版本及之后，AstrBot 引入了 Agent 沙盒环境，以替代之前的代码执行器功能。沙盒环境给 Agent 提供了更安全、更灵活的代码执行和自动化操作能力。
+在 `v4.12.0` 版本及之后，LKMBot 引入了 Agent 沙盒环境，以替代之前的代码执行器功能。沙盒环境给 Agent 提供了更安全、更灵活的代码执行和自动化操作能力。
 
 ![](https://files.astrbot.app/docs/source/images/astrbot-agent-sandbox/image.png)
 
 ## 启用沙盒环境
 
-目前，AstrBot 的沙盒环境驱动器支持：
+目前，LKMBot 的沙盒环境驱动器支持：
 
 - `Shipyard Neo`（当前推荐）
 - `Shipyard`（旧方案，仍可继续使用）
 - `CUA`（本地或云端电脑使用沙盒，适合需要桌面操作的场景）
 
-在当前版本的 AstrBot 控制台中，可在“配置文件” -> “AI 配置” -> “能力” -> “使用电脑能力”中选择：
+在当前版本的 LKMBot 控制台中，可在“配置文件” -> “AI 配置” -> “能力” -> “使用电脑能力”中选择：
 
 - `Computer Use Runtime` = `sandbox`
 - `沙箱环境驱动器` = `Shipyard Neo`、`Shipyard` 或 `CUA`
@@ -26,16 +26,16 @@
 - **Ship**：负责 Python / Shell / 文件系统能力
 - **Gull**：负责浏览器自动化能力
 
-对于 `Shipyard Neo`，工作区根目录固定为 `/workspace`。在 AstrBot 中调用文件系统工具时，应当传入**相对于工作区根目录**的路径，例如 `reports/result.txt`，而不是 `/workspace/reports/result.txt`。
+对于 `Shipyard Neo`，工作区根目录固定为 `/workspace`。在 LKMBot 中调用文件系统工具时，应当传入**相对于工作区根目录**的路径，例如 `reports/result.txt`，而不是 `/workspace/reports/result.txt`。
 
 > [!TIP]
-> `Shipyard Neo` 下浏览器能力并不是所有 profile 都有。只有 profile 支持 `browser` capability 时，AstrBot 才会挂载浏览器相关工具。典型 profile 如 `browser-python`。
+> `Shipyard Neo` 下浏览器能力并不是所有 profile 都有。只有 profile 支持 `browser` capability 时，LKMBot 才会挂载浏览器相关工具。典型 profile 如 `browser-python`。
 
 ## CUA 运行时
 
 `CUA` 是一个面向电脑使用（Computer Use）的沙盒运行时。它可以通过统一的 Python SDK 创建 Linux、macOS、Windows、Android 等不同类型的沙盒，并暴露 Shell、截图、鼠标、键盘、文件系统等接口。
 
-在 AstrBot 中选择 `CUA` 驱动器后，Agent 可以在 CUA sandbox 中使用：
+在 LKMBot 中选择 `CUA` 驱动器后，Agent 可以在 CUA sandbox 中使用：
 
 - Shell 工具
 - Python 工具
@@ -46,17 +46,17 @@
 - 沙盒文件上传与下载工具
 
 > [!NOTE]
-> CUA 是可选运行时，AstrBot 默认安装不会强制安装它。如果选择了 `CUA` 但当前 Python 环境没有安装 `cua` 包，启动沙盒时会提示安装缺失。
+> CUA 是可选运行时，LKMBot 默认安装不会强制安装它。如果选择了 `CUA` 但当前 Python 环境没有安装 `cua` 包，启动沙盒时会提示安装缺失。
 
 ### 安装 CUA 依赖
 
-如果您通过源码或虚拟环境运行 AstrBot，请在 AstrBot 使用的 Python 环境中安装 CUA：
+如果您通过源码或虚拟环境运行 LKMBot，请在 LKMBot 使用的 Python 环境中安装 CUA：
 
 ```bash
 pip install cua
 ```
 
-如果您使用 `uv` 管理 AstrBot 环境，可在 AstrBot 项目目录中执行：
+如果您使用 `uv` 管理 LKMBot 环境，可在 LKMBot 项目目录中执行：
 
 ```bash
 uv pip install cua
@@ -71,7 +71,7 @@ CUA 本身还依赖具体运行方式：
 
 具体宿主机要求、镜像支持情况和本地运行时安装方式，请参考 [CUA 官方文档](https://cua.ai/docs)。
 
-### 在 AstrBot 中配置 CUA
+### 在 LKMBot 中配置 CUA
 
 进入 WebUI：
 
@@ -85,7 +85,7 @@ CUA 本身还依赖具体运行方式：
 CUA 相关配置项包括：
 
 - `CUA Image`：要启动的 CUA 镜像。常见值为 `linux`、`macos`、`windows`、`android`。默认 `linux`。
-- `CUA OS Type`：镜像的操作系统类型。默认 `linux`。它会影响 AstrBot 对 POSIX Shell fallback 的判断。
+- `CUA OS Type`：镜像的操作系统类型。默认 `linux`。它会影响 LKMBot 对 POSIX Shell fallback 的判断。
 - `CUA Sandbox TTL`：沙盒生命周期，单位为秒。默认 `3600`。
 - `CUA Telemetry Enabled`：是否启用 CUA 侧遥测。默认关闭。
 - `CUA Local Runtime`：是否使用本地运行时。默认开启。关闭后会按 CUA SDK 的云端方式创建沙盒。
@@ -114,14 +114,14 @@ CUA API Key = <your-cua-api-key>
 ```
 
 > [!WARNING]
-> 不要把 CUA API Key 写入公开日志、截图或 issue。AstrBot 的运行日志不会输出该字段，但部署平台、Shell 历史和容器环境变量仍需自行保护。
+> 不要把 CUA API Key 写入公开日志、截图或 issue。LKMBot 的运行日志不会输出该字段，但部署平台、Shell 历史和容器环境变量仍需自行保护。
 
 ### 使用 CUA 时的注意事项
 
 - `linux` 镜像通常适合 Shell、Python、文件系统和桌面自动化测试。
-- 非 POSIX 镜像（如 `windows`、`android`）不一定支持 `sh`、`cat`、`ls`、`rm`、`base64` 等命令。AstrBot 对需要这些命令的 fallback 操作会返回明确错误。
+- 非 POSIX 镜像（如 `windows`、`android`）不一定支持 `sh`、`cat`、`ls`、`rm`、`base64` 等命令。LKMBot 对需要这些命令的 fallback 操作会返回明确错误。
 - 如果需要在 CUA sandbox 中打开浏览器或 GUI 程序，通常应使用 Shell 后台执行，例如显式传入 `background=true`，避免命令阻塞后续工具调用。
-- 直接把 sandbox 内的文件路径发送给用户通常不可行。应优先使用 AstrBot 的沙盒下载工具，将文件下载到 AstrBot 临时目录后再发送。
+- 直接把 sandbox 内的文件路径发送给用户通常不可行。应优先使用 LKMBot 的沙盒下载工具，将文件下载到 LKMBot 临时目录后再发送。
 - CUA 与 Shipyard Neo 的 workspace 语义不同。Shipyard Neo 固定使用 `/workspace`；CUA 的工作目录和文件路径取决于镜像与运行时。
 
 ### 何时选择 CUA
@@ -132,11 +132,11 @@ CUA API Key = <your-cua-api-key>
 - 需要测试不同 OS 镜像中的行为，例如 Linux、Windows、Android。
 - 已经在本机或云端部署好 CUA 运行环境。
 
-如果只是需要稳定的 Python/Shell/文件系统沙盒，且不需要桌面 GUI 操作，通常优先选择 `Shipyard Neo`。它与 AstrBot 的 workspace、Skills 同步和长期运行模式更贴合。
+如果只是需要稳定的 Python/Shell/文件系统沙盒，且不需要桌面 GUI 操作，通常优先选择 `Shipyard Neo`。它与 LKMBot 的 workspace、Skills 同步和长期运行模式更贴合。
 
 ## 性能要求
 
-AstrBot 给每个沙盒环境限制最高 1 CPU 和 512 MB 内存。
+LKMBot 给每个沙盒环境限制最高 1 CPU 和 512 MB 内存。
 
 我们建议您的宿主机至少有 2 个 CPU 和 4 GB 内存，并开启 Swap，以保证多个沙盒环境实例可以稳定运行。
 
@@ -144,9 +144,9 @@ AstrBot 给每个沙盒环境限制最高 1 CPU 和 512 MB 内存。
 
 ### 单独部署 Shipyard Neo（推荐）
 
-如果您准备长期使用 `Shipyard Neo`，更推荐将它**单独部署在一台资源更充足的机器上**，例如您的 homelab、局域网服务器，或独立云主机，然后再让 AstrBot 远程接入 Bay。
+如果您准备长期使用 `Shipyard Neo`，更推荐将它**单独部署在一台资源更充足的机器上**，例如您的 homelab、局域网服务器，或独立云主机，然后再让 LKMBot 远程接入 Bay。
 
-原因是：`Shipyard Neo` 在启用浏览器能力时需要运行较重的浏览器运行时。对于资源紧张的云服务器，把 AstrBot 和 `Shipyard Neo` 部署在同一台机器上，通常会让 CPU 和内存压力都比较大，稳定性和体验都不理想。
+原因是：`Shipyard Neo` 在启用浏览器能力时需要运行较重的浏览器运行时。对于资源紧张的云服务器，把 LKMBot 和 `Shipyard Neo` 部署在同一台机器上，通常会让 CPU 和内存压力都比较大，稳定性和体验都不理想。
 
 大致步骤如下：
 
@@ -160,9 +160,9 @@ docker compose up -d
 部署完成后：
 
 - Bay 默认监听在 `http://<your-host>:8114`
-- 在 AstrBot 控制台中选择 `Shipyard Neo` 驱动器
+- 在 LKMBot 控制台中选择 `Shipyard Neo` 驱动器
 - `Shipyard Neo API Endpoint` 填写对应地址，例如 `http://<your-host>:8114`
-- `Shipyard Neo Access Token` 填写 Bay API Key；如果 AstrBot 能访问 Bay 的 `credentials.json`，也可以留空让 AstrBot 自动发现
+- `Shipyard Neo Access Token` 填写 Bay API Key；如果 LKMBot 能访问 Bay 的 `credentials.json`，也可以留空让 LKMBot 自动发现
 
 ### 参考：`config.yaml` 完整示例（附说明）
 
@@ -222,7 +222,7 @@ cargo:
   root_path: "/var/lib/bay/cargos"
   # 默认工作区大小限制（MB）
   default_size_limit_mb: 1024
-  # Cargo 挂载到 sandbox 内的路径。AstrBot/Neo 的工作区根目录就是这里。
+  # Cargo 挂载到 sandbox 内的路径。LKMBot/Neo 的工作区根目录就是这里。
   mount_path: "/workspace"
 
 security:
@@ -368,7 +368,7 @@ gc:
 - **Session**：实际运行中的容器会话，可被停止或重建
 - **Cargo**：持久化工作区卷，挂载到 `/workspace`
 
-对 AstrBot 而言，当前会按请求的 `session_id` 维度缓存沙箱 booter；在主 Agent 默认流程下，这个 `session_id` 通常等于消息会话标识 `unified_msg_origin`。因此，同一消息会话的后续请求通常会继续复用同一个 Neo sandbox；如果沙箱失效，则会自动重建。
+对 LKMBot 而言，当前会按请求的 `session_id` 维度缓存沙箱 booter；在主 Agent 默认流程下，这个 `session_id` 通常等于消息会话标识 `unified_msg_origin`。因此，同一消息会话的后续请求通常会继续复用同一个 Neo sandbox；如果沙箱失效，则会自动重建。
 
 关于 TTL 与数据持久化的更详细说明，请参考下文的“关于 `Shipyard Neo Sandbox TTL`”与“关于沙盒环境的数据持久化”小节。
 
@@ -376,23 +376,23 @@ gc:
 
 以下内容为旧版 `Shipyard` 驱动器的部署与配置说明，仍然保留，供兼容旧部署方案时参考。
 
-### 使用 Docker Compose 部署 AstrBot 和 Shipyard
+### 使用 Docker Compose 部署 LKMBot 和 Shipyard
 
-如果您还没有部署 AstrBot，或者想更换为我们推荐的带沙盒环境的部署方式，推荐使用 Docker Compose 来部署 AstrBot，代码如下：
+如果您还没有部署 LKMBot，或者想更换为我们推荐的带沙盒环境的部署方式，推荐使用 Docker Compose 来部署 LKMBot，代码如下：
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
-cd AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
 # 修改 compose-with-shipyard.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
 docker compose -f compose-with-shipyard.yml up -d
 docker pull soulter/shipyard-ship:latest
 ```
 
-这会启动一个包含 AstrBot 主程序和沙盒环境的 Docker Compose 服务。
+这会启动一个包含 LKMBot 主程序和沙盒环境的 Docker Compose 服务。
 
 ### 单独部署 Shipyard
 
-如果您已经部署了 AstrBot，但没有部署沙盒环境，可以单独部署 Shipyard。
+如果您已经部署了 LKMBot，但没有部署沙盒环境，可以单独部署 Shipyard。
 
 代码如下：
 
@@ -408,14 +408,14 @@ docker pull soulter/shipyard-ship:latest
 部署成功后，上述命令会启动一个 Shipyard 服务，默认监听在 `http://<your-host>:8156`。
 
 > [!TIP]
-> 如果您使用 Docker 部署 AstrBot，您也可以修改上面的 Compose 文件，将 Shipyard 的网络与 AstrBot 放在同一个 Docker 网络中，这样就不需要暴露 Shipyard 的端口到宿主机。
+> 如果您使用 Docker 部署 LKMBot，您也可以修改上面的 Compose 文件，将 Shipyard 的网络与 LKMBot 放在同一个 Docker 网络中，这样就不需要暴露 Shipyard 的端口到宿主机。
 
-## 配置 AstrBot 使用沙盒环境
+## 配置 LKMBot 使用沙盒环境
 
 > [!TIP]
-> 请确保您的 AstrBot 版本在 `v4.12.0` 及之后。
+> 请确保您的 LKMBot 版本在 `v4.12.0` 及之后。
 
-在 AstrBot 控制台，进入 “配置文件” -> “AI 配置” -> “能力” -> “使用电脑能力”。
+在 LKMBot 控制台，进入 “配置文件” -> “AI 配置” -> “能力” -> “使用电脑能力”。
 
 1. 将 `Computer Use Runtime` 设为 `sandbox`
 2. 在 `沙箱环境驱动器` 中选择 `Shipyard Neo` 或 `Shipyard`
@@ -431,10 +431,10 @@ docker pull soulter/shipyard-ship:latest
   - 单独部署时填写实际地址，例如 `http://<your-host>:8114`
 - `Shipyard Neo Access Token`
   - 填写 Bay API Key
-  - 如果是官方联合部署，且 AstrBot 能访问 Bay 的 `credentials.json`，可以留空自动发现
+  - 如果是官方联合部署，且 LKMBot 能访问 Bay 的 `credentials.json`，可以留空自动发现
 - `Shipyard Neo Profile`
   - 例如 `python-default`、`browser-python`
-  - 如果留空，AstrBot 会优先尝试选择能力更完整、且优先带有 `browser` capability 的 profile，失败时再回退到 `python-default`
+  - 如果留空，LKMBot 会优先尝试选择能力更完整、且优先带有 `browser` capability 的 profile，失败时再回退到 `python-default`
 - `Shipyard Neo Sandbox TTL`
   - sandbox 生命周期上限，默认值为 3600 秒（1 小时）
 
@@ -458,7 +458,7 @@ docker pull soulter/shipyard-ship:latest
 
 - TTL 表示 sandbox 生命周期上限
 - profile 还会定义一个独立的空闲超时（`idle_timeout`）
-- AstrBot 发起能力调用时，通常会刷新空闲超时，而不是直接延长 TTL
+- LKMBot 发起能力调用时，通常会刷新空闲超时，而不是直接延长 TTL
 - `keepalive` 只会延长空闲超时，不会自动启动新的 session，也不会延长 TTL
 
 ## 关于 `Shipyard Ship 存活时间(秒)`

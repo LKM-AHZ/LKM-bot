@@ -149,7 +149,7 @@ def _migrate_agent_runner_config(
     """Migrate legacy Agent Runner fields in one core configuration.
 
     Args:
-        config: Mutable AstrBot configuration loaded from disk.
+        config: Mutable LKMBot configuration loaded from disk.
         fallback_config: Default configuration used to resolve shared providers.
 
     Returns:
@@ -305,7 +305,7 @@ def migrate_config_on_load(config: dict[str, Any], config_path: Path) -> bool:
     configuration, which has already been loaded and persisted at this point.
 
     Args:
-        config: Mutable AstrBot configuration loaded from disk.
+        config: Mutable LKMBot configuration loaded from disk.
         config_path: Path of the configuration being loaded.
 
     Returns:
@@ -439,10 +439,10 @@ async def migra(
     """Run migrations that require initialized configuration or database state.
 
     Args:
-        db: Initialized AstrBot database.
+        db: Initialized LKMBot database.
         astrbot_config_mgr: Configuration manager used by legacy migrations.
         umop_config_router: Initialized UMOP configuration router.
-        acm: Initialized AstrBot configuration manager.
+        acm: Initialized LKMBot configuration manager.
     """
     from astrbot.core.db.migration.migra_45_to_46 import migrate_45_to_46
     from astrbot.core.db.migration.migra_token_usage import migrate_token_usage

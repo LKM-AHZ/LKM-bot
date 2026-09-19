@@ -85,7 +85,7 @@ SKIP_DEFAULT_PASSWORD_AUTH_ENV = "ASTRBOT_DASHBOARD_SKIP_DEFAULT_PASSWORD_AUTH"
 SKIP_DEFAULT_PASSWORD_AUTH_ENV_OLD = "DASHBOARD_SKIP_DEFAULT_PASSWORD_AUTH"
 LOCAL_DASHBOARD_HOSTS = {"127.0.0.1", "localhost", "::1"}
 DEFAULT_PASSWORD_LOGIN_FAILURE_MESSAGE = (
-    "Login failed. If this is your first time using AstrBot, the old default "
+    "Login failed. If this is your first time using LKMBot, the old default "
     "astrbot password has been replaced by a random strong password printed in "
     "the startup logs. Check the initial password in the logs and try again. "
     "Learn more: https://docs.astrbot.app/en/faq.html\n\n"
@@ -95,9 +95,9 @@ DEFAULT_PASSWORD_LOGIN_FAILURE_MESSAGE = (
 )
 MD5_PASSWORD_LOGIN_FAILURE_MESSAGE = (
     "Incorrect username or password. If you cannot log in after upgrading "
-    "AstrBot even though the password is correct, see "
+    "LKMBot even though the password is correct, see "
     "https://docs.astrbot.app/en/faq.html\n\n"
-    "用户名或密码错误。如果你在升级 AstrBot 后遇到了密码正确但无法登录的情况，"
+    "用户名或密码错误。如果你在升级 LKMBot 后遇到了密码正确但无法登录的情况，"
     "请参考 https://docs.astrbot.app/faq.html"
 )
 TOTP_TRUSTED_DEVICE_COOKIE_NAME = _TOTP_TRUSTED_DEVICE_COOKIE_NAME
@@ -361,7 +361,7 @@ class AuthService:
         )
         if (
             storage_upgraded
-            and username == "astrbot"
+            and username in {"astrbot", "lkmbot"}
             and is_default_dashboard_password(password)
             and not self.demo_mode
         ):

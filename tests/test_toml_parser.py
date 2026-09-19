@@ -61,7 +61,7 @@ def test_read_pyproject_project_dependencies_accepts_inline_arrays(
 @pytest.mark.parametrize(
     ("project_lines", "message"),
     [
-        (["[project]", 'name = "AstrBot"'], "Missing project.dependencies"),
+        (["[project]", 'name = "LKMBot"'], "Missing project.dependencies"),
         (
             ["[project]", "dependencies = ["],
             "Unterminated project.dependencies array",

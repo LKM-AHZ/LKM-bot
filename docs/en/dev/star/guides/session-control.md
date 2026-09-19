@@ -14,7 +14,7 @@ User: Keen observation (明察秋毫)
 ...
 ```
 
-AstrBot provides out-of-the-box session control functionality:
+LKMBot provides out-of-the-box session control functionality:
 
 Import:
 
@@ -107,7 +107,7 @@ Used by developers to control whether a session should end, and to retrieve mess
 
 ## Custom Session ID Filter
 
-By default, the AstrBot session controller uses `sender_id` (the sender's ID) as the identifier for distinguishing different sessions. If you want to treat an entire group as one session, you need to customize the session ID filter.
+By default, the LKMBot session controller uses `sender_id` (the sender's ID) as the identifier for distinguishing different sessions. If you want to treat an entire group as one session, you need to customize the session ID filter.
 
 ```py
 import astrbot.api.message_components as Comp

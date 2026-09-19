@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 
 class _RecordEnricherFilter(logging.Filter):
-    """为 logging.LogRecord 注入 AstrBot 日志字段。"""
+    """为 logging.LogRecord 注入 LKMBot 日志字段。"""
 
     def filter(self, record: logging.LogRecord) -> bool:
         if record.name.startswith(PLUGIN_LOGGER_PREFIX):

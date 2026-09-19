@@ -4,19 +4,19 @@
 
 ### Encountering 404 Error When Opening the Dashboard
 
-Download `AstrBot-vxxxxx-dashboard.zip` from the [release](https://github.com/AstrBotDevs/AstrBot/releases) page, extract it, and move it to `AstrBot/data`. If it still doesn't work, try restarting your computer (based on community feedback).
+Download `AstrBot-vxxxxx-dashboard.zip` from the [release](https://github.com/AstrBotDevs/AstrBot/releases) page, extract it, and move it to `LKMBot/data`. If it still doesn't work, try restarting your computer (based on community feedback).
 
 ### First Login Account and Random Password
 
-On first startup, the WebUI account is `astrbot` by default, and the default password is randomly generated (it is not a fixed hardcoded value). Check the startup logs and log in with the random initial password shown there:
+On first startup, the default WebUI account is `lkmbot`, and the password is randomly generated rather than hardcoded. Instances upgraded from an older version keep their existing account. Check the startup logs and log in with the random initial password shown there:
 
 ```text
 [00:27:40.590] [Core] [INFO] [dashboard.server:523]:
  ✨✨✨
-  AstrBot v4.24.3 WebUI is ready
+  LKMBot v4.24.3 WebUI is ready
 
    ➜  Local: http://localhost:6185
-   ➜  Initial username: astrbot
+   ➜  Initial username: lkmbot
    ➜  Initial password: UiYVpZxnW8k22IWqf0ru5pOy
    ➜  Change it after logging in
  ✨✨✨
@@ -27,14 +27,14 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
 
 ### Forgot Dashboard Password
 
-If you forgot your AstrBot dashboard password, you can use the CLI tool `astrbot password` to change the password.
+If you forgot your LKMBot dashboard password, you can use the CLI tool `lkmbot password` to change the password.
 
-Another approach you can take is to find the `"dashboard"` field in `AstrBot/data/cmd_config.json`, for example:
+Another approach you can take is to find the `"dashboard"` field in `LKMBot/data/cmd_config.json`, for example:
 
 ```json
   "dashboard": {
     "enable": true,
-    "username": "astrbot",
+    "username": "lkmbot",
     "password": "81e0c3dxxxxxxxxxxx78862e78",
     "pbkdf2_password": "pbkdf2_sha256$600000$1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
     "password_storage_upgraded": true,
@@ -70,32 +70,32 @@ The segment should look like:
   },
 ```
 
-After restart, AstrBot will automatically generate a random password with the fixed username `astrbot`; check the startup logs.
+After restart, LKMBot will automatically generate a random password with the fixed username `lkmbot`; check the startup logs.
 
-### Correct Password Cannot Log In After Upgrading AstrBot
+### Correct Password Cannot Log In After Upgrading LKMBot
 
-If you are sure the dashboard password is correct but still cannot log in after upgrading AstrBot, the old WebUI static files may be incompatible with the newer backend.
+If you are sure the dashboard password is correct but still cannot log in after upgrading LKMBot, the old WebUI static files may be incompatible with the newer backend.
 
 Solution:
 
-1. Stop AstrBot.
-2. Delete the `dist` folder under AstrBot's `data` directory: `AstrBot/data/dist`.
-3. Restart AstrBot.
+1. Stop LKMBot.
+2. Delete the `dist` folder under LKMBot's `data` directory: `LKMBot/data/dist`.
+3. Restart LKMBot.
 4. Access the dashboard in your browser. Press `Ctrl+Shift+R` or `Ctrl+F5` (or `Cmd+Shift+R` on macOS) to force refresh the page.
 
-After restart, AstrBot will reload or download WebUI files that match the current version.
+After restart, LKMBot will reload or download WebUI files that match the current version.
 
 ## Bot Core Related
 
-### How to Let AstrBot Control My Mac / Windows / Linux Computer?
+### How to Let LKMBot Control My Mac / Windows / Linux Computer?
 
-1. In the AstrBot WebUI, open `Config`, select the profile used by your bot, and go to `AI → Capabilities → Agent Computer Use`. Set `Computer Use Runtime` to `local`. This section requires the built-in AstrBot AI runner.
+1. In the LKMBot WebUI, open `Config`, select the profile used by your bot, and go to `AI → Capabilities → Agent Computer Use`. Set `Computer Use Runtime` to `local`. This section requires the built-in LKMBot AI runner.
 2. In the same profile, go to `Platform → General → Administrator IDs` and add your user ID (available through the `/sid` command).
 3. Click `Save Configuration` in the bottom-right corner.
 
 > [!TIP]
-> For security reasons, when runtime environment is set to `local`, AstrBot only allows AstrBot administrators to use computer capabilities by default.
-> You can select `sandbox` for the runtime environment, which allows all users to use computer capabilities (in an isolated sandbox). For more details, see [AstrBot Sandbox Environment](/en/use/astrbot-agent-sandbox.md)
+> For security reasons, when runtime environment is set to `local`, LKMBot only allows LKMBot administrators to use computer capabilities by default.
+> You can select `sandbox` for the runtime environment, which allows all users to use computer capabilities (in an isolated sandbox). For more details, see [LKMBot Sandbox Environment](/en/use/astrbot-agent-sandbox.md)
 
 ### Bot Cannot Chat in Group Conversations
 
@@ -132,7 +132,7 @@ This is because the provider's API returned empty text. Try the following steps:
 
 ![image](https://files.astrbot.app/docs/source/images/faq/image.png)
 
-This is because the plugin's dependencies were not installed properly. Normally, AstrBot automatically installs plugin dependencies after installing the plugin, but installation may fail in the following situations:
+This is because the plugin's dependencies were not installed properly. Normally, LKMBot automatically installs plugin dependencies after installing the plugin, but installation may fail in the following situations:
 
 1. Network issues preventing dependency downloads
 2. Plugin author did not include a `requirements.txt` file
@@ -140,7 +140,7 @@ This is because the plugin's dependencies were not installed properly. Normally,
 
 Solution:
 
-Based on the error message, refer to the plugin's README to manually install dependencies. You can install dependencies in the AstrBot WebUI under `Data & Logs → Logs → Install pip Package`.
+Based on the error message, refer to the plugin's README to manually install dependencies. You can install dependencies in the LKMBot WebUI under `Data & Logs → Logs → Install pip Package`.
 
 Enter the package name in the dialog, optionally specify a PyPI repository URL, and click `Install`.
 

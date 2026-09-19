@@ -16,7 +16,7 @@ class ProviderSSYCloud(ProviderOpenAIOfficial):
         """Initialize the SSYCloud client with provider defaults.
 
         Args:
-            provider_config: AstrBot provider source configuration.
+            provider_config: LKMBot provider source configuration.
             provider_settings: Global provider settings.
         """
         if not provider_config.get("api_base"):
@@ -25,7 +25,7 @@ class ProviderSSYCloud(ProviderOpenAIOfficial):
         if not isinstance(custom_headers, dict):
             custom_headers = {}
             provider_config["custom_headers"] = custom_headers
-        custom_headers.setdefault("X-Title", "AstrBot")
+        custom_headers.setdefault("X-Title", "LKMBot")
         super().__init__(provider_config, provider_settings)
 
     async def get_models(self) -> list[str]:

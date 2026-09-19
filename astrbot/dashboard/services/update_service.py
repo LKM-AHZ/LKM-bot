@@ -167,7 +167,7 @@ class UpdateService:
         Args:
             progress_id: Progress record id reported to the frontend.
             version: Target version without the latest sentinel.
-            reboot: Whether to restart AstrBot after applying files.
+            reboot: Whether to restart LKMBot after applying files.
             proxy: Optional GitHub proxy URL.
         """
         try:
@@ -233,9 +233,9 @@ class UpdateService:
                     98,
                 )
                 await self.core_lifecycle.restart()
-                message = "更新成功，AstrBot 将在 2 秒内全量重启以应用新的代码。"
+                message = "更新成功，LKMBot 将在 2 秒内全量重启以应用新的代码。"
             else:
-                message = "更新成功，AstrBot 将在下次启动时应用新的代码。"
+                message = "更新成功，LKMBot 将在下次启动时应用新的代码。"
 
             self.update_progress[progress_id].update(
                 {
@@ -273,7 +273,7 @@ class UpdateService:
                 logger.error(f"Failed to ensure Dashboard assets: {exc}")
                 raise UpdateServiceError(f"管理面板修复失败: {exc}") from exc
             return UpdateServiceResult(
-                message="管理面板已与当前 AstrBot 版本同步。",
+                message="管理面板已与当前 LKMBot 版本同步。",
                 headers=self.clear_site_data_headers,
             )
         except UpdateServiceError:

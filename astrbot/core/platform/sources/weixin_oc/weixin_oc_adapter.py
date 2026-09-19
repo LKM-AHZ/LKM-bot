@@ -1696,7 +1696,7 @@ class WeixinOCAdapter(Platform):
         """Creates a Weixin OC message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created Weixin OC message event.

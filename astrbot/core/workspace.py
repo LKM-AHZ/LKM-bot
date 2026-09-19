@@ -95,14 +95,14 @@ def workspace_path_to_root(path: str) -> Path:
     """Resolve a custom workspace path.
 
     Args:
-        path: Stored workspace path. Relative values are rooted under AstrBot
+        path: Stored workspace path. Relative values are rooted under LKMBot
             workspaces. Absolute values are allowed and resolved as provided.
 
     Returns:
         Absolute resolved path.
 
     Raises:
-        ValueError: If a relative path escapes or targets the AstrBot workspaces
+        ValueError: If a relative path escapes or targets the LKMBot workspaces
             root.
     """
     workspaces_root = Path(get_astrbot_workspaces_path()).resolve(strict=False)
@@ -113,7 +113,7 @@ def workspace_path_to_root(path: str) -> Path:
     resolved = (workspaces_root / candidate).resolve(strict=False)
     if resolved == workspaces_root or not resolved.is_relative_to(workspaces_root):
         raise ValueError(
-            "Relative workspace path must stay within a subdirectory of AstrBot workspaces"
+            "Relative workspace path must stay within a subdirectory of LKMBot workspaces"
         )
     return resolved
 
@@ -129,7 +129,7 @@ def resolve_project_workspace_root(project: Any, *, fallback_umo: str) -> Path:
         Workspace root used as cwd.
 
     Raises:
-        ValueError: If an API key project resolves outside AstrBot workspaces.
+        ValueError: If an API key project resolves outside LKMBot workspaces.
     """
     workspaces_root = Path(get_astrbot_workspaces_path()).resolve(strict=False)
     fallback = default_workspace_root(fallback_umo)
@@ -160,7 +160,7 @@ def resolve_project_workspace_root(project: Any, *, fallback_umo: str) -> Path:
         resolved == workspaces_root or not resolved.is_relative_to(workspaces_root)
     ):
         raise ValueError(
-            "API key project workspace must stay within AstrBot workspaces"
+            "API key project workspace must stay within LKMBot workspaces"
         )
     return resolved
 

@@ -1,4 +1,4 @@
-"""Process-level restart support for the AstrBot lifecycle."""
+"""Process-level restart support for the LKMBot lifecycle."""
 
 import os
 import subprocess
@@ -123,7 +123,7 @@ def _exec_restart(executable: str, argv: list[str]) -> None:
 
 
 def restart_process(delay: int = 3) -> None:
-    """Restart the current AstrBot process after a short delay.
+    """Restart the current LKMBot process after a short delay.
 
     Args:
         delay: Seconds to wait before replacing the current process.

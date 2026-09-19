@@ -134,7 +134,7 @@ def decrypt_qqofficial_secret(encrypted_secret: str, bind_key: str) -> str:
 
 
 def qqofficial_login_result(data: dict[str, Any], *, bind_key: str) -> dict[str, Any]:
-    """Map QQ bot bind polling payloads to AstrBot registration statuses.
+    """Map QQ bot bind polling payloads to LKMBot registration statuses.
 
     Args:
         data: Response data from `/lite/poll_bind_result`.

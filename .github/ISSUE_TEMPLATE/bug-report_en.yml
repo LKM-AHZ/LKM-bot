@@ -25,15 +25,15 @@ body:
 
   - type: input
     attributes:
-      label: AstrBot Version
-      description: The AstrBot version where the issue occurred. Please do not use meaningless values like `latest`.
+      label: LKMBot Version
+      description: The LKMBot version where the issue occurred. Please do not use meaningless values like `latest`.
     validations:
       required: true
 
   - type: dropdown
     attributes:
       label: Operating System
-      description: The operating system where AstrBot is running.
+      description: The operating system where LKMBot is running.
       options:
         - "Windows"
         - "MacOS"
@@ -47,7 +47,7 @@ body:
       # Deployment methods may expand in the future. To avoid frequent form modifications,
       # we use an input field here so users can fill it in themselves.
       label: Deployment Method
-      description: How AstrBot is deployed.
+      description: How LKMBot is deployed.
       placeholder: For example, Docker, Windows Desktop.
     validations:
       required: true
@@ -86,7 +86,7 @@ body:
           required: true
         - label: I have tried disabling all plugins to rule out issues caused by plugins.
           required: true
-        - label: The issue I am reporting is related to AstrBot itself, not to a specific plugin.
+        - label: The issue I am reporting is related to LKMBot itself, not to a specific plugin.
           required: true
         - label: I have read and agree to the project's [Code of Conduct](https://github.com/AstrBotDevs/AstrBot/blob/master/CODE_OF_CONDUCT.md).
           required: true

@@ -122,7 +122,7 @@ def test_process_restart_spawns_new_console_on_windows(
                 r"C:\Python312\python.exe",
                 "main.py",
                 "--webui-dir",
-                r"C:\AstrBot WebUI\dist",
+                r"C:\LKMBot WebUI\dist",
             ],
         )
 
@@ -133,7 +133,7 @@ def test_process_restart_spawns_new_console_on_windows(
                 r"C:\Python312\python.exe",
                 "main.py",
                 "--webui-dir",
-                r"C:\AstrBot WebUI\dist",
+                r"C:\LKMBot WebUI\dist",
             ],
             process_restart.subprocess.CREATE_NEW_CONSOLE,
         )
@@ -195,7 +195,7 @@ class _FakeZipArchive:
     def read(self, name: str) -> bytes:
         if name.endswith(("metadata.yaml", "metadata.yml")):
             return (
-                b"name: demo\ndesc: Demo plugin\nversion: 1.0.0\nauthor: AstrBot Team\n"
+                b"name: demo\ndesc: Demo plugin\nversion: 1.0.0\nauthor: LKMBot Team\n"
             )
         return b""
 
@@ -383,7 +383,7 @@ def test_plugin_unzip_file_accepts_metadata_yml(tmp_path: Path) -> None:
                     "name: demo_plugin",
                     "desc: Demo plugin",
                     "version: 1.0.0",
-                    "author: AstrBot Team",
+                    "author: LKMBot Team",
                 ]
             ),
         )
@@ -419,7 +419,7 @@ def test_plugin_validate_archive_rejects_incomplete_metadata(tmp_path: Path) -> 
                 [
                     "name: demo_plugin",
                     "desc: Demo plugin",
-                    "author: AstrBot Team",
+                    "author: LKMBot Team",
                 ]
             ),
         )
@@ -441,7 +441,7 @@ def test_plugin_validate_archive_rejects_empty_metadata_fields(
                     "name: demo_plugin",
                     "desc: Demo plugin",
                     "version: ''",
-                    "author: AstrBot Team",
+                    "author: LKMBot Team",
                 ]
             ),
         )
@@ -629,7 +629,7 @@ async def test_astrbot_updater_exposes_release_info_without_download_details(
     async def fake_fetch_release_info(_url: str):
         return [
             {
-                "version": "AstrBot v99.0.0",
+                "version": "LKMBot v99.0.0",
                 "tag_name": "v99.0.0",
                 "published_at": "2026-08-01T00:00:00Z",
                 "body": "release notes",
@@ -903,7 +903,7 @@ async def test_astrbot_updater_prefers_hosted_core_package(
     async def fake_fetch_release_info(url: str, latest: bool = True):  # noqa: ARG001
         return [
             {
-                "version": "AstrBot v99.0.0",
+                "version": "LKMBot v99.0.0",
                 "published_at": "2026-06-19T00:00:00Z",
                 "body": "hosted core package",
                 "tag_name": "v99.0.0",
@@ -945,7 +945,7 @@ async def test_astrbot_updater_falls_back_when_hosted_core_package_fails(
     async def fake_fetch_release_info(url: str, latest: bool = True):  # noqa: ARG001
         return [
             {
-                "version": "AstrBot v99.0.0",
+                "version": "LKMBot v99.0.0",
                 "published_at": "2026-06-19T00:00:00Z",
                 "body": "hosted core package",
                 "tag_name": "v99.0.0",
@@ -992,7 +992,7 @@ async def test_astrbot_updater_falls_back_when_hosted_core_package_is_not_zip(
     async def fake_fetch_release_info(url: str, latest: bool = True):  # noqa: ARG001
         return [
             {
-                "version": "AstrBot v99.0.0",
+                "version": "LKMBot v99.0.0",
                 "published_at": "2026-06-19T00:00:00Z",
                 "body": "hosted core package",
                 "tag_name": "v99.0.0",
@@ -1129,7 +1129,7 @@ async def test_fetch_release_info_uses_httpx_client_with_env_proxy_support(
 
     fake_async_client_state.json_payload = [
         {
-            "name": "AstrBot v4.23.2",
+            "name": "LKMBot v4.23.2",
             "published_at": "2026-04-16T00:00:00Z",
             "body": "fix updater socks proxy support",
             "tag_name": "v4.23.2",
@@ -1162,7 +1162,7 @@ async def test_fetch_release_info_uses_httpx_client_with_env_proxy_support(
 
     assert release_info == [
         {
-            "version": "AstrBot v4.23.2",
+            "version": "LKMBot v4.23.2",
             "published_at": "2026-04-16T00:00:00Z",
             "body": "fix updater socks proxy support",
             "tag_name": "v4.23.2",
@@ -1205,13 +1205,13 @@ async def test_download_from_repo_url_uses_head_without_metadata_lookup(
         raising=False,
     )
 
-    target_path = tmp_path / "AstrBot"
+    target_path = tmp_path / "LKMBot"
     await _RepoZipUpdater()._download_repository(
         str(target_path),
         "https://github.com/AstrBotDevs/AstrBot",
     )
 
-    assert (tmp_path / "AstrBot.zip").read_bytes() == b"zip-data"
+    assert (tmp_path / "LKMBot.zip").read_bytes() == b"zip-data"
     assert fake_async_client_state.requested_urls == []
     assert fake_async_client_state.stream_urls == [
         "https://github.com/AstrBotDevs/AstrBot/archive/HEAD.zip"
@@ -1238,7 +1238,7 @@ async def test_download_from_repo_url_uses_explicit_branch_without_default_branc
     monkeypatch.setattr(updater, "_download_file", fake_download_file)
 
     await updater._download_repository(
-        str(tmp_path / "AstrBot"),
+        str(tmp_path / "LKMBot"),
         "https://github.com/AstrBotDevs/AstrBot/tree/dev",
         proxy="https://proxy.example/",
     )
@@ -1272,7 +1272,7 @@ async def test_plugin_updater_shallow_clones_non_github_repository(
                         "name: demo_plugin",
                         "desc: Demo plugin",
                         "version: 1.0.0",
-                        "author: AstrBot Team",
+                        "author: LKMBot Team",
                     ]
                 ),
                 encoding="utf-8",
@@ -1607,7 +1607,7 @@ def test_repo_unzip_file_normalizes_windows_extended_length_paths(
 ) -> None:
     import astrbot.core.zip_updater as zip_updater_module
 
-    target_dir = r"\\?\C:\Users\admin\AppData\Local\AstrBot\backend\app"
+    target_dir = r"\\?\C:\Users\admin\AppData\Local\LKMBot\backend\app"
     captured = _exercise_unzip_file_windows_path_normalization(
         monkeypatch,
         updater_module=zip_updater_module,
@@ -1639,7 +1639,7 @@ def test_plugin_unzip_file_normalizes_windows_extended_length_paths(
     import astrbot.core.star.updater as plugin_updater_module
     import astrbot.core.zip_updater as zip_updater_module
 
-    target_dir = r"\\?\C:\Users\admin\AppData\Local\AstrBot\data\plugins\demo"
+    target_dir = r"\\?\C:\Users\admin\AppData\Local\LKMBot\data\plugins\demo"
     captured = _exercise_unzip_file_windows_path_normalization(
         monkeypatch,
         updater_module=plugin_updater_module,
@@ -1694,7 +1694,7 @@ def test_repo_unzip_file_handles_archives_without_explicit_root_dir_entry(
 ) -> None:
     import astrbot.core.zip_updater as zip_updater_module
 
-    target_dir = r"\\?\C:\Users\admin\AppData\Local\AstrBot\backend\app"
+    target_dir = r"\\?\C:\Users\admin\AppData\Local\LKMBot\backend\app"
     archive_root = "repo-root"
     expected_root = ntpath.join(target_dir, archive_root)
     expected_file = ntpath.join(expected_root, "README.md")

@@ -36,7 +36,7 @@ def test_core_constraints_provider_writes_constraints_file_from_fallback_distrib
     fake_distribution = FakeFallbackDistribution()
 
     def mock_distribution(name):
-        if name == "AstrBot":
+        if name == "LKMBot":
             raise core_constraints_module.importlib_metadata.PackageNotFoundError
         if name == "AstrBot-App":
             return fake_distribution

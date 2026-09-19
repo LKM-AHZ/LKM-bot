@@ -133,7 +133,7 @@ export type workspace_type = 'session' | 'project' | 'custom';
 
 export type ChatRequest = {
     /**
-     * Caller-declared WebChat sender/session owner. Configured AstrBot administrator IDs require the chat:admin API key sub-scope.
+     * Caller-declared WebChat sender/session owner. Configured LKMBot administrator IDs require the chat:admin API key sub-scope.
      */
     username?: string;
     session_id?: string;
@@ -613,7 +613,7 @@ export type ReorderRequest = {
 };
 
 /**
- * The AstrBot backend runtime, including when running inside a container. Values are captured at application startup.
+ * The LKMBot backend runtime, including when running inside a container. Values are captured at application startup.
  */
 export type RuntimeInfo = {
     /**
@@ -625,7 +625,7 @@ export type RuntimeInfo = {
      */
     arch: string;
     /**
-     * Local process sandbox startup check, captured when AstrBot starts. It does not verify DNS resolution or every permitted operation.
+     * Local process sandbox startup check, captured when LKMBot starts. It does not verify DNS resolution or every permitted operation.
      */
     sandbox: {
         backend: ('bubblewrap' | 'seatbelt') | null;
@@ -634,7 +634,7 @@ export type RuntimeInfo = {
          */
         status: 'detected' | 'missing' | 'unavailable' | 'unsupported';
         /**
-         * Bounded startup error detail, included when status is unavailable. Restart AstrBot after fixing the environment to refresh the check.
+         * Bounded startup error detail, included when status is unavailable. Restart LKMBot after fixing the environment to refresh the check.
          */
         error?: string;
     };
@@ -3749,22 +3749,6 @@ export type DeleteT2iTemplateData = {
 export type DeleteT2iTemplateResponse = (SuccessEnvelope);
 
 export type DeleteT2iTemplateError = unknown;
-
-export type GetSubagentConfigResponse = (SuccessEnvelope);
-
-export type GetSubagentConfigError = unknown;
-
-export type UpdateSubagentConfigData = {
-    body: DynamicConfig;
-};
-
-export type UpdateSubagentConfigResponse = (SuccessEnvelope);
-
-export type UpdateSubagentConfigError = unknown;
-
-export type ListSubagentAvailableToolsResponse = (SuccessEnvelope);
-
-export type ListSubagentAvailableToolsError = unknown;
 
 export type VerifyPlatformWebhookData = {
     path: {

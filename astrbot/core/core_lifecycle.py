@@ -1,4 +1,4 @@
-"""Astrbot 核心生命周期管理类, 负责管理 AstrBot 的启动、停止、重启等操作.
+"""Astrbot 核心生命周期管理类, 负责管理 LKMBot 的启动、停止、重启等操作.
 
 该类负责初始化各个组件, 包括 ProviderManager、PlatformManager、ConversationManager、PluginManager、PipelineScheduler、EventBus等。
 该类还负责加载和执行插件, 以及处理事件总线的分发。
@@ -34,7 +34,6 @@ from astrbot.core.provider.manager import ProviderManager
 from astrbot.core.star.context import Context
 from astrbot.core.star.star_handler import EventType, star_handlers_registry, star_map
 from astrbot.core.star.star_manager import PluginManager
-from astrbot.core.subagent_orchestrator import SubAgentOrchestrator
 from astrbot.core.umop_config_router import UmopConfigRouter
 from astrbot.core.updater import AstrBotUpdater
 from astrbot.core.utils.event_loop_diagnostics import (
@@ -49,7 +48,7 @@ from .event_bus import EventBus
 
 
 class AstrBotCoreLifecycle:
-    """AstrBot 核心生命周期管理类, 负责管理 AstrBot 的启动、停止、重启等操作.
+    """LKMBot 核心生命周期管理类, 负责管理 LKMBot 的启动、停止、重启等操作.
 
     该类负责初始化各个组件, 包括 ProviderManager、PlatformManager、ConversationManager、PluginManager、PipelineScheduler、
     EventBus 等。
@@ -61,7 +60,6 @@ class AstrBotCoreLifecycle:
         self.astrbot_config = astrbot_config  # 初始化配置
         self.db = db  # 初始化数据库
 
-        self.subagent_orchestrator: SubAgentOrchestrator | None = None
         self.cron_manager: CronJobManager | None = None
         self.temp_dir_cleaner: TempDirCleaner | None = None
         self._default_chat_provider_warning_emitted = False
@@ -81,9 +79,9 @@ class AstrBotCoreLifecycle:
             if has_system_proxy:
                 logger.warning(
                     "System http_proxy/https_proxy environment variables were detected, "
-                    "but AstrBot has no proxy configured. Clearing the proxy variables "
+                    "but LKMBot has no proxy configured. Clearing the proxy variables "
                     "and setting no_proxy to localhost,127.0.0.1,::1 so local API "
-                    "requests bypass the proxy. Configure http_proxy in AstrBot if a "
+                    "requests bypass the proxy. Configure http_proxy in LKMBot if a "
                     "proxy is required."
                 )
             if "https_proxy" in os.environ:
@@ -95,24 +93,6 @@ class AstrBotCoreLifecycle:
             # Always bypass proxies for loopback addresses used by local APIs.
             os.environ["no_proxy"] = "localhost,127.0.0.1,::1"
             logger.debug("HTTP proxy cleared, no_proxy set to localhost")
-
-    async def _init_or_reload_subagent_orchestrator(self) -> None:
-        """Create (if needed) and reload the subagent orchestrator from config.
-
-        This keeps lifecycle wiring in one place while allowing the orchestrator
-        to manage enable/disable and tool registration details.
-        """
-        try:
-            if self.subagent_orchestrator is None:
-                self.subagent_orchestrator = SubAgentOrchestrator(
-                    self.provider_manager.llm_tools,
-                    self.persona_mgr,
-                )
-            await self.subagent_orchestrator.reload_from_config(
-                self.astrbot_config.get("subagent_orchestrator", {}),
-            )
-        except Exception as e:
-            logger.error(f"Subagent orchestrator init failed: {e}", exc_info=True)
 
     def _warn_about_unset_default_chat_provider(self) -> None:
         if self._default_chat_provider_warning_emitted:
@@ -136,7 +116,7 @@ class AstrBotCoreLifecycle:
             self._default_chat_provider_warning_emitted = True
             logger.warning(
                 "Detected %d enabled chat providers but `agent_runner.config.model.provider_id` is empty. "
-                "AstrBot will use `%s` as the startup fallback chat provider. "
+                "LKMBot will use `%s` as the startup fallback chat provider. "
                 "Set a default chat model in the WebUI configuration page to avoid unexpected provider switching.",
                 len(providers),
                 fallback_id,
@@ -148,19 +128,19 @@ class AstrBotCoreLifecycle:
             self._default_chat_provider_warning_emitted = True
             logger.warning(
                 "Configured Agent Runner model provider ID `%s` does not match an enabled provider. "
-                "AstrBot will use `%s` as the fallback chat provider. "
+                "LKMBot will use `%s` as the fallback chat provider. "
                 "Please check the WebUI configuration page.",
                 default_id,
                 fallback_id,
             )
 
     async def initialize(self) -> None:
-        """初始化 AstrBot 核心生命周期管理类.
+        """初始化 LKMBot 核心生命周期管理类.
 
         负责初始化各个组件, 包括 ProviderManager、PlatformManager、ConversationManager、PluginManager、PipelineScheduler、EventBus、AstrBotUpdater等。
         """
         # 初始化日志代理
-        logger.info("AstrBot v" + VERSION)
+        logger.info("LKMBot v" + VERSION)
         if os.environ.get("TESTING", ""):
             LogManager.configure_logger(
                 logger, self.astrbot_config, override_level="DEBUG"
@@ -180,7 +160,7 @@ class AstrBotCoreLifecycle:
         self.umop_config_router = UmopConfigRouter(sp=sp)
         await self.umop_config_router.initialize()
 
-        # 初始化 AstrBot 配置管理器
+        # 初始化 LKMBot 配置管理器
         self.astrbot_config_mgr = AstrBotConfigManager(
             default_config=self.astrbot_config,
             ucr=self.umop_config_router,
@@ -203,7 +183,7 @@ class AstrBotCoreLifecycle:
                 self.astrbot_config_mgr,
             )
         except Exception as e:
-            logger.error(f"AstrBot migration failed: {e!s}")
+            logger.error(f"LKMBot migration failed: {e!s}")
             logger.error(traceback.format_exc())
 
         # 初始化事件队列
@@ -235,9 +215,6 @@ class AstrBotCoreLifecycle:
         # 初始化 CronJob 管理器
         self.cron_manager = CronJobManager(self.db)
 
-        # Dynamic subagents (handoff tools) from config.
-        await self._init_or_reload_subagent_orchestrator()
-
         # 初始化提供给插件的上下文
         self.star_context = Context(
             self.event_queue,
@@ -251,7 +228,6 @@ class AstrBotCoreLifecycle:
             self.astrbot_config_mgr,
             self.kb_manager,
             self.cron_manager,
-            self.subagent_orchestrator,
         )
 
         # 初始化插件管理器
@@ -356,12 +332,12 @@ class AstrBotCoreLifecycle:
             logger.error("-------")
 
     async def start(self) -> None:
-        """启动 AstrBot 核心生命周期管理类.
+        """启动 LKMBot 核心生命周期管理类.
 
         用load加载事件总线和任务并初始化, 执行启动完成事件钩子
         """
         self._load()
-        logger.info("AstrBot started.")
+        logger.info("LKMBot started.")
 
         # 执行启动完成事件钩子
         handlers = star_handlers_registry.get_handlers_by_event_type(
@@ -380,7 +356,7 @@ class AstrBotCoreLifecycle:
         await asyncio.gather(*self.curr_tasks, return_exceptions=True)
 
     async def stop(self) -> None:
-        """停止 AstrBot 核心生命周期管理类, 取消所有当前任务并终止各个管理器."""
+        """停止 LKMBot 核心生命周期管理类, 取消所有当前任务并终止各个管理器."""
         if self.temp_dir_cleaner:
             await self.temp_dir_cleaner.stop()
 
@@ -425,7 +401,7 @@ class AstrBotCoreLifecycle:
             logger.warning(f"释放数据库引擎失败: {e}")
 
     async def restart(self) -> None:
-        """重启 AstrBot 核心生命周期管理类, 终止各个管理器并重新加载平台实例"""
+        """重启 LKMBot 核心生命周期管理类, 终止各个管理器并重新加载平台实例"""
         await shutdown_local_booter()
         await self.provider_manager.terminate()
         await self.platform_manager.terminate()

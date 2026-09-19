@@ -1,4 +1,4 @@
-name: Build and Deploy AstrBot Docs
+name: Build and Deploy LKMBot Docs
 
 on:
   push:

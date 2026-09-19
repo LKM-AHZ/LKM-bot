@@ -28,9 +28,9 @@
 
   ![image](https://files.astrbot.app/docs/source/images/kook/image-1.png)
 
-## 在 AstrBot 配置
+## 在 LKMBot 配置
 
-1. 进入 AstrBot 的管理面板
+1. 进入 LKMBot 的管理面板
 2. 点击左边栏 `机器人`
 3. 点击机器人列表上方的 `创建机器人`
 4. 选择 `kook` 适配器

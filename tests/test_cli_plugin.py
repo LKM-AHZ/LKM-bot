@@ -16,7 +16,7 @@ def _write_plugin(path: Path, name: str = "astrbot_plugin_local_demo") -> None:
                 f"name: {name}",
                 "desc: Local plugin",
                 "version: 1.0.0",
-                "author: AstrBot",
+                "author: LKMBot",
                 "repo: https://example.com/local-plugin",
             ],
         ),

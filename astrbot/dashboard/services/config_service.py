@@ -413,7 +413,7 @@ def validate_config(
                             f"{dependency} is installed but cannot start a sandbox: "
                             f"{detail} Restricted Local execution is unavailable. "
                             "Check system security policies or container restrictions, "
-                            "then restart AstrBot to check again."
+                            "then restart LKMBot to check again."
                         )
                     else:
                         reason = f"Missing {dependency}; restricted Local execution is unavailable."

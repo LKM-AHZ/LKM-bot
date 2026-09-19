@@ -1,9 +1,9 @@
 ---
 name: skill-creator
-description: Create, revise, and validate AstrBot Skills built around SKILL.md instruction bundles. Use when the user asks to create, scaffold, improve, package, or review a Skill for an AstrBot workspace, local installation, or plugin.
+description: Create, revise, and validate LKMBot Skills built around SKILL.md instruction bundles. Use when the user asks to create, scaffold, improve, package, or review a Skill for an LKMBot workspace, local installation, or plugin.
 ---
 
-# Create AstrBot Skills
+# Create LKMBot Skills
 
 Build small, reusable instruction bundles that another agent can discover and follow reliably.
 
@@ -37,9 +37,9 @@ In local mode, common targets are:
 - Locally installed Skill: `<astrbot-data>/skills/<skill-name>`.
 - Installed third-party plugin Skill: `<astrbot-data>/plugins/<plugin-name>/skills/<skill-name>`.
 
-If no location is specified in local mode, create the Skill under `skills/<skill-name>` in the current AstrBot workspace. Creating or modifying a locally installed Skill requires administrator access and is enforced by the filesystem tools. If permission is denied, use the workspace target and explain the fallback.
+If no location is specified in local mode, create the Skill under `skills/<skill-name>` in the current LKMBot workspace. Creating or modifying a locally installed Skill requires administrator access and is enforced by the filesystem tools. If permission is denied, use the workspace target and explain the fallback.
 
-In sandbox mode, do not use `<astrbot-data>` or attempt to install a Skill into the host AstrBot instance. Create it under `skills/<skill-name>` in the current sandbox workspace, and treat it as sandbox-scoped unless the runtime provides a dedicated persistence or release workflow.
+In sandbox mode, do not use `<astrbot-data>` or attempt to install a Skill into the host LKMBot instance. Create it under `skills/<skill-name>` in the current sandbox workspace, and treat it as sandbox-scoped unless the runtime provides a dedicated persistence or release workflow.
 
 Treat plugin-provided Skills as read-only during normal runtime. Modify a plugin Skill only when the user is working in that plugin's source tree and has explicitly requested the change. If the requested target is not writable, create the Skill in the workspace and explain how to install or move it.
 
@@ -71,14 +71,14 @@ description: Describe what the Skill does and the concrete requests or situation
 ---
 ```
 
-Make the description specific enough for discovery. Put all trigger guidance in the description because AstrBot loads the body only after the Skill is selected.
+Make the description specific enough for discovery. Put all trigger guidance in the description because LKMBot loads the body only after the Skill is selected.
 
 Write the body as direct instructions:
 
 - Use imperative language.
 - Put the main workflow before edge cases.
 - State important safety boundaries close to the affected action.
-- Use the AstrBot tool names actually available in the current runtime when a workflow depends on tools.
+- Use the LKMBot tool names actually available in the current runtime when a workflow depends on tools.
 - Prefer relative paths inside the Skill so it works after installation or sandbox synchronization.
 - Keep examples short and representative.
 
@@ -117,4 +117,4 @@ Run any bundled scripts on representative safe inputs. Fix validation or executi
 
 ## Finish
 
-Report the created or updated location, included resources, validation performed, and any runtime or activation step still required. Do not enable a globally installed Skill or change an AstrBot configuration unless the user requested it.
+Report the created or updated location, included resources, validation performed, and any runtime or activation step still required. Do not enable a globally installed Skill or change an LKMBot configuration unless the user requested it.

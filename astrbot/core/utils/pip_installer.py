@@ -473,7 +473,7 @@ def _classify_pip_failure(output_lines: list[str]) -> DependencyConflictError | 
         message = (
             f"A core dependency version protection conflict was detected.{detail} "
             "The dependency version required by the plugin is incompatible with "
-            "AstrBot Core. The downgrade was blocked to preserve system stability. "
+            "LKMBot Core. The downgrade was blocked to preserve system stability. "
             "Contact the plugin author or adjust requirements.txt."
         )
     else:
@@ -962,7 +962,7 @@ class PipInstaller:
         self,
         pip_install_arg: str,
         pypi_index_url: str | None = None,
-        core_dist_name: str | None = "AstrBot",
+        core_dist_name: str | None = "LKMBot",
     ) -> None:
         self.pip_install_arg = pip_install_arg
         self.pypi_index_url = pypi_index_url

@@ -4,13 +4,13 @@
 
 If you haven't installed Dify yet, please refer to the [Dify Installation Documentation](https://docs.dify.ai/getting-started/install-self-hosted) to install it.
 
-## Configure Dify in AstrBot
+## Configure Dify in LKMBot
 
 In the WebUI, open **Config**, select the profile to edit, and open **AI**. Click **More actions** (`…`) beside the heading → **Change Execution Mode**, select **Dify**, read and check the reset acknowledgement, then click **Use This Mode**. Make sure **Enable AI** is on, then enter the connection settings on this page. Switching resets the current mode's configuration; see [Agent Runner](../../use/agent-runner.md).
 
 In Dify, one `API Key` uniquely corresponds to one Dify application. Therefore, you can configure different API keys in separate profiles to connect multiple Dify applications.
 
-AstrBot provides these **Application Type** options:
+LKMBot provides these **Application Type** options:
 
 - chat
 - chatflow
@@ -18,7 +18,7 @@ AstrBot provides these **Application Type** options:
 - workflow
 
 >[!TIP]
->Please ensure that the APP type you set in AstrBot matches the application type created in Dify.
+>Please ensure that the APP type you set in LKMBot matches the application type created in Dify.
 >![image](https://files.astrbot.app/docs/source/images/dify/image-3.png)
 
 ### Chat and Agent Applications
@@ -39,16 +39,16 @@ Workflow applications receive input variables, execute the workflow, and output 
 
 ![image](https://files.astrbot.app/docs/source/images/dify/workflow-io-key.png)
 
-For Workflow applications, AstrBot will attach two variables with each request:
+For Workflow applications, LKMBot will attach two variables with each request:
 
 - `astrbot_text_query`: Input variable name. This is the text content entered by the user.
 - `astrbot_session_id`: Session ID
 
 You can customize the input variable name in the configuration, which is the **Prompt Input Variable** field in the Dify settings.
 
-You need to modify the input variable name of your Workflow to adapt to AstrBot's input.
+You need to modify the input variable name of your Workflow to adapt to LKMBot's input.
 
-Finally, the Workflow will output a result. You can customize the variable name of this result, which is the **Workflow Output Variable** field in the Dify settings, with a default value of `astrbot_wf_output`. You need to configure this variable name in the output node of the Dify Workflow, otherwise AstrBot cannot parse it correctly.
+Finally, the Workflow will output a result. You can customize the variable name of this result, which is the **Workflow Output Variable** field in the Dify settings, with a default value of `astrbot_wf_output`. You need to configure this variable name in the output node of the Dify Workflow, otherwise LKMBot cannot parse it correctly.
 
 #### Create API Key
 
@@ -70,7 +70,7 @@ You can use the `/set` command to dynamically set input variables, as shown in t
 
 ![alt text](https://files.astrbot.app/docs/source/images/dify/image-5.png)
 
-After setting variables, AstrBot will attach the variables you set in the next request to Dify, flexibly adapting to your Workflow.
+After setting variables, LKMBot will attach the variables you set in the next request to Dify, flexibly adapting to your Workflow.
 
 ![alt text](https://files.astrbot.app/docs/source/images/dify/image-4.png)
 

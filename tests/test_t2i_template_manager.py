@@ -56,7 +56,7 @@ def test_initialize_user_templates_migrates_only_unmodified_defaults(
     """Verify automatic migration preserves customized user templates.
 
     Args:
-        monkeypatch: Pytest fixture used to isolate AstrBot paths and legacy hashes.
+        monkeypatch: Pytest fixture used to isolate LKMBot paths and legacy hashes.
         tmp_path: Temporary directory used for built-in and user templates.
         user_content: Existing user template content, or None when it is missing.
         expected_content: Template content expected after manager initialization.

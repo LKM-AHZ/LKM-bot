@@ -50,7 +50,7 @@
     "enable": "启用 AI",
     "more": "更多操作",
     "changeRunner": "更换执行方式",
-    "localSettingsTitle": "AstrBot 内置 AI",
+    "localSettingsTitle": "LKMBot 内置 AI",
     "settingsSuffix": "设置",
     "tabs": {
       "model": "模型",
@@ -87,8 +87,8 @@
     "runners": {
       "local": {
         "title": "内置 AI",
-        "summary": "配置 AstrBot 的 AI 能力，包括模型、人格、知识库和工具。",
-        "description": "使用 AstrBot 内置 AI，支持模型、人格、知识库和工具能力。"
+        "summary": "配置 LKMBot 的 AI 能力，包括模型、人格、知识库和工具。",
+        "description": "使用 LKMBot 内置 AI，支持模型、人格、知识库和工具能力。"
       },
       "dify": {
         "title": "Dify",
@@ -146,7 +146,7 @@
   },
   "configManagement": {
     "title": "配置文件管理",
-    "description": "AstrBot 支持针对不同机器人分别设置配置文件。未指定时使用默认配置文件。",
+    "description": "LKMBot 支持针对不同机器人分别设置配置文件。未指定时使用默认配置文件。",
     "newConfig": "新建配置文件",
     "copyConfig": "复制配置文件",
     "editConfig": "编辑配置文件",

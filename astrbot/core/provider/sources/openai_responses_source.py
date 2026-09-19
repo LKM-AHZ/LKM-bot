@@ -60,13 +60,13 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
         self,
         messages: list[dict],
     ) -> list[dict]:
-        """Convert AstrBot's OpenAI chat history to Responses input items.
+        """Convert LKMBot's OpenAI chat history to Responses input items.
 
         The conversion preserves function call IDs and serialized reasoning output
         items so the complete history can be replayed without server-side state.
 
         Args:
-            messages: AstrBot context in OpenAI Chat Completions format.
+            messages: LKMBot context in OpenAI Chat Completions format.
 
         Returns:
             A list of Responses API input items.
@@ -249,7 +249,7 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
             prompt: Current user prompt.
             image_urls: Image references attached to the prompt.
             audio_urls: Audio references attached to the prompt.
-            contexts: Existing AstrBot conversation history.
+            contexts: Existing LKMBot conversation history.
             system_prompt: System-level instructions for this request.
             tool_calls_result: Function calls and their returned outputs.
             model: Optional per-request model override.
@@ -309,7 +309,7 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
             request_max_retries: Maximum transport-level request attempts.
 
         Returns:
-            Normalized AstrBot LLM response.
+            Normalized LKMBot LLM response.
 
         Raises:
             TypeError: If the SDK returns an unexpected response type.
@@ -488,14 +488,14 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
         response: Response,
         tools: ToolSet | None,
     ) -> LLMResponse:
-        """Normalize a Responses API response into AstrBot's LLM response.
+        """Normalize a Responses API response into LKMBot's LLM response.
 
         Args:
             response: SDK Responses API response object.
             tools: Functions available for resolving function call output items.
 
         Returns:
-            Normalized AstrBot LLM response.
+            Normalized LKMBot LLM response.
 
         Raises:
             EmptyModelOutputError: If the response contains no usable output.

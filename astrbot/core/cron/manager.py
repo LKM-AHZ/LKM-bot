@@ -35,7 +35,7 @@ def _normalize_crontab_day_of_week(day_of_week: str) -> str:
     """Normalize standard crontab weekdays for APScheduler.
 
     APScheduler treats numeric weekdays as Monday=0, while standard crontab and
-    AstrBot's WebUI use Sunday=0/7. Numeric weekday fields are expanded to
+    LKMBot's WebUI use Sunday=0/7. Numeric weekday fields are expanded to
     weekday names so the scheduled day remains unambiguous.
 
     Args:

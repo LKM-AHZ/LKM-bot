@@ -305,7 +305,7 @@ class NeoSkillSyncManager:
         mapping["version"] = _MAP_VERSION
         self._save_map(mapping)
 
-        # Ensure local skill is visible to AstrBot skill manager.
+        # Ensure local skill is visible to LKMBot skill manager.
         SkillManager().set_skill_active(local_skill_name, True)
 
         # Best-effort synchronization to active sandboxes.

@@ -14,7 +14,7 @@ async def test_document_storage_fts_insert_search_and_delete(tmp_path):
 
     await storage.insert_documents_batch(
         doc_ids=["chunk-1", "chunk-2"],
-        texts=["AstrBot 知识库召回性能优化", "FAISS 向量检索"],
+        texts=["LKMBot 知识库召回性能优化", "FAISS 向量检索"],
         metadatas=[
             {"kb_doc_id": "doc-1", "kb_id": "kb-1", "chunk_index": 0},
             {"kb_doc_id": "doc-1", "kb_id": "kb-1", "chunk_index": 1},

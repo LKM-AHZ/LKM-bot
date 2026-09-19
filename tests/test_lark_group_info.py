@@ -48,7 +48,7 @@ async def test_lark_get_group_fetches_details_and_all_member_pages():
             return_value=SimpleNamespace(
                 success=lambda: True,
                 data=SimpleNamespace(
-                    name="AstrBot Group",
+                    name="LKMBot Group",
                     avatar="https://example.com/avatar.png",
                     owner_id="owner",
                     user_manager_id_list=["admin"],
@@ -94,7 +94,7 @@ async def test_lark_get_group_fetches_details_and_all_member_pages():
 
     assert group is not None
     assert group.group_id == "chat-1"
-    assert group.group_name == "AstrBot Group"
+    assert group.group_name == "LKMBot Group"
     assert group.group_avatar == "https://example.com/avatar.png"
     assert group.group_owner == "owner"
     assert group.group_admins == ["admin"]
@@ -150,7 +150,7 @@ async def test_lark_get_group_does_not_publish_a_truncated_member_list():
             return_value=SimpleNamespace(
                 success=lambda: True,
                 data=SimpleNamespace(
-                    name="AstrBot Group",
+                    name="LKMBot Group",
                     avatar=None,
                     owner_id=None,
                     user_manager_id_list=None,

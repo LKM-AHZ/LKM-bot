@@ -1,57 +1,57 @@
 # CLI Commands
 
-The AstrBot CLI initializes instances, starts AstrBot, updates common config values, and manages plugins.
+The LKMBot CLI initializes instances, starts LKMBot, updates common config values, and manages plugins.
 
-If you install AstrBot with `uv`:
+If you install LKMBot with `uv`:
 
 ```bash
-uv tool install astrbot --python 3.12
+uv tool install git+https://github.com/Alma1314/LKM-bot.git --python 3.12
 ```
 
-`uv` creates the `astrbot` executable and puts it on `PATH`. You can inspect the path with:
+`uv` creates the `lkmbot` executable and puts it on `PATH`. You can inspect the path with:
 
 ::: code-group
 
 ```bash [Linux / macOS]
-which astrbot
+which lkmbot
 ```
 
 ```powershell [Windows]
-where.exe astrbot
+where.exe lkmbot
 ```
 
 :::
 
 > [!TIP]
-> Run the commands below from the AstrBot working directory.
+> Run the commands below from the LKMBot working directory.
 
 ## Quick Start
 
-Initialize the directory once, then start AstrBot:
+Initialize the directory once, then start LKMBot:
 
 ```bash
-astrbot init
-astrbot run
+lkmbot init
+lkmbot run
 ```
 
-`astrbot init` creates the data directories and configuration files required by AstrBot. After initialization, use `astrbot run` for later starts.
+`lkmbot init` creates the data directories and configuration files required by LKMBot. After initialization, use `lkmbot run` for later starts.
 
 ## Top-Level Commands
 
 | Command | Purpose |
 | --- | --- |
-| `astrbot init` | Initialize the current directory as an AstrBot working directory. |
-| `astrbot run` | Start AstrBot in the foreground. |
-| `astrbot conf` | Read or update common config values. |
-| `astrbot password` | Change the WebUI login password interactively. |
-| `astrbot plug` | Create, install, update, remove, or search plugins. |
-| `astrbot help` | Show CLI help. |
-| `astrbot --version` | Show the AstrBot CLI version. |
+| `lkmbot init` | Initialize the current directory as an LKMBot working directory. |
+| `lkmbot run` | Start LKMBot in the foreground. |
+| `lkmbot conf` | Read or update common config values. |
+| `lkmbot password` | Change the WebUI login password interactively. |
+| `lkmbot plug` | Create, install, update, remove, or search plugins. |
+| `lkmbot help` | Show CLI help. |
+| `lkmbot --version` | Show the LKMBot CLI version. |
 
-## Start AstrBot
+## Start LKMBot
 
 ```bash
-astrbot run
+lkmbot run
 ```
 
 Common options:
@@ -65,18 +65,18 @@ Common options:
 Examples:
 
 ```bash
-astrbot run --port 6185
-astrbot run --reload
-astrbot run --reset-password
+lkmbot run --port 6185
+lkmbot run --reload
+lkmbot run --reset-password
 ```
 
-If you forget the WebUI login password, run this from the AstrBot working directory:
+If you forget the WebUI login password, run this from the LKMBot working directory:
 
 ```bash
-astrbot run --reset-password
+lkmbot run --reset-password
 ```
 
-AstrBot regenerates the initial password during startup and prints it in startup logs. After logging in, change the password in the WebUI immediately.
+LKMBot regenerates the initial password during startup and prints it in startup logs. After logging in, change the password in the WebUI immediately.
 
 When starting directly from source, you can also run:
 
@@ -86,12 +86,12 @@ python main.py --reset-password
 
 ## Config
 
-`astrbot conf` reads and updates common config values.
+`lkmbot conf` reads and updates common config values.
 
 ```bash
-astrbot conf get
-astrbot conf get dashboard.port
-astrbot conf set dashboard.port 6185
+lkmbot conf get
+lkmbot conf get dashboard.port
+lkmbot conf set dashboard.port 6185
 ```
 
 Supported keys:
@@ -108,41 +108,41 @@ Supported keys:
 Changing the dashboard password writes the current password hashes automatically:
 
 ```bash
-astrbot conf set dashboard.password "new-password"
+lkmbot conf set dashboard.password "new-password"
 ```
 
 You can also use the dedicated interactive password command:
 
 ```bash
-astrbot password
-astrbot password --username admin
+lkmbot password
+lkmbot password --username admin
 ```
 
 ## Plugins
 
-`astrbot plug` manages plugins under `data/plugins`.
+`lkmbot plug` manages plugins under `data/plugins`.
 
 | Command | Purpose |
 | --- | --- |
-| `astrbot plug list` | List installed plugins. |
-| `astrbot plug list --all` | Also show uninstalled plugins. |
-| `astrbot plug search <QUERY>` | Search plugins. |
-| `astrbot plug install <NAME>` | Install a plugin. |
-| `astrbot plug update [NAME]` | Update one plugin, or all updatable plugins if no name is given. |
-| `astrbot plug remove <NAME>` | Remove an installed plugin. |
-| `astrbot plug new <NAME>` | Create a new plugin from the template. |
+| `lkmbot plug list` | List installed plugins. |
+| `lkmbot plug list --all` | Also show uninstalled plugins. |
+| `lkmbot plug search <QUERY>` | Search plugins. |
+| `lkmbot plug install <NAME>` | Install a plugin. |
+| `lkmbot plug update [NAME]` | Update one plugin, or all updatable plugins if no name is given. |
+| `lkmbot plug remove <NAME>` | Remove an installed plugin. |
+| `lkmbot plug new <NAME>` | Create a new plugin from the template. |
 
 Use a GitHub proxy when installing or updating plugins:
 
 ```bash
-astrbot plug install example-plugin --proxy https://gh-proxy.example.com/
-astrbot plug update --proxy https://gh-proxy.example.com/
+lkmbot plug install example-plugin --proxy https://gh-proxy.example.com/
+lkmbot plug update --proxy https://gh-proxy.example.com/
 ```
 
 Creating a new plugin asks for the author, description, version, and repository URL:
 
 ```bash
-astrbot plug new my-plugin
+lkmbot plug new my-plugin
 ```
 
 ## Help
@@ -150,20 +150,20 @@ astrbot plug new my-plugin
 Show general CLI help:
 
 ```bash
-astrbot help
+lkmbot help
 ```
 
 Show help for a specific command:
 
 ```bash
-astrbot help run
-astrbot run --help
-astrbot help conf
-astrbot plug --help
+lkmbot help run
+lkmbot run --help
+lkmbot help conf
+lkmbot plug --help
 ```
 
 Show the version:
 
 ```bash
-astrbot --version
+lkmbot --version
 ```

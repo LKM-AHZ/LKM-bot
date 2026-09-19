@@ -30,7 +30,7 @@
     },
     "cpu": {
       "label": "CPU",
-      "note": "Использование CPU AstrBot"
+      "note": "Использование CPU LKMBot"
     },
     "memory": {
       "label": "Память процесса",

@@ -67,7 +67,7 @@ def test_custom_workspace_rejects_file_path(tmp_path, monkeypatch):
 
 
 def test_custom_workspace_relative_path_uses_astrbot_workspaces(tmp_path, monkeypatch):
-    """Relative custom workspace paths should resolve under AstrBot workspaces."""
+    """Relative custom workspace paths should resolve under LKMBot workspaces."""
     relative_workspace = tmp_path / "relative-workspace"
     relative_workspace.mkdir()
     monkeypatch.setattr(
@@ -87,7 +87,7 @@ def test_custom_workspace_relative_path_uses_astrbot_workspaces(tmp_path, monkey
 
 
 def test_custom_workspace_rejects_relative_path_traversal(tmp_path, monkeypatch):
-    """Relative custom workspace paths must not escape AstrBot workspaces."""
+    """Relative custom workspace paths must not escape LKMBot workspaces."""
     outside_workspace = tmp_path / "outside"
     workspaces_root = tmp_path / "workspaces"
     outside_workspace.mkdir()
@@ -125,7 +125,7 @@ def test_custom_workspace_rejects_workspaces_root(tmp_path, monkeypatch):
 def test_custom_workspace_accepts_absolute_path_outside_workspaces(
     tmp_path, monkeypatch
 ):
-    """Absolute custom workspace paths may point outside AstrBot workspaces."""
+    """Absolute custom workspace paths may point outside LKMBot workspaces."""
     outside_workspace = tmp_path / "outside"
     workspaces_root = tmp_path / "workspaces"
     outside_workspace.mkdir()
@@ -306,7 +306,7 @@ def test_api_key_project_runtime_rejects_root_outside_workspaces(
         workspace_path=None,
     )
 
-    with pytest.raises(ValueError, match="must stay within AstrBot workspaces"):
+    with pytest.raises(ValueError, match="must stay within LKMBot workspaces"):
         resolve_project_workspace_root(
             project,
             fallback_umo="webchat:FriendMessage:webchat!api-key!default",

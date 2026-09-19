@@ -10,10 +10,10 @@ class ProviderMiraRouter(ProviderOpenAIOfficial):
     """MiraRouter provider using its OpenAI-compatible API."""
 
     def __init__(self, provider_config: dict, provider_settings: dict) -> None:
-        """Initialize the MiraRouter client with AstrBot attribution.
+        """Initialize the MiraRouter client with LKMBot attribution.
 
         Args:
-            provider_config: AstrBot provider source configuration.
+            provider_config: LKMBot provider source configuration.
             provider_settings: Global provider settings.
         """
         super().__init__(provider_config, provider_settings)

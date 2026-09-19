@@ -550,7 +550,7 @@ class AstrBotDashboard:
         self._jwt_secret = self.config["dashboard"]["jwt_secret"]
 
     def _build_dashboard_credentials_display(self) -> str:
-        username = self.config["dashboard"].get("username", "astrbot")
+        username = self.config["dashboard"].get("username", "lkmbot")
         generated_password = getattr(self.config, "_generated_dashboard_password", None)
         if not generated_password:
             return f"   ➜  Username: {username}\n ✨✨✨\n"
@@ -679,7 +679,7 @@ class AstrBotDashboard:
                 f"错误：端口 {port} 已被占用\n"
                 f"占用信息: \n           {process_info}\n"
                 f"请确保：\n"
-                f"1. 没有其他 AstrBot 实例正在运行\n"
+                f"1. 没有其他 LKMBot 实例正在运行\n"
                 f"2. 端口 {port} 没有被其他程序占用\n"
                 f"3. 如需使用其他端口，请修改配置文件",
             )
@@ -692,7 +692,7 @@ class AstrBotDashboard:
             webui_status = (
                 f"WebUI is NOT ready: static files are missing at {self.data_path}"
             )
-        parts = [f"\n ✨✨✨\n  AstrBot v{VERSION} {webui_status}\n\n"]
+        parts = [f"\n ✨✨✨\n  LKMBot v{VERSION} {webui_status}\n\n"]
         parts.append(f"   ➜  Local: {scheme}://localhost:{port}\n")
         for ip in ip_addr:
             parts.append(f"   ➜  Network: {scheme}://{ip}:{port}\n")
@@ -732,4 +732,4 @@ class AstrBotDashboard:
 
     async def shutdown_trigger(self) -> None:
         await self.shutdown_event.wait()
-        logger.info("AstrBot WebUI 已经被关闭")
+        logger.info("LKMBot WebUI 已经被关闭")

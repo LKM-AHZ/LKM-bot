@@ -1,1 +1,1 @@
-This page has moved to [AstrBot Plugin Development Guide](/en/dev/star/plugin-new).
+This page has moved to [LKMBot Plugin Development Guide](/en/dev/star/plugin-new).

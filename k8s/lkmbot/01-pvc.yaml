@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: astrbot-data-pvc
-  namespace: astrbot-standalone-ns
+  name: lkmbot-data-pvc
+  namespace: lkmbot-standalone-ns
   labels:
-    app: astrbot-standalone
+    app: lkmbot-standalone
 spec:
   accessModes:
     - ReadWriteOnce

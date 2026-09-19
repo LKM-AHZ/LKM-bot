@@ -100,14 +100,14 @@ async def test_firecrawl_search_maps_web_results(monkeypatch):
     async def fake_firecrawl_search(provider_settings, payload):
         assert provider_settings["websearch_firecrawl_key"] == ["firecrawl-key"]
         assert payload == {
-            "query": "AstrBot",
+            "query": "LKMBot",
             "limit": 3,
             "sources": ["web"],
             "country": "US",
         }
         return [
             tools.SearchResult(
-                title="AstrBot",
+                title="LKMBot",
                 url="https://example.com",
                 snippet="Search result",
             )
@@ -119,11 +119,11 @@ async def test_firecrawl_search_maps_web_results(monkeypatch):
         {"websearch_firecrawl_key": ["firecrawl-key"]}
     )
 
-    result = await tool.call(context, query="AstrBot", limit=3, country="US")
+    result = await tool.call(context, query="LKMBot", limit=3, country="US")
 
     assert json.loads(result)["results"] == [
         {
-            "title": "AstrBot",
+            "title": "LKMBot",
             "url": "https://example.com",
             "snippet": "Search result",
             "index": json.loads(result)["results"][0]["index"],
@@ -140,7 +140,7 @@ async def test_firecrawl_search_maps_v2_data_list(monkeypatch):
                 "success": True,
                 "data": [
                     {
-                        "title": "AstrBot",
+                        "title": "LKMBot",
                         "url": "https://example.com",
                         "description": "Search result",
                     }
@@ -157,12 +157,12 @@ async def test_firecrawl_search_maps_v2_data_list(monkeypatch):
 
     results = await tools._firecrawl_search(
         {"websearch_firecrawl_key": ["firecrawl-key"]},
-        {"query": "AstrBot", "limit": 5, "sources": ["web"]},
+        {"query": "LKMBot", "limit": 5, "sources": ["web"]},
     )
 
     assert session.posted == {
         "url": "https://api.firecrawl.dev/v2/search",
-        "json": {"query": "AstrBot", "limit": 5, "sources": ["web"]},
+        "json": {"query": "LKMBot", "limit": 5, "sources": ["web"]},
         "headers": {
             "Authorization": "Bearer firecrawl-key",
             "Content-Type": "application/json",
@@ -170,7 +170,7 @@ async def test_firecrawl_search_maps_v2_data_list(monkeypatch):
     }
     assert results == [
         tools.SearchResult(
-            title="AstrBot", url="https://example.com", snippet="Search result"
+            title="LKMBot", url="https://example.com", snippet="Search result"
         )
     ]
 
@@ -185,7 +185,7 @@ async def test_firecrawl_search_maps_v2_grouped_web_data(monkeypatch):
                 "data": {
                     "web": [
                         {
-                            "title": "AstrBot",
+                            "title": "LKMBot",
                             "url": "https://example.com",
                             "description": "Search result",
                         }
@@ -203,12 +203,12 @@ async def test_firecrawl_search_maps_v2_grouped_web_data(monkeypatch):
 
     results = await tools._firecrawl_search(
         {"websearch_firecrawl_key": ["firecrawl-key"]},
-        {"query": "AstrBot", "limit": 5, "sources": ["web"]},
+        {"query": "LKMBot", "limit": 5, "sources": ["web"]},
     )
 
     assert results == [
         tools.SearchResult(
-            title="AstrBot", url="https://example.com", snippet="Search result"
+            title="LKMBot", url="https://example.com", snippet="Search result"
         )
     ]
 
@@ -217,14 +217,14 @@ async def test_firecrawl_search_maps_v2_grouped_web_data(monkeypatch):
 async def test_firecrawl_search_payload_omits_tbs_and_uses_default_limit(monkeypatch):
     async def fake_firecrawl_search(provider_settings, payload):
         assert payload == {
-            "query": "AstrBot",
+            "query": "LKMBot",
             "limit": 5,
             "sources": ["web"],
             "country": "US",
         }
         return [
             tools.SearchResult(
-                title="AstrBot",
+                title="LKMBot",
                 url="https://example.com",
                 snippet="Search result",
             )
@@ -238,7 +238,7 @@ async def test_firecrawl_search_payload_omits_tbs_and_uses_default_limit(monkeyp
 
     result = await tool.call(
         context,
-        query="AstrBot",
+        query="LKMBot",
         tbs="qdr:d",
         country="US",
     )
@@ -278,7 +278,7 @@ async def test_firecrawl_search_uses_session_context(monkeypatch):
                 "success": True,
                 "data": [
                     {
-                        "title": "AstrBot",
+                        "title": "LKMBot",
                         "url": "https://example.com",
                         "description": "Search result",
                     }
@@ -295,7 +295,7 @@ async def test_firecrawl_search_uses_session_context(monkeypatch):
 
     await tools._firecrawl_search(
         {"websearch_firecrawl_key": ["firecrawl-key"]},
-        {"query": "AstrBot"},
+        {"query": "LKMBot"},
     )
 
     assert session.trust_env is True
@@ -303,7 +303,7 @@ async def test_firecrawl_search_uses_session_context(monkeypatch):
     assert session.exited is True
     assert session.posted == {
         "url": "https://api.firecrawl.dev/v2/search",
-        "json": {"query": "AstrBot"},
+        "json": {"query": "LKMBot"},
         "headers": {
             "Authorization": "Bearer firecrawl-key",
             "Content-Type": "application/json",
@@ -329,7 +329,7 @@ async def test_firecrawl_search_raises_error_for_http_errors(monkeypatch):
     ):
         await tools._firecrawl_search(
             {"websearch_firecrawl_key": ["firecrawl-key"]},
-            {"query": "AstrBot"},
+            {"query": "LKMBot"},
         )
 
     assert session.trust_env is True
@@ -511,7 +511,7 @@ async def test_tavily_search_raises_value_error_when_no_key_configured():
     """Raise ValueError when no Tavily API key is configured."""
     with pytest.raises(
         ValueError,
-        match="Error: Tavily API key is not configured in AstrBot.",
+        match="Error: Tavily API key is not configured in LKMBot.",
     ):
         await tools._tavily_search({}, {"query": "test"})
 
@@ -531,7 +531,7 @@ async def test_tavily_search_key_failover_on_quota_exceeded_432(
                 status=200,
                 jsonData={
                     "results": [
-                        {"title": "AstrBot", "url": "https://example.com", "content": "OK"}
+                        {"title": "LKMBot", "url": "https://example.com", "content": "OK"}
                     ]
                 },
             ),
@@ -549,7 +549,7 @@ async def test_tavily_search_key_failover_on_quota_exceeded_432(
     results = await tools._tavily_search(providerSettings, {"query": "test"})
 
     assert len(results) == 1
-    assert results[0].title == "AstrBot"
+    assert results[0].title == "LKMBot"
     assert results[0].url == "https://example.com"
     assert len(session.calls) == 2  # Both keys were attempted.
 
@@ -721,7 +721,7 @@ async def test_tavily_search_tool_normalizes_date_filters(
         captured_payload.update(payload)
         return [
             tools.SearchResult(
-                title="AstrBot",
+                title="LKMBot",
                 url="https://example.com",
                 snippet="Search result",
             )
@@ -731,7 +731,7 @@ async def test_tavily_search_tool_normalizes_date_filters(
     tool = tools.TavilyWebSearchTool()
     context = _context_with_provider_settings({"websearch_tavily_key": ["tavily-key"]})
 
-    await tool.call(context, query="AstrBot", **date_filters)
+    await tool.call(context, query="LKMBot", **date_filters)
 
     actual_filters = {
         key: captured_payload[key]
@@ -757,11 +757,11 @@ def test_normalize_legacy_web_search_config_migrates_exa_key():
 async def test_exa_search_maps_results(monkeypatch):
     async def fake_exa_search(provider_settings, payload):
         assert provider_settings["websearch_exa_key"] == ["exa-key"]
-        assert payload["query"] == "AstrBot"
+        assert payload["query"] == "LKMBot"
         assert payload["numResults"] == 5
         return [
             tools.SearchResult(
-                title="AstrBot",
+                title="LKMBot",
                 url="https://example.com",
                 snippet="AI Agent Assistant",
             )
@@ -771,10 +771,10 @@ async def test_exa_search_maps_results(monkeypatch):
     tool = tools.ExaWebSearchTool()
     context = _context_with_provider_settings({"websearch_exa_key": ["exa-key"]})
 
-    result = await tool.call(context, query="AstrBot", num_results=5)
+    result = await tool.call(context, query="LKMBot", num_results=5)
 
     parsed = json.loads(result)
-    assert parsed["results"][0]["title"] == "AstrBot"
+    assert parsed["results"][0]["title"] == "LKMBot"
     assert parsed["results"][0]["url"] == "https://example.com"
     assert parsed["results"][0]["snippet"] == "AI Agent Assistant"
 
@@ -787,7 +787,7 @@ async def test_exa_search_raw_api_call(monkeypatch):
             json_data={
                 "results": [
                     {
-                        "title": "AstrBot",
+                        "title": "LKMBot",
                         "url": "https://example.com",
                         "text": "AI Agent Assistant",
                     }
@@ -804,14 +804,14 @@ async def test_exa_search_raw_api_call(monkeypatch):
 
     results = await tools._exa_search(
         {"websearch_exa_key": ["exa-key"]},
-        {"query": "AstrBot", "numResults": 10, "type": "auto"},
+        {"query": "LKMBot", "numResults": 10, "type": "auto"},
     )
 
     assert session.posted["url"] == "https://api.exa.ai/search"
     assert session.posted["headers"]["x-api-key"] == "exa-key"
     assert results == [
         tools.SearchResult(
-            title="AstrBot", url="https://example.com", snippet="AI Agent Assistant"
+            title="LKMBot", url="https://example.com", snippet="AI Agent Assistant"
         )
     ]
 
@@ -834,7 +834,7 @@ async def test_exa_search_raises_on_http_error(monkeypatch):
     ):
         await tools._exa_search(
             {"websearch_exa_key": ["exa-key"]},
-            {"query": "AstrBot"},
+            {"query": "LKMBot"},
         )
 
 
@@ -894,16 +894,16 @@ async def test_anysearch_search_maps_results(monkeypatch):
                 "data": {
                     "results": [
                         {
-                            "title": "AstrBot - AI Chatbot Framework",
+                            "title": "LKMBot - AI Chatbot Framework",
                             "url": "https://github.com/AstrBotDevs/AstrBot",
                             "snippet": "A powerful AI chatbot framework for Python",
-                            "content": "AstrBot is a flexible AI chatbot framework..."
+                            "content": "LKMBot is a flexible AI chatbot framework..."
                         },
                         {
-                            "title": "AstrBot Documentation",
+                            "title": "LKMBot Documentation",
                             "url": "https://astrbot.dev/docs",
-                            "snippet": "Official documentation for AstrBot",
-                            "content": "Getting started with AstrBot..."
+                            "snippet": "Official documentation for LKMBot",
+                            "content": "Getting started with LKMBot..."
                         }
                     ],
                     "metadata": {
@@ -922,15 +922,15 @@ async def test_anysearch_search_maps_results(monkeypatch):
     monkeypatch.setattr(tools.aiohttp, "ClientSession", fake_client_session)
 
     provider_settings = {"websearch_anysearch_key": ["test-key"]}
-    results = await _anysearch_search(provider_settings, {"query": "AstrBot"})
+    results = await _anysearch_search(provider_settings, {"query": "LKMBot"})
 
     assert len(results) == 2
-    assert results[0].title == "AstrBot - AI Chatbot Framework"
+    assert results[0].title == "LKMBot - AI Chatbot Framework"
     assert results[0].url == "https://github.com/AstrBotDevs/AstrBot"
     assert results[0].snippet == "A powerful AI chatbot framework for Python"
-    assert results[1].title == "AstrBot Documentation"
+    assert results[1].title == "LKMBot Documentation"
     assert results[1].url == "https://astrbot.dev/docs"
-    assert results[1].snippet == "Official documentation for AstrBot"
+    assert results[1].snippet == "Official documentation for LKMBot"
     for result in results:
         assert result.url is not None
         assert result.url != ""

@@ -64,7 +64,7 @@ class StatService:
         self.config = config
         self.storage_cleaner = StorageCleaner(config)
 
-        # Probe sandbox startup once; restart AstrBot to refresh this snapshot.
+        # Probe sandbox startup once; restart LKMBot to refresh this snapshot.
         system = platform.system().lower()
         sandbox = {"backend": None, "status": "unsupported"}
         if system == "linux":
@@ -146,7 +146,8 @@ class StatService:
         username = self.config["dashboard"]["username"]
         password = get_dashboard_password_hash(self.config, upgraded=True)
         return (
-            username == "astrbot" and is_default_dashboard_password(password)
+            username in {"astrbot", "lkmbot"}
+            and is_default_dashboard_password(password)
         ) and not DEMO_MODE
 
     async def get_version(self) -> dict:
@@ -189,11 +190,11 @@ class StatService:
                 the dashboard, when available.
 
         Returns:
-            Public WebUI and AstrBot version information.
+            Public WebUI and LKMBot version information.
         """
 
         def read_code_version() -> str | None:
-            """Read the AstrBot code version from the package file.
+            """Read the LKMBot code version from the package file.
 
             Returns:
                 The version string from disk, or None when it is unavailable.
@@ -232,7 +233,7 @@ class StatService:
         try:
             code_version = await asyncio.to_thread(read_code_version)
         except Exception as exc:
-            logger.warning("Failed to read AstrBot code version from disk: %s", exc)
+            logger.warning("Failed to read LKMBot code version from disk: %s", exc)
 
         return {
             "webui_version": dashboard_version,
@@ -563,7 +564,7 @@ class StatService:
                 raise StatServiceError("proxy_url is required")
 
             proxy_url = proxy_url.rstrip("/")
-            test_url = f"{proxy_url}/https://github.com/AstrBotDevs/AstrBot/raw/refs/heads/master/.python-version"
+            test_url = f"{proxy_url}/https://github.com/Alma1314/LKM-bot/raw/refs/heads/master/.python-version"
             start_time = time.time()
 
             async with (

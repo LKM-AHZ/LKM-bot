@@ -34,7 +34,7 @@ async def prepare_request_images(
         req: Working request; shared lists and image blocks are copied on write.
         event: Owner of prepared working files.
         max_size: Normalized longest-edge limit for this request.
-        output_dir: Event working file directory, defaulting to AstrBot temp.
+        output_dir: Event working file directory, defaulting to LKMBot temp.
         prepared: Request-local cache of paths, processing outcomes, and owned
             notice objects. Original and prepared references share each result.
         quote_image_ref: Optional input for the dedicated quote caption branch.

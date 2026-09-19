@@ -497,7 +497,7 @@ class LinePlatformAdapter(Platform):
         """Creates a LINE message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created LINE message event.

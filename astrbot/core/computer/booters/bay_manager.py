@@ -1,6 +1,6 @@
 """Manage Bay container lifecycle for zero-config Shipyard Neo integration.
 
-When no Bay endpoint is configured, AstrBot can automatically start a Bay
+When no Bay endpoint is configured, LKMBot can automatically start a Bay
 container using the Docker socket (like BoxliteBooter does for Ship
 containers).
 """

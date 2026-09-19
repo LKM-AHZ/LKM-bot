@@ -146,7 +146,7 @@
     },
     "knowledgebase": {
       "description": "Knowledge Base",
-      "hint": "AstrBot's \"external brain\".",
+      "hint": "LKMBot's \"external brain\".",
       "kb_names": {
         "description": "Knowledge Base List",
         "hint": "Supports multiple selections"
@@ -166,7 +166,7 @@
     },
     "websearch": {
       "description": "Web Search",
-      "hint": "Enables AstrBot to access the internet and stay up to date.",
+      "hint": "Enables LKMBot to access the internet and stay up to date.",
       "provider_settings": {
         "web_search": {
           "description": "Enable Web Search"
@@ -225,7 +225,7 @@
     },
     "agent_computer_use": {
       "description": "Agent Computer Use",
-      "hint": "Allows the AstrBot to access and use your computer or an sandbox environment to perform more complex tasks. See: [Computer Use](https://docs.astrbot.app/use/computer.html).",
+      "hint": "Allows the LKMBot to access and use your computer or an sandbox environment to perform more complex tasks. See: [Computer Use](https://docs.astrbot.app/use/computer.html).",
       "provider_settings": {
         "computer_use_runtime": {
           "description": "Computer Use Runtime",
@@ -237,7 +237,7 @@
         },
         "computer_use_require_admin": {
           "description": "Require Admin Permission for Sandbox",
-          "hint": "When enabled, AstrBot admin permission is required to use remote sandbox capabilities. Admins can be added in Platform Config. Use the /sid command to view admin IDs."
+          "hint": "When enabled, LKMBot admin permission is required to use remote sandbox capabilities. Admins can be added in Platform Config. Use the /sid command to view admin IDs."
         },
         "sandbox": {
           "booter": {
@@ -269,7 +269,7 @@
           },
           "cua_idle_timeout": {
             "description": "CUA Idle Timeout",
-            "hint": "Idle timeout for CUA sandbox sessions in seconds. When greater than 0, AstrBot proactively shuts down an idle CUA sandbox after that amount of inactivity; 0 disables it."
+            "hint": "Idle timeout for CUA sandbox sessions in seconds. When greater than 0, LKMBot proactively shuts down an idle CUA sandbox after that amount of inactivity; 0 disables it."
           },
           "cua_telemetry_enabled": {
             "description": "CUA Telemetry",
@@ -313,10 +313,10 @@
         "scopeHints": {
           "none": "No file access allowed",
           "workspace": "Restricted workspace, temporary directories, and skill files.",
-          "host": "All files in the environment where AstrBot runs."
+          "host": "All files in the environment where LKMBot runs."
         },
         "scopeDetails": {
-          "account": "1. Access is limited to files permitted by the account running AstrBot.",
+          "account": "1. Access is limited to files permitted by the account running LKMBot.",
           "docker": "2. If deployed through Docker, only files inside the container and mounted files are accessible, not all files on the Docker host."
         },
         "roles": {
@@ -336,7 +336,7 @@
           "os": "OS",
           "arch": "Architecture",
           "sandbox": "Local isolation",
-          "unavailableHint": "Sandbox startup failed, affecting restricted Shell/Python execution and workspace file search. Use the error below to check system security policies (such as Linux AppArmor and user namespace restrictions) or container restrictions, then restart AstrBot to check again.",
+          "unavailableHint": "Sandbox startup failed, affecting restricted Shell/Python execution and workspace file search. Use the error below to check system security policies (such as Linux AppArmor and user namespace restrictions) or container restrictions, then restart LKMBot to check again.",
           "status": {
             "detected": "{backend} · Startup check passed",
             "missing": "Missing {dependency}",
@@ -348,12 +348,12 @@
     },
     "proactive_capability": {
       "description": "Proactive Agent",
-      "hint": "AstrBot will wake up, run your tasks, and deliver the results to you. See [Proactive Agent](https://docs.astrbot.app/en/use/proactive-agent.html)",
+      "hint": "LKMBot will wake up, run your tasks, and deliver the results to you. See [Proactive Agent](https://docs.astrbot.app/en/use/proactive-agent.html)",
       "provider_settings": {
         "proactive_capability": {
           "add_cron_tools": {
             "description": "Enable",
-            "hint": "When enabled, related tools will be passed to the Agent to implement proactive Agent capabilities. You can tell AstrBot what to do at a future time, and it will be triggered on schedule to execute the task, and report the result back to you."
+            "hint": "When enabled, related tools will be passed to the Agent to implement proactive Agent capabilities. You can tell LKMBot what to do at a future time, and it will be triggered on schedule to execute the task, and report the result back to you."
           }
         }
       }
@@ -388,7 +388,7 @@
         },
         "provider_id": {
           "description": "Model Provider ID for Context Compression",
-          "hint": "When left empty, the current chat model will be used for compression. If the model is unavailable or compression fails, AstrBot falls back to the 'Truncate by Turns' strategy."
+          "hint": "When left empty, the current chat model will be used for compression. If the model is unavailable or compression fails, LKMBot falls back to the 'Truncate by Turns' strategy."
         },
         "fallback_max_tokens": {
           "description": "Fallback context window size",
@@ -594,11 +594,11 @@
       },
       "discord_allow_bot_messages": {
         "description": "Allow Bot Messages",
-        "hint": "When enabled, AstrBot will receive messages from other Discord bots. Useful for bot-to-bot communication scenarios (e.g., message forwarding). Disabled by default."
+        "hint": "When enabled, LKMBot will receive messages from other Discord bots. Useful for bot-to-bot communication scenarios (e.g., message forwarding). Disabled by default."
       },
       "discord_command_register": {
         "description": "Register Discord slash commands",
-        "hint": "When enabled, AstrBot will automatically register plugin commands as Discord slash commands"
+        "hint": "When enabled, LKMBot will automatically register plugin commands as Discord slash commands"
       },
       "discord_proxy": {
         "description": "Discord Proxy URL",
@@ -744,11 +744,11 @@
       },
       "telegram_command_auto_refresh": {
         "description": "Command Auto Refresh",
-        "hint": "When enabled, AstrBot automatically refreshes Telegram commands at runtime. (Setting this alone has no effect)"
+        "hint": "When enabled, LKMBot automatically refreshes Telegram commands at runtime. (Setting this alone has no effect)"
       },
       "telegram_command_register": {
         "description": "Command Registration",
-        "hint": "When enabled, AstrBot automatically registers Telegram commands."
+        "hint": "When enabled, LKMBot automatically registers Telegram commands."
       },
       "telegram_command_register_interval": {
         "description": "Command Auto Refresh Interval",
@@ -779,7 +779,7 @@
       },
       "unified_webhook_mode": {
         "description": "Unified Webhook Mode",
-        "hint": "When enabled, use AstrBot unified webhook entry without opening a separate port. Callback URL is /api/v1/webhooks/platforms/{webhook_uuid}."
+        "hint": "When enabled, use LKMBot unified webhook entry without opening a separate port. Callback URL is /api/v1/webhooks/platforms/{webhook_uuid}."
       },
       "use_markdown": {
         "description": "Use Markdown for Proactive Messages",
@@ -831,7 +831,7 @@
       },
       "wpp_active_message_poll": {
         "description": "Enable Proactive Message Polling",
-        "hint": "Only enable if WeChat messages are not syncing to AstrBot on time. Disabled by default."
+        "hint": "Only enable if WeChat messages are not syncing to LKMBot on time. Disabled by default."
       },
       "wpp_active_message_poll_interval": {
         "description": "Proactive Message Poll Interval",
@@ -839,7 +839,7 @@
       },
       "ws_reverse_host": {
         "description": "Reverse WebSocket Host",
-        "hint": "AstrBot acts as the server."
+        "hint": "LKMBot acts as the server."
       },
       "ws_reverse_port": {
         "description": "Reverse WebSocket Port"
@@ -955,7 +955,7 @@
       },
       "disable_builtin_commands": {
         "description": "Disable Built-in Commands",
-        "hint": "Disable all built-in AstrBot commands such as help, sid, new, etc."
+        "hint": "Disable all built-in LKMBot commands such as help, sid, new, etc."
       }
     },
     "whitelist": {
@@ -1202,7 +1202,7 @@
       },
       "t2i_endpoint": {
         "description": "Text-to-Image Service API Endpoint",
-        "hint": "Uses AstrBot API service when empty"
+        "hint": "Uses LKMBot API service when empty"
       },
       "t2i_template": {
         "description": "Text-to-Image Custom Template",
@@ -1222,7 +1222,7 @@
       },
       "log_file_path": {
         "description": "Log File Path",
-        "hint": "Relative paths are resolved under the data directory, e.g. logs/astrbot.log; absolute paths are supported."
+        "hint": "Relative paths are resolved under the data directory, e.g. logs/lkmbot.log; absolute paths are supported."
       },
       "log_file_max_mb": {
         "description": "Log File Max Size (MB)",
@@ -1238,7 +1238,7 @@
       },
       "trace_log_path": {
         "description": "Trace Log File Path",
-        "hint": "Relative paths are resolved under the data directory, e.g. logs/astrbot.trace.log; absolute paths are supported."
+        "hint": "Relative paths are resolved under the data directory, e.g. logs/lkmbot.trace.log; absolute paths are supported."
       },
       "trace_log_max_mb": {
         "description": "Trace Log Max Size (MB)",
@@ -1254,11 +1254,11 @@
       },
       "callback_api_base": {
         "description": "Externally Accessible Callback API Address",
-        "hint": "External services may access AstrBot's backend through callback links generated by AstrBot (such as file download links). Since AstrBot cannot automatically determine the externally accessible host address in the deployment environment, this configuration item is needed to explicitly specify how external services should access AstrBot's address. Examples: [http://localhost:6185](http://localhost:6185), [https://example.com](https://example.com), etc."
+        "hint": "External services may access LKMBot's backend through callback links generated by LKMBot (such as file download links). Since LKMBot cannot automatically determine the externally accessible host address in the deployment environment, this configuration item is needed to explicitly specify how external services should access LKMBot's address. Examples: [http://localhost:6185](http://localhost:6185), [https://example.com](https://example.com), etc."
       },
       "disable_metrics": {
         "description": "Disable Anonymous Usage Statistics",
-        "hint": "When disabled, AstrBot will not upload anonymous usage statistics."
+        "hint": "When disabled, LKMBot will not upload anonymous usage statistics."
       },
       "dashboard": {
         "trust_proxy_headers": {
@@ -1855,7 +1855,7 @@
       },
       "whisper_device": {
         "description": "Inference device",
-        "hint": "Whisper inference device. Apple Silicon can use mps; other environments should use cpu. If mps is selected but unavailable, AstrBot will fall back to cpu."
+        "hint": "Whisper inference device. Apple Silicon can use mps; other environments should use cpu. If mps is selected but unavailable, LKMBot will fall back to cpu."
       },
       "id": {
         "description": "ID"
@@ -1960,7 +1960,7 @@
       },
       "auto_save_history": {
         "description": "Conversation history managed by Coze",
-        "hint": "When enabled, Coze manages conversation history. AstrBot's locally saved context will not take effect (read-only), and operations on AstrBot context will not apply. If disabled, AstrBot manages the context."
+        "hint": "When enabled, Coze manages conversation history. LKMBot's locally saved context will not take effect (read-only), and operations on LKMBot context will not apply. If disabled, LKMBot manages the context."
       }
     }
   },

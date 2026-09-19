@@ -1,21 +1,21 @@
-# 使用 AstrBot 启动器部署 AstrBot
+# 使用 LKMBot 启动器部署 LKMBot
 
-## AstrBot 一键启动器
+## LKMBot 一键启动器
 
-AstrBot 一键启动器支持 Windows、MacOS、Linux 等多端部署。
+LKMBot 一键启动器支持 Windows、MacOS、Linux 等多端部署。
 
 0. 打开 [AstrBotDevs/astrbot-launcher](https://github.com/AstrBotDevs/astrbot-launcher)
 1.  **(可选但推荐)** 给本项目点个 [**Star ⭐**](https://github.com/AstrBotDevs/astrbot-launcher)，你的支持是作者更新和维护的动力！
 2. 找到右边的 Releases，点击最新版本的 Release，在新的页面的 Assets 中下载对应你系统的安装器。
 
-如，Windows X86 的用户应该下载 `AstrBot.Launcher_0.2.1_x64-setup.exe`，Windows on Arm 的用户应该下载 `AstrBot.Launcher_0.2.1_arm64-setup.exe`，MacOS M 芯片的用户下载 `AstrBot.Launcher_0.2.1_aarch64.dmg`。
+如，Windows X86 的用户应该下载 `LKMBot.Launcher_0.2.1_x64-setup.exe`，Windows on Arm 的用户应该下载 `LKMBot.Launcher_0.2.1_arm64-setup.exe`，MacOS M 芯片的用户下载 `LKMBot.Launcher_0.2.1_aarch64.dmg`。
 
 MacOS 用户下载安装好后，可能会遇到 "已损坏，无法打开" 的提示。这是因为 MacOS 的安全机制阻止了未认证的应用运行。解决方法如下：
 
 1. 打开终端
 2. 输入以下命令并回车：
    `xattr -dr com.apple.quarantine /Applications/AstrBot\ Launcher.app`
-3. 重新尝试打开 AstrBot Launcher 应用
+3. 重新尝试打开 LKMBot Launcher 应用
 
 ## 旧版本 Windows 安装器（不推荐）
 
@@ -24,7 +24,7 @@ MacOS 用户下载安装好后，可能会遇到 "已损坏，无法打开" 的�
 > 需要您的电脑上预先安装好 Python 环境（3.10 - 3.13），并且将 Python 添加到环境变量中，否则安装器将无法正常工作。
 
 
-推荐使用上面提到的 AstrBot 一键启动器来部署 AstrBot，因为它更简单、更自动化、更现代化，适合大多数用户。
+推荐使用上面提到的 LKMBot 一键启动器来部署 LKMBot，因为它更简单、更自动化、更现代化，适合大多数用户。
 
 安装器是一个使用 `Powershell` 编写的脚本，体积小巧，<20KB。需要您的电脑上安装有 `Powershell`，一般 `Windows 10` 及以上版本的设备都会自带这个工具。
 
@@ -55,21 +55,21 @@ MacOS 用户下载安装好后，可能会遇到 "已损坏，无法打开" 的�
 
 如果没有检测到 Python 环境，脚本将会提示并退出。
 
-脚本将自动检测目录下是否有 `AstrBot` 文件夹，如果没有，将会从 [GitHub](https://github.com/AstrBotDevs/AstrBot/releases/latest) 自动下载最新的 AstrBot 源码。下载好后，会自动安装 AstrBot 的依赖并运行。
+脚本将自动检测目录下是否有 `LKMBot` 文件夹，如果没有，将会从 [GitHub](https://github.com/AstrBotDevs/AstrBot/releases/latest) 自动下载最新的 LKMBot 源码。下载好后，会自动安装 LKMBot 的依赖并运行。
 
 ## 🎉 大功告成！
 
-如果一切顺利，你会看到 AstrBot 打印出的日志。
+如果一切顺利，你会看到 LKMBot 打印出的日志。
 
-如果没有报错，你会看到一条日志显示类似 `🌈 管理面板已启动，可访问` 并附带了几条链接。打开其中一个链接即可访问 AstrBot 管理面板。
+如果没有报错，你会看到一条日志显示类似 `🌈 管理面板已启动，可访问` 并附带了几条链接。打开其中一个链接即可访问 LKMBot 管理面板。
 
 > [!TIP]
-> 首次登录请使用启动日志中打印的随机初始密码（用户名通常为 `astrbot`）。登录后请立即修改密码。
+> 首次登录请使用启动日志中打印的随机初始密码（用户名通常为 `lkmbot`）。登录后请立即修改密码。
 >
 > **当管理面板打开时遇到 404 错误：**
-> 在 [release](https://github.com/AstrBotDevs/AstrBot/releases) 页面下载dist.zip，解压拖到 AstrBot/data 下。还不行请重启电脑（来自群里的反馈）
+> 在 [release](https://github.com/AstrBotDevs/AstrBot/releases) 页面下载dist.zip，解压拖到 LKMBot/data 下。还不行请重启电脑（来自群里的反馈）
 
-接下来，你需要部署任何一个消息平台，才能够实现在消息平台上使用 AstrBot。
+接下来，你需要部署任何一个消息平台，才能够实现在消息平台上使用 LKMBot。
 
 
 > [!TIP]

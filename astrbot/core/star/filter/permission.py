@@ -35,7 +35,7 @@ class PermissionTypeFilter(HandlerFilter):
 
         Args:
             event: Incoming command event.
-            cfg: Active AstrBot configuration.
+            cfg: Active LKMBot configuration.
 
         Returns:
             Whether the sender may run the command.

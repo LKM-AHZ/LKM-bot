@@ -10,7 +10,7 @@ export const head: HeadConfig[] = [
 
     // --- 基础和SEO元数据 ---
     ["link", { rel: "icon", href: "/logo.png" }],
-    ["meta", { name: "description", content: "AstrBot" }],
+    ["meta", { name: "description", content: "LKMBot" }],
     [
         "meta",
         { name: "viewport", content: "width=device-width, initial-scale=1.0" },
@@ -19,10 +19,10 @@ export const head: HeadConfig[] = [
   /*  // --- Open Graph (OG) 协议元数据 (用于社交媒体分享) ---
     ["meta", { property: "og:type", content: "website" }],
     ["meta", { property: "og:locale", content: "zh_CN" }],
-    ["meta", { property: "og:title", content: "AstrBot" }],
-    ["meta", { property: "og:description", content: "AstrBot" }],
+    ["meta", { property: "og:title", content: "LKMBot" }],
+    ["meta", { property: "og:description", content: "LKMBot" }],
     ["meta", { property: "og:url", content: "https://docs.astrbot.app" }],
-    ["meta", { property: "og:site_name", content: "AstrBot" }],
+    ["meta", { property: "og:site_name", content: "LKMBot" }],
     [
         "meta",
         {
@@ -32,7 +32,7 @@ export const head: HeadConfig[] = [
     ],
     [
         "meta",
-        { property: "og:image:alt", content: "AstrBot" },
+        { property: "og:image:alt", content: "LKMBot" },
     ],
     ["meta", { property: "og:image:width", content: "1200" }],
     ["meta", { property: "og:image:height", content: "630" }],
@@ -40,7 +40,7 @@ export const head: HeadConfig[] = [
 
     // --- Twitter Card 元数据 ---
     ["meta", { name: "twitter:card", content: "summary_large_image" }],
-    ["meta", { name: "twitter:site", content: "@AstrBot" }],*/
+    ["meta", { name: "twitter:site", content: "@LKMBot" }],*/
 
     // --- Umami Analytics ---
     ["script", { defer: "", src: "https://cloud.umami.is/script.js", "data-website-id": "9c3f777e-9f4a-4b79-a5c3-ff94f5dca8f9" }],

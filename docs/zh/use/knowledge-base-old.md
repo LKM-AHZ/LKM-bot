@@ -1,4 +1,4 @@
-# AstrBot 旧版知识库
+# LKMBot 旧版知识库
 
 > [!WARNING]
 > 本页保留旧版知识库的操作说明和界面截图，导航名称不适用于当前 WebUI。当前版本请参考[知识库使用文档](/use/knowledge-base)。如需访问保留的旧版界面，可在当前 `知识库` 页面点击 `切换到旧版知识库`（`/alkaid/knowledge-base`）。
@@ -9,7 +9,7 @@
 
 打开服务提供商页面，点击新增服务提供商，选择 Embedding。
 
-目前 AstrBot 支持兼容 OpenAI API 和 Gemini API 的嵌入向量服务。
+目前 LKMBot 支持兼容 OpenAI API 和 Gemini API 的嵌入向量服务。
 
 点击上面的提供商卡片进入配置页面，填写配置。
 
@@ -23,7 +23,7 @@
 
 ## 创建知识库
 
-AstrBot 支持多知识库管理。在聊天时，您可以**自由指定知识库**。
+LKMBot 支持多知识库管理。在聊天时，您可以**自由指定知识库**。
 
 进入知识库页面，点击创建知识库，如下图所示：
 
@@ -46,7 +46,7 @@ AstrBot 支持多知识库管理。在聊天时，您可以**自由指定知识�
 2. 进入 [模型广场](https://ppio.cn/model-api/console)，点击嵌入模型
 3. 点击 BAAI:BGE-M3 （截止至 2025-06-02，该模型在该平台免费）。
 4. 找到 API 接入指南，申请 Key。
-5. 填写 AstrBot OpenAI Embedding 模型提供商配置：
+5. 填写 LKMBot OpenAI Embedding 模型提供商配置：
    1. API Key 为刚刚申请的 PPIO 的 API Key
    2. embedding api base 填写 `https://api.ppinfra.com/v3/openai`
    3. model 填写你选择的模型，此例子中为 `baai/bge-m3`。

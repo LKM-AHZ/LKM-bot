@@ -2,14 +2,14 @@
 
 优云智算是 UCloud 旗下的 GPU 算力租赁和大模型 API 调用平台，致力于为 AI、深度学习、科学计算相关客户提供丰富多样的算力资源。
 
-AstrBot 在优云智算发布了 Ollama + AstrBot 一键自部署镜像，并且接入了优云智算 LLM API。
+LKMBot 在优云智算发布了 Ollama + LKMBot 一键自部署镜像，并且接入了优云智算 LLM API。
 
-## 使用 Ollama + AstrBot 一键自部署镜像
+## 使用 Ollama + LKMBot 一键自部署镜像
 
 > 镜像默认参数为：RTX 3090 24GB + Intel 16核 + 64GB RAM + 200GB 系统盘。采用按量付费的方式，请留意您的余额使用情况。
 
 1. 通过 [此链接](https://passport.compshare.cn/register?referral_code=FV7DcGowN4hB5UuXKgpE74) 注册优云智算账户。
-1. 打开 [AstrBot 镜像链接](https://www.compshare.cn/images/0oX7xoGrzfre)，点击创建实例。
+1. 打开 [LKMBot 镜像链接](https://www.compshare.cn/images/0oX7xoGrzfre)，点击创建实例。
 2. 部署成功后，在[控制台](https://console.compshare.cn/light-gpu/console/resources)中打开「JupyterLab」
 3. 进入JupyterLab后，新建一个终端 Terminal，在终端中粘贴以下指令
 
@@ -23,18 +23,18 @@ cd
 ```txt
 (py312) root@f8396035c96d:/workspace# cd
 ./astrbot_booter.sh
-Starting AstrBot...
+Starting LKMBot...
 Starting ollama...
 Both services started in the background.
 ```
 
-启动成功后，在浏览器中输入 `http://实例的外网IP:6185` 即可访问 AstrBot 的界面。外网 IP 可以在 控制台->基础网络（外网）中获取。
+启动成功后，在浏览器中输入 `http://实例的外网IP:6185` 即可访问 LKMBot 的界面。外网 IP 可以在 控制台->基础网络（外网）中获取。
 
 > 可能需要等待半分钟左右。
 
-首次登录时请使用启动日志内的随机初始密码（用户名通常是 astrbot），登录后请立即修改密码。
+首次登录时请使用启动日志内的随机初始密码（用户名通常是 lkmbot），登录后请立即修改密码。
 
-登录成功后，可以重新设置密码，并进入 AstrBot 的页面。
+登录成功后，可以重新设置密码，并进入 LKMBot 的页面。
 
 实例默认会导入 Ollama-DeepSeek-R1-32B 模型。
 
@@ -51,7 +51,7 @@ Both services started in the background.
 
 ### 使用优云智算提供的模型 API
 
-AstrBot 支持接入优云智算提供的模型 API。
+LKMBot 支持接入优云智算提供的模型 API。
 
 1. 在 [优云智算](https://console.compshare.cn/light-gpu/model-center) 找到想要接入的模型
 2. 打开 `模型提供商 → 对话 → 新增`，选择 `OpenAI Compatible`，填写优云智算的 API Key，并将 API Base URL 设为 `https://api.modelverse.cn/v1`。
@@ -75,8 +75,8 @@ AstrBot 支持接入优云智算提供的模型 API。
 - KOOK：[接入到 KOOK](https://docs.astrbot.app/platform/kook.html)
 - Slack：[接入到 Slack](https://docs.astrbot.app/platform/slack.html)
 - Discord：[接入到 Discord](https://docs.astrbot.app/platform/discord.html)
-- 更多接入方式参考 [AstrBot 官方文档](https://docs.astrbot.app/what-is-astrbot.html)
+- 更多接入方式参考 [LKMBot 官方文档](https://docs.astrbot.app/what-is-astrbot.html)
 
 ## 更多功能
 
-更多功能请参考 [AstrBot 官方文档](https://docs.astrbot.app)。
+更多功能请参考 [LKMBot 官方文档](https://docs.astrbot.app)。

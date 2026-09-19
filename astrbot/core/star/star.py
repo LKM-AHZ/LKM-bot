@@ -46,7 +46,7 @@ class StarMetadata:
     root_dir_name: str | None = None
     """插件的目录名称"""
     reserved: bool = False
-    """是否是 AstrBot 的保留插件"""
+    """是否是 LKMBot 的保留插件"""
 
     activated: bool = True
     """是否被激活"""
@@ -67,7 +67,7 @@ class StarMetadata:
     """插件声明支持的平台适配器 ID 列表（对应 ADAPTER_NAME_2_TYPE 的 key）"""
 
     astrbot_version: str | None = None
-    """插件要求的 AstrBot 版本范围（PEP 440 specifier，如 >=4.13.0,<4.17.0）"""
+    """插件要求的 LKMBot 版本范围（PEP 440 specifier，如 >=4.13.0,<4.17.0）"""
 
     i18n: dict[str, dict] = field(default_factory=dict)
     """插件自带的国际化文案，按 locale 分组。"""

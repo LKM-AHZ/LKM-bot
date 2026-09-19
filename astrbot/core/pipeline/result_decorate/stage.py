@@ -418,7 +418,7 @@ class ResultDecorateStage(Stage):
                 if word_cnt > self.forward_threshold:
                     node = Node(
                         uin=event.get_self_id(),
-                        name="AstrBot",
+                        name="LKMBot",
                         content=[*result.chain],
                     )
                     result.chain = [node]

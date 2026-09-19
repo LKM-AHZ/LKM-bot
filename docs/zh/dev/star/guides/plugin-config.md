@@ -3,7 +3,7 @@
 
 随着插件功能的增加，可能需要定义一些配置以让用户自定义插件的行为。
 
-AstrBot 提供了“强大”的配置解析和可视化功能。能够让用户在管理面板上直接配置插件，而不需要修改代码。
+LKMBot 提供了“强大”的配置解析和可视化功能。能够让用户在管理面板上直接配置插件，而不需要修改代码。
 
 ## 配置定义
 
@@ -53,10 +53,10 @@ AstrBot 提供了“强大”的配置解析和可视化功能。能够让用户
 - `invisible`: 可选。配置是否隐藏。默认是 `false`。如果设置为 `true`，则不会在管理面板上显示。
 - `secret`: 可选。仅对 `string` 和字符串 `list` 生效。设置为 `true` 时，管理面板会以密码输入框展示，并允许用户临时切换可见状态。此选项只遮罩界面显示，不会加密配置文件中的值。
 - `options`: 可选。一个列表，如 `"options": ["chat", "agent", "workflow"]`。提供下拉列表可选项。
-- `editor_mode`: 可选。是否启用代码编辑器模式。需要 AstrBot >= `v3.5.10`, 低于这个版本不会报错，但不会生效。默认是 false。
+- `editor_mode`: 可选。是否启用代码编辑器模式。需要 LKMBot >= `v3.5.10`, 低于这个版本不会报错，但不会生效。默认是 false。
 - `editor_language`: 可选。代码编辑器的代码语言，默认为 `json`。
 - `editor_theme`: 可选。代码编辑器的主题，可选值有 `vs-light`（默认）， `vs-dark`。
-- `_special`: 可选。用于调用 AstrBot 提供的可视化提供商选取、人格选取、知识库选取等功能，详见下文。
+- `_special`: 可选。用于调用 LKMBot 提供的可视化提供商选取、人格选取、知识库选取等功能，详见下文。
 
 ### 敏感配置项
 
@@ -97,7 +97,7 @@ API Key、访问令牌和密码等敏感字符串应设置 `"secret": true`。�
 - `select_knowledgebase` 的结果为 `list` 类型，支持多选，建议将对应配置项的 `type` 设为 `list`，默认值设为 `[]`。
 
 > [!NOTE]
-> 此外，AstrBot Core 内部还使用了 `select_providers`、`provider_pool`、`persona_pool`、`select_plugin_set`、`t2i_template`、`get_embedding_dim`、`select_agent_runner_provider:*`（`*` 为运行器类型占位符）等 `_special` 值。这些属于内部实现，随时可能变动，请勿在插件中使用。
+> 此外，LKMBot Core 内部还使用了 `select_providers`、`provider_pool`、`persona_pool`、`select_plugin_set`、`t2i_template`、`get_embedding_dim`、`select_agent_runner_provider:*`（`*` 为运行器类型占位符）等 `_special` 值。这些属于内部实现，随时可能变动，请勿在插件中使用。
 
 以 `select_provider` 为例，将呈现以下效果:
 
@@ -120,7 +120,7 @@ API Key、访问令牌和密码等敏感字符串应设置 `"secret": true`。�
 
 ### dict 类型的 schema
 
-用于可视化编辑一个 Python 的 dict 类型的配置。如 AstrBot Core 中的自定义请求体参数配置项：
+用于可视化编辑一个 Python 的 dict 类型的配置。如 LKMBot Core 中的自定义请求体参数配置项：
 
 ```py
 "custom_extra_body": {
@@ -240,7 +240,7 @@ API Key、访问令牌和密码等敏感字符串应设置 `"secret": true`。�
 
 ## 在插件中使用配置
 
-AstrBot 在载入插件时会检测插件目录下是否有 `_conf_schema.json` 文件，如果有，会自动解析配置并保存在 `data/config/<plugin_name>_config.json` 下（依照 Schema 创建的配置文件实体），并在实例化插件类时传入给 `__init__()`。
+LKMBot 在载入插件时会检测插件目录下是否有 `_conf_schema.json` 文件，如果有，会自动解析配置并保存在 `data/config/<plugin_name>_config.json` 下（依照 Schema 创建的配置文件实体），并在实例化插件类时传入给 `__init__()`。
 
 ```py
 from astrbot.api import AstrBotConfig
@@ -260,4 +260,4 @@ class ConfigPlugin(Star):
 
 ## 配置更新
 
-您在发布不同版本更新 Schema 时，AstrBot 会递归检查 Schema 的配置项，自动为缺失的配置项添加默认值、移除不存在的配置项。
+您在发布不同版本更新 Schema 时，LKMBot 会递归检查 Schema 的配置项，自动为缺失的配置项添加默认值、移除不存在的配置项。

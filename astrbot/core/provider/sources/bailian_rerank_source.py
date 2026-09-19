@@ -77,7 +77,7 @@ class BailianRerankProvider(RerankProvider):
         # 设置模型名称
         self.set_model(self.model)
 
-        logger.info(f"AstrBot 百炼 Rerank 初始化完成。模型: {self.model}")
+        logger.info(f"LKMBot 百炼 Rerank 初始化完成。模型: {self.model}")
 
     def _uses_compatible_api(self) -> bool:
         base_url_path = urlsplit(self.base_url).path.rstrip("/")

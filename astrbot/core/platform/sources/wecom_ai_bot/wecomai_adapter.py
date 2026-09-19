@@ -648,7 +648,7 @@ class WecomAIBotAdapter(Platform):
         """Creates a WeCom AI Bot message event.
 
         Args:
-            message: AstrBot message object to wrap.
+            message: LKMBot message object to wrap.
 
         Returns:
             Created WeCom AI Bot message event.

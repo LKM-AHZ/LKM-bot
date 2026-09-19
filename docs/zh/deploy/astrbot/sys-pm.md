@@ -22,18 +22,18 @@ paru -S astrbot-git
 ```
 # 启动
 >[!TIP]
-> 你可以直接使用 astrbot init （首次运行）初始化
-> 使用astrbot run运行
+> 你可以直接使用 lkmbot init （首次运行）初始化
+> 使用lkmbot run运行
 > 但是更加推荐使用systemctl启动，拥有自动重启，日志轮转等功能
 
 ```bash
-systemctl --user start astrbot.service
+systemctl --user start lkmbot.service
 ```
 
 # 开机自启
 ```bash
 # 处于安全考虑，设计为以用户身份执行
-systemctl --user enable astrbot.service
+systemctl --user enable lkmbot.service
 # 如果需要立即启动，加上--now
-# systemctl --user enable --now astrbot.service
+# systemctl --user enable --now lkmbot.service
 ```

@@ -25,15 +25,15 @@ body:
 
   - type: input
     attributes:
-      label: AstrBot 版本
-      description: 发生问题的 AstrBot 版本。请不要使用诸如 `latest` 之类的无意义值。
+      label: LKMBot 版本
+      description: 发生问题的 LKMBot 版本。请不要使用诸如 `latest` 之类的无意义值。
     validations:
       required: true
 
   - type: dropdown
     attributes:
       label: 操作系统
-      description: AstrBot 运行所在的操作系统。
+      description: LKMBot 运行所在的操作系统。
       options:
         - "Windows"
         - "MacOS"
@@ -46,7 +46,7 @@ body:
     attributes:
       # 考虑到部署方式未来可能扩增，为了避免频繁修改表单，故此处使用 input 让用户自己填。
       label: 部署方式
-      description: AstrBot 的部署方式。
+      description: LKMBot 的部署方式。
       placeholder: 例如 Docker、Windows Desktop。
     validations:
       required: true
@@ -85,7 +85,7 @@ body:
           required: true
         - label: 我已尝试过禁用所有插件，排除了可能是因插件导致的问题。
           required: true
-        - label: 我报告的问题与 AstrBot 本体相关，而非在报告某一插件的问题。
+        - label: 我报告的问题与 LKMBot 本体相关，而非在报告某一插件的问题。
           required: true
         - label: 我已阅读并同意本项目的[贡献者行为准则](https://github.com/AstrBotDevs/AstrBot/blob/master/CODE_OF_CONDUCT.md)。
           required: true

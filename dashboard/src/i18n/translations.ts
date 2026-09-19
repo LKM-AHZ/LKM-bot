@@ -35,7 +35,6 @@ import zhCNKnowledgeBaseDetail from './locales/zh-CN/features/knowledge-base/det
 import zhCNKnowledgeBaseDocument from './locales/zh-CN/features/knowledge-base/document.json';
 import zhCNPersona from './locales/zh-CN/features/persona.json';
 import zhCNCommand from './locales/zh-CN/features/command.json';
-import zhCNSubagent from './locales/zh-CN/features/subagent.json';
 import zhCNWelcome from './locales/zh-CN/features/welcome.json';
 
 import zhCNErrors from './locales/zh-CN/messages/errors.json';
@@ -76,7 +75,6 @@ import enUSKnowledgeBaseDetail from './locales/en-US/features/knowledge-base/det
 import enUSKnowledgeBaseDocument from './locales/en-US/features/knowledge-base/document.json';
 import enUSPersona from './locales/en-US/features/persona.json';
 import enUSCommand from './locales/en-US/features/command.json';
-import enUSSubagent from './locales/en-US/features/subagent.json';
 import enUSWelcome from './locales/en-US/features/welcome.json';
 
 import enUSErrors from './locales/en-US/messages/errors.json';
@@ -117,7 +115,6 @@ import ruRUKnowledgeBaseDetail from './locales/ru-RU/features/knowledge-base/det
 import ruRUKnowledgeBaseDocument from './locales/ru-RU/features/knowledge-base/document.json';
 import ruRUPersona from './locales/ru-RU/features/persona.json';
 import ruRUCommand from './locales/ru-RU/features/command.json';
-import ruRUSubagent from './locales/ru-RU/features/subagent.json';
 import ruRUWelcome from './locales/ru-RU/features/welcome.json';
 
 import ruRUErrors from './locales/ru-RU/messages/errors.json';
@@ -158,7 +155,6 @@ import jaJPKnowledgeBaseDetail from './locales/ja-JP/features/knowledge-base/det
 import jaJPKnowledgeBaseDocument from './locales/ja-JP/features/knowledge-base/document.json';
 import jaJPPersona from './locales/ja-JP/features/persona.json';
 import jaJPCommand from './locales/ja-JP/features/command.json';
-import jaJPSubagent from './locales/ja-JP/features/subagent.json';
 import jaJPWelcome from './locales/ja-JP/features/welcome.json';
 
 import jaJPErrors from './locales/ja-JP/messages/errors.json';
@@ -207,7 +203,6 @@ export const translations = {
       },
       persona: zhCNPersona,
       command: zhCNCommand,
-      subagent: zhCNSubagent,
       welcome: zhCNWelcome
     },
     messages: {
@@ -256,7 +251,6 @@ export const translations = {
       },
       persona: enUSPersona,
       command: enUSCommand,
-      subagent: enUSSubagent,
       welcome: enUSWelcome
     },
     messages: {
@@ -305,7 +299,6 @@ export const translations = {
       },
       persona: ruRUPersona,
       command: ruRUCommand,
-      subagent: ruRUSubagent,
       welcome: ruRUWelcome
     },
     messages: {
@@ -354,7 +347,6 @@ export const translations = {
       },
       persona: jaJPPersona,
       command: jaJPCommand,
-      subagent: jaJPSubagent,
       welcome: jaJPWelcome
     },
     messages: {

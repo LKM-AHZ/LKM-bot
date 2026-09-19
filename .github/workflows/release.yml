@@ -1,4 +1,4 @@
-name: Release AstrBot
+name: Release LKMBot
 
 on:
   push:

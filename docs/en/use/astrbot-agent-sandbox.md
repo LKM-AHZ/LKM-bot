@@ -3,18 +3,18 @@
 > [!TIP]
 > This feature is currently in technical preview and may have some bugs. If you encounter any issues, please submit an issue on [GitHub](https://github.com/AstrBotDevs/AstrBot/issues).
 
-Starting from version `v4.12.0`, AstrBot introduced the Agent sandbox environment to replace the previous code executor functionality. The sandbox environment provides Agents with safer and more flexible code execution and automation capabilities.
+Starting from version `v4.12.0`, LKMBot introduced the Agent sandbox environment to replace the previous code executor functionality. The sandbox environment provides Agents with safer and more flexible code execution and automation capabilities.
 
 ![](https://files.astrbot.app/docs/source/images/astrbot-agent-sandbox/image.png)
 
 ## Enabling the Sandbox Environment
 
-AstrBot currently supports the following sandbox drivers:
+LKMBot currently supports the following sandbox drivers:
 
 - `Shipyard Neo` (recommended)
 - `Shipyard` (legacy option, still supported)
 
-In the current AstrBot console, go to **Config → AI → Capabilities → Agent Computer Use** and select:
+In the current LKMBot console, go to **Config → AI → Capabilities → Agent Computer Use** and select:
 
 - `Computer Use Runtime` = `sandbox`
 - `Sandbox Driver` = `Shipyard Neo` or `Shipyard`
@@ -25,14 +25,14 @@ In the current AstrBot console, go to **Config → AI → Capabilities → Agent
 - **Ship**: provides Python / Shell / filesystem capabilities
 - **Gull**: provides browser automation capabilities
 
-For `Shipyard Neo`, the workspace root is fixed at `/workspace`. When using filesystem tools in AstrBot, you should pass **paths relative to the workspace root**, for example `reports/result.txt`, not `/workspace/reports/result.txt`.
+For `Shipyard Neo`, the workspace root is fixed at `/workspace`. When using filesystem tools in LKMBot, you should pass **paths relative to the workspace root**, for example `reports/result.txt`, not `/workspace/reports/result.txt`.
 
 > [!TIP]
-> Browser capability is not available in every `Shipyard Neo` profile. AstrBot only mounts browser-related tools when the selected profile supports the `browser` capability. A typical example is `browser-python`.
+> Browser capability is not available in every `Shipyard Neo` profile. LKMBot only mounts browser-related tools when the selected profile supports the `browser` capability. A typical example is `browser-python`.
 
 ## Performance Requirements
 
-AstrBot limits each sandbox instance to at most 1 CPU and 512 MB of memory.
+LKMBot limits each sandbox instance to at most 1 CPU and 512 MB of memory.
 
 We recommend that your host machine have at least 2 CPUs, 4 GB of memory, and swap enabled, so multiple sandbox instances can run more reliably.
 
@@ -40,9 +40,9 @@ We recommend that your host machine have at least 2 CPUs, 4 GB of memory, and sw
 
 ### Deploy Shipyard Neo Separately (Recommended)
 
-If you plan to use `Shipyard Neo` for the long term, it is generally better to **deploy it separately on a machine with more resources**, such as your homelab, a LAN server, or a dedicated cloud host, and then let AstrBot connect to Bay remotely.
+If you plan to use `Shipyard Neo` for the long term, it is generally better to **deploy it separately on a machine with more resources**, such as your homelab, a LAN server, or a dedicated cloud host, and then let LKMBot connect to Bay remotely.
 
-The reason is that `Shipyard Neo` can become fairly resource-heavy when browser capability is enabled, because it needs to run a full browser runtime. On resource-constrained cloud servers, deploying AstrBot and `Shipyard Neo` on the same machine usually puts significant pressure on CPU and memory, which can negatively affect both stability and overall experience.
+The reason is that `Shipyard Neo` can become fairly resource-heavy when browser capability is enabled, because it needs to run a full browser runtime. On resource-constrained cloud servers, deploying LKMBot and `Shipyard Neo` on the same machine usually puts significant pressure on CPU and memory, which can negatively affect both stability and overall experience.
 
 A basic deployment flow looks like this:
 
@@ -56,9 +56,9 @@ docker compose up -d
 After deployment:
 
 - Bay listens on `http://<your-host>:8114` by default
-- In the AstrBot console, choose the `Shipyard Neo` driver
+- In the LKMBot console, choose the `Shipyard Neo` driver
 - Set `Shipyard Neo API Endpoint` to the corresponding address, for example `http://<your-host>:8114`
-- Set `Shipyard Neo Access Token` to the Bay API key; if AstrBot can access Bay's `credentials.json`, you may also leave it empty and let AstrBot auto-discover it
+- Set `Shipyard Neo Access Token` to the Bay API key; if LKMBot can access Bay's `credentials.json`, you may also leave it empty and let LKMBot auto-discover it
 
 ### Reference: Full `config.yaml` Example (with Notes)
 
@@ -119,7 +119,7 @@ cargo:
   root_path: "/var/lib/bay/cargos"
   # Default workspace size limit (MB)
   default_size_limit_mb: 1024
-  # Path mounted inside the sandbox. This is AstrBot/Neo's workspace root.
+  # Path mounted inside the sandbox. This is LKMBot/Neo's workspace root.
   mount_path: "/workspace"
 
 security:
@@ -265,7 +265,7 @@ A practical way to think about this file:
 - **Session**: the actual running container session, which may be stopped or rebuilt
 - **Cargo**: the persistent workspace volume mounted at `/workspace`
 
-From AstrBot's perspective, the current implementation caches the sandbox booter by request `session_id`; in the default main-agent flow, this `session_id` usually equals the message-session identifier `unified_msg_origin`. As a result, follow-up requests from the same message session will usually continue using the same Neo sandbox; if the sandbox becomes unavailable, it will be rebuilt automatically.
+From LKMBot's perspective, the current implementation caches the sandbox booter by request `session_id`; in the default main-agent flow, this `session_id` usually equals the message-session identifier `unified_msg_origin`. As a result, follow-up requests from the same message session will usually continue using the same Neo sandbox; if the sandbox becomes unavailable, it will be rebuilt automatically.
 
 For more detailed explanations of TTL and persistence behavior, see the later sections on “`Shipyard Neo Sandbox TTL`” and “Data Persistence in the Sandbox Environment”.
 
@@ -273,23 +273,23 @@ For more detailed explanations of TTL and persistence behavior, see the later se
 
 The following content describes the older `Shipyard` driver. It is kept for compatibility with existing legacy deployments.
 
-### Deploying AstrBot and Shipyard with Docker Compose
+### Deploying LKMBot and Shipyard with Docker Compose
 
-If you have not deployed AstrBot yet, or want to use the older recommended deployment method with sandbox support, you can still deploy AstrBot with Docker Compose using the following commands:
+If you have not deployed LKMBot yet, or want to use the older recommended deployment method with sandbox support, you can still deploy LKMBot with Docker Compose using the following commands:
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
-cd AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
 # Modify the environment variables in compose-with-shipyard.yml, such as the Shipyard access token
 docker compose -f compose-with-shipyard.yml up -d
 docker pull soulter/shipyard-ship:latest
 ```
 
-This starts a Docker Compose stack containing the AstrBot main program and the sandbox environment.
+This starts a Docker Compose stack containing the LKMBot main program and the sandbox environment.
 
 ### Deploying Shipyard Separately
 
-If AstrBot is already deployed but the sandbox environment is not, you can deploy Shipyard separately.
+If LKMBot is already deployed but the sandbox environment is not, you can deploy Shipyard separately.
 
 ```bash
 mkdir astrbot-shipyard
@@ -303,14 +303,14 @@ docker pull soulter/shipyard-ship:latest
 After successful deployment, Shipyard listens on `http://<your-host>:8156` by default.
 
 > [!TIP]
-> If you deploy AstrBot with Docker, you can also place Shipyard on the same Docker network as AstrBot so you do not need to expose Shipyard's port to the host.
+> If you deploy LKMBot with Docker, you can also place Shipyard on the same Docker network as LKMBot so you do not need to expose Shipyard's port to the host.
 
-## Configuring AstrBot to Use the Sandbox Environment
+## Configuring LKMBot to Use the Sandbox Environment
 
 > [!TIP]
-> Please make sure your AstrBot version is `v4.12.0` or later.
+> Please make sure your LKMBot version is `v4.12.0` or later.
 
-In the AstrBot console, go to **Config → AI → Capabilities → Agent Computer Use**.
+In the LKMBot console, go to **Config → AI → Capabilities → Agent Computer Use**.
 
 1. Set `Computer Use Runtime` to `sandbox`
 2. Select `Shipyard Neo` or `Shipyard` as the sandbox driver
@@ -325,10 +325,10 @@ If you choose `Shipyard Neo`, the main configuration items are:
   - For a separated deployment, use the actual address, such as `http://<your-host>:8114`
 - `Shipyard Neo Access Token`
   - Fill in the Bay API key
-  - If AstrBot can access Bay's `credentials.json`, you may leave it empty and let AstrBot auto-discover it
+  - If LKMBot can access Bay's `credentials.json`, you may leave it empty and let LKMBot auto-discover it
 - `Shipyard Neo Profile`
   - For example `python-default` or `browser-python`
-  - If left empty, AstrBot will try to choose a profile with richer capabilities, preferring one that includes the `browser` capability, and fall back to `python-default` if needed
+  - If left empty, LKMBot will try to choose a profile with richer capabilities, preferring one that includes the `browser` capability, and fall back to `python-default` if needed
 - `Shipyard Neo Sandbox TTL`
   - The upper lifetime limit of the sandbox, defaulting to 3600 seconds (1 hour)
 
@@ -352,7 +352,7 @@ In `Shipyard Neo`:
 
 - TTL represents the upper lifetime bound of the sandbox
 - The selected profile also defines a separate idle timeout (`idle_timeout`)
-- Capability calls from AstrBot usually refresh the idle timeout, rather than directly extending the TTL
+- Capability calls from LKMBot usually refresh the idle timeout, rather than directly extending the TTL
 - `keepalive` only extends the idle timeout; it does not automatically start a new session and does not extend the TTL
 
 ## About `Shipyard Ship Lifetime (seconds)`

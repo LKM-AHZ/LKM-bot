@@ -148,7 +148,7 @@ def check_local_file_permission(
     ):
         return (
             "error: Permission denied. Local computer tools are disabled for this "
-            "user role. Enable Local computer access for this role in AstrBot "
+            "user role. Enable Local computer access for this role in LKMBot "
             "WebUI -> Config -> Normal Config -> AI -> Agent Computer Use -> "
             "Local Permission Policies."
         )
@@ -166,7 +166,7 @@ def check_admin_permission(
     if require_admin and context.context.event.role != "admin":
         return (
             f"error: Permission denied. {operation_name} is only allowed for admin users. "
-            "Tell user to set admins in `AstrBot WebUI -> Config -> General Config` by adding their user ID to the admins list if they need this feature. "
+            "Tell user to set admins in `LKMBot WebUI -> Config -> General Config` by adding their user ID to the admins list if they need this feature. "
             f"User's ID is: {context.context.event.get_sender_id()}. User's ID can be found by using /sid command."
         )
     return None
@@ -194,7 +194,7 @@ def check_local_execution_permission(
             f"error: Permission denied. {operation_name} is disabled by the "
             "Local permission policy for this user role. Enable Local computer "
             "access and `Execute code` "
-            "for this role in AstrBot WebUI -> Config -> Normal Config -> AI -> "
+            "for this role in LKMBot WebUI -> Config -> Normal Config -> AI -> "
             "Agent Computer Use -> Local Permission Policies."
         )
     if policy.requires_sandbox:
@@ -203,7 +203,7 @@ def check_local_execution_permission(
         except RuntimeError as exc:
             return policy, (
                 "error: Permission denied. Restricted Local execution is unavailable: "
-                f"{exc} Select `Third-party sandbox` under AstrBot WebUI -> Config -> "
+                f"{exc} Select `Third-party sandbox` under LKMBot WebUI -> Config -> "
                 "Normal Config -> AI -> Agent Computer Use -> Computer Use Runtime."
             )
     return policy, None

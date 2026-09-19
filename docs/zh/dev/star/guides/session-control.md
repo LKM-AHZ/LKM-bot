@@ -14,7 +14,7 @@
 ...
 ```
 
-AstrBot 提供了开箱即用的会话控制功能：
+LKMBot 提供了开箱即用的会话控制功能：
 
 导入：
 
@@ -99,7 +99,7 @@ async def handle_empty_mention(self, event: AstrMessageEvent):
 
 ## 自定义会话 ID 算子
 
-默认情况下，AstrBot 会话控制器会将基于 `sender_id` （发送人的 ID）作为识别不同会话的标识，如果想将一整个群作为一个会话，则需要自定义会话 ID 算子。
+默认情况下，LKMBot 会话控制器会将基于 `sender_id` （发送人的 ID）作为识别不同会话的标识，如果想将一整个群作为一个会话，则需要自定义会话 ID 算子。
 
 ```py
 import astrbot.api.message_components as Comp

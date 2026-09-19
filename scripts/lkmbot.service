@@ -1,0 +1,20 @@
+# user service
+[Unit]
+Description=LKMBot Service
+Documentation=https://github.com/Alma1314/LKM-bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/.local/share/lkmbot
+ExecStart=/usr/bin/sh -c '/usr/bin/lkmbot run || { /usr/bin/lkmbot init && /usr/bin/lkmbot run; }'
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lkmbot-%u
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target

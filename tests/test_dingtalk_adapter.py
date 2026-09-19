@@ -112,7 +112,7 @@ async def test_dingtalk_reconnect_delay_wakes_on_terminate(monkeypatch):
 @pytest.mark.parametrize(
     ("use_markdown", "expected_key", "expected_param"),
     [
-        (None, "sampleMarkdown", {"title": "AstrBot", "text": "first\nsecond"}),
+        (None, "sampleMarkdown", {"title": "LKMBot", "text": "first\nsecond"}),
         (False, "sampleText", {"content": "first\nsecond"}),
     ],
 )
@@ -175,7 +175,7 @@ async def test_dingtalk_self_mention_produces_consistent_command_text(payload):
 async def test_dingtalk_group_message_includes_available_group_details():
     adapter = DingtalkPlatformAdapter.__new__(DingtalkPlatformAdapter)
     message = _dingtalk_group_message(
-        conversationTitle="AstrBot Group",
+        conversationTitle="LKMBot Group",
         isAdmin=True,
         msgtype="text",
         text={"content": "hello"},
@@ -185,7 +185,7 @@ async def test_dingtalk_group_message_includes_available_group_details():
 
     assert result.group is not None
     assert result.group.group_id == "conversation"
-    assert result.group.group_name == "AstrBot Group"
+    assert result.group.group_name == "LKMBot Group"
     assert result.group.group_admins is None
 
     event = DingtalkMessageEvent(

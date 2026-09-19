@@ -3,8 +3,8 @@ import { head } from "./config/head";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
-  title: "AstrBot",
-  description: "AstrBot",
+  title: "LKMBot",
+  description: "LKMBot",
   head: head,
 
   rewrites: {
@@ -33,7 +33,7 @@ export default defineConfig({
           {
             text: "简介",
             items: [
-              { text: "关于 AstrBot", link: "/what-is-astrbot" },
+              { text: "关于 LKMBot", link: "/what-is-astrbot" },
               { text: "社区", link: "/community" },
               { text: "常见问题", link: "/faq" },
             ],
@@ -167,7 +167,6 @@ export default defineConfig({
               { text: "工具使用 Tools", link: "/function-calling" },
               { text: "技能 Skills", link: "/skills" },
               { text: "使用电脑能力", link: "/computer" },
-              { text: "SubAgent 编排", link: "/subagent" },
               { text: "主动型 Agent 能力", link: "/proactive-agent" },
               { text: "MCP", link: "/mcp" },
               { text: "网页搜索", link: "/websearch" },
@@ -219,7 +218,7 @@ export default defineConfig({
                 link: "/plugin-platform-adapter",
               },
               {
-                text: "AstrBot HTTP API",
+                text: "LKMBot HTTP API",
                 link: "/openapi",
               },
               {
@@ -227,7 +226,7 @@ export default defineConfig({
                 link: "/openapi-scopes",
               },
               {
-                text: "AstrBot 配置文件",
+                text: "LKMBot 配置文件",
                 link: "/astrbot-config",
               },
             ],
@@ -248,7 +247,7 @@ export default defineConfig({
             collapsed: false,
             items: [
               { text: "开源之夏 2025", link: "/ospp-2025" },
-              { text: "桐谷霁屿 x AstrBot 插件奖励活动", link: "/tonggujiyu-astrbot-plugin-reward-program" },
+              { text: "桐谷霁屿 x LKMBot 插件奖励活动", link: "/tonggujiyu-astrbot-plugin-reward-program" },
             ],
           },
         ],
@@ -264,12 +263,12 @@ export default defineConfig({
           next: '下一篇'
         },
         editLink: {
-          pattern: 'https://github.com/AstrBotdevs/AstrBot/edit/master/docs/:path',
+          pattern: 'https://github.com/Alma1314/LKM-bot/edit/master/docs/:path',
           text: '发现文档有问题？在 GitHub 上编辑此页',
         },
         logo: '/logo_prod.png',
         socialLinks: [
-          { icon: "github", link: "https://github.com/AstrBotDevs/AstrBot" },
+          { icon: "github", link: "https://github.com/Alma1314/LKM-bot" },
         ],
         footer: {
           message: 'Deployed on&nbsp' +
@@ -293,7 +292,7 @@ export default defineConfig({
           {
             text: "Introduction",
             items: [
-              { text: "What is AstrBot", link: "/en/what-is-astrbot" },
+              { text: "What is LKMBot", link: "/en/what-is-astrbot" },
               { text: "Community", link: "/en/community" },
               { text: "FAQ", link: "/en/faq" },
             ],
@@ -429,7 +428,6 @@ export default defineConfig({
               { text: "Tool Use", link: "/function-calling" },
               { text: "Anthropic Skills", link: "/skills" },
               { text: "Computer Use", link: "/computer" },
-              { text: "SubAgent Orchestration", link: "/subagent" },
               { text: "Proactive Tasks", link: "/proactive-agent" },
               { text: "MCP", link: "/mcp" },
               { text: "Web Search", link: "/websearch" },
@@ -479,7 +477,7 @@ export default defineConfig({
                 link: "/plugin-platform-adapter",
               },
               {
-                text: "AstrBot HTTP API",
+                text: "LKMBot HTTP API",
                 link: "/openapi",
               },
               {
@@ -487,7 +485,7 @@ export default defineConfig({
                 link: "/openapi-scopes",
               },
               {
-                text: "AstrBot Configuration File",
+                text: "LKMBot Configuration File",
                 link: "/astrbot-config",
               },
             ],
@@ -520,12 +518,12 @@ export default defineConfig({
           next: 'Next'
         },
         editLink: {
-          pattern: 'https://github.com/AstrBotdevs/AstrBot/edit/master/docs/:path',
+          pattern: 'https://github.com/Alma1314/LKM-bot/edit/master/docs/:path',
           text: 'Edit this page on GitHub',
         },
         logo: '/logo_prod.png',
         socialLinks: [
-          { icon: "github", link: "https://github.com/AstrBotDevs/AstrBot" },
+          { icon: "github", link: "https://github.com/Alma1314/LKM-bot" },
         ],
         footer: {
           message: 'Deployed on&nbsp' +

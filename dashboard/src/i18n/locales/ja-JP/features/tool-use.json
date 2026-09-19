@@ -4,7 +4,7 @@
   "tooltip": {
     "info": "関数呼び出しと MCP とは？",
     "marketplace": "コミュニティの MCP サーバーを閲覧・インストール",
-    "serverConfig": "MCP サーバー（stdio）の設定では、次のフィールドを使用できます：\ncommand：コマンド名（例：python または uv）\nargs：コマンド引数の配列（例：[\"run\", \"server.py\"]）\nenv：環境変数オブジェクト（例：{\"api_key\": \"abc\"}）\ncwd：作業ディレクトリのパス（例：/path/to/server）\nencoding：出力エンコーディング（既定：utf-8）\nencoding_error_handler：テキストのエンコーディングエラー処理（既定：strict）\nその他のフィールドについては MCP ドキュメントを参照してください。\n⚠️ Docker で AstrBot をデプロイする場合は、AstrBot がマウントした data ディレクトリ内に MCP サーバーをインストールしてください。"
+    "serverConfig": "MCP サーバー（stdio）の設定では、次のフィールドを使用できます：\ncommand：コマンド名（例：python または uv）\nargs：コマンド引数の配列（例：[\"run\", \"server.py\"]）\nenv：環境変数オブジェクト（例：{\"api_key\": \"abc\"}）\ncwd：作業ディレクトリのパス（例：/path/to/server）\nencoding：出力エンコーディング（既定：utf-8）\nencoding_error_handler：テキストのエンコーディングエラー処理（既定：strict）\nその他のフィールドについては MCP ドキュメントを参照してください。\n⚠️ Docker で LKMBot をデプロイする場合は、LKMBot がマウントした data ディレクトリ内に MCP サーバーをインストールしてください。"
   },
   "tabs": {
     "local": "ローカルサーバー",
@@ -114,7 +114,7 @@
       },
       "tips": {
         "timeoutConfig": "ツール呼び出しのタイムアウトは設定ページで個別に指定してください",
-        "transportRecommendation": "Streamable HTTP または SSE モードの使用を推奨します。stdio モードは AstrBot ホスト上でローカルプロセスを起動するため、信頼できる MCP サーバーにのみ使用してください。"
+        "transportRecommendation": "Streamable HTTP または SSE モードの使用を推奨します。stdio モードは LKMBot ホスト上でローカルプロセスを起動するため、信頼できる MCP サーバーにのみ使用してください。"
       }
     },
     "serverDetail": {

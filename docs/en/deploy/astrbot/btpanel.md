@@ -1,8 +1,8 @@
-# Deploy AstrBot on BT Panel
+# Deploy LKMBot on BT Panel
 
 [BT Panel](https://www.bt.cn/new/index.html) is a secure, efficient, and production-ready Linux/Windows server operation panel.
 
-AstrBot has been published to BT Panel's Docker App Store, supporting one-click installation.
+LKMBot has been published to BT Panel's Docker App Store, supporting one-click installation.
 
 ## Install BT Panel
 
@@ -14,24 +14,24 @@ After entering the BT Panel page, click `Docker` on the left sidebar, click Sett
 
 ![alt text](https://files.astrbot.app/docs/source/images/btpanel/image-1.png)
 
-## Install AstrBot
+## Install LKMBot
 
-Go to Docker's App Store and search for `AstrBot`, as shown below.
+Go to Docker's App Store and search for `LKMBot`, as shown below.
 
 ![image](https://files.astrbot.app/docs/source/images/btpanel/image.png)
 
 Click Install and wait for the installation to complete.
 
-After successful installation, click `Security` on the left sidebar and open the corresponding AstrBot port (default is 6185).
+After successful installation, click `Security` on the left sidebar and open the corresponding LKMBot port (default is 6185).
 
 If you are using cloud servers from providers like AWS, Alibaba Cloud, Tencent Cloud, etc., make sure their security groups also allow the corresponding port.
 
-## Access AstrBot
+## Access LKMBot
 
-Visit `http://IP:6185` to access the AstrBot dashboard.
+Visit `http://IP:6185` to access the LKMBot dashboard.
 
 > [!TIP]
-> By default, the above method only opens port 6185. If you need to deploy messaging platforms, you need to additionally open the corresponding ports. Click `Container` in the top bar, find the AstrBot container, click `Manage`, click `Edit Container`, and add the corresponding ports.
+> By default, the above method only opens port 6185. If you need to deploy messaging platforms, you need to additionally open the corresponding ports. Click `Container` in the top bar, find the LKMBot container, click `Manage`, click `Edit Container`, and add the corresponding ports.
 >
 > ![image](https://files.astrbot.app/docs/source/images/btpanel/image-2.png)
 >
@@ -39,7 +39,7 @@ Visit `http://IP:6185` to access the AstrBot dashboard.
 >
 >| Port    | Description | Type
 >| -------- | ------- | ------- |
->| 6185 |  AstrBot WebUI `default` port  | Required |
+>| 6185 |  LKMBot WebUI `default` port  | Required |
 >| 6195 | WeCom `default` port    | Optional |
 >| 6199 | QQ Personal Account(aiocqhttp) `default` port    | Optional |
 >| 6196    | QQ Official API(Webhook) `default` port   | Optional |

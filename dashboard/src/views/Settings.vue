@@ -690,7 +690,7 @@ const resourceItems = computed(() => [
         title: t('core.navigation.github'),
         subtitle: tm('resources.github.subtitle'),
         icon: 'mdi-github',
-        action: () => openExternalLink('https://github.com/AstrBotDevs/AstrBot')
+        action: () => openExternalLink('https://github.com/Alma1314/LKM-bot')
     }
 ]);
 

@@ -105,7 +105,7 @@
               <v-col cols="12" sm="4">
                 <!-- GitHub Card -->
                 <v-card variant="outlined" class="h-100 pa-4 d-flex flex-column"
-                  href="https://github.com/AstrBotDevs/AstrBot/" target="_blank">
+                  href="https://github.com/Alma1314/LKM-bot/" target="_blank">
                   <div class="d-flex align-center mb-3">
                     <v-icon size="32" class="mr-3">mdi-github</v-icon>
                     <span class="text-h6 font-weight-bold">GitHub</span>

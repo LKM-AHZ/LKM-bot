@@ -1,13 +1,13 @@
-![AstrBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+![LKMBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
 
 <div align="center">
 
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh.md">简体中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README.md">English</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ja.md">日本語</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_fr.md">Français</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_es.md">Español</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ru.md">Русский</a>
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh.md">简体中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README.md">English</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ja.md">日本語</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_fr.md">Français</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_es.md">Español</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ru.md">Русский</a>
 
 <br>
 
@@ -37,7 +37,7 @@
 <a href="mailto:community@astrbot.app">Email</a>
 </div>
 
-AstrBot 是一個開源的一站式 Agent 聊天機器人平台，可接入主流即時通訊軟體，為個人、開發者和團隊打造可靠、可擴展的對話式智慧基礎設施。無論是個人 AI 夥伴、智慧客服、自動化助手，還是企業知識庫，AstrBot 都能在您的即時通訊軟體平台的工作流程中快速構建生產可用的 AI 應用程式。
+LKMBot 是一個開源的一站式 Agent 聊天機器人平台，可接入主流即時通訊軟體，為個人、開發者和團隊打造可靠、可擴展的對話式智慧基礎設施。無論是個人 AI 夥伴、智慧客服、自動化助手，還是企業知識庫，LKMBot 都能在您的即時通訊軟體平台的工作流程中快速構建生產可用的 AI 應用程式。
 
 ![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
 
@@ -57,7 +57,7 @@ AstrBot 是一個開源的一站式 Agent 聊天機器人平台，可接入主�
 
 ### 雨雲一鍵雲端部署
 
-對於希望一鍵部署並讓 AstrBot 24 小時在線、且不想自行管理伺服器的使用者，我們推薦使用雨雲的一鍵雲端部署服務 ☁️：
+對於希望一鍵部署並讓 LKMBot 24 小時在線、且不想自行管理伺服器的使用者，我們推薦使用雨雲的一鍵雲端部署服務 ☁️：
 
 [![Deploy on RainYun](https://rainyun-apps.cn-nb1.rains3.com/materials/deploy-on-rainyun-en.svg)](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
 
@@ -67,37 +67,40 @@ AstrBot 是一個開源的一站式 Agent 聊天機器人平台，可接入主�
 > 需要安裝 [uv](https://docs.astral.sh/uv/)。
 > 對於 macOS 使用者：由於 macOS 安全性檢查，首次執行 `astrbot` 指令可能需要較長時間（約 10-20 秒）。
 
-對於想快速體驗 AstrBot、且熟悉命令列並能自行安裝 `uv` 環境的使用者，我們推薦使用 `uv` 一鍵部署方式 ⚡️。
+對於想快速體驗 LKMBot、且熟悉命令列並能自行安裝 `uv` 環境的使用者，我們推薦使用 `uv` 一鍵部署方式 ⚡️。
 
 ```bash
-uv tool install astrbot --python 3.12
-astrbot init # 僅首次執行此命令以初始化環境
-astrbot run
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+uv tool install . --python 3.12
+lkmbot init # 僅首次執行此命令以初始化環境
+lkmbot run
 ```
 
-更新 `astrbot`：
+更新 `lkmbot`：
 
 ```bash
-uv tool upgrade astrbot --python 3.12
+git pull --ff-only
+uv tool install --force . --python 3.12
 ```
 
 ### Docker 部署
 
-對於熟悉容器、希望獲得更穩定且更適合正式環境部署方式的使用者，我們推薦使用 Docker / Docker Compose 部署 AstrBot。
+對於熟悉容器、希望獲得更穩定且更適合正式環境部署方式的使用者，我們推薦使用 Docker / Docker Compose 部署 LKMBot。
 
-請參考官方文件 [使用 Docker 部署 AstrBot](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot)。
+請參考官方文件 [使用 Docker 部署 LKMBot](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot)。
 
 ### 桌面客戶端部署
 
-對於希望在桌面端使用 AstrBot、並以 ChatUI 為主要入口的使用者，我們推薦使用 AstrBot App。
+對於希望在桌面端使用 LKMBot、並以 ChatUI 為主要入口的使用者，我們推薦使用 LKMBot App。
 
 前往 [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop) 下載並安裝；此方式面向桌面使用，不建議伺服器場景。
 
 ### 啟動器部署
 
-同樣在桌面端，對於希望快速部署並實現環境隔離多開的使用者，我們推薦使用 AstrBot Launcher。
+同樣在桌面端，對於希望快速部署並實現環境隔離多開的使用者，我們推薦使用 LKMBot Launcher。
 
-前往 [AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher) 下載並安裝。
+前往 [LKMBot Launcher](https://github.com/Raven95676/astrbot-launcher) 下載並安裝。
 
 **更多部署方式**
 
@@ -115,7 +118,7 @@ uv tool upgrade astrbot --python 3.12
 
 ## 支援的訊息平台
 
-將 AstrBot 連接到你常用的聊天平台。
+將 LKMBot 連接到你常用的聊天平台。
 
 | 平台 | 維護方 |
 |---------|---------------|
@@ -187,10 +190,10 @@ uv tool upgrade astrbot --python 3.12
 
 ### 開發環境
 
-AstrBot 使用 `ruff` 進行程式碼格式化和檢查。
+LKMBot 使用 `ruff` 進行程式碼格式化和檢查。
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
 pip install pre-commit
 pre-commit install
 ```
@@ -207,7 +210,7 @@ pre-commit install
 
 ## ❤️ Special Thanks
 
-特別感謝所有 Contributors 和外掛開發者對 AstrBot 的貢獻 ❤️
+特別感謝所有 Contributors 和外掛開發者對 LKMBot 的貢獻 ❤️
 
 <a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />

@@ -2,11 +2,11 @@
 # Text to Image
 
 > [!TIP]
-> For easier development, you can use the [AstrBot Text2Image Playground](https://t2i-playground.astrbot.app/) for online visual editing and testing of HTML templates.
+> For easier development, you can use the [LKMBot Text2Image Playground](https://t2i-playground.astrbot.app/) for online visual editing and testing of HTML templates.
 
 ## Basic Usage
 
-AstrBot supports rendering text into images.
+LKMBot supports rendering text into images.
 
 ```python
 @filter.command("image")  # Register an /image command that accepts a text parameter.
@@ -24,7 +24,7 @@ async def on_aiocqhttp(self, event: AstrMessageEvent, text: str):
 
 If you find the default rendered images insufficiently aesthetic, you can use custom HTML templates to render images.
 
-AstrBot supports rendering text-to-image templates using `HTML + Jinja2`.
+LKMBot supports rendering text-to-image templates using `HTML + Jinja2`.
 
 ```py{7}
 # Custom Jinja2 template with CSS support

@@ -13,7 +13,7 @@ def test_github_repository_resolves_branch_with_slashes() -> None:
     )
 
     assert repository.owner == "AstrBotDevs"
-    assert repository.name == "AstrBot"
+    assert repository.name == "LKMBot"
     assert repository.branch == "feature/updater"
     assert repository.archive_url == (
         "https://github.com/AstrBotDevs/AstrBot/archive/refs/heads/feature/updater.zip"
@@ -50,7 +50,7 @@ def test_github_ssh_repository_uses_git_transport() -> None:
 
     assert repository.provider == "github.com"
     assert repository.owner == "AstrBotDevs"
-    assert repository.name == "AstrBot"
+    assert repository.name == "LKMBot"
     assert repository.transport == "git"
 
 

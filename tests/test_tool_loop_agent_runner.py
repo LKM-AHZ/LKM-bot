@@ -11,8 +11,6 @@ import pytest
 # 将项目根目录添加到 sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from astrbot.core.agent.agent import Agent
-from astrbot.core.agent.handoff import HandoffTool
 from astrbot.core.agent.hooks import BaseAgentRunHooks
 from astrbot.core.agent.message import ImageURLPart, Message, TextPart
 from astrbot.core.agent.run_context import ContextWrapper
@@ -387,11 +385,6 @@ class SequentialToolProvider(MockProvider):
         )
 
 
-class MockHandoffProvider(MockToolCallProvider):
-    def __init__(self, handoff_tool_name: str):
-        super().__init__(handoff_tool_name, {"input": "delegate this task"})
-
-
 class MockHooks(BaseAgentRunHooks):
     """模拟钩子函数"""
 
@@ -432,26 +425,6 @@ class MockEvent:
 class MockAgentContext:
     def __init__(self, event):
         self.event = event
-
-
-class BlockingSubagentContext:
-    def __init__(self):
-        self.started = asyncio.Event()
-        self.cancelled = False
-
-    async def get_current_chat_provider_id(self, _umo: str) -> str:
-        return "provider-id"
-
-    def get_config(self, **_kwargs):
-        return {"provider_settings": {}}
-
-    async def tool_loop_agent(self, **_kwargs):
-        self.started.set()
-        try:
-            await asyncio.Future()
-        except asyncio.CancelledError:
-            self.cancelled = True
-            raise
 
 
 class BlockingToolState:
@@ -1469,63 +1442,6 @@ async def test_stop_cancels_provider_before_first_response(
 
 
 @pytest.mark.asyncio
-async def test_stop_interrupts_pending_subagent_handoff(mock_hooks):
-    subagent_context = BlockingSubagentContext()
-    event = MockEvent("webchat:FriendMessage:webchat!user!session", "user")
-    handoff_tool = HandoffTool(
-        Agent(name="subagent", instructions="subagent-instructions", tools=[]),
-        tool_description="Delegate tasks to the subagent.",
-    )
-    provider = MockHandoffProvider(handoff_tool.name)
-    request = ProviderRequest(
-        prompt="delegate",
-        func_tool=ToolSet(tools=[handoff_tool]),
-        contexts=[],
-    )
-    runner = ToolLoopAgentRunner()
-
-    await runner.reset(
-        provider=provider,
-        request=request,
-        run_context=ContextWrapper(
-            context=SimpleNamespace(event=event, context=subagent_context)
-        ),
-        tool_executor=FunctionToolExecutor(),
-        agent_hooks=mock_hooks,
-        streaming=False,
-    )
-
-    step_iter = runner.step()
-    first_resp = await step_iter.__anext__()
-    if first_resp.type == "agent_stats":
-        first_resp = await step_iter.__anext__()
-    assert first_resp.type == "tool_call"
-    assert provider.abort_signal is not None
-    assert provider.abort_signal.is_set() is False
-
-    pending_resp = asyncio.create_task(step_iter.__anext__())
-    await asyncio.wait_for(subagent_context.started.wait(), timeout=5)
-
-    runner.request_stop()
-    assert provider.abort_signal.is_set() is True
-
-    aborted_resp = await asyncio.wait_for(pending_resp, timeout=1)
-    assert aborted_resp.type == "aborted"
-    assert runner.was_aborted() is True
-    assert subagent_context.cancelled is True
-    final_resp = runner.get_final_llm_resp()
-    assert final_resp is not None
-    assert final_resp.completion_text == runner.USER_INTERRUPTION_MESSAGE
-    assert [message.role for message in runner.run_context.messages[-2:]] == [
-        "user",
-        "assistant",
-    ]
-
-    with pytest.raises(StopAsyncIteration):
-        await step_iter.__anext__()
-
-
-@pytest.mark.asyncio
 async def test_stop_interrupts_pending_regular_tool(mock_hooks):
     tool_state = BlockingToolState()
     event = MockEvent("webchat:FriendMessage:webchat!user!session", "user")
@@ -2353,9 +2269,9 @@ async def test_step_notices_reach_model_once_per_threshold(
         assert not any(marker in str(m) for m in snapshots[step - 1])
         assert any(marker in str(m) for m in snapshots[step])
     assert "Remaining steps: 0." in str(tools[-1].content)
-    assert "tool-call round limit in AstrBot WebUI" in str(tools[-1].content)
+    assert "tool-call round limit in LKMBot WebUI" in str(tools[-1].content)
     assert any(
-        "tool-call round limit in AstrBot WebUI" in str(m) for m in snapshots[-1]
+        "tool-call round limit in LKMBot WebUI" in str(m) for m in snapshots[-1]
     )
     assert runner.request_context_manager.process.await_count == 129
 
@@ -2386,7 +2302,7 @@ async def test_small_step_budgets_and_reset(
             f"[SYSTEM NOTICE: Agent step budget {percent}%]" in str(m.content)
             for m in tools
         ) == (1 if max_steps >= 16 else 0)
-    assert "tool-call round limit in AstrBot WebUI" in str(tools[-1].content)
+    assert "tool-call round limit in LKMBot WebUI" in str(tools[-1].content)
     assert mock_provider.call_count == max_steps + 1
     assert runner._step_budget_notified
     await runner.reset(

@@ -36,7 +36,7 @@ async def test_room_message_maps_embedded_room_information() -> None:
             "toRoomId": "room-id",
             "toRoom": {
                 "id": "room-id",
-                "name": "AstrBot room",
+                "name": "LKMBot room",
                 "ownerId": "owner-id",
             },
         },
@@ -44,7 +44,7 @@ async def test_room_message_maps_embedded_room_information() -> None:
 
     assert message.group is not None
     assert message.group.group_id == "room-id"
-    assert message.group.group_name == "AstrBot room"
+    assert message.group.group_name == "LKMBot room"
     assert message.group.group_owner == "owner-id"
 
 

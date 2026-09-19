@@ -1,7 +1,7 @@
 # Community-Provided Deployment Methods
 
 > [!WARNING]
-> AstrBot official does not guarantee the security and stability of these deployment methods.
+> LKMBot official does not guarantee the security and stability of these deployment methods.
 
 ## Linux One-Click Deployment Script
 
@@ -21,7 +21,7 @@ Repository Address: [zhende1113/Antlia](https://github.com/zhende1113/Antlia/)
 
 ## Linux One-Click Deployment Script (Based on Docker)
 
-Supports AstrBot / NapCat.
+Supports LKMBot / NapCat.
 
 > [!TIP]
 > Use `sudo` for elevated permissions if you have insufficient privileges.
@@ -47,6 +47,6 @@ sudo ./AstrbotScript.sh
 
 __Repository Address: [railgun19457/AstrbotScript](https://github.com/railgun19457/AstrbotScript)__
 
-## AstrBot Android Deployment
+## LKMBot Android Deployment
 
 Refer to [zz6zz666/AstrBot-Android-App](https://github.com/zz6zz666/AstrBot-Android-App)

@@ -27,7 +27,7 @@
           >
             <ChatUILogo class="chat-sidebar-brand-logo" />
             <span class="chat-sidebar-brand-copy">
-              <span class="chat-sidebar-brand-name">AstrBot</span>
+              <span class="chat-sidebar-brand-name">LKMBot</span>
               <span class="chat-sidebar-brand-mode">ChatUI</span>
             </span>
           </div>

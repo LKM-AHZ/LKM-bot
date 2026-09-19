@@ -142,7 +142,7 @@ class BubblewrapProcessSandbox(UnixProcessSandbox):
                     command.extend(("--ro-bind", str(path), str(path)))
             for path in sorted(writable_paths, key=lambda item: len(item.parts)):
                 command.extend(("--bind", str(path), str(path)))
-            # A writable workspace or attachment root must not make AstrBot's
+            # A writable workspace or attachment root must not make LKMBot's
             # Python installation writable when it contains that installation.
             for path in sorted(
                 {Path(sys.prefix).resolve(), Path(sys.base_prefix).resolve()},

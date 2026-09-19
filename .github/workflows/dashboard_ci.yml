@@ -1,4 +1,4 @@
-name: AstrBot Dashboard CI
+name: LKMBot Dashboard CI
 
 on:
   push:

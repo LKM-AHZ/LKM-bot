@@ -1,9 +1,9 @@
-# AstrBot 知识库
+# LKMBot 知识库
 
 > [!TIP]
-> 需要 AstrBot 版本 >= 4.5.0。
+> 需要 LKMBot 版本 >= 4.5.0。
 >
-> 我们在 4.5.0 版本中重新设计了全新的知识库系统，AstrBot 将原生支持知识库功能。下文介绍的是新版知识库的使用方法。如果您使用的是之前的版本，请参考[旧版知识库使用文档](/use/knowledge-base-old.html)，我们建议您升级到最新版以获得更好的体验。
+> 我们在 4.5.0 版本中重新设计了全新的知识库系统，LKMBot 将原生支持知识库功能。下文介绍的是新版知识库的使用方法。如果您使用的是之前的版本，请参考[旧版知识库使用文档](/use/knowledge-base-old.html)，我们建议您升级到最新版以获得更好的体验。
 
 ![知识库预览](https://files.astrbot.app/docs/zh/use/image-3.png)
 
@@ -11,7 +11,7 @@
 
 打开 `模型提供商`（`/providers`），切换到 `嵌入` 标签，点击 `新增`，选择所需的提供商类型。
 
-目前 AstrBot 支持兼容 OpenAI API 和 Gemini API 的嵌入向量服务。
+目前 LKMBot 支持兼容 OpenAI API 和 Gemini API 的嵌入向量服务。
 
 在左侧选择提供商，在右侧填写 API 地址、API Key、模型名称等配置。
 
@@ -25,7 +25,7 @@
 
 ## 创建知识库
 
-AstrBot 支持多知识库管理。在聊天时，您可以**自由指定知识库**。
+LKMBot 支持多知识库管理。在聊天时，您可以**自由指定知识库**。
 
 打开侧边栏的 `知识库`（`/knowledge-base`），点击 `创建知识库`。
 
@@ -52,7 +52,7 @@ AstrBot 支持多知识库管理。在聊天时，您可以**自由指定知识�
 
 1. 打开 [硅基流动官网](https://cloud.siliconflow.cn/i/zMCYMSt2)，注册账户并完成实名认证。
 2. 打开 [API 密钥](https://cloud.siliconflow.cn/me/account/ak)。
-5. 填写 AstrBot OpenAI Embedding 模型提供商配置：
+5. 填写 LKMBot OpenAI Embedding 模型提供商配置：
    1. API Key 为刚刚申请的硅基流动的 API Key
    2. embedding api base 填写 `https://api.siliconflow.cn/v1`
    3. model 填写你选择的模型，此例子中为 `BAAI/bge-m3`。

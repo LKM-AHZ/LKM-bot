@@ -1,8 +1,8 @@
-# Deploy AstrBot with AstrBot Launcher
+# Deploy LKMBot with LKMBot Launcher
 
-## Recommended Method 1: AstrBot One-Click Launcher
+## Recommended Method 1: LKMBot One-Click Launcher
 
-AstrBot One-Click Launcher supports Windows, macOS, and Linux.
+LKMBot One-Click Launcher supports Windows, macOS, and Linux.
 
 0. Open [AstrBotDevs/astrbot-launcher](https://github.com/AstrBotDevs/astrbot-launcher)
 1. **Optional but recommended**: give this project a [**Star ⭐**](https://github.com/AstrBotDevs/astrbot-launcher). Your support helps maintainers keep improving it.
@@ -10,16 +10,16 @@ AstrBot One-Click Launcher supports Windows, macOS, and Linux.
 
 For example:
 
-- Windows x86 users: `AstrBot.Launcher_0.2.1_x64-setup.exe`
-- Windows on Arm users: `AstrBot.Launcher_0.2.1_arm64-setup.exe`
-- macOS Apple Silicon users: `AstrBot.Launcher_0.2.1_aarch64.dmg`
+- Windows x86 users: `LKMBot.Launcher_0.2.1_x64-setup.exe`
+- Windows on Arm users: `LKMBot.Launcher_0.2.1_arm64-setup.exe`
+- macOS Apple Silicon users: `LKMBot.Launcher_0.2.1_aarch64.dmg`
 
 For macOS users, if you see "damaged and can't be opened", it is caused by macOS security restrictions on unsigned apps. Fix it with:
 
 1. Open Terminal.
 2. Run:
    `xattr -dr com.apple.quarantine /Applications/AstrBot\ Launcher.app`
-3. Reopen AstrBot Launcher.
+3. Reopen LKMBot Launcher.
 
 ## Method 2: Legacy Windows Installer
 
@@ -57,21 +57,21 @@ Drag `launcher_astrbot_en.bat` into the PowerShell window and press Enter.
 
 If Python is not detected, the script exits with a prompt.
 
-The script checks whether an `AstrBot` folder exists. If not, it downloads the latest AstrBot source from [GitHub](https://github.com/AstrBotDevs/AstrBot/releases/latest), installs dependencies, and runs it automatically.
+The script checks whether an `LKMBot` folder exists. If not, it downloads the latest LKMBot source from [GitHub](https://github.com/AstrBotDevs/AstrBot/releases/latest), installs dependencies, and runs it automatically.
 
 ## Done
 
-If everything works, you will see AstrBot logs.
+If everything works, you will see LKMBot logs.
 
-Without errors, you should see a log like `🌈 Management panel started, accessible at` with several URLs. Open one URL to access AstrBot WebUI.
+Without errors, you should see a log like `🌈 Management panel started, accessible at` with several URLs. Open one URL to access LKMBot WebUI.
 
 > [!TIP]
-> First-time logins use the random password generated on startup and printed to logs. Use that password (and the username shown in the logs, usually `astrbot`) to log in, then change it immediately.
+> First-time logins use the random password generated on startup and printed to logs. Use that password (and the username shown in the logs, usually `lkmbot`) to log in, then change it immediately.
 >
 > If WebUI returns 404:
-> Download `dist.zip` from [release](https://github.com/AstrBotDevs/AstrBot/releases), extract it into `AstrBot/data`, then restart the computer if needed.
+> Download `dist.zip` from [release](https://github.com/AstrBotDevs/AstrBot/releases), extract it into `LKMBot/data`, then restart the computer if needed.
 
-Then deploy at least one messaging platform adapter to start using AstrBot in IM apps.
+Then deploy at least one messaging platform adapter to start using LKMBot in IM apps.
 
 ## Error: Python is not installed
 

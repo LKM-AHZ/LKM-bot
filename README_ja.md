@@ -1,13 +1,13 @@
-![AstrBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+![LKMBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
 
 <div align="center">
 
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh.md">简体中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README.md">English</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_zh-TW.md">繁體中文</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_fr.md">Français</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_es.md">Español</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/blob/master/README_ru.md">Русский</a>
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh.md">简体中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README.md">English</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh-TW.md">繁體中文</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_fr.md">Français</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_es.md">Español</a> ｜
+<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_ru.md">Русский</a>
 
 <br>
 
@@ -37,7 +37,7 @@
 <a href="mailto:community@astrbot.app">Email Support</a>
 </div>
 
-AstrBot は、主要なインスタントメッセージングアプリと統合できるオープンソースのオールインワン Agent チャットボットプラットフォームです。個人、開発者、チームに信頼性が高くスケーラブルな会話型 AI インフラストラクチャを提供します。パーソナル AI コンパニオン、インテリジェントカスタマーサービス、オートメーションアシスタント、エンタープライズナレッジベースなど、AstrBot を使用すると、IM プラットフォームのワークフロー内で本番環境対応の AI アプリケーションを迅速に構築できます。
+LKMBot は、主要なインスタントメッセージングアプリと統合できるオープンソースのオールインワン Agent チャットボットプラットフォームです。個人、開発者、チームに信頼性が高くスケーラブルな会話型 AI インフラストラクチャを提供します。パーソナル AI コンパニオン、インテリジェントカスタマーサービス、オートメーションアシスタント、エンタープライズナレッジベースなど、LKMBot を使用すると、IM プラットフォームのワークフロー内で本番環境対応の AI アプリケーションを迅速に構築できます。
 
 ![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
 
@@ -57,7 +57,7 @@ AstrBot は、主要なインスタントメッセージングアプリと統合
 
 ### RainYun ワンクリッククラウドデプロイ
 
-AstrBot をワンクリックで 24 時間稼働させたいものの、サーバーを自分で管理したくないユーザーには、RainYun のワンクリッククラウドデプロイサービスをおすすめします ☁️:
+LKMBot をワンクリックで 24 時間稼働させたいものの、サーバーを自分で管理したくないユーザーには、RainYun のワンクリッククラウドデプロイサービスをおすすめします ☁️:
 
 [![Deploy on RainYun](https://rainyun-apps.cn-nb1.rains3.com/materials/deploy-on-rainyun-en.svg)](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
 
@@ -67,37 +67,40 @@ AstrBot をワンクリックで 24 時間稼働させたいものの、サー�
 > [uv](https://docs.astral.sh/uv/) のインストールが必要です。
 > macOS ユーザーの場合：macOS のセキュリティチェックにより、`astrbot` コマンドの初回実行に時間がかかる場合があります（約 10〜20 秒）。
 
-AstrBot を素早く試したいユーザーで、コマンドラインに慣れており `uv` 環境を自分でインストールできる場合は、`uv` のワンクリックデプロイをおすすめします ⚡️:
+LKMBot を素早く試したいユーザーで、コマンドラインに慣れており `uv` 環境を自分でインストールできる場合は、`uv` のワンクリックデプロイをおすすめします ⚡️:
 
 ```bash
-uv tool install astrbot --python 3.12
-astrbot init # 初回のみ実行して環境を初期化します
-astrbot run
+git clone https://github.com/Alma1314/LKM-bot.git
+cd LKM-bot
+uv tool install . --python 3.12
+lkmbot init # 初回のみ実行して環境を初期化します
+lkmbot run
 ```
 
 `astrbot` の更新：
 
 ```bash
-uv tool upgrade astrbot --python 3.12
+git pull --ff-only
+uv tool install --force . --python 3.12
 ```
 
 ### Docker デプロイ
 
-コンテナ運用に慣れており、より安定した本番向けのデプロイ方法を求めるユーザーには、Docker / Docker Compose での AstrBot デプロイをおすすめします。
+コンテナ運用に慣れており、より安定した本番向けのデプロイ方法を求めるユーザーには、Docker / Docker Compose での LKMBot デプロイをおすすめします。
 
-公式ドキュメント [Docker を使用した AstrBot のデプロイ](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot) をご参照ください。
+公式ドキュメント [Docker を使用した LKMBot のデプロイ](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot) をご参照ください。
 
 ### デスクトップアプリのデプロイ
 
-デスクトップで AstrBot を使い、主に ChatUI を入口として利用するユーザーには、AstrBot App をおすすめします。
+デスクトップで LKMBot を使い、主に ChatUI を入口として利用するユーザーには、LKMBot App をおすすめします。
 
 [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop) からダウンロードしてインストールしてください。この方式はデスクトップ向けであり、サーバー用途には推奨されません。
 
 ### ランチャーのデプロイ
 
-同じくデスクトップで、素早くデプロイしつつ環境を分離して多重起動したいユーザーには、AstrBot Launcher をおすすめします。
+同じくデスクトップで、素早くデプロイしつつ環境を分離して多重起動したいユーザーには、LKMBot Launcher をおすすめします。
 
-[AstrBot Launcher](https://github.com/Raven95676/astrbot-launcher) からダウンロードしてインストールしてください。
+[LKMBot Launcher](https://github.com/Raven95676/astrbot-launcher) からダウンロードしてインストールしてください。
 
 **その他のデプロイ方法**
 
@@ -115,7 +118,7 @@ uv tool upgrade astrbot --python 3.12
 
 ## サポートされているメッセージプラットフォーム
 
-AstrBot をよく使うチャットプラットフォームに接続できます。
+LKMBot をよく使うチャットプラットフォームに接続できます。
 
 | プラットフォーム | 保守 |
 |---------|---------------|
@@ -188,10 +191,10 @@ Issue を確認したり、PR(プルリクエスト)のレビューを手伝う�
 
 ### 開発環境
 
-AstrBot はコードのフォーマットとチェックに `ruff` を使用しています。
+LKMBot はコードのフォーマットとチェックに `ruff` を使用しています。
 
 ```bash
-git clone https://github.com/AstrBotDevs/AstrBot
+git clone https://github.com/Alma1314/LKM-bot.git
 pip install pre-commit
 pre-commit install
 ```
@@ -208,7 +211,7 @@ pre-commit install
 
 ## ❤️ Special Thanks
 
-AstrBot への貢献をしていただいたすべてのコントリビューターとプラグイン開発者に特別な感謝を ❤️
+LKMBot への貢献をしていただいたすべてのコントリビューターとプラグイン開発者に特別な感謝を ❤️
 
 <a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />

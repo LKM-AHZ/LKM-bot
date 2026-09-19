@@ -74,12 +74,7 @@ const sidebarItem: menu[] = [
         title: 'core.navigation.cron',
         icon: 'mdi-clock-outline',
         to: '/cron'
-      },
-      {
-        title: 'core.navigation.subagent',
-        icon: 'mdi-vector-link',
-        to: '/subagent'
-      },
+      }
     ]
   }
   // {

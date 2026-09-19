@@ -1,4 +1,4 @@
-"""Cross-platform startup smoke check for AstrBot."""
+"""Cross-platform startup smoke check for LKMBot."""
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def main() -> int:
     webui_dir = smoke_root / "webui"
     webui_dir.mkdir()
     (webui_dir / "index.html").write_text(
-        "<!doctype html><title>AstrBot</title>",
+        "<!doctype html><title>LKMBot</title>",
         encoding="utf-8",
     )
 
@@ -89,7 +89,7 @@ def main() -> int:
             return_code = proc.poll()
             if return_code is not None:
                 print(
-                    f"AstrBot exited before becoming healthy. Exit code: {return_code}",
+                    f"LKMBot exited before becoming healthy. Exit code: {return_code}",
                     file=sys.stderr,
                 )
                 print(_tail(log_path), file=sys.stderr)

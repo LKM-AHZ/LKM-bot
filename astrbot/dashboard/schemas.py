@@ -190,13 +190,6 @@ class CommandPermissionRequest(BaseModel):
     permission: str
 
 
-class SubAgentConfigRequest(OpenModel):
-    main_enable: bool | None = None
-    enable: bool | None = None
-    remove_main_duplicate_tools: bool | None = None
-    agents: list[dict[str, Any]] | None = None
-
-
 class TraceSettingsRequest(BaseModel):
     trace_enable: bool | None = None
 
@@ -216,7 +209,7 @@ class OpenApiChatRequest(OpenModel):
     username: str | None = Field(
         default=None,
         description=(
-            "Caller-declared WebChat sender/session owner. Configured AstrBot "
+            "Caller-declared WebChat sender/session owner. Configured LKMBot "
             "administrator IDs require the chat:admin API key subscope."
         ),
     )
