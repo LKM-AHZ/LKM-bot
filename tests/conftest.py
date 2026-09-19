@@ -100,6 +100,39 @@ def pytest_configure(config):
 
 
 # ============================================================
+# 全局可变状态的测试间隔离
+# ============================================================
+
+
+@pytest.fixture(autouse=True)
+def _isolate_star_registry():
+    """每测后把 star_registry / star_map 复原到本测开始前的样子。
+
+    两者是 ``astrbot.core.star.star`` 的模块级可变全局（``star_manager`` 经
+    ``from .star import star_registry`` 共享同一对象），而不少测试会 append/clear 它们。
+    串行时测试顺序固定、尚能自洽；xdist 并行下分发顺序变化，残留会漂到别的用例上——
+    典型症状是 ``test_skill_metadata_enrichment`` 里 ``len(skills) == 1`` 偶发多出内置
+    star 的技能（SkillManager 会按 star_registry 里 reserved 的插件去扫
+    ``astrbot/builtin_stars/*/skills``）。进程启动时该注册表为空，故复原即隔离。
+    """
+    from astrbot.core.star.star import star_map, star_registry
+
+    registry_snapshot = list(star_registry)
+    map_snapshot = dict(star_map)
+    # 测试前也清空：内置 star 的注册来自 import/加载副作用，一旦发生过就永久留在模块级
+    # 全局里。串行时靠 test_plugin_manager 的 clear() 顺带擦干净、恰好赶在 skill 用例之前，
+    # 并行下分发顺序一变就漏出来（SkillManager 会按 reserved 插件去扫
+    # astrbot/builtin_stars/*/skills，令 ``len(skills) == 1`` 断言多出内置技能）。
+    # 清空使每个用例都从与进程启动一致的干净态开始；测后再还原现场。
+    star_registry.clear()
+    star_map.clear()
+    yield
+    star_registry[:] = registry_snapshot
+    star_map.clear()
+    star_map.update(map_snapshot)
+
+
+# ============================================================
 # 临时目录和文件 Fixtures
 # ============================================================
 

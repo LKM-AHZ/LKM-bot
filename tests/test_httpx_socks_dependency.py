@@ -1,13 +1,21 @@
+"""httpx[socks] 依赖验收：SOCKS 代理支持的「声明 ↔ 锁定」一致性。
+
+依赖真相源是 ``pyproject.toml``（声明）与 ``uv.lock``（锁定）。``requirements.txt`` 已随
+构建链转向 uv 而移除，故原先「与 requirements.txt 比对 spec」的检查改为与 ``uv.lock`` 比对：
+光在 pyproject 里声明 extra 不够，锁定结果里必须真的带上该 extra，SOCKS 代理才可用。
+"""
+
 import re
 from pathlib import Path
 
 import pytest
+import tomllib
 
 from astrbot.core.utils.toml_parser import read_pyproject_project_dependencies
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-REQUIREMENTS_PATH = PROJECT_ROOT / "requirements.txt"
 PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
+UV_LOCK_PATH = PROJECT_ROOT / "uv.lock"
 HTTPX_SOCKS_PATTERN = re.compile(r"^httpx\[socks\](?:\s*[<>=!~][^;]*)?(?:\s*;.*)?$")
 
 
@@ -19,25 +27,17 @@ def _read_httpx_socks_dependency(entries: list[str]) -> str | None:
     return None
 
 
-def _read_requirements() -> list[str]:
-    entries = []
-    for line in REQUIREMENTS_PATH.read_text(encoding="utf-8").splitlines():
-        candidate = line.split("#", 1)[0].strip()
-        if candidate:
-            entries.append(candidate)
-    return entries
-
-
 def _read_pyproject_dependencies() -> list[str]:
     return read_pyproject_project_dependencies(PYPROJECT_PATH)
 
 
-def test_requirements_include_httpx_socks_dependency() -> None:
-    requirements_dependency = _read_httpx_socks_dependency(_read_requirements())
-
-    assert requirements_dependency is not None, (
-        "Expected httpx[socks] dependency in requirements.txt for SOCKS proxy support"
-    )
+def _locked_httpx_extras() -> dict:
+    """``uv.lock`` 里 httpx 的 optional-dependencies；缺包或缺 section 时返回空 dict。"""
+    lock = tomllib.loads(UV_LOCK_PATH.read_text(encoding="utf-8"))
+    for package in lock.get("package", []):
+        if package.get("name") == "httpx":
+            return package.get("optional-dependencies", {})
+    return {}
 
 
 def test_pyproject_declares_httpx_socks_dependency() -> None:
@@ -48,19 +48,17 @@ def test_pyproject_declares_httpx_socks_dependency() -> None:
     )
 
 
-def test_httpx_socks_dependency_spec_matches_between_dependency_files() -> None:
-    requirements_dependency = _read_httpx_socks_dependency(_read_requirements())
-    pyproject_dependency = _read_httpx_socks_dependency(_read_pyproject_dependencies())
-
-    assert requirements_dependency is not None, (
-        "Expected httpx[socks] dependency in requirements.txt for SOCKS proxy support"
-    )
-    assert pyproject_dependency is not None, (
+def test_uv_lock_pins_httpx_socks_extra() -> None:
+    """pyproject 声明了 httpx[socks]，锁文件里就必须真的带上该 extra（含 socksio）。"""
+    assert _read_httpx_socks_dependency(_read_pyproject_dependencies()) is not None, (
         "Expected httpx[socks] dependency in pyproject.toml for SOCKS proxy support"
     )
-    assert requirements_dependency == pyproject_dependency, (
-        "Expected httpx[socks] dependency spec to match between requirements.txt "
-        "and pyproject.toml for SOCKS proxy support"
+    socks_extra = _locked_httpx_extras().get("socks")
+    assert socks_extra, (
+        "Expected uv.lock to record the httpx 'socks' extra for SOCKS proxy support"
+    )
+    assert any(dep.get("name") == "socksio" for dep in socks_extra), (
+        "Expected uv.lock's httpx 'socks' extra to pull in socksio"
     )
 
 
