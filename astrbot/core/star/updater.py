@@ -250,7 +250,7 @@ class _PluginUpdater(_RepoZipUpdater):
         plugin: StarMetadata,
         proxy="",
         download_url: str = "",
-        repo_url: str = "",
+        repo_url: str | None = "",
     ) -> str:
         """Replace an installed plugin with a validated repository checkout.
 

@@ -3,8 +3,8 @@
 import asyncio
 import json
 import uuid
-from collections.abc import Awaitable, Callable
-from typing import Any
+from collections.abc import Awaitable, Callable, Coroutine
+from typing import Any, cast
 
 import aiohttp
 
@@ -141,7 +141,9 @@ class WecomAIBotLongConnectionClient:
         if cmd in {"aibot_msg_callback", "aibot_event_callback"}:
             # Keep the receive loop available for command acknowledgements sent by
             # the callback handler, such as the configured initial response.
-            task = asyncio.create_task(self.message_handler(payload))
+            task = asyncio.create_task(
+                cast(Coroutine[Any, Any, None], self.message_handler(payload))
+            )
             self._message_handler_tasks.add(task)
             task.add_done_callback(self._on_message_handler_done)
             return

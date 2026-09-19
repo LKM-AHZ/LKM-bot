@@ -93,7 +93,7 @@ class ExecuteShellTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         command: str,
@@ -101,6 +101,7 @@ class ExecuteShellTool(FunctionTool):
         timeout: int | None = None,
         env: dict[str, Any] | None = None,
         yield_time_ms: int = 10_000,
+        **kwargs: Any,
     ) -> ToolExecResult:
         local_policy, permission_error = check_local_execution_permission(
             context,
@@ -137,7 +138,7 @@ class ExecuteShellTool(FunctionTool):
                 if not creator_id:
                     return "Error executing command: sender identity is unavailable."
                 creator_is_admin = context.context.event.role == "admin"
-                sandbox_roots = {}
+                sandbox_roots: dict[str, Any] = {}
                 if local_policy and local_policy.filesystem_scope == "workspace":
                     umo = context.context.event.unified_msg_origin
                     sandbox_roots = {
@@ -268,13 +269,14 @@ class LocalExecuteShellTool(ExecuteShellTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 同上：工具必填参数刻意不留默认值，以保证缺参立刻报错
         self,
         context: ContextWrapper[AstrAgentContext],
         command: str,
         yield_time_ms: int = 10_000,
         timeout: int | None = None,
         env: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> ToolExecResult:
         """Execute a local command without a background-mode argument.
 
@@ -362,7 +364,7 @@ class ShellSessionTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         action: str,
@@ -371,6 +373,7 @@ class ShellSessionTool(FunctionTool):
         cursor: int | None = None,
         yield_time_ms: int = 5_000,
         max_output_chars: int = 10_000,
+        **kwargs: Any,
     ) -> ToolExecResult:
         """Perform an identity-scoped local shell session operation.
 

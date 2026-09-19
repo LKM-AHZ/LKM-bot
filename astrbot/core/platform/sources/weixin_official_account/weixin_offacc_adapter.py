@@ -253,13 +253,14 @@ class WeixinOfficialAccountServer:
                 f"wx start task: user={from_user} msg_id={msg_id} preview={preview}"
             )
 
-            self.user_buffer[from_user] = state = {
+            state: dict[str, Any] = {
                 "msg_id": msg_id,
                 "preview": preview,
                 "task": None,  # set later after task created
                 "cached_xml": [],  # for passive reply
                 "started_at": time.monotonic(),
             }
+            self.user_buffer[from_user] = state
             self.user_buffer[from_user]["task"] = task = asyncio.create_task(
                 self.callback(msg)
             )

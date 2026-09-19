@@ -69,7 +69,9 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build
           echo "${{ steps.tag.outputs.tag }}" > dist/assets/version
-          zip -r "AstrBot-${{ steps.tag.outputs.tag }}-dashboard.zip" dist
+          # 资产名须与 astrbot/core/dashboard_assets.py 的回退 URL、面板 404 页提示
+          # （dashboard/services/static_file_service.py）保持一致，否则自动安装会 404
+          zip -r "LKMBot-${{ steps.tag.outputs.tag }}-dashboard.zip" dist
 
       - name: Build core package
         shell: bash
@@ -85,7 +87,7 @@ jobs:
         with:
           name: Dashboard-${{ steps.tag.outputs.tag }}
           if-no-files-found: error
-          path: dashboard/AstrBot-${{ steps.tag.outputs.tag }}-dashboard.zip
+          path: dashboard/LKMBot-${{ steps.tag.outputs.tag }}-dashboard.zip
 
       - name: Upload release packages to Cloudflare R2
         if: ${{ env.R2_ACCOUNT_ID != '' && env.R2_ACCESS_KEY_ID != '' && env.R2_SECRET_ACCESS_KEY != '' }}
@@ -108,9 +110,9 @@ jobs:
           endpoint = https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com
           EOF
 
-          cp "dashboard/AstrBot-${VERSION_TAG}-dashboard.zip" "dashboard/${DASHBOARD_LATEST_OBJECT_NAME}"
+          cp "dashboard/LKMBot-${VERSION_TAG}-dashboard.zip" "dashboard/${DASHBOARD_LATEST_OBJECT_NAME}"
           rclone copy "dashboard/${DASHBOARD_LATEST_OBJECT_NAME}" "r2:${R2_BUCKET_NAME}" --progress
-          cp "dashboard/AstrBot-${VERSION_TAG}-dashboard.zip" "dashboard/astrbot-webui-${VERSION_TAG}.zip"
+          cp "dashboard/LKMBot-${VERSION_TAG}-dashboard.zip" "dashboard/astrbot-webui-${VERSION_TAG}.zip"
           rclone copy "dashboard/astrbot-webui-${VERSION_TAG}.zip" "r2:${R2_BUCKET_NAME}" --progress
 
           cp "AstrBot-${VERSION_TAG}-core.zip" "${CORE_LATEST_OBJECT_NAME}"
@@ -240,7 +242,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p astrbot/dashboard/dist
-          unzip -q "${RUNNER_TEMP}/dashboard-artifact/AstrBot-${{ steps.tag.outputs.tag }}-dashboard.zip" -d "${RUNNER_TEMP}/dashboard-artifact/unpacked"
+          unzip -q "${RUNNER_TEMP}/dashboard-artifact/LKMBot-${{ steps.tag.outputs.tag }}-dashboard.zip" -d "${RUNNER_TEMP}/dashboard-artifact/unpacked"
           cp -r "${RUNNER_TEMP}/dashboard-artifact/unpacked/dist/." astrbot/dashboard/dist/
 
       - name: Set up Python

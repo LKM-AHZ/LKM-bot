@@ -1063,7 +1063,7 @@ async def test_download_dashboard_falls_back_when_hosted_package_is_not_zip(
     assert zipfile.is_zipfile(zip_path)
     assert calls == [
         "https://astrbot-registry.soulter.top/download/astrbot-dashboard/v99.0.0/dist.zip",
-        "https://github.com/AstrBotDevs/AstrBot/releases/download/v99.0.0/AstrBot-v99.0.0-dashboard.zip",
+        "https://github.com/Alma1314/LKM-bot/releases/download/v99.0.0/LKMBot-v99.0.0-dashboard.zip",
     ]
 
 

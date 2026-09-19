@@ -2,17 +2,11 @@ import asyncio
 import base64
 import logging
 import os
+from typing import Any
 
 import aiohttp
 import dashscope
 from dashscope.audio.tts_v2 import AudioFormat, SpeechSynthesizer
-
-try:
-    from dashscope.aigc.multimodal_conversation import MultiModalConversation
-except (
-    ImportError
-):  # pragma: no cover - older dashscope versions without Qwen TTS support
-    MultiModalConversation = None
 
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.datetime_utils import generate_timestamp_id
@@ -20,6 +14,20 @@ from astrbot.core.utils.datetime_utils import generate_timestamp_id
 from ..entities import ProviderType
 from ..provider import TTSProvider
 from ..register import register_provider_adapter
+
+# 允许缺失的旧版 dashscope：未安装时保持 None，显式放宽为 Any，
+# 避免可选导入分支被收窄成「类 | None」而误报。
+MultiModalConversation: Any = None
+try:
+    from dashscope.aigc.multimodal_conversation import (
+        MultiModalConversation as _MultiModalConversation,
+    )
+except (
+    ImportError
+):  # pragma: no cover - older dashscope versions without Qwen TTS support
+    pass
+else:
+    MultiModalConversation = _MultiModalConversation
 
 
 @register_provider_adapter(

@@ -108,8 +108,12 @@ class MisskeyPlatformEvent(AstrMessageEvent):
                     room_id = extract_room_id_from_session_id(self.session_id)
                     await self.client.send_room_message(room_id, content)
                 elif original_message_id and hasattr(self.client, "create_note"):
+                    # 原实现把 raw_message 当**位置参数**传，落到了 user_id 形参上（且 user_cache
+                    # 为 None）→ 两个解析分支都不成立，可见性恒为默认 "public"，回复会绕过原笔记
+                    # 的可见性设置。按 misskey_utils 文档的第二种调用方式改用关键字传参。
                     visibility, visible_user_ids = resolve_message_visibility(
-                        raw_message,
+                        raw_message=raw_message,
+                        self_id=self.message_obj.self_id,
                     )
                     await self.client.create_note(
                         content,

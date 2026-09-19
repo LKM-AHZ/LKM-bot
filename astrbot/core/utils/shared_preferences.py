@@ -3,7 +3,7 @@ import os
 import threading
 from collections import defaultdict
 from copy import deepcopy
-from typing import Any, TypeVar, overload
+from typing import Any, TypeVar, cast, overload
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from deprecated import deprecated
@@ -269,7 +269,7 @@ class SharedPreferences:
         scope: str,
         scope_id: str,
         key: str,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
     ) -> _VT:
         """获取指定范围和键的偏好设置"""
         await self.initialize()
@@ -303,7 +303,7 @@ class SharedPreferences:
         self,
         umo: str,
         key: str,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
     ) -> _VT: ...
 
     @overload
@@ -334,7 +334,7 @@ class SharedPreferences:
         self,
         umo: str | None,
         key: str | None = None,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
     ) -> _VT | list[Preference]:
         """获取会话范围的偏好设置
 
@@ -348,12 +348,12 @@ class SharedPreferences:
     async def global_get(self, key: None, default: Any = None) -> list[Preference]: ...
 
     @overload
-    async def global_get(self, key: str, default: _VT = None) -> _VT: ...
+    async def global_get(self, key: str, default: _VT = cast(_VT, None)) -> _VT: ...
 
     async def global_get(
         self,
         key: str | None,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
     ) -> _VT | list[Preference]:
         """获取全局范围的偏好设置
 
@@ -432,7 +432,7 @@ class SharedPreferences:
     def get(
         self,
         key: str,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
         scope: str | None = None,
         scope_id: str | None = "",
     ) -> _VT:

@@ -358,9 +358,9 @@ class WecomPlatformAdapter(Platform):
     async def convert_message(self, msg: BaseMessage) -> AstrBotMessage | None:
         abm = AstrBotMessage()
         if isinstance(msg, TextMessage):
-            abm.message_str = msg.content
+            abm.message_str = cast(str, msg.content)
             abm.self_id = str(msg.agent)
-            abm.message = [Plain(msg.content)]
+            abm.message = [Plain(cast(str, msg.content))]
             abm.type = MessageType.FRIEND_MESSAGE
             abm.sender = MessageMember(
                 cast(str, msg.source),
@@ -373,7 +373,7 @@ class WecomPlatformAdapter(Platform):
         elif isinstance(msg, ImageMessage):
             abm.message_str = "[图片]"
             abm.self_id = str(msg.agent)
-            abm.message = [Image(file=msg.image, url=msg.image)]
+            abm.message = [Image(file=cast(str, msg.image), url=cast(str, msg.image))]
             abm.type = MessageType.FRIEND_MESSAGE
             abm.sender = MessageMember(
                 cast(str, msg.source),

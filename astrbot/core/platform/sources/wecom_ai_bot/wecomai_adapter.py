@@ -584,7 +584,7 @@ class WecomAIBotAdapter(Platform):
             ) from e
         await super().send_by_session(session, message_chain)
 
-    def run(self) -> Awaitable[Any]:
+    def run(self) -> Awaitable[Any]:  # ty: ignore[invalid-method-override]  # 上游既有的子类签名与基类声明不一致（ty 的 LSP 检查，具体项见诊断 info）；改动会触及插件可见的公开 API，故逐行豁免
         """运行适配器，同时启动HTTP服务器和队列监听器"""
 
         async def run_both() -> None:

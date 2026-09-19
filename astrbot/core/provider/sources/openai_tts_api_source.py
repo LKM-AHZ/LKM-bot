@@ -41,7 +41,7 @@ class ProviderOpenAITTSAPI(TTSProvider):
             api_key=self.chosen_api_key,
             base_url=provider_config.get("api_base"),
             timeout=timeout,
-            http_client=http_client,
+            http_client=http_client,  # ty: ignore[invalid-argument-type]  # openai SDK 自带 httpx2（与 httpx 为同一实现的两个包名）
         )
 
         self.set_model(provider_config.get("model", ""))

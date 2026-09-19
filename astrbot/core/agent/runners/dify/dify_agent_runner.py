@@ -26,7 +26,7 @@ class DifyAgentRunner(BaseAgentRunner[TContext]):
     """Dify Agent Runner"""
 
     @override
-    async def reset(
+    async def reset(  # ty: ignore[invalid-method-override]  # 各 runner 的自身配置参数不同（provider/request 等），子类按自身需求重排形参；调用点一律按关键字传参
         self,
         request: ProviderRequest,
         run_context: ContextWrapper[TContext],
@@ -96,7 +96,7 @@ class DifyAgentRunner(BaseAgentRunner[TContext]):
             await self.api_client.close()
 
     @override
-    async def step_until_done(
+    async def step_until_done(  # ty: ignore[invalid-method-override]  # 各 runner 的自身配置参数不同（provider/request 等），子类按自身需求重排形参；调用点一律按关键字传参
         self, max_step: int = 128
     ) -> T.AsyncGenerator[AgentResponse, None]:
         while not self.done():

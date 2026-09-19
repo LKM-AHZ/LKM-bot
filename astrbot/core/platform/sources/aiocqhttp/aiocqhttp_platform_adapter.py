@@ -248,7 +248,8 @@ class AiocqhttpAdapter(Platform):
                     # 如果文本段为空，则跳过
                     continue
                 message_str += current_text
-                a = ComponentTypes[t](text=current_text)
+                # t == "text" 时 ComponentTypes 中对应的就是 Plain
+                a = Plain(text=current_text)
                 abm.message.append(a)
 
             elif t == "file":
@@ -424,7 +425,7 @@ class AiocqhttpAdapter(Platform):
 
         return abm
 
-    def run(self) -> Awaitable[Any]:
+    def run(self) -> Awaitable[Any]:  # ty: ignore[invalid-method-override]  # 上游既有的子类签名与基类声明不一致（ty 的 LSP 检查，具体项见诊断 info）；改动会触及插件可见的公开 API，故逐行豁免
         if not self.host or not self.port:
             logger.warning(
                 "aiocqhttp: 未配置 ws_reverse_host 或 ws_reverse_port，将使用默认值：http://0.0.0.0:6199",

@@ -16,5 +16,9 @@ async def resolve_maybe_awaitable(value: T | Awaitable[T]) -> T:
 async def run_maybe_async(
     operation: Callable[[], T | Awaitable[T]] | T | Awaitable[T],
 ) -> T:
-    result: Any = operation() if callable(operation) else operation
+    result: Any = (
+        cast(Callable[[], T | Awaitable[T]], operation)()
+        if callable(operation)
+        else operation
+    )
     return await resolve_maybe_awaitable(result)

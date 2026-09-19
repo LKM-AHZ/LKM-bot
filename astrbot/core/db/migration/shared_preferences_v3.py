@@ -1,6 +1,6 @@
 import json
 import os
-from typing import TypeVar
+from typing import TypeVar, cast
 
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
 
@@ -28,7 +28,7 @@ class SharedPreferences:
             json.dump(self._data, f, indent=4, ensure_ascii=False)
             f.flush()
 
-    def get(self, key, default: _VT = None) -> _VT:
+    def get(self, key, default: _VT = cast(_VT, None)) -> _VT:
         return self._data.get(key, default)
 
     def put(self, key, value) -> None:

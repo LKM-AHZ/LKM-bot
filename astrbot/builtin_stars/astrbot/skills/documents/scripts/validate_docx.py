@@ -122,7 +122,7 @@ def validate_docx(path: Path) -> dict:
         )
 
     try:
-        document = Document(path)
+        document = Document(path)  # ty: ignore[invalid-argument-type]  # python-docx 桩件只接受 str，运行时接受 Path
         if not document.sections:
             errors.append("Document contains no section.")
         for index, section in enumerate(document.sections):

@@ -100,6 +100,7 @@ class GetExecutionHistoryTool(NeoSkillToolBase):
         tags: str | None = None,
         has_notes: bool = False,
         has_description: bool = False,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -134,13 +135,14 @@ class AnnotateExecutionTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         execution_id: str,
         description: str | None = None,
         tags: str | None = None,
         notes: str | None = None,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -186,11 +188,12 @@ class CreateSkillPayloadTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         payload: dict[str, Any] | list[Any],
         kind: str = "astrbot_skill_v1",
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -217,10 +220,11 @@ class GetSkillPayloadTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         payload_ref: str,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -263,13 +267,14 @@ class CreateSkillCandidateTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         skill_key: str,
         source_execution_ids: list[str],
         scenario_key: str | None = None,
         payload_ref: str | None = None,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -308,6 +313,7 @@ class ListSkillCandidatesTool(NeoSkillToolBase):
         skill_key: str | None = None,
         limit: int = 100,
         offset: int = 0,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -340,7 +346,7 @@ class EvaluateSkillCandidateTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         candidate_id: str,
@@ -348,6 +354,7 @@ class EvaluateSkillCandidateTool(NeoSkillToolBase):
         score: float | None = None,
         benchmark_id: str | None = None,
         report: str | None = None,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -393,12 +400,13 @@ class PromoteSkillCandidateTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         candidate_id: str,
         stage: str = "canary",
         sync_to_local: bool = True,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using skill lifecycle tools"):
             return err
@@ -460,6 +468,7 @@ class ListSkillReleasesTool(NeoSkillToolBase):
         stage: str | None = None,
         limit: int = 100,
         offset: int = 0,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -489,10 +498,11 @@ class RollbackSkillReleaseTool(NeoSkillToolBase):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         release_id: str,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,
@@ -526,6 +536,7 @@ class SyncSkillReleaseTool(NeoSkillToolBase):
         release_id: str | None = None,
         skill_key: str | None = None,
         require_stable: bool = True,
+        **kwargs: Any,
     ) -> ToolExecResult:
         return await self._run(
             context,

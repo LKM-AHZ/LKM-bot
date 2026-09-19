@@ -2,8 +2,8 @@ import asyncio
 import os
 import subprocess
 
-import edge_tts
-from edge_tts.constants import WSS_HEADERS
+import edge_tts  # ty: ignore[unresolved-import]  # 可选依赖 edge-tts 未安装
+from edge_tts.constants import WSS_HEADERS  # ty: ignore[unresolved-import]  # 未装依赖
 
 from astrbot.core import logger
 from astrbot.core.provider.headers import DEFAULT_USER_AGENT
@@ -71,7 +71,7 @@ class ProviderEdgeTTS(TTSProvider):
             await communicate.save(mp3_path)
 
             try:
-                from pyffmpeg import FFmpeg
+                from pyffmpeg import FFmpeg  # ty: ignore[unresolved-import]  # 未装依赖
 
                 ff = FFmpeg()
                 ff.convert(input_file=mp3_path, output_file=wav_path)

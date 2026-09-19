@@ -361,12 +361,13 @@ class FileReadTool(FunctionTool):
             raise ValueError("`limit` must be greater than or equal to 1.")
         return offset, limit
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         path: str,
         offset: int | None = None,
         limit: int | None = None,
+        **kwargs: Any,
     ) -> ToolExecResult:
         permission_error = check_local_file_permission(context)
         if permission_error:
@@ -465,11 +466,12 @@ class FileWriteTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         path: str,
         content: str,
+        **kwargs: Any,
     ) -> ToolExecResult:
         permission_error = check_local_file_permission(context)
         if permission_error:
@@ -578,13 +580,14 @@ class FileEditTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         path: str,
         old: str,
         new: str,
         replace_all: bool = False,
+        **kwargs: Any,
     ) -> ToolExecResult:
         umo = str(context.context.event.unified_msg_origin)
         permission_error = check_local_file_permission(context)
@@ -845,7 +848,7 @@ class GrepTool(FunctionTool):
 
         return normalized
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         pattern: str,
@@ -907,7 +910,10 @@ class GrepTool(FunctionTool):
                             f"Blocked path: {search_path}."
                         )
                     sandbox_root = str(
-                        max(matching_roots, key=lambda root: len(root.parts))
+                        max(
+                            matching_roots,
+                            key=lambda root: len(cast(Path, root).parts),
+                        )
                     )
                     result = await cast(Any, sb.fs).search_files(
                         pattern=normalized_pattern,
@@ -976,10 +982,11 @@ class FileUploadTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         local_path: str,
+        **kwargs: Any,
     ) -> str | None:
         if permission_error := check_admin_permission(context, "File upload/download"):
             return permission_error
@@ -1041,11 +1048,12 @@ class FileDownloadTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         remote_path: str,
         also_send_to_user: bool = True,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if permission_error := check_admin_permission(context, "File upload/download"):
             return permission_error

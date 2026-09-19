@@ -77,6 +77,7 @@ class CuaScreenshotTool(FunctionTool):
         context: ContextWrapper[AstrAgentContext],
         send_to_user: bool = True,
         return_image_to_llm: bool = True,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Taking CUA screenshots"):
             return err
@@ -126,12 +127,13 @@ class CuaMouseClickTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         x: int,
         y: int,
         button: str = "left",
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using CUA mouse"):
             return err
@@ -157,10 +159,11 @@ class CuaKeyboardTypeTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         text: str,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using CUA keyboard"):
             return err

@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 import shlex
-from typing import Any, cast
+from typing import Any
 
 from astrbot.api import logger
 
@@ -52,7 +52,7 @@ class NeoPythonComponent(PythonComponent):
     def __init__(self, sandbox: Sandbox) -> None:
         self._sandbox = sandbox
 
-    async def exec(
+    async def exec(  # ty: ignore[invalid-method-override]  # 子类按自身能力裁剪形参（如缺 cwd），调用统一经 computer_client 分派
         self,
         code: str,
         kernel_id: str | None = None,
@@ -65,8 +65,10 @@ class NeoPythonComponent(PythonComponent):
 
         output_text = payload.get("output", "") or ""
         error_text = payload.get("error", "") or ""
-        data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
-        rich_output = data.get("output") if isinstance(data.get("output"), dict) else {}
+        raw_data = payload.get("data")
+        data: dict[str, Any] = raw_data if isinstance(raw_data, dict) else {}
+        raw_output = data.get("output")
+        rich_output: dict[str, Any] = raw_output if isinstance(raw_output, dict) else {}
         if not isinstance(rich_output.get("images"), list):
             rich_output["images"] = []
         if "text" not in rich_output:
@@ -588,7 +590,7 @@ class ShipyardNeoBooter(ComputerBooter):
 
         return chosen
 
-    async def shutdown(self, *, delete_sandbox: bool = False) -> None:
+    async def shutdown(self, *, delete_sandbox: bool = False, **kwargs: Any) -> None:
         if self._client is not None:
             sandbox_id = getattr(self._sandbox, "id", "unknown")
 
@@ -676,7 +678,7 @@ class ShipyardNeoBooter(ComputerBooter):
         if local_dir:
             os.makedirs(local_dir, exist_ok=True)
         with open(local_path, "wb") as f:
-            f.write(cast(bytes, content))
+            f.write(content)
         logger.info(
             "[Computer] File downloaded from Neo sandbox: %s -> %s",
             remote_path,

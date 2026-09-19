@@ -4,7 +4,7 @@ import contextvars
 from collections.abc import Callable, KeysView
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Generic, TypeVar, overload
+from typing import Any, Generic, TypeVar, cast, overload
 
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, JSONResponse
@@ -88,7 +88,7 @@ class PluginMultiDict(Generic[ValueT]):
         value = self.get(key)
         if value is None and key not in self:
             raise KeyError(key)
-        return value
+        return cast(ValueT, value)
 
     def __bool__(self) -> bool:
         return bool(self._pairs)

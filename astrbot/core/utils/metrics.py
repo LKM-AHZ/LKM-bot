@@ -206,7 +206,7 @@ class Metric:
 
         try:
             async with aiohttp.ClientSession(trust_env=True) as session:
-                async with session.post(base_url, json=payload, timeout=3) as response:
+                async with session.post(base_url, json=payload, timeout=3) as response:  # ty: ignore[invalid-argument-type]  # aiohttp 接受数字超时, 桩件过严
                     if response.status != 200:
                         pass
         except Exception:

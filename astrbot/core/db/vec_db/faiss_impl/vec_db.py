@@ -56,7 +56,7 @@ class FaissVecDB(BaseVecDB):
         await self.embedding_storage.insert(vector, int_id)
         return int_id
 
-    async def insert_batch(
+    async def insert_batch(  # ty: ignore[invalid-method-override]  # 子类实现与基类声明的形参名/返回形态不同（k vs top_k、list[int] vs int 等），调用方只使用 BaseVecDB 抽象面
         self,
         contents: list[str],
         metadatas: list[dict] | None = None,
@@ -212,7 +212,7 @@ class FaissVecDB(BaseVecDB):
             raise
         return int_ids
 
-    async def retrieve(
+    async def retrieve(  # ty: ignore[invalid-method-override]  # 子类实现与基类声明的形参名/返回形态不同（k vs top_k、list[int] vs int 等），调用方只使用 BaseVecDB 抽象面
         self,
         query: str,
         k: int = 5,
@@ -310,7 +310,7 @@ class FaissVecDB(BaseVecDB):
                     f"Failed to roll back document storage entry {doc_id}: {exc}",
                 )
 
-    async def delete(self, doc_id: str) -> None:
+    async def delete(self, doc_id: str) -> None:  # ty: ignore[invalid-method-override]  # 子类实现与基类声明的形参名/返回形态不同（k vs top_k、list[int] vs int 等），调用方只使用 BaseVecDB 抽象面
         """删除一条文档块（chunk）"""
         # 获得对应的 int id
         result = await self.document_storage.get_document_by_doc_id(doc_id)

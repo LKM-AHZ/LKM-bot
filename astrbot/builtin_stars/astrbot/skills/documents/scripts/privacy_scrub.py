@@ -99,7 +99,7 @@ def scrub_docx(input_path: Path, output_path: Path) -> None:
                 if info.filename.endswith(".xml"):
                     content = _scrub_xml(info.filename, content)
                 destination.writestr(info, content)
-        Document(temporary_path)
+        Document(temporary_path)  # ty: ignore[invalid-argument-type]  # python-docx 桩件只接受 str，运行时接受 Path
         shutil.move(temporary_path, output_path)
     finally:
         if temporary_path.exists():

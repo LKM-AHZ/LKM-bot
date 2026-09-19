@@ -471,7 +471,7 @@ class SQLiteDatabase(BaseDatabase):
                 if group_by_session
                 else ConversationV2.inner_conversation_id
             )
-            count_query = select(func.count(count_target))
+            count_query = select(func.count(count_target))  # ty: ignore[invalid-argument-type]  # SQLAlchemy func.count 桩件未建模列表达式
             if conditions:
                 count_query = count_query.where(*conditions)
             total_count = await session.execute(count_query)
@@ -486,11 +486,11 @@ class SQLiteDatabase(BaseDatabase):
                 if sort_by == "updated_at"
                 else ConversationV2.created_at
             )
-            order = sort_column.asc if sort_order == "asc" else sort_column.desc
+            order = sort_column.asc if sort_order == "asc" else sort_column.desc  # ty: ignore[unresolved-attribute]  # ORM 列表达式, ty 未建模描述符
             tie_breaker = (
-                ConversationV2.inner_conversation_id.asc
+                ConversationV2.inner_conversation_id.asc  # ty: ignore[unresolved-attribute]  # ORM 列表达式
                 if sort_order == "asc"
-                else ConversationV2.inner_conversation_id.desc
+                else ConversationV2.inner_conversation_id.desc  # ty: ignore[unresolved-attribute]  # ORM 列表达式
             )
             if group_by_session:
                 session_sort = func.max(sort_column).label("session_sort")
@@ -541,7 +541,7 @@ class SQLiteDatabase(BaseDatabase):
                     .limit(page_size)
                 )
             if not include_history:
-                result_query = result_query.options(defer(ConversationV2.content))
+                result_query = result_query.options(defer(ConversationV2.content))  # ty: ignore[invalid-argument-type]  # ORM defer 桩件
             if (
                 not group_by_session
                 and sort_by == "created_at"
@@ -562,7 +562,7 @@ class SQLiteDatabase(BaseDatabase):
                 )
                 conversation_columns = [
                     column
-                    for column in ConversationV2.__table__.columns
+                    for column in ConversationV2.__table__.columns  # ty: ignore[unresolved-attribute]  # ORM 元数据描述符
                     if include_history or column.name != "content"
                 ]
                 result_query = select(ConversationV2).from_statement(
@@ -570,7 +570,7 @@ class SQLiteDatabase(BaseDatabase):
                 )
                 if not include_history:
                     result_query = result_query.options(
-                        defer(ConversationV2.content),
+                        defer(ConversationV2.content),  # ty: ignore[invalid-argument-type]  # ORM defer 桩件
                     )
                 result = await session.execute(result_query, compiled.params)
             else:
@@ -682,7 +682,7 @@ class SQLiteDatabase(BaseDatabase):
             offset = (page - 1) * page_size
 
             base_query = (
-                select(
+                select(  # ty: ignore[no-matching-overload]  # ORM select 多列重载, ty 未建模
                     col(Preference.scope_id).label("session_id"),
                     func.json_extract(Preference.value, "$.val").label(
                         "conversation_id",
@@ -918,7 +918,7 @@ class SQLiteDatabase(BaseDatabase):
         async with self.get_db() as session:
             session: AsyncSession
             result = await session.execute(
-                select(func.count(PlatformMessageHistory.id)).where(
+                select(func.count(PlatformMessageHistory.id)).where(  # ty: ignore[invalid-argument-type]  # SQLAlchemy count 桩件
                     PlatformMessageHistory.platform_id == platform_id,
                     PlatformMessageHistory.user_id == user_id,
                 )

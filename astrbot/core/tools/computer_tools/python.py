@@ -1,5 +1,6 @@
 import platform
 from dataclasses import dataclass, field
+from typing import Any
 
 import mcp
 
@@ -90,12 +91,13 @@ class PythonTool(FunctionTool):
     description: str = f"Run codes in an IPython shell. Current OS: {_OS_NAME}."
     parameters: dict = field(default_factory=lambda: param_schema)
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         code: str,
         silent: bool = False,
         timeout: int = 30,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if permission_error := check_admin_permission(context, "Python execution"):
             return permission_error
@@ -131,12 +133,13 @@ class LocalPythonTool(FunctionTool):
 
     parameters: dict = field(default_factory=lambda: param_schema)
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         code: str,
         silent: bool = False,
         timeout: int = 30,
+        **kwargs: Any,
     ) -> ToolExecResult:
         local_policy, permission_error = check_local_execution_permission(
             context,
@@ -160,7 +163,7 @@ class LocalPythonTool(FunctionTool):
         try:
             current_workspace_root = await workspace_root_for_context(context)
             current_workspace_root.mkdir(parents=True, exist_ok=True)
-            sandbox_roots = {}
+            sandbox_roots: dict[str, Any] = {}
             if sandboxed and local_policy.filesystem_scope == "workspace":
                 umo = context.context.event.unified_msg_origin
                 sandbox_roots = {

@@ -25,7 +25,7 @@ class ProcessStage(Stage):
         self.star_request_sub_stage = StarRequestSubStage()
         await self.star_request_sub_stage.initialize(ctx)
 
-    async def process(
+    async def process(  # ty: ignore[invalid-method-override]  # 基类声明为协程、子类用 yield 实现为异步生成器（同一层级两种调用形态），ty 的 LSP 检查无法表达该联合契约
         self,
         event: AstrMessageEvent,
     ) -> None | AsyncGenerator[None, None]:

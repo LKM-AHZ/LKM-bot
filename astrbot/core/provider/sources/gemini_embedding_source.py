@@ -1,3 +1,5 @@
+from typing import cast
+
 from google import genai
 from google.genai import types
 from google.genai.errors import APIError
@@ -37,7 +39,9 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
 
         self.client = genai.Client(api_key=api_key, http_options=http_options).aio
         # The SDK adds its own lower-case UA alongside our explicit header.
-        self.client._api_client._http_options.headers.pop("user-agent", None)
+        _headers = self.client._api_client._http_options.headers
+        if _headers is not None:
+            _headers.pop("user-agent", None)
 
         self.model = provider_config.get(
             "embedding_model",
@@ -68,7 +72,7 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
             ]
             result = await self.client.models.embed_content(
                 model=self.model,
-                contents=contents,
+                contents=cast(types.ContentListUnion, contents),
                 config=types.EmbedContentConfig(
                     output_dimensionality=self.get_dim(),
                 ),

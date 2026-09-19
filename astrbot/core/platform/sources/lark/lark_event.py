@@ -273,17 +273,21 @@ class LarkMessageEvent(AstrMessageEvent):
                     response.msg,
                 )
                 # Retry only this rejected message, preserving its deduplication UUID.
+                fallback_body_builder = (
+                    CreateMessageRequestBody.builder()
+                    .receive_id(fallback_chat_id)
+                    .content(content)
+                    .msg_type(msg_type)
+                )
+                original_body = request.request_body
+                if original_body is not None and original_body.uuid is not None:
+                    fallback_body_builder = fallback_body_builder.uuid(
+                        original_body.uuid
+                    )
                 fallback_request = (
                     CreateMessageRequest.builder()
                     .receive_id_type("chat_id")
-                    .request_body(
-                        CreateMessageRequestBody.builder()
-                        .receive_id(fallback_chat_id)
-                        .content(content)
-                        .msg_type(msg_type)
-                        .uuid(request.request_body.uuid)
-                        .build()
-                    )
+                    .request_body(fallback_body_builder.build())
                     .build()
                 )
                 response = await lark_client.im.v1.message.acreate(fallback_request)

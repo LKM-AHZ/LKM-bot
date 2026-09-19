@@ -60,7 +60,7 @@ class DifyAPIClient:
             url,
             json=payload,
             headers=self.headers,
-            timeout=timeout,
+            timeout=timeout,  # ty: ignore[invalid-argument-type]  # aiohttp 运行时接受 float 秒数作为超时，typeshed 仅声明 ClientTimeout
         ) as resp:
             if resp.status != 200:
                 text = await resp.text()
@@ -89,7 +89,7 @@ class DifyAPIClient:
             url,
             json=payload,
             headers=self.headers,
-            timeout=timeout,
+            timeout=timeout,  # ty: ignore[invalid-argument-type]  # aiohttp 运行时接受 float 秒数作为超时，typeshed 仅声明 ClientTimeout
         ) as resp:
             if resp.status != 200:
                 text = await resp.text()

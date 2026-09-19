@@ -1,4 +1,9 @@
-CUA_DEFAULT_CONFIG = {
+from typing import Any
+
+# 值类型异构（str / int / bool），且各键被单独取用为**不同**的函数默认值
+# （见 cua.py 的 CuaBooter.__init__）：不显式宽注解时 ty 会把每个键推成全部值类型的并集
+# （`str | int` 之类），导致「默认值与形参注解不符」的误判。此处宽注解即表达本意。
+CUA_DEFAULT_CONFIG: dict[str, Any] = {
     "image": "linux",
     "os_type": "linux",
     "ttl": 3600,

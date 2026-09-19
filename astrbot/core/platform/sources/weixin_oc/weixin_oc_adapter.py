@@ -552,7 +552,7 @@ class WeixinOCAdapter(Platform):
             self._context_tokens = self._normalize_context_tokens(raw_context_tokens)
 
     def _normalize_context_tokens(
-        self, raw_context_tokens: Mapping[object, object]
+        self, raw_context_tokens: Mapping[Any, Any]
     ) -> dict[str, str]:
         normalized_context_tokens: dict[str, str] = {}
         for user_id, context_token in raw_context_tokens.items():
@@ -1556,12 +1556,13 @@ class WeixinOCAdapter(Platform):
         abm.message_str = text
         abm.timestamp = ts
         abm.raw_message = msg
-        abm.is_reply = reply_metadata.is_reply
-        abm.ref_msg = reply_metadata.ref_msg
-        abm.reply_kind = reply_metadata.reply_kind
-        abm.quoted_item_type = reply_metadata.quoted_item_type
-        abm.quoted_text = reply_metadata.quoted_text
-        abm.reply_to = reply_metadata.reply_to
+        # AstrBotMessage 未声明这些引用字段，按运行时契约动态附加
+        setattr(abm, "is_reply", reply_metadata.is_reply)
+        setattr(abm, "ref_msg", reply_metadata.ref_msg)
+        setattr(abm, "reply_kind", reply_metadata.reply_kind)
+        setattr(abm, "quoted_item_type", reply_metadata.quoted_item_type)
+        setattr(abm, "quoted_text", reply_metadata.quoted_text)
+        setattr(abm, "reply_to", reply_metadata.reply_to)
 
         self._cache_recent_message(
             from_user_id,

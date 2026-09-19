@@ -400,8 +400,9 @@ class QQOfficialPlatformAdapter(Platform):
             return
 
         use_md = getattr(message_chain, "use_markdown_", None)
+        payload: dict[str, Any]
         if use_md is False or (use_md is None and not self.use_markdown_default):
-            payload: dict[str, Any] = {"content": plain_text}
+            payload = {"content": plain_text}
         else:
             payload = {
                 "markdown": MarkdownPayload(content=plain_text) if plain_text else None,
@@ -832,7 +833,7 @@ class QQOfficialPlatformAdapter(Platform):
                 if not group_name and isinstance(raw_data, dict):
                     group_name = raw_data.get("group_name")
                 abm.group = Group(
-                    group_id=message.group_openid,
+                    group_id=str(message.group_openid),
                     group_name=str(group_name) if group_name else None,
                 )
                 bot_mentions = [

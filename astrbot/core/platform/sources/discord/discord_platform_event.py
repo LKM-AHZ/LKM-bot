@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import AsyncGenerator
 from io import BytesIO
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import discord
 from discord.types.interactions import ComponentInteractionData
@@ -72,7 +72,7 @@ class DiscordPlatformEvent(AstrMessageEvent):
             logger.error(f"[Discord] 解析消息链时失败: {e}", exc_info=True)
             return
 
-        kwargs = {}
+        kwargs: dict[str, Any] = {}
         if content:
             kwargs["content"] = content
         if files:
@@ -268,10 +268,15 @@ class DiscordPlatformEvent(AstrMessageEvent):
             if isinstance(channel, discord.Thread):
                 continue
             try:
-                if not channel.permissions_for(member).view_channel:
+                if (
+                    not cast("discord.abc.GuildChannel", channel)
+                    .permissions_for(member)
+                    .view_channel
+                ):
                     continue
             except Exception:
                 continue
+            assert group.members is not None
             group.members.append(
                 MessageMember(
                     user_id=str(member_id),

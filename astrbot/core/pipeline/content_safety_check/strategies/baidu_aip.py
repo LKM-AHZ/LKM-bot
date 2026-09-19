@@ -2,7 +2,9 @@
 
 from typing import Any, cast
 
-from aip import AipContentCensor
+from aip import (  # ty: ignore[unresolved-import]  # 可选依赖 baidu-aip 未安装，仅在启用该策略时才需要
+    AipContentCensor,
+)
 
 from . import ContentSafetyStrategy
 

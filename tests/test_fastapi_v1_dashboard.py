@@ -1336,7 +1336,7 @@ async def test_dashboard_static_dist_files_are_served(
     assert "<h2>手动安装</h2>" in missing_response.text
     assert "WebUI files are missing" in missing_response.text
     assert "Manual installation" in missing_response.text
-    assert "AstrBot-vx.x.x-dashboard.zip" in missing_response.text
+    assert "LKMBot-vx.x.x-dashboard.zip" in missing_response.text
     assert "index.html" in missing_response.text
     assert traversal_response.status_code == 404
     assert api_response.status_code == 404

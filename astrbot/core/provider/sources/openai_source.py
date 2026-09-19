@@ -369,12 +369,12 @@ class ProviderOpenAIOfficial(Provider):
                 api_key=self.chosen_api_key,
                 api_version=provider_config.get("api_version", None),
                 default_headers=self.custom_headers,
-                base_url=provider_config.get("api_base") or None,
+                base_url=provider_config.get("api_base") or None,  # ty: ignore[invalid-argument-type]  # openai 桩件把 Azure base_url 定为必填 str，运行时允许 None
                 timeout=self.timeout,
                 # Retry is handled by retry_provider_request(); disable the
                 # SDK built-in retry to avoid stacking request attempts.
                 max_retries=0,
-                http_client=self._create_http_client(provider_config),
+                http_client=self._create_http_client(provider_config),  # ty: ignore[invalid-argument-type]  # openai SDK 自带 httpx2（与 httpx 为同一实现的两个包名）
             )
         else:
             # Using OpenAI Official API
@@ -386,7 +386,7 @@ class ProviderOpenAIOfficial(Provider):
                 # Retry is handled by retry_provider_request(); disable the
                 # SDK built-in retry to avoid stacking request attempts.
                 max_retries=0,
-                http_client=self._create_http_client(provider_config),
+                http_client=self._create_http_client(provider_config),  # ty: ignore[invalid-argument-type]  # openai SDK 自带 httpx2（与 httpx 为同一实现的两个包名）
             )
 
         self.default_params = inspect.signature(

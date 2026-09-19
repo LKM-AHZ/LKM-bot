@@ -7,6 +7,7 @@ import argparse
 import json
 import zipfile
 from pathlib import Path
+from typing import Any, cast
 from xml.etree import ElementTree
 
 from docx import Document
@@ -25,7 +26,7 @@ def inspect_docx(path: Path, sample_paragraphs: int) -> dict:
     Returns:
         JSON-serializable inspection data.
     """
-    document = Document(path)
+    document = Document(path)  # ty: ignore[invalid-argument-type]  # python-docx 桩件只接受 str，运行时接受 Path
     paragraphs = [
         paragraph for paragraph in document.paragraphs if paragraph.text.strip()
     ]
@@ -92,7 +93,11 @@ def inspect_docx(path: Path, sample_paragraphs: int) -> dict:
         "paragraphs": len(document.paragraphs),
         "nonempty_paragraphs": len(paragraphs),
         "paragraph_sample": [
-            {"style": paragraph.style.name, "text": paragraph.text}
+            {
+                # 段落样式在 DOCX 中始终存在，桩件标为 Optional；此处按运行时实情断言
+                "style": cast(Any, paragraph.style).name,
+                "text": paragraph.text,
+            }
             for paragraph in paragraphs[:sample_paragraphs]
         ],
         "headings": headings,

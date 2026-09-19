@@ -963,6 +963,7 @@ class AstrBotImporter:
 
         try:
             mapper = sa_inspect(model_class)
+            assert mapper is not None  # sqlalchemy inspect 桩件返回可选
             for column in mapper.columns:
                 if column.name in result and result[column.name] is not None:
                     # 检查是否是 datetime 类型的列

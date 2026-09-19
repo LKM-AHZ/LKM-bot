@@ -650,7 +650,7 @@ class FastAPIAppAdapter:
             from quart import Quart
 
             self._quart_compat_app = Quart("astrbot_dashboard_plugin_compat")
-            self._quart_compat_app.json.sort_keys = False
+            self._quart_compat_app.json.sort_keys = False  # ty: ignore[unresolved-attribute]  # Quart JSONProvider 运行时支持, 桩件未声明
         return self._quart_compat_app
 
     def add_url_rule(

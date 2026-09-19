@@ -329,7 +329,9 @@ class CuaShellComponent(ShellComponent):
                 }
             command = _build_cua_background_command(command)
 
-        result = await _maybe_await(self._exec_raw(command, **kwargs))
+        exec_raw = self._exec_raw
+        assert exec_raw is not None  # __init__ 已校验 `.exec`/`.run` 至少存在其一
+        result = await _maybe_await(exec_raw(command, **kwargs))
         proc = (
             _normalize_with_python3_requirement(result, "background execution")
             if background
@@ -364,7 +366,7 @@ class CuaPythonComponent(PythonComponent):
                 python, "run", None
             )
 
-    async def exec(
+    async def exec(  # ty: ignore[invalid-method-override]  # 子类按自身能力裁剪形参（如缺 cwd），调用统一经 computer_client 分派
         self,
         code: str,
         kernel_id: str | None = None,
@@ -746,7 +748,7 @@ class CuaBooter(ComputerBooter):
     async def boot(self, session_id: str) -> None:
         _ = session_id
         try:
-            from cua import Image, Sandbox
+            from cua import Image, Sandbox  # ty: ignore[unresolved-import]  # noqa: I001  # 未装依赖 cua
         except ImportError as exc:
             raise RuntimeError(
                 "CUA sandbox support requires the optional `cua` package. "
@@ -802,7 +804,7 @@ class CuaBooter(ComputerBooter):
             kwargs["api_key"] = self.api_key
         return kwargs
 
-    async def shutdown(self) -> None:
+    async def shutdown(self, **kwargs: Any) -> None:
         if self._runtime is not None:
             await self._runtime.sandbox_cm.__aexit__(None, None, None)
             self._runtime = None

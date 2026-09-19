@@ -43,7 +43,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             api_key=provider_config.get("embedding_api_key"),
             base_url=api_base,
             timeout=int(provider_config.get("timeout", 20)),
-            http_client=http_client,
+            http_client=http_client,  # ty: ignore[invalid-argument-type]  # openai SDK 自带 httpx2（与 httpx 为同一实现的两个包名）
         )
         self.model = provider_config.get("embedding_model", "text-embedding-3-small")
 

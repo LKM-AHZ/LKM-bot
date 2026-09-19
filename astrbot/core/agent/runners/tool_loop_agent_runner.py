@@ -206,7 +206,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         self._resolve_unconsumed_follow_ups()
 
     @override
-    async def reset(
+    async def reset(  # ty: ignore[invalid-method-override]  # 各 runner 的自身配置参数不同（provider/request 等），子类按自身需求重排形参；调用点一律按关键字传参
         self,
         provider: Provider,
         request: ProviderRequest,
@@ -465,7 +465,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
 
     async def _await_or_stop(
         self,
-        awaitable: T.Awaitable[AwaitableResultT],
+        awaitable: T.Coroutine[T.Any, T.Any, AwaitableResultT],
     ) -> AwaitableResultT | None:
         """Await work while allowing a stop request to cancel it immediately.
 
@@ -506,7 +506,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
         self, *, include_model: bool = True
     ) -> T.AsyncGenerator[LLMResponse, None]:
         """Yields chunks *and* a final LLMResponse."""
-        payload = {
+        payload: dict[str, T.Any] = {
             "contexts": self._sanitize_contexts_for_provider(self.run_context.messages),
             "func_tool": self._func_tool_for_provider(),
             "session_id": self.req.session_id,
@@ -1004,7 +1004,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     llm_resp.tools_call_args = requery_resp.tools_call_args
                     llm_resp.tools_call_ids = requery_resp.tools_call_ids
 
-            tool_call_result_blocks = []
+            tool_call_result_blocks: list[ToolCallMessageSegment] = []
             cached_images = []  # Collect cached images for LLM visibility
             try:
                 async for result in self._handle_function_tools(self.req, llm_resp):
@@ -1070,8 +1070,13 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                     if isinstance(last_result.content, str):
                         last_result.content += notice
                     else:
+                        existing_parts = (
+                            last_result.content
+                            if isinstance(last_result.content, list)
+                            else []
+                        )
                         last_result.content = [
-                            *(last_result.content or []),
+                            *existing_parts,
                             TextPart(text=notice),
                         ]
 
@@ -1139,7 +1144,7 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
 
             self.req.append_tool_calls_result(tool_calls_result)
 
-    async def step_until_done(
+    async def step_until_done(  # ty: ignore[invalid-method-override]  # 各 runner 的自身配置参数不同（provider/request 等），子类按自身需求重排形参；调用点一律按关键字传参
         self, max_step: int
     ) -> T.AsyncGenerator[AgentResponse, None]:
         """Process steps until the agent is done."""

@@ -24,7 +24,11 @@ jobs:
       
     - name: Install dependencies
       run: uv sync
-      
+
+    # 复用上面 uv sync 建好的环境（ty 已在 dev 依赖组里），避免二次 sync
+    - name: Type check with ty
+      run: uv run ty check .
+
     - name: Check code formatting with ruff
       run: |
         uvx --from ruff==0.15.22 ruff format --check .

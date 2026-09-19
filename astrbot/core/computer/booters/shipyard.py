@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import shlex
-from typing import Any
+from typing import Any, cast
 
 from shipyard import FileSystemComponent as ShipyardFileSystemComponent
 from shipyard import ShipyardClient, Spec
@@ -195,7 +195,7 @@ class ShipyardBooter(ComputerBooter):
         self._shell = ShipyardShellWrapper(self._ship.shell)
         self._fs = ShipyardFileSystemWrapper(self._ship.fs, self._shell)
 
-    async def shutdown(self) -> None:
+    async def shutdown(self, **kwargs: Any) -> None:
         logger.info("[Computer] Shipyard booter shutdown.")
 
     @property
@@ -204,7 +204,9 @@ class ShipyardBooter(ComputerBooter):
 
     @property
     def python(self) -> PythonComponent:
-        return self._ship.python
+        # shipyard SDK 的 PythonComponent.exec 缺少 cwd 形参，与 olayer 协议不兼容；
+        # 调用统一经 computer_client 适配，此处按协议断言。
+        return cast(PythonComponent, self._ship.python)
 
     @property
     def shell(self) -> ShellComponent:

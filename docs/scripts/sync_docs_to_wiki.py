@@ -5,6 +5,7 @@ import posixpath
 import re
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from typing import Any
 
 TITLE_RE = re.compile(r"^#\s+(.+)$", re.MULTILINE)
 FENCED_BLOCK_RE = re.compile(
@@ -17,9 +18,9 @@ SOURCE_ALIASES = {
     "zh/config/providers/start.md": "zh/providers/start.md",
     "en/config/providers/start.md": "en/providers/start.md",
 }
-LANG_CONFIG = {
+LANG_CONFIG: dict[str, dict[str, Any]] = {
     "zh": {
-        "index_title": "# LKMBot 中文文档",
+        "index_title": "# AstrBot 中文文档",
         "index_intro": "该页面由 `AstrBot-docs` 自动同步到 GitHub Wiki。",
         "index_links": [
             ("关于 LKMBot", "zh-what-is-astrbot"),

@@ -116,7 +116,9 @@ class ProviderGoogleGenAI(Provider):
             http_options=http_options,
         ).aio
         # The SDK adds its own lower-case UA alongside our explicit header.
-        self.client._api_client._http_options.headers.pop("user-agent", None)
+        _headers = self.client._api_client._http_options.headers
+        if _headers is not None:
+            _headers.pop("user-agent", None)
 
     def _init_safety_settings(self) -> None:
         """初始化安全设置"""
@@ -632,9 +634,11 @@ class ProviderGoogleGenAI(Provider):
                     modalities,
                     temperature,
                 )
+                client = self.client
+                assert client is not None  # terminate() 之后不再发起请求
                 result = await retry_provider_request(
                     "Gemini",
-                    lambda: self.client.models.generate_content(
+                    lambda: client.models.generate_content(
                         model=model,
                         contents=cast(types.ContentListUnion, conversation),
                         config=config,
@@ -724,9 +728,11 @@ class ProviderGoogleGenAI(Provider):
                     payloads.get("tool_choice", "auto"),
                     system_instruction,
                 )
+                client = self.client
+                assert client is not None  # terminate() 之后不再发起请求
                 result = await retry_provider_request(
                     "Gemini",
-                    lambda: self.client.models.generate_content_stream(
+                    lambda: client.models.generate_content_stream(
                         model=model,
                         contents=cast(types.ContentListUnion, conversation),
                         config=config,
@@ -917,7 +923,7 @@ class ProviderGoogleGenAI(Provider):
 
         raise Exception("Gemini request failed.")
 
-    async def text_chat_stream(
+    async def text_chat_stream(  # ty: ignore[invalid-method-override]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），基类与子类的注解各用其一
         self,
         prompt=None,
         session_id=None,
@@ -986,9 +992,11 @@ class ProviderGoogleGenAI(Provider):
 
     async def get_models(self):
         try:
+            client = self.client
+            assert client is not None  # terminate() 之后不再发起请求
             models = await retry_provider_request(
                 "Gemini",
-                lambda: self.client.models.list(),
+                lambda: client.models.list(),
             )
             return [
                 m.name.replace("models/", "")

@@ -60,7 +60,7 @@ async def run_third_party_agent(
     类似于 run_agent 函数，但专门处理第三方 agent runner
     """
     try:
-        async for resp in runner.step_until_done(max_step=128):  # type: ignore[misc]
+        async for resp in runner.step_until_done(max_step=128):  # type: ignore[misc]  # ty: ignore[not-iterable]  # 基类声明为协程、子类以 yield 实现为异步生成器（同一层级两种调用形态），运行时为异步可迭代
             if resp.type == "streaming_delta":
                 if stream_to_general:
                     continue
@@ -275,7 +275,7 @@ class ThirdPartyAgentSubStage(Stage):
         # Second yield keeps scheduler progress consistent after final result update.
         yield
 
-    async def process(
+    async def process(  # ty: ignore[invalid-method-override]  # 基类声明为协程、子类用 yield 实现为异步生成器（同一层级两种调用形态），ty 的 LSP 检查无法表达该联合契约
         self, event: AstrMessageEvent, provider_wake_prefix: str
     ) -> AsyncGenerator[None, None]:
         req: ProviderRequest | None = None

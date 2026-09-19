@@ -17,7 +17,7 @@ class ProviderOpenRouter(ProviderOpenAIOfficial):
             "https://github.com/Alma1314/LKM-bot"
         )
         self.client._custom_headers["X-OpenRouter-Title"] = "LKMBot"  # type: ignore
-        self.client._custom_headers["X-OpenRouter-Categories"] = (
+        self.client._custom_headers["X-OpenRouter-Categories"] = (  # ty: ignore[invalid-assignment]  # SDK 私有属性运行时为 dict，桩件标注为只读 Mapping
             "general-chat,personal-agent"  # type: ignore
         )
         self.reasoning_key = "reasoning"

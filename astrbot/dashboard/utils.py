@@ -1,7 +1,7 @@
 import base64
 import traceback
 from io import BytesIO
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from astrbot.api import logger
 from astrbot.core.knowledge_base.kb_helper import KBHelper
@@ -29,12 +29,14 @@ async def generate_tsne_visualization(
     """
     try:
         import faiss
-        import matplotlib  # type: ignore[reportMissingImports]
+        import matplotlib  # type: ignore[reportMissingImports]  # ty: ignore[unresolved-import]  # 可选依赖
         import numpy as np
 
         matplotlib.use("Agg")  # 使用非交互式后端
-        import matplotlib.pyplot as plt  # type: ignore[reportMissingImports]
-        from sklearn.manifold import TSNE  # type: ignore[reportMissingImports]
+        import matplotlib.pyplot as plt  # type: ignore[reportMissingImports]  # ty: ignore[unresolved-import]  # 可选依赖
+        from sklearn.manifold import (  # type: ignore[reportMissingImports]  # ty: ignore[unresolved-import]  # 可选依赖
+            TSNE,
+        )
     except ImportError as e:
         raise Exception(
             "缺少必要的库以生成 t-SNE 可视化。请安装 matplotlib 和 scikit-learn: {e}",
@@ -84,7 +86,7 @@ async def generate_tsne_visualization(
                 index.reconstruct(i, vectors[i])
 
         # 获取查询向量
-        vec_db: FaissVecDB = kb_helper.vec_db  # type: ignore
+        vec_db = cast("FaissVecDB", kb_helper.vec_db)  # type: ignore
         embedding_provider = vec_db.embedding_provider
         query_embedding = await embedding_provider.get_embedding(query)
         query_vector = np.array([query_embedding], dtype=np.float32)

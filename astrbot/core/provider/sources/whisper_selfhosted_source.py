@@ -2,7 +2,7 @@ import asyncio
 from functools import partial
 from typing import cast
 
-import whisper
+import whisper  # ty: ignore[unresolved-import]  # 可选依赖 openai-whisper 未安装
 
 from astrbot.core import logger
 from astrbot.core.utils.media_utils import MediaResolver
@@ -30,7 +30,7 @@ class ProviderOpenAIWhisperSelfHost(STTProvider):
 
     def _resolve_device(self) -> str:
         if self.device == "mps":
-            import torch  # torch is a dependency of openai-whisper
+            import torch  # ty: ignore[unresolved-import]  # torch 是 openai-whisper 的依赖，可选依赖未安装
 
             mps_backend = getattr(torch.backends, "mps", None)
             if mps_backend and mps_backend.is_available():

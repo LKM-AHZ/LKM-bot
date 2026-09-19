@@ -1,6 +1,6 @@
 import asyncio
 import random
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 import boxlite
@@ -135,7 +135,7 @@ class BoxliteBooter(ComputerBooter):
             f"Booting(Boxlite) for session: {session_id}, this may take a while..."
         )
         random_port = random.randint(20000, 30000)
-        self.box = boxlite.SimpleBox(
+        self.box = boxlite.SimpleBox(  # ty: ignore[unresolved-attribute]  # 可选依赖 boxlite 未安装，桩件无此成员
             image="soulter/shipyard-ship",
             memory_mib=512,
             cpus=1,
@@ -172,7 +172,7 @@ class BoxliteBooter(ComputerBooter):
 
         await self.mocked.wait_healthy(self.box.id, session_id)
 
-    async def shutdown(self) -> None:
+    async def shutdown(self, **kwargs: Any) -> None:
         logger.info(f"Shutting down Boxlite booter for ship: {self.box.id}")
         self.box.shutdown()
         logger.info(f"Boxlite booter for ship: {self.box.id} stopped")
@@ -183,7 +183,9 @@ class BoxliteBooter(ComputerBooter):
 
     @property
     def python(self) -> PythonComponent:
-        return self._python
+        # shipyard SDK 的 PythonComponent.exec 缺少 cwd 形参，与 olayer 协议不兼容；
+        # 调用统一经 computer_client 适配，此处按协议断言。
+        return cast(PythonComponent, self._python)
 
     @property
     def shell(self) -> ShellComponent:

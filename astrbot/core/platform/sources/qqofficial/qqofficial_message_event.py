@@ -5,7 +5,7 @@ import logging
 import os
 import random
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import aiofiles
 import botpy
@@ -74,7 +74,7 @@ def _qqofficial_retry(max_attempts: int = 5):
         ),
         stop=stop_after_attempt(max_attempts),
         wait=wait_exponential(multiplier=2, min=2, max=30),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
+        before_sleep=before_sleep_log(cast(Any, logger), logging.WARNING),
         reraise=True,
     )
 
@@ -242,7 +242,14 @@ class QQOfficialMessageEvent(AstrMessageEvent):
         # 先标记事件层“已执行发送操作”，避免异常路径遗漏
         await super().send_streaming(generator, use_fallback)
         # QQ C2C 流式协议：开始/中间分片使用 state=1，结束分片使用 state=10
-        stream_payload = {"state": 1, "id": None, "index": 0, "reset": False}
+        # 宽注解：payload 各键值类型异构（state/index 为 int、id 先 None 后 str、
+        # reset 为 bool），不注解会被推断成窄并集，后续 `["id"] = <str>` 之类赋值即误判。
+        stream_payload: dict[str, Any] = {
+            "state": 1,
+            "id": None,
+            "index": 0,
+            "reset": False,
+        }
         last_edit_time = 0  # 上次发送分片的时间
         throttle_interval = 1  # 分片间最短间隔 (秒)
         ret = None
@@ -270,7 +277,7 @@ class QQOfficialMessageEvent(AstrMessageEvent):
                         if ret_id is not None:
                             stream_payload["id"] = ret_id
                     # 重置 stream_payload，为下一段流式做准备
-                    stream_payload = {
+                    stream_payload: dict[str, Any] = {
                         "state": 1,
                         "id": None,
                         "index": 0,
@@ -437,8 +444,11 @@ class QQOfficialMessageEvent(AstrMessageEvent):
 
         # 根据消息链的 use_markdown_ 标记决定发送模式
         use_md = getattr(self.send_buffer, "use_markdown_", None)
+        # 先声明宽类型：两个分支写入的键集/值类型不同（content/markdown、media 等），
+        # 若让 ty 按字面量推断，后面 `payload["media"] = <Media>` 会被判类型不符。
+        payload: dict[str, Any]
         if use_md is False:
-            payload: dict = {
+            payload = {
                 "content": plain_text,
                 "msg_type": 0,
                 "msg_id": self.message_obj.message_id,
@@ -782,6 +792,7 @@ class QQOfficialMessageEvent(AstrMessageEvent):
                     user_openid=openid,
                     srv_send_msg=srv_send_msg,
                 )
+            assert group_openid is not None
             return await uploader.upload_group(
                 file_path=local_file,
                 file_type=file_type,
@@ -905,7 +916,10 @@ class QQOfficialMessageEvent(AstrMessageEvent):
             logger.error(f"[QQOfficial] post_c2c_message: 响应不是 dict: {result}")
             return None
 
-        return message.Message(**result)
+        # botpy 把 Message 声明成全字段必需的 TypedDict，而这里的 result 是 QQ 服务端
+        # 返回的完整报文（字段齐全性由 API 契约保证，本地无法静态证明）→ 逐行豁免 ty 的
+        # "缺必需键"检查；运行语义不变（TypedDict 的"构造"就是 dict(**result)）。
+        return message.Message(**result)  # ty: ignore[missing-typed-dict-key]
 
     @staticmethod
     async def _parse_to_qqofficial(message: MessageChain):

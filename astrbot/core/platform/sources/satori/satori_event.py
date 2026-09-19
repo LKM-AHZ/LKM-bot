@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
@@ -103,7 +103,7 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     "POST",
                     "/guild.get",
                     {"guild_id": target_id},
-                    self.platform,
+                    cast("str | None", self.platform),
                     self.user_id,
                 )
             except Exception as exc:
@@ -133,7 +133,7 @@ class SatoriPlatformEvent(AstrMessageEvent):
                     "POST",
                     "/guild.member.list",
                     data,
-                    self.platform,
+                    cast("str | None", self.platform),
                     self.user_id,
                 )
             except Exception as exc:

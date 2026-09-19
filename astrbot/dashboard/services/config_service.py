@@ -959,7 +959,7 @@ class ConfigDisplayService:
         return await self.get_configs(args.get("plugin_name", None))
 
     async def get_astrbot_config(self) -> dict:
-        metadata = copy.deepcopy(CONFIG_METADATA_2)
+        metadata: dict[str, Any] = copy.deepcopy(CONFIG_METADATA_2)
         platform_i18n = ConfigMetadataI18n.convert_to_i18n_keys(
             {
                 "platform_group": {
@@ -1544,11 +1544,12 @@ class ProviderConfigService:
         return provider
 
     def get_provider_schema(self) -> dict:
+        config_metadata: dict[str, Any] = CONFIG_METADATA_2
         provider_metadata = ConfigMetadataI18n.convert_to_i18n_keys(
             {
                 "provider_group": {
                     "metadata": {
-                        "provider": CONFIG_METADATA_2["provider_group"]["metadata"][
+                        "provider": config_metadata["provider_group"]["metadata"][
                             "provider"
                         ]
                     }

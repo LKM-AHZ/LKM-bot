@@ -205,15 +205,16 @@ class ToolSet:
         result = []
         # Stable ordering preserves prompt-cache prefixes for compatible providers.
         for tool in sorted(self.tools, key=lambda tool: tool.name):
-            func_def = {"type": "function", "function": {"name": tool.name}}
+            func_body: dict[str, Any] = {"name": tool.name}
+            func_def: dict[str, Any] = {"type": "function", "function": func_body}
             if tool.description:
-                func_def["function"]["description"] = tool.description
+                func_body["description"] = tool.description
 
             if tool.parameters is not None:
                 if (
                     tool.parameters and tool.parameters.get("properties")
                 ) or not omit_empty_parameter_field:
-                    func_def["function"]["parameters"] = tool.parameters
+                    func_body["parameters"] = tool.parameters
 
             result.append(func_def)
         return result

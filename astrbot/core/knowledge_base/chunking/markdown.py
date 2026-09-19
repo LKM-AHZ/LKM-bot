@@ -6,6 +6,7 @@
 
 import re
 from dataclasses import dataclass
+from typing import Any
 
 from .base import BaseChunker
 from .recursive import RecursiveCharacterChunker
@@ -248,7 +249,7 @@ class MarkdownChunker(BaseChunker):
         )
 
         # 找到所有标题及其位置（排除代码块内的）
-        headings = []
+        headings: list[dict[str, Any]] = []
         for match in heading_pattern.finditer(text):
             if self._is_in_fenced_block(match.start(), fenced_ranges):
                 continue

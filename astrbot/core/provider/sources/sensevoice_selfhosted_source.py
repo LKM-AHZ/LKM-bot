@@ -7,8 +7,12 @@ import asyncio
 import re
 from typing import cast
 
-from funasr_onnx import SenseVoiceSmall
-from funasr_onnx.utils.postprocess_utils import rich_transcription_postprocess
+from funasr_onnx import (  # ty: ignore[unresolved-import]  # 未装依赖 funasr_onnx
+    SenseVoiceSmall,
+)
+from funasr_onnx.utils.postprocess_utils import (  # ty: ignore[unresolved-import]  # 未装依赖
+    rich_transcription_postprocess,
+)
 
 from astrbot.core import logger
 from astrbot.core.utils.media_utils import MediaResolver

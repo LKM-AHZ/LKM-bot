@@ -1,7 +1,7 @@
 import asyncio
 import os
 import uuid
-from typing import TypedDict, TypeVar
+from typing import TypedDict, TypeVar, cast
 
 from astrbot.core import AstrBotConfig, logger
 from astrbot.core.config.astrbot_config import ASTRBOT_CONFIG_PATH
@@ -124,7 +124,7 @@ class AstrBotConfigManager:
             if meta and isinstance(meta, dict):
                 # the bind relation between umo and conf is defined in ucr now, so we remove "umop" here
                 meta.pop("umop", None)
-                return ConfInfo(**meta, id=conf_id)
+                return cast(ConfInfo, {**meta, "id": conf_id})
 
         return DEFAULT_CONFIG_CONF_INFO
 
@@ -184,7 +184,7 @@ class AstrBotConfigManager:
             if not isinstance(meta, dict):
                 continue
             meta.pop("umop", None)
-            conf_list.append(ConfInfo(**meta, id=uuid_))
+            conf_list.append(cast(ConfInfo, {**meta, "id": uuid_}))
         conf_list.append(DEFAULT_CONFIG_CONF_INFO)
         return conf_list
 
@@ -300,7 +300,7 @@ class AstrBotConfigManager:
         self,
         umo: str | None = None,
         key: str | None = None,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
     ) -> _VT:
         """获取配置项。umo 为 None 时使用默认配置"""
         if umo is None:

@@ -46,7 +46,7 @@ async def test_discord_group_message_includes_guild_and_channel_name():
 
     assert abm.group is not None
     assert abm.group.group_id == "123"
-    assert abm.group.group_name == "AstrBot-general"
+    assert abm.group.group_name == "LKMBot-general"
 
 
 @pytest.mark.asyncio
@@ -155,7 +155,7 @@ async def test_discord_get_group_fetches_uncached_guild_name():
     group = await event.get_group()
 
     assert group is not None
-    assert group.group_name == "AstrBot-general"
+    assert group.group_name == "LKMBot-general"
     client.fetch_channel.assert_awaited_once_with(123)
     client.fetch_guild.assert_awaited_once_with(456)
 
@@ -210,7 +210,7 @@ async def test_discord_get_group_enriches_guild_metadata_from_complete_cache():
 
     assert group is not None
     assert group.group_id == "123"
-    assert group.group_name == "AstrBot-general"
+    assert group.group_name == "LKMBot-general"
     assert group.group_avatar == "https://cdn.discordapp.com/guild.png"
     assert group.group_owner == "1"
     assert group.member_count == 3

@@ -952,7 +952,7 @@ class MisskeyAPI:
 
         if message_type == "note":
             # 发帖使用 fileIds (复数)
-            note_kwargs = {
+            note_kwargs: dict[str, Any] = {
                 "text": text,
                 "file_ids": file_ids or None,
             }

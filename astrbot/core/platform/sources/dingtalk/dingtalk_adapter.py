@@ -872,7 +872,8 @@ class DingtalkPlatformAdapter(Platform):
         self._terminated_event.set()
         self._shutdown_event.set()
         if self.client_.websocket is not None:
-            self.client_.open_connection = monkey_patch_close
+            # 运行时猴子补丁：用抛 KeyboardInterrupt 的桩替换 SDK 的 open_connection
+            setattr(self.client_, "open_connection", monkey_patch_close)
             await self.client_.websocket.close(code=1000, reason="Graceful shutdown")
 
     def get_client(self):

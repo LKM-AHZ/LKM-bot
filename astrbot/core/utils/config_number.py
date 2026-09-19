@@ -1,3 +1,5 @@
+from typing import SupportsIndex, SupportsInt, cast
+
 from astrbot.core import logger
 
 
@@ -38,7 +40,7 @@ def coerce_int_config(
             parsed = default
     else:
         try:
-            parsed = int(value)
+            parsed = int(cast("SupportsInt | SupportsIndex", value))
         except (TypeError, ValueError):
             if warn:
                 logger.warning(

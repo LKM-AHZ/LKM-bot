@@ -42,7 +42,9 @@ class ProviderGeminiTTSAPI(TTSProvider):
 
         self.client = genai.Client(api_key=api_key, http_options=http_options).aio
         # The SDK adds its own lower-case UA alongside our explicit header.
-        self.client._api_client._http_options.headers.pop("user-agent", None)
+        _headers = self.client._api_client._http_options.headers
+        if _headers is not None:
+            _headers.pop("user-agent", None)
         self.model: str = provider_config.get(
             "gemini_tts_model",
             "gemini-2.5-flash-preview-tts",

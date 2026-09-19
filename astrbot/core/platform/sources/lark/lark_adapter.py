@@ -587,7 +587,8 @@ class LarkPlatformAdapter(Platform):
                     continue
                 # 飞书 open_id 可能是 None，这里做个防护
                 open_id = m.id.open_id if m.id.open_id else ""
-                at_list[m.key] = Comp.At(qq=open_id, name=m.name)
+                if m.key is not None:
+                    at_list[m.key] = Comp.At(qq=open_id, name=m.name)
 
                 if (self.bot_open_id and open_id == self.bot_open_id) or (
                     m.name == self.bot_name
@@ -657,8 +658,10 @@ class LarkPlatformAdapter(Platform):
                         .user_id_type("open_id")
                         .build()
                     )
+                    contact_service = self.lark_api.contact
+                    assert contact_service is not None
                     response = await asyncio.wait_for(
-                        self.lark_api.contact.v3.user.aget(request),
+                        contact_service.v3.user.aget(request),
                         timeout=USER_NAME_LOOKUP_TIMEOUT_SECONDS,
                     )
                     if response.success() and response.data and response.data.user:

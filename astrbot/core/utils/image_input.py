@@ -129,7 +129,7 @@ async def prepare_request_images(
         if not any(
             (part.get("type") != "text" or part.get("text", "").strip())
             if isinstance(part, dict)
-            else (part.type != "text" or part.text.strip())
+            else (part.type != "text" or getattr(part, "text", "").strip())
             for part in parts
         ):
             req.prompt = "[Image unavailable]"

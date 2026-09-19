@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
+from typing import cast
 
 import aiohttp
 from PIL import Image, ImageDraw, ImageFont
@@ -130,7 +131,8 @@ class TextMeasurer:
         """
         width = math.ceil(font.getlength(text)) if text else 0
         try:
-            ascent, descent = font.getmetrics()
+            # ImageFont.ImageFont 基类无 getmetrics, 仅 FreeTypeFont 提供
+            ascent, descent = cast("ImageFont.FreeTypeFont", font).getmetrics()
             height = math.ceil(ascent + descent)
         except AttributeError:
             left, top, right, bottom = font.getbbox(text or "Ag")
@@ -826,6 +828,7 @@ class CodeBlock(MarkdownBlock):
             The next y coordinate.
         """
         del image, font_size
+        assert self.label_font is not None  # measure() 后必已加载字体
         draw.rounded_rectangle(
             (x, y + 4, x + width, y + self.height - 4),
             radius=4,
@@ -907,6 +910,7 @@ class MathBlock(MarkdownBlock):
             The next y coordinate.
         """
         del image, font_size
+        assert self.font is not None  # measure() 后必已加载字体
         text_y = y + 10
         for line in self.lines:
             line_width = TextMeasurer.get_text_size(line, self.font)[0]
@@ -1026,6 +1030,8 @@ class TableBlock(MarkdownBlock):
             The next y coordinate.
         """
         del image, font_size
+        assert self.body_font is not None  # measure() 后必已加载字体
+        assert self.header_font is not None  # measure() 后必已加载字体
         table_y = y + 8
         table_height = sum(self.row_heights)
         row_y = table_y
@@ -1170,6 +1176,7 @@ class ImageBlock(MarkdownBlock):
             The next y coordinate.
         """
         del font_size
+        assert self.font is not None  # measure() 后必已加载字体
         if self.display_image is None:
             text_y = y + 7
             _, line_height = TextMeasurer.get_text_size("Ag", self.font)

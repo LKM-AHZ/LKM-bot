@@ -196,7 +196,7 @@ class ProviderRequest:
             A user message containing encoded media, text or a failure placeholder.
         """
         # 构建内容块列表
-        content_blocks = []
+        content_blocks: list[dict[str, Any]] = []
         image_capture_failed = False
 
         # 1. 用户原始发言（OpenAI 建议：用户发言在前）
@@ -221,6 +221,8 @@ class ProviderRequest:
                     image_url = dumped.get("image_url")
                     url = image_url.get("url") if isinstance(image_url, dict) else None
                     if isinstance(url, str) and url:
+                        # url 由 image_url 取出，能走到这里 image_url 必为 dict
+                        assert isinstance(image_url, dict)
                         try:
                             resolved = await resolve_image_ref_to_base64_data(url)
                         except Exception as exc:

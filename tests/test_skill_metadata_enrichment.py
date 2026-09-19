@@ -186,7 +186,7 @@ def test_build_skills_prompt_normalizes_windows_backslashes_in_example(monkeypat
         ),
     ]
     prompt = build_skills_prompt(skills)
-    assert 'type "C:/AstrBot/My Skills/foo/SKILL.md"' in prompt
+    assert 'type "C:/LKMBot/My Skills/foo/SKILL.md"' in prompt
 
 
 def test_build_skills_prompt_uses_windows_command_for_unc_paths(monkeypatch):

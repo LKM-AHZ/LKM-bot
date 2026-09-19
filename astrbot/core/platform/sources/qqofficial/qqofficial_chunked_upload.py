@@ -7,7 +7,7 @@ import hashlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import aiohttp
 from botpy.http import BotHttp, Route
@@ -317,10 +317,11 @@ class QQOfficialChunkedUploader:
                 ),
                 _MAX_RETRY_TIMEOUT_SECONDS,
             )
+            retry_delay_option = upload_config.get("retry_delay")
             retry_delay = max(
                 float(
-                    upload_config.get("retry_delay")
-                    if upload_config.get("retry_delay") is not None
+                    retry_delay_option
+                    if retry_delay_option is not None
                     else _DEFAULT_RETRY_DELAY_SECONDS
                 ),
                 0.0,
@@ -412,7 +413,7 @@ class QQOfficialChunkedUploader:
         """
         raw_index = part.get("index") if "index" in part else part.get("part_index")
         try:
-            part_index = int(raw_index)
+            part_index = int(cast(Any, raw_index))
             part_size = int(part.get("block_size") or session.block_size)
         except (TypeError, ValueError) as exc:
             raise QQOfficialChunkedUploadError(
@@ -571,7 +572,7 @@ class QQOfficialChunkedUploader:
                 route = Route(
                     method,
                     path,
-                    is_sandbox=self._http.is_sandbox,
+                    is_sandbox=cast(Any, self._http.is_sandbox),
                 )
                 async with http_session.request(
                     method,

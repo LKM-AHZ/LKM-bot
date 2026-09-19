@@ -20,7 +20,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypeAlias
+from typing import TypeAlias, cast
 from urllib.parse import unquote, urlparse, urlsplit
 from urllib.request import url2pathname
 
@@ -1050,7 +1050,8 @@ def _encode_image_frame_bytes(
             )
         if prepared.mode in {"I", "I;16"}:
             # Normalize high-bit-depth pixels instead of clipping them to 255.
-            low, high = prepared.getextrema()
+            # mode 为 I/I;16 时 getextrema 返回 tuple, ty 无法由 mode 收窄
+            low, high = cast("tuple[int, int]", prepared.getextrema())
             if high > low:
                 with prepared.point(
                     lambda v: (v - low) * (255.0 / (high - low))

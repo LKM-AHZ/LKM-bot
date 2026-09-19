@@ -2,7 +2,7 @@ import asyncio
 import re
 from collections.abc import AsyncGenerator
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 from slack_sdk.web.async_client import AsyncWebClient
 
@@ -249,7 +249,7 @@ class SlackMessageEvent(AstrMessageEvent):
         cursor: str | None = None
         try:
             while True:
-                request: dict[str, str | int] = {
+                request: dict[str, Any] = {
                     "channel": channel_id,
                     "limit": 200,
                 }

@@ -174,7 +174,7 @@ class DeerFlowAPIClient:
             url,
             json=payload,
             headers=self.headers,
-            timeout=timeout,
+            timeout=timeout,  # ty: ignore[invalid-argument-type]  # aiohttp 运行时接受 float 秒数作为超时，typeshed 仅声明 ClientTimeout
             proxy=self.proxy,
         ) as resp:
             if resp.status not in (200, 201):
@@ -193,7 +193,7 @@ class DeerFlowAPIClient:
         async with session.delete(
             url,
             headers=self.headers,
-            timeout=timeout,
+            timeout=timeout,  # ty: ignore[invalid-argument-type]  # aiohttp 运行时接受 float 秒数作为超时，typeshed 仅声明 ClientTimeout
             proxy=self.proxy,
         ) as resp:
             if resp.status not in (200, 202, 204, 404):

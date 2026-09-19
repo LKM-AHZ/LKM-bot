@@ -346,6 +346,7 @@ class PluginManager:
             for p in self.context.get_all_stars():
                 to_update.append(p.root_dir_name)
         for p in to_update:
+            assert p is not None
             plugin_path = os.path.join(plugin_dir, p)
             await self._ensure_plugin_requirements(plugin_path, p)
         return True

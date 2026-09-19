@@ -65,7 +65,7 @@ class BrowserExecTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         cmd: str,
@@ -74,6 +74,7 @@ class BrowserExecTool(FunctionTool):
         tags: str | None = None,
         learn: bool = False,
         include_trace: bool = False,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using browser tools"):
             return err
@@ -128,7 +129,7 @@ class BrowserBatchExecTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         commands: list[str],
@@ -138,6 +139,7 @@ class BrowserBatchExecTool(FunctionTool):
         tags: str | None = None,
         learn: bool = False,
         include_trace: bool = False,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using browser tools"):
             return err
@@ -177,7 +179,7 @@ class RunBrowserSkillTool(FunctionTool):
         }
     )
 
-    async def call(
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
         self,
         context: ContextWrapper[AstrAgentContext],
         skill_key: str,
@@ -186,6 +188,7 @@ class RunBrowserSkillTool(FunctionTool):
         include_trace: bool = False,
         description: str | None = None,
         tags: str | None = None,
+        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using browser tools"):
             return err

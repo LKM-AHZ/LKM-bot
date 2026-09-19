@@ -1,6 +1,6 @@
 [project]
 name = "LKMBot"
-version = "4.28.1"
+version = "0.1.0"
 description = "Easy-to-use multi-platform LLM chatbot and development framework"
 readme = "README.md"
 license = { text = "AGPL-3.0-or-later" }
@@ -81,6 +81,7 @@ dev = [
   "pytest-asyncio>=1.1.0",
   "pytest-cov>=6.2.1",
   "ruff==0.15.22",
+  "ty==0.0.70",
 ]
 
 [project.scripts]
@@ -122,6 +123,23 @@ reportMissingTypeStubs = false
 reportMissingImports = false
 include = ["astrbot"]
 exclude = ["dashboard", "node_modules", "dist", "data", "tests"]
+
+# ty（CI 硬门禁：`uv run ty check .` 必须 0 诊断且退出码 0）
+[tool.ty.environment]
+# 与 .python-version / requires-python 对齐，避免 ty 默认版本带来的口径漂移
+python-version = "3.12"
+
+# 排除范围与 pyright 的 exclude、ruff 的 exclude 保持一致：测试代码不纳入静态类型检查。
+# 理由是测试里大量 mock/替身（SimpleNamespace / MagicMock / 裸 dict 赋给有类型属性）会产生
+# 上千条与真实缺陷无关的诊断；要"修"它们只能靠加宽注解或强转，反而弱化类型。
+[tool.ty.src]
+exclude = ["tests"]
+
+[tool.ty.rules]
+# 全仓 `# type: ignore` 是给 pyright 写的（本仓库 pyright 仍是配置中的检查器）。
+# ty 判定"未使用"并不代表 pyright 也不再需要 → 保留注释本身，只在 ty 侧关掉该提示，
+# 否则每条都会让 `ty check` 以非零码退出。
+unused-type-ignore-comment = "ignore"
 
 [tool.hatch.metadata]
 allow-direct-references = true

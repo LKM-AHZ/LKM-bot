@@ -209,7 +209,7 @@ class TestStarMetadataPluginId:
         from astrbot.core.star.star import StarMetadata
 
         metadata = StarMetadata(name="Hello", author="LKMBot")
-        assert metadata.plugin_id == "astrbot/hello"
+        assert metadata.plugin_id == "lkmbot/hello"
 
     def test_plugin_id_recomputes_after_attribute_assignment(self):
         from astrbot.core.star.star import StarMetadata

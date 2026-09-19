@@ -347,15 +347,16 @@ async def _compress_image_bytes_to_base64(data: bytes) -> dict[str, str | int]:
     def _run() -> dict[str, str | int]:
         temp_dir = Path(get_astrbot_temp_path())
         temp_dir.mkdir(parents=True, exist_ok=True)
-        compressed_path = Path(
-            _compress_image_sync(
-                data,
-                temp_dir,
-                IMAGE_COMPRESS_DEFAULT_MAX_SIZE,
-                IMAGE_COMPRESS_DEFAULT_QUALITY,
-                IMAGE_COMPRESS_DEFAULT_OPTIMIZE,
-            )
+        compressed_file = _compress_image_sync(
+            data,
+            temp_dir,
+            IMAGE_COMPRESS_DEFAULT_MAX_SIZE,
+            IMAGE_COMPRESS_DEFAULT_QUALITY,
+            IMAGE_COMPRESS_DEFAULT_OPTIMIZE,
         )
+        # None 表示动图等无法压缩的情形；此处维持原有「不支持即失败」的调用约定
+        assert compressed_file is not None
+        compressed_path = Path(compressed_file)
         try:
             compressed_bytes = compressed_path.read_bytes()
         finally:

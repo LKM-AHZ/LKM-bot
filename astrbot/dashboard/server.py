@@ -41,7 +41,7 @@ except ImportError:  # pragma: no cover
     try:
         from multipart.multipart import parse_options_header
     except ImportError:
-        parse_options_header = None
+        parse_options_header = None  # ty: ignore[invalid-assignment]  # 两个 multipart 实现均缺失时的回退
 
 if os.name == "nt":
     # Windows 的 mimetypes 会把 .svg 映射成非标准的 image/svg,这里强制覆盖为标准类型
@@ -710,7 +710,7 @@ class AstrBotDashboard:
         config = HyperConfig()
         config.bind = [f"{host}:{port}"]
         if bool(self.config.get("dashboard", {}).get("trust_proxy_headers", False)):
-            config.logger_class = _ProxyAwareHypercornLogger
+            config.logger_class = _ProxyAwareHypercornLogger  # ty: ignore[invalid-assignment]  # hypercorn 桩件过严, 运行时可用
         if ssl_enable:
             config.certfile = resolved_ssl_config["certfile"]
             config.keyfile = resolved_ssl_config["keyfile"]

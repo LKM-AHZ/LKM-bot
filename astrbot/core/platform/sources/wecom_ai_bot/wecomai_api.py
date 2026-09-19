@@ -168,7 +168,7 @@ class WecomAIBotAPIClient:
             logger.info(f"开始下载加密图片: {image_url}")
 
             async with aiohttp.ClientSession() as session:
-                async with session.get(image_url, timeout=15) as response:
+                async with session.get(image_url, timeout=15) as response:  # ty: ignore[invalid-argument-type]  # aiohttp 运行时接受数字秒数作为超时，typeshed 仅声明 ClientTimeout
                     if response.status != 200:
                         error_msg = f"图片下载失败，状态码: {response.status}"
                         logger.error(error_msg)

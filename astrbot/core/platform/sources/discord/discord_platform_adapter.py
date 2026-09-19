@@ -9,7 +9,13 @@ from discord.channel import DMChannel
 
 from astrbot import logger
 from astrbot.api.event import MessageChain
-from astrbot.api.message_components import File, Image, Plain, Record
+from astrbot.api.message_components import (
+    BaseMessageComponent,
+    File,
+    Image,
+    Plain,
+    Record,
+)
 from astrbot.api.platform import (
     AstrBotMessage,
     MessageMember,
@@ -260,7 +266,7 @@ class DiscordPlatformAdapter(Platform):
             user_id=str(message.author.id),
             nickname=message.author.display_name,
         )
-        message_chain = []
+        message_chain: list[BaseMessageComponent] = []
         if abm.message_str:
             message_chain.append(Plain(text=abm.message_str))
         if message.attachments:

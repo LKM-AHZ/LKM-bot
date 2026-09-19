@@ -14,4 +14,6 @@ class BaseFunctionToolExecutor(Generic[TContext]):
         tool: FunctionTool,
         run_context: ContextWrapper[TContext],
         **tool_args,
-    ) -> AsyncGenerator[Any | mcp.types.CallToolResult, None]: ...
+    ) -> AsyncGenerator[Any | mcp.types.CallToolResult, None]:
+        # 由具体执行器（如 FunctionToolExecutor）以异步生成器形式实现
+        raise NotImplementedError

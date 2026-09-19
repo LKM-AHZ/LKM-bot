@@ -8,7 +8,6 @@ import ssl
 import time
 import uuid
 from pathlib import Path
-from typing import cast
 from urllib.parse import unquote, urlparse
 
 import aiohttp
@@ -103,7 +102,7 @@ def save_temp_img(img: Image.Image | bytes) -> str:
     p = os.path.join(temp_dir, f"io_temp_img_{timestamp}.jpg")
 
     if isinstance(img, Image.Image):
-        cast(Image.Image, img).save(p)
+        img.save(p)
     else:
         with open(p, "wb") as f:
             f.write(img)
@@ -303,7 +302,7 @@ async def download_file(
             trust_env=True,
             connector=connector,
         ) as session:
-            async with session.get(url, timeout=1800) as resp:
+            async with session.get(url, timeout=1800) as resp:  # ty: ignore[invalid-argument-type]  # aiohttp 接受数字超时, 桩件过严
                 _raise_for_download_status(resp, url)
                 with open(path, "wb") as f:
                     await _download_response_to_file(
@@ -331,7 +330,7 @@ async def download_file(
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, ssl=ssl_context, timeout=120) as resp:
+            async with session.get(url, ssl=ssl_context, timeout=120) as resp:  # ty: ignore[invalid-argument-type]  # aiohttp 接受数字超时, 桩件过严
                 _raise_for_download_status(resp, url)
                 with open(path, "wb") as f:
                     await _download_response_to_file(

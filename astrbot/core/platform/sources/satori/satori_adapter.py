@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from xml.etree import ElementTree as ET
 
 import websockets
@@ -194,11 +194,12 @@ class SatoriPlatformAdapter(Platform):
         if self._is_websocket_closed(self.ws):
             raise Exception("WebSocket连接已关闭")
 
-        identify_payload = {
+        identify_body: dict[str, Any] = {
+            "token": str(self.token) if self.token else "",  # 字符串
+        }
+        identify_payload: dict[str, Any] = {
             "op": 3,  # IDENTIFY
-            "body": {
-                "token": str(self.token) if self.token else "",  # 字符串
-            },
+            "body": identify_body,
         }
 
         # 只有在有序列号时才添加sn字段

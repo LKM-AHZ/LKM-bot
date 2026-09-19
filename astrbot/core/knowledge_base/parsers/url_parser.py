@@ -64,7 +64,7 @@ class URLExtractor:
                     api_url,
                     json=payload,
                     headers=headers,
-                    timeout=30.0,  # 增加超时时间，因为内容提取可能需要更长时间
+                    timeout=30.0,  # ty: ignore[invalid-argument-type]  # aiohttp 接受数字超时, 桩件过严  # 增加超时时间，因为内容提取可能需要更长时间
                 ) as response:
                     if response.status != 200:
                         reason = await response.text()

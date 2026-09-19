@@ -547,7 +547,8 @@ class TelegramPlatformAdapter(Platform):
                 group_id=group_id,
                 group_name=group_name,
             )
-            message._telegram_topic_name = topic_name
+            # AstrBotMessage 未声明该字段，按运行时契约动态附加
+            setattr(message, "_telegram_topic_name", topic_name)
         message.message_id = str(update.message.message_id)
         _from_user = update.message.from_user
         if not _from_user:

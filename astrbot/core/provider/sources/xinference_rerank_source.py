@@ -1,4 +1,4 @@
-from typing import cast
+from typing import Any, cast
 
 from xinference_client.client.restful.async_restful_client import (
     AsyncClient as Client,
@@ -93,7 +93,8 @@ class XinferenceRerankProvider(RerankProvider):
         if not self.model:
             raise RuntimeError("Xinference rerank model is not initialized")
         try:
-            response = await self.model.rerank(documents, query, top_n)
+            # SDK 形参为 list[str | dict]，list 不协变，运行时接受 list[str]
+            response = await self.model.rerank(cast(Any, documents), query, top_n)
             results = response.get("results", [])
             logger.debug(f"Rerank API response: {response}")
 

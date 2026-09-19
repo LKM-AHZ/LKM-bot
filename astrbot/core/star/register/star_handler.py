@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import AsyncGenerator, Awaitable, Callable
-from typing import Any
+from typing import Any, cast
 
 import docstring_parser
 
@@ -28,7 +28,7 @@ def get_handler_full_name(
     awaitable: Callable[..., Awaitable[Any] | AsyncGenerator[Any]],
 ) -> str:
     """获取 Handler 的全名"""
-    return f"{awaitable.__module__}_{awaitable.__name__}"
+    return f"{awaitable.__module__}_{cast(Any, awaitable).__name__}"
 
 
 def get_handler_or_create(
@@ -49,7 +49,7 @@ def get_handler_or_create(
     md = StarHandlerMetadata(
         event_type=event_type,
         handler_full_name=handler_full_name,
-        handler_name=handler.__name__,
+        handler_name=cast(Any, handler).__name__,
         handler_module_path=handler.__module__,
         handler=handler,
         event_filters=[],
@@ -621,7 +621,7 @@ def register_llm_tool(name: str | None = None, **kwargs):
             | Awaitable[MessageEventResult | str | None],
         ],
     ):
-        llm_tool_name = name_ if name_ else awaitable.__name__
+        llm_tool_name = name_ if name_ else cast(Any, awaitable).__name__
         func_doc = awaitable.__doc__ or ""
         docstring = docstring_parser.parse(func_doc)
         args = []

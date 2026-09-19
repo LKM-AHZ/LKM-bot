@@ -537,7 +537,7 @@ def _build_story(
                     start=start if list_kind == "ordered-list" else "bulletchar",
                     leftIndent=20,
                     bulletFontName="Helvetica",
-                    bulletFontSize=styles["body"].fontSize,
+                    bulletFontSize=styles["body"].fontSize,  # ty: ignore[unresolved-attribute]  # reportlab 运行时 ParagraphStyle 支持 fontSize，桩件未建模
                     spaceAfter=6,
                 )
             )

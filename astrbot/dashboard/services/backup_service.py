@@ -184,7 +184,7 @@ class BackupService:
         self.ensure_cleanup_task_started()
         Path(self.backup_dir).mkdir(parents=True, exist_ok=True)
 
-        backup_files = []
+        backup_files: list[dict[str, Any]] = []
         for filename in os.listdir(self.backup_dir):
             if not filename.endswith(".zip") or filename.startswith("."):
                 continue

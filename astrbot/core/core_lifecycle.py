@@ -10,11 +10,13 @@
 """
 
 import asyncio
+import logging
 import os
 import threading
 import time
 import traceback
 from asyncio import Queue
+from typing import cast
 
 from astrbot.api import logger, sp
 from astrbot.core import LogBroker, LogManager
@@ -31,7 +33,7 @@ from astrbot.core.platform.manager import PlatformManager
 from astrbot.core.platform_message_history_mgr import PlatformMessageHistoryManager
 from astrbot.core.process_restart import restart_process
 from astrbot.core.provider.manager import ProviderManager
-from astrbot.core.star.context import Context
+from astrbot.core.star.context import Context, PlatformManagerProtocol
 from astrbot.core.star.star_handler import EventType, star_handlers_registry, star_map
 from astrbot.core.star.star_manager import PluginManager
 from astrbot.core.umop_config_router import UmopConfigRouter
@@ -143,11 +145,15 @@ class AstrBotCoreLifecycle:
         logger.info("LKMBot v" + VERSION)
         if os.environ.get("TESTING", ""):
             LogManager.configure_logger(
-                logger, self.astrbot_config, override_level="DEBUG"
+                cast("logging.Logger", logger),
+                self.astrbot_config,
+                override_level="DEBUG",
             )
             LogManager.configure_trace_logger(self.astrbot_config)
         else:
-            LogManager.configure_logger(logger, self.astrbot_config)
+            LogManager.configure_logger(
+                cast("logging.Logger", logger), self.astrbot_config
+            )
             LogManager.configure_trace_logger(self.astrbot_config)
 
         await self.db.initialize()
@@ -221,7 +227,7 @@ class AstrBotCoreLifecycle:
             self.astrbot_config,
             self.db,
             self.provider_manager,
-            self.platform_manager,
+            cast(PlatformManagerProtocol, self.platform_manager),
             self.conversation_manager,
             self.platform_message_history_manager,
             self.persona_mgr,

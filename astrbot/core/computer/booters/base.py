@@ -9,13 +9,16 @@ from ..olayer import (
 
 class ComputerBooter:
     @property
-    def fs(self) -> FileSystemComponent: ...
+    def fs(self) -> FileSystemComponent:
+        raise NotImplementedError
 
     @property
-    def python(self) -> PythonComponent: ...
+    def python(self) -> PythonComponent:
+        raise NotImplementedError
 
     @property
-    def shell(self) -> ShellComponent: ...
+    def shell(self) -> ShellComponent:
+        raise NotImplementedError
 
     @property
     def capabilities(self) -> tuple[str, ...] | None:
@@ -51,12 +54,16 @@ class ComputerBooter:
 
         Should return a dict with `success` (bool) and `file_path` (str) keys.
         """
-        ...
+        raise NotImplementedError
 
     async def download_file(self, remote_path: str, local_path: str) -> None:
         """Download file from the computer."""
         ...
 
     async def available(self) -> bool:
-        """Check if the computer is available."""
-        ...
+        """Check if the computer is available.
+
+        Defaults to False to preserve the historical implicit ``None`` (falsy)
+        result; some booters such as BoxliteBooter rely on this default.
+        """
+        return False

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import (
@@ -62,17 +62,21 @@ class WeixinOCMessageEvent(AstrMessageEvent):
     async def send(self, message: MessageChain) -> None:
         if not message.chain:
             return
-        await self.platform.send_by_session(self.session, message)
+        # self.platform 被本类 __init__ 覆写为适配器实例，基类声明为 PlatformMetadata
+        adapter = cast("WeixinOCAdapter", self.platform)
+        await adapter.send_by_session(self.session, message)
         await super().send(message)
 
     async def send_typing(self) -> None:
-        await self.platform.start_typing(
+        adapter = cast("WeixinOCAdapter", self.platform)
+        await adapter.start_typing(
             self.session.session_id,
             self._get_typing_owner_id(),
         )
 
     async def stop_typing(self) -> None:
-        await self.platform.stop_typing(
+        adapter = cast("WeixinOCAdapter", self.platform)
+        await adapter.stop_typing(
             self.session.session_id,
             self._get_typing_owner_id(),
         )

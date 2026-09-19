@@ -6,7 +6,7 @@
 import json
 import os
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from astrbot.core.knowledge_base.kb_db_sqlite import KBSQLiteDatabase
 from astrbot.core.knowledge_base.retrieval.tokenizer import (
@@ -120,7 +120,7 @@ class SparseRetriever:
         kb_options: dict,
     ) -> list[SparseResult]:
         top_k_sparse = 0
-        chunks = []
+        chunks: list[dict[str, Any]] = []
         for kb_id in kb_ids:
             vec_db: FaissVecDB | None = kb_options.get(kb_id, {}).get("vec_db")
             if not vec_db:

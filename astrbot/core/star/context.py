@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from asyncio import Queue
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from deprecated import deprecated
 
@@ -543,7 +543,9 @@ class Context:
             provider_type=ProviderType.TEXT_TO_SPEECH,
             umo=umo,
         )
-        if prov and not isinstance(prov, TTSProvider):
+        if prov is None:
+            return None
+        if not isinstance(prov, TTSProvider):
             raise ValueError("返回的 Provider 不是 TTSProvider 类型")
         return prov
 
@@ -587,7 +589,9 @@ class Context:
             provider_type=ProviderType.SPEECH_TO_TEXT,
             umo=umo,
         )
-        if prov and not isinstance(prov, STTProvider):
+        if prov is None:
+            return None
+        if not isinstance(prov, STTProvider):
             raise ValueError("返回的 Provider 不是 STTProvider 类型")
         return prov
 
@@ -810,8 +814,8 @@ class Context:
         """
         md = StarHandlerMetadata(
             event_type=EventType.OnLLMRequestEvent,
-            handler_full_name=func_obj.__module__ + "_" + func_obj.__name__,
-            handler_name=func_obj.__name__,
+            handler_full_name=func_obj.__module__ + "_" + cast(Any, func_obj).__name__,
+            handler_name=cast(Any, func_obj).__name__,
             handler_module_path=func_obj.__module__,
             handler=func_obj,
             event_filters=[],
@@ -860,8 +864,10 @@ class Context:
         """
         md = StarHandlerMetadata(
             event_type=EventType.AdapterMessageEvent,
-            handler_full_name=awaitable.__module__ + "_" + awaitable.__name__,
-            handler_name=awaitable.__name__,
+            handler_full_name=awaitable.__module__
+            + "_"
+            + cast(Any, awaitable).__name__,
+            handler_name=cast(Any, awaitable).__name__,
             handler_module_path=awaitable.__module__,
             handler=awaitable,
             event_filters=[],

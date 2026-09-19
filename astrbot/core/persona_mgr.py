@@ -1,3 +1,5 @@
+from typing import cast
+
 from astrbot import logger
 from astrbot.api import sp
 from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
@@ -413,10 +415,15 @@ class PersonaManager:
                     user_turn = not user_turn
 
             try:
-                persona = Personality(
-                    **persona_cfg,
-                    _begin_dialogs_processed=bd_processed,
-                    _mood_imitation_dialogs_processed="",  # deprecated
+                # persona_cfg 的键来自上方固定字面量，运行时字段齐全；
+                # ty 无法从 dict 推导 TypedDict 的必填键，这里显式断言。
+                persona = cast(
+                    Personality,
+                    {
+                        **persona_cfg,
+                        "_begin_dialogs_processed": bd_processed,
+                        "_mood_imitation_dialogs_processed": "",  # deprecated
+                    },
                 )
                 if persona["name"] == self.default_persona:
                     selected_default_persona = persona

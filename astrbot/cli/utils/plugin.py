@@ -4,6 +4,7 @@ import uuid
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 from zipfile import ZipFile
 
 import click
@@ -128,7 +129,7 @@ def build_plug_list(plugins_dir: Path) -> list:
 
     """
     # Get local plugin info
-    result = []
+    result: list[dict[str, Any]] = []
     if plugins_dir.is_dir():
         for plugin_dir in plugins_dir.iterdir():
             if not plugin_dir.is_dir():
@@ -157,7 +158,7 @@ def build_plug_list(plugins_dir: Path) -> list:
                 )
 
     # Get online plugin list
-    online_plugins_dict = {}
+    online_plugins_dict: dict[str, dict[str, Any]] = {}
     try:
         with httpx.Client() as client:
             resp = client.get("https://api.soulter.top/astrbot/plugins")

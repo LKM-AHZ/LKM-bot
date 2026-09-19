@@ -616,7 +616,7 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
         llm_response.raw_completion = response
         return llm_response
 
-    async def _handle_api_error(
+    async def _handle_api_error(  # ty: ignore[invalid-method-override]  # 上游既有的子类签名与基类声明不一致（ty 的 LSP 检查，具体项见诊断 info）；改动会触及插件可见的公开 API，故逐行豁免
         self,
         error: Exception,
         payloads: dict,

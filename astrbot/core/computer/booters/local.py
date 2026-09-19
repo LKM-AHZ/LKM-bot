@@ -821,8 +821,9 @@ class LocalShellComponent(ShellComponent):
                 session
                 for session in self._sessions.values()
                 if not invalid_only
-                or getattr(session, "permission_check", None) is None
-                or not session.permission_check()
+                or (permission_check := getattr(session, "permission_check", None))
+                is None
+                or not permission_check()
             ]
             for session in sessions:
                 session.terminated = True
@@ -879,10 +880,8 @@ class LocalShellComponent(ShellComponent):
                 f"Shell session {session_id} was not found or has expired. "
                 "Start a new shell session."
             )
-        if (
-            getattr(session, "permission_check", None) is None
-            or not session.permission_check()
-        ):
+        permission_check = getattr(session, "permission_check", None)
+        if permission_check is None or not permission_check():
             await self.shutdown_sessions(invalid_only=True)
             raise ValueError(
                 f"Shell session {session_id} expired after a permission change. "

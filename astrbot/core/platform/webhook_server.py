@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, Response
@@ -114,7 +114,8 @@ class FastAPIWebhookServer:
     ) -> None:
         config = HyperConfig()
         config.bind = [f"{host}:{port}"]
-        await serve(self.app, config, shutdown_trigger=shutdown_trigger)
+        # FastAPI 实例是合法的 ASGI 应用，hypercorn 的 Framework 联合类型未涵盖
+        await serve(cast(Any, self.app), config, shutdown_trigger=shutdown_trigger)
 
     async def shutdown(self) -> None:
         return None

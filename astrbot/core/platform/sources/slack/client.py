@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import json
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 from fastapi.responses import Response
 from slack_sdk.socket_mode.aiohttp import SocketModeClient
@@ -160,7 +160,7 @@ class SlackSocketClient:
         """启动 Socket Mode 连接"""
         self.socket_client = SocketModeClient(
             app_token=self.app_token,
-            logger=logger,
+            logger=cast(Any, logger),
             web_client=self.web_client,
         )
 

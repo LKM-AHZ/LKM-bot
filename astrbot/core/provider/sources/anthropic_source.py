@@ -116,7 +116,7 @@ class ProviderAnthropic(Provider):
             timeout=self.timeout,
             base_url=self.base_url,
             default_headers=self.custom_headers,
-            http_client=self._create_http_client(provider_config),
+            http_client=self._create_http_client(provider_config),  # ty: ignore[invalid-argument-type]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），运行时同对象
         )
 
     def _create_http_client(self, provider_config: dict) -> httpx.AsyncClient | None:
@@ -617,10 +617,10 @@ class ProviderAnthropic(Provider):
                 )
 
         # 用于累积工具调用信息
-        tool_use_buffer = {}
+        tool_use_buffer: dict[int, dict[str, Any]] = {}
         # 用于累积最终结果
         final_text = ""
-        final_tool_calls = []
+        final_tool_calls: list[dict[str, Any]] = []
         id = None
         usage = TokenUsage()
         extra_body = self.provider_config.get("custom_extra_body", {})
@@ -762,7 +762,7 @@ class ProviderAnthropic(Provider):
         )
         yield final_response
 
-    async def text_chat(
+    async def text_chat(  # ty: ignore[invalid-method-override]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），基类与子类的注解各用其一
         self,
         prompt=None,
         session_id=None,
@@ -835,7 +835,7 @@ class ProviderAnthropic(Provider):
 
         return llm_response
 
-    async def text_chat_stream(
+    async def text_chat_stream(  # ty: ignore[invalid-method-override]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），基类与子类的注解各用其一
         self,
         prompt=None,
         session_id=None,

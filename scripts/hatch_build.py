@@ -20,7 +20,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from hatchling.builders.hooks.plugin.interface import (  # ty: ignore[unresolved-import]  # 仅构建时安装 hatchling, 运行期不导入
+    BuildHookInterface,
+)
 
 
 class CustomBuildHook(BuildHookInterface):

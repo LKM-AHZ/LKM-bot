@@ -1,5 +1,6 @@
 import asyncio
 import os
+from typing import Any
 
 from astrbot.core import logger
 from astrbot.core.provider.entities import ProviderType
@@ -8,10 +9,14 @@ from astrbot.core.provider.register import register_provider_adapter
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.datetime_utils import generate_timestamp_id
 
+# 可选依赖：未安装时保持 None，类型放宽为 Any 以兼容两种分支
+genie: Any = None
 try:
-    import genie_tts as genie  # type: ignore
+    import genie_tts as _genie_tts  # type: ignore
 except ImportError:
-    genie = None
+    pass
+else:
+    genie = _genie_tts
 
 
 @register_provider_adapter(
