@@ -59,12 +59,6 @@ LKMBot is an open-source all-in-one Agent chatbot platform that integrates with 
 
 ## Quick Start
 
-### One-Click Cloud Deployment (RainYun)
-
-For users who want one-click 24-hour-online deployment and do not want to manage servers themselves, we recommend RainYun's one-click cloud deployment service ☁️:
-
-[![Deploy on RainYun](https://rainyun-apps.cn-nb1.rains3.com/materials/deploy-on-rainyun-en.svg)](https://app.rainyun.com/apps/rca/store/5994?ref=NjU1ODg0)
-
 ### One-Click Deployment
 
 > [!NOTE]
@@ -204,30 +198,6 @@ pip install pre-commit
 pre-commit install
 ```
 
-
-## 🌍 Community
-
-### QQ Groups
-
-We have 15+ chat groups, please see: [Community](https://docs.astrbot.app/community.html) for details.
-
-### Discord Server
-
-<a href="https://discord.gg/hAVk6tgV36"><img alt="Discord_community" src="https://img.shields.io/badge/Discord-AstrBot-purple?style=for-the-badge&color=76bad9"></a>
-
-## ❤️ Special Thanks
-
-Special thanks to all Contributors and plugin developers for their contributions to LKMBot ❤️
-
-<a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />
-</a>
-
-Open Source Friends ❤️
-
-- [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) - The amazing cat framework
-- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) - The powerful "digital life" in your QQ!
-
 ## ⭐ Star History
 
 > [!TIP]
@@ -237,13 +207,3 @@ Open Source Friends ❤️
 
 [![Star History Chart](https://api.star-history.com/svg?repos=astrbotdevs/astrbot&type=Date)](https://star-history.com/#astrbotdevs/astrbot&Date)
 
-</div>
-
-<div align="center">
-
-_Companionship and capability should never be at odds. What we aim to create is a robot that can understand emotions, provide genuine companionship, and reliably accomplish tasks._
-
-_私は、高性能ですから!_
-
-<img src="https://files.astrbot.app/watashiwa-koseino-desukara.gif" width="100"/>
-</div>

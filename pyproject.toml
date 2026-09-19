@@ -130,6 +130,13 @@ allow-direct-references = true
 [tool.hatch.build]
 artifacts = ["astrbot/dashboard/dist/**"]
 
+# 显式声明要打包的目录：项目名（LKMBot）与源码目录（astrbot/）在改名后不再一致，
+# hatchling 的默认启发式（按项目名找同名目录）会找不到包 → 构建 wheel 直接失败：
+#   ValueError: Unable to determine which files to ship ...
+# 后果是 `uv sync`（含 .github/workflows/code-format.yml）不可用。
+[tool.hatch.build.targets.wheel]
+packages = ["astrbot"]
+
 # Custom build hook: builds the Vue dashboard and copies dist into the package.
 [tool.hatch.build.hooks.custom]
 path = "scripts/hatch_build.py"

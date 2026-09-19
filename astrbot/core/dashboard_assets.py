@@ -416,8 +416,7 @@ def _extract_package(
             _read_dashboard_version(staged_dist), expected_version
         ):
             raise RuntimeError(
-                "Downloaded Dashboard version does not match "
-                f"LKMBot {expected_version}"
+                f"Downloaded Dashboard version does not match LKMBot {expected_version}"
             )
 
         if target_dist.exists() or target_dist.is_symlink():

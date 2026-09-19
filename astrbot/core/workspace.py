@@ -159,9 +159,7 @@ def resolve_project_workspace_root(project: Any, *, fallback_umo: str) -> Path:
     if creator.startswith(API_KEY_USERNAME_PREFIX) and (
         resolved == workspaces_root or not resolved.is_relative_to(workspaces_root)
     ):
-        raise ValueError(
-            "API key project workspace must stay within LKMBot workspaces"
-        )
+        raise ValueError("API key project workspace must stay within LKMBot workspaces")
     return resolved
 
 
