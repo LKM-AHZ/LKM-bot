@@ -318,6 +318,7 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { apiUrl } from "@/api/base";
 import { botApi, fileApi, systemConfigApi } from "@/api/v1";
 import AddNewPlatform from "@/components/platform/AddNewPlatform.vue";
 import PlatformEditor from "@/components/platform/PlatformEditor.vue";
@@ -520,12 +521,14 @@ function showErrorDetails(platform) {
 }
 
 function getWebhookUrl(webhookUuid) {
+  // 该地址是给**外部 IM 平台**回调用的，必须与浏览器实际访问的地址一致：面板若挂在
+  // 子路径（本部署 /bot）下，而 callback_api_base 没带该前缀，回调会打到同域的社区站
+  // backend（两边同为 /api/v1/*）。已配置就用配置值（部署者负责带前缀）；未配置时按当前
+  // 地址推导，避免给出一个必然错误的默认值。
+  const fallbackBase = `${window.location.origin}${apiUrl("/").replace(/\/$/, "")}`;
   const callbackBase =
-    configData.value.callback_api_base || "http(s)://<your-domain-or-ip>";
-  return `${callbackBase.replace(
-    /\/$/,
-    "",
-  )}/api/v1/webhooks/platforms/${webhookUuid}`;
+    (configData.value.callback_api_base || fallbackBase).replace(/\/$/, "");
+  return `${callbackBase}/api/v1/webhooks/platforms/${webhookUuid}`;
 }
 
 function openWebhookDialog(webhookUuid) {

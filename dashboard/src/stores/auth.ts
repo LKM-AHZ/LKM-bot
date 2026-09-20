@@ -171,6 +171,29 @@ export const useAuthStore = defineStore("auth", {
         return false;
       }
     },
+    /**
+     * 会话水合：社区后台 SSO 免登只写 httpOnly cookie（见后端 `auth_sso`），而面板的路由守卫
+     * 与 WebSocket/SSE 都依赖 `localStorage.token`，故首次进入内嵌面板时用既有 cookie 换 token。
+     *
+     * 返回是否水合成功（false = 确实未登录，调用方按未登录处理；网络异常同样返回 false，
+     * 由后续请求各自报错，不在此处吞掉错误语义）。
+     */
+    async hydrateFromCookie(): Promise<boolean> {
+      try {
+        const res = await httpClient.get('/api/v1/auth/session');
+        const data: any = res?.data?.data;
+        const token = String(data?.token || '');
+        if (!token) return false;
+        localStorage.setItem('token', token);
+        this.username = String(data?.username || '');
+        if (this.username) {
+          localStorage.setItem('user', this.username);
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
     logout() {
       this.username = '';
       localStorage.removeItem('user');

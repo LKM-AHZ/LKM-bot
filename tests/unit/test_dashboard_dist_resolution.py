@@ -157,3 +157,53 @@ class TestExplicitWebuiDir:
             resolve_dashboard_dist(empty)
 
         assert WARNING_FRAGMENT not in caplog.text
+
+
+def _make_subpath_dist(root, version, base: str = "/bot") -> str:
+    """A dist built for a proxy sub-path: references carry the prefix, files do not."""
+    assets = root / "assets"
+    assets.mkdir(parents=True)
+    (root / "index.html").write_text(
+        f'<html><head><link rel="stylesheet" href="{base}/assets/app.css"></head>'
+        f'<body><script type="module" src="{base}/assets/app.js"></script></body></html>',
+        encoding="utf-8",
+    )
+    (assets / "app.js").write_text("export {};", encoding="utf-8")
+    (assets / "app.css").write_text("body{}", encoding="utf-8")
+    if version is not None:
+        (assets / "version").write_text(version, encoding="utf-8")
+    return str(root)
+
+
+class TestSubPathBaseDist:
+    """面板挂在反向代理子路径（本部署 /bot/）时，index.html 的资源引用带前缀而文件在根部。
+
+    若把这类引用当成"缺文件"，内置 dist 会被判不完整 → 后端转而去上游 registry 下载**根 base**
+    的 WebUI 覆盖它，子路径部署随即全面 404。
+    """
+
+    def test_subpath_dist_is_served_quietly(self, tmp_path, caplog):
+        dist = _make_subpath_dist(tmp_path / "webui", f"v{VERSION}")
+
+        with caplog.at_level(logging.WARNING):
+            resolved = resolve_dashboard_dist(dist)
+
+        assert resolved is not None
+        assert str(resolved) == str(tmp_path / "webui")
+        assert WARNING_FRAGMENT not in caplog.text
+
+    def test_subpath_dist_is_complete(self, tmp_path):
+        from astrbot.core.dashboard_assets import _is_dist_complete
+
+        dist = tmp_path / "webui"
+        _make_subpath_dist(dist, f"v{VERSION}")
+        assert _is_dist_complete(dist) is True
+
+    def test_missing_entry_is_still_incomplete(self, tmp_path):
+        """剥离前缀不得掩盖真的缺文件（否则会拿半截 dist 去服务）。"""
+        from astrbot.core.dashboard_assets import _is_dist_complete
+
+        dist = tmp_path / "webui"
+        _make_subpath_dist(dist, f"v{VERSION}")
+        (dist / "assets" / "app.js").unlink()
+        assert _is_dist_complete(dist) is False

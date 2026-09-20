@@ -15,7 +15,11 @@ env/
 venv*/
 ENV/
 .conda/
-dashboard/
+# 前端源码需进构建上下文：镜像里的 WebUI 由 dashboard/ 现场构建（子路径 base 必须在构建期
+# 注入；运行期从上游 registry 下载的是根 base 包，在 /bot/ 下会全部 404）。只排除可再生的大目录。
+dashboard/node_modules
+dashboard/dist
+dashboard/.pnpm-store
 !astrbot/dashboard/
 !astrbot/dashboard/dist/
 !astrbot/dashboard/dist/**

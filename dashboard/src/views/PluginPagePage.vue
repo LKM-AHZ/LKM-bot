@@ -2,8 +2,9 @@
 import axios from "axios";
 import { computed, onBeforeUnmount, onMounted, ref, toRaw, watch } from "vue";
 import { useRoute } from "vue-router";
-import { pluginApi } from "@/api/v1";
+import { apiUrl } from "@/api/base";
 import { fetchWithAuth } from "@/api/http";
+import { pluginApi } from "@/api/v1";
 import { useModuleI18n } from "@/i18n/composables";
 import { usePluginI18n } from "@/utils/pluginI18n";
 import { useCustomizerStore } from "@/stores/customizer";
@@ -598,7 +599,12 @@ const loadPluginPage = async () => {
 
     plugin.value = pluginData;
     page.value = pageEntry;
-    const contentUrl = new URL(pageEntry.content_path, window.location.origin);
+    // 后端返回的 content_path 是面板后端视角的绝对路径；挂在子路径下时要补前缀，
+    // 否则 iframe 会打到反代外的同域路径（社区站的 /api/...）。
+    const contentUrl = new URL(
+      apiUrl(pageEntry.content_path),
+      window.location.origin,
+    );
     contentUrl.searchParams.set('theme', themeParam.value);
     iframeSrc.value = contentUrl.pathname + contentUrl.search + contentUrl.hash;
   } catch (error) {

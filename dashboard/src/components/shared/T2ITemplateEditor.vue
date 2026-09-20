@@ -250,6 +250,7 @@ import { VueMonacoEditor } from '@guolao/vue-monaco-editor'
 import { useI18n, useModuleI18n } from '@/i18n/composables'
 import { useToast } from '@/utils/toast'
 import { statsApi, t2iApi } from '@/api/v1'
+import { apiUrl } from '@/api/base'
 
 const { t } = useI18n()
 const { tm } = useModuleI18n('core.shared')
@@ -322,7 +323,7 @@ const injectShikiRuntime = (content) => {
   return `${runtimeScript}\n${content}`
 }
 
-const getShikiRuntimeScript = () => '<script id="astrbot-t2i-shiki-runtime" src="/t2i/shiki_runtime.iife.js"></scr' + 'ipt>'
+const getShikiRuntimeScript = () => `<script id="astrbot-t2i-shiki-runtime" src="${apiUrl('/t2i/shiki_runtime.iife.js')}"></scr` + 'ipt>'
 
 const hasMarkdownSource = (content) => /<[^>]+\bid=["']markdown-source["']/i.test(content)
 

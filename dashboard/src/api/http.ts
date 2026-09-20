@@ -4,6 +4,9 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios';
 
+// 显式带 .ts 扩展名：本模块被 node 原生测试直接 import，node 的 ESM 解析不补扩展名。
+import { BASE, stripBase, withBase } from './base.ts';
+
 const AUTH_HEADER = 'Authorization';
 const LOCALE_HEADER = 'Accept-Language';
 
@@ -11,7 +14,7 @@ let configured = false;
 let originalFetch: typeof window.fetch | null = null;
 
 export const httpClient = axios;
-export const apiV1Client = axios.create({ baseURL: '/api/v1' });
+export const apiV1Client = axios.create({ baseURL: `${BASE}/api/v1` });
 
 function getToken(): string | null {
   return localStorage.getItem('token');
@@ -31,6 +34,18 @@ function setAxiosHeader(
     return;
   }
   headers[key] = value;
+}
+
+/**
+ * 子路径前缀补全：面板代码（含 `generate:api` 生成的 SDK）里写死了大量绝对路径
+ * `/api/v1/...`，而 axios 的 `baseURL` 只对**相对** url 生效，故在此统一补前缀。
+ * 幂等，因此对已带前缀的 url（如 `apiV1Client` 的相对路径解析结果）无副作用。
+ */
+function prefixBase(config: InternalAxiosRequestConfig) {
+  if (typeof config.url === 'string' && config.url.startsWith('/')) {
+    config.url = withBase(config.url);
+  }
+  return config;
 }
 
 function attachAxiosHeaders(config: InternalAxiosRequestConfig) {
@@ -67,7 +82,8 @@ function normalizeAxiosError(error: AxiosError) {
           : url;
       const requestUrl = new URL(resolvedUrl || '/', window.location.origin);
       if (requestUrl.origin === window.location.origin) {
-        requestPath = requestUrl.pathname;
+        // 去掉面板前缀再与后端路径常量比较（挂在 /bot/ 下时 pathname 会带前缀）。
+        requestPath = stripBase(requestUrl.pathname);
       }
     } catch {
       requestPath = '';
@@ -81,6 +97,8 @@ function normalizeAxiosError(error: AxiosError) {
         '/api/v1/auth/login',
         '/api/v1/auth/setup',
         '/api/v1/auth/setup-status',
+        // 会话水合：未登录时 401 是正常路径（守卫据此判定"未登录"），不该再触发跳转副作用。
+        '/api/v1/auth/session',
       ].includes(requestPath) ||
       Boolean(
         (
@@ -115,6 +133,7 @@ function normalizeAxiosError(error: AxiosError) {
 }
 
 function installAxiosInterceptors(instance: AxiosInstance) {
+  instance.interceptors.request.use(prefixBase);
   instance.interceptors.request.use(attachAxiosHeaders);
   instance.interceptors.response.use((response) => response, normalizeAxiosError);
 }
@@ -132,6 +151,11 @@ export function fetchWithAuth(input: RequestInfo | URL, init?: RequestInit) {
     }
   } catch {
     return fetchImpl(input, init);
+  }
+
+  // 同源绝对路径补面板前缀（字符串形态覆盖面板全部调用点；Request 对象由调用方自行构造完整 URL）。
+  if (typeof input === 'string') {
+    input = withBase(input);
   }
 
   const token = getToken();

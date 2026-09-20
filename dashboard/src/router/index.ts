@@ -25,6 +25,7 @@ interface AuthStore {
   ): Promise<void | 'totp_required' | 'upgrade_recovery_required'>;
   logout(): void;
   has_token(): boolean;
+  hydrateFromCookie(): Promise<boolean>;
 }
 
 router.beforeEach(async (to, from, next) => {
@@ -44,6 +45,11 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (authRequired && !auth.has_token()) {
+      // 内嵌面板（社区后台 iframe）走 SSO：会话 cookie 已由 /api/v1/auth/sso 写入，
+      // 这里把它兑换成 token；失败才按未登录处理（普通访问路径不受影响——无 cookie 即返回 false）。
+      if (await auth.hydrateFromCookie()) {
+        return next();
+      }
       auth.returnUrl = to.fullPath;
       return next('/auth/login');
     }

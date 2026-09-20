@@ -1,5 +1,6 @@
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
+import { apiUrl } from './base';
 import * as openApiV1 from './generated/openapi-v1';
 import {
   type BackupChunkUploadRequest,
@@ -801,7 +802,9 @@ export const backupApi = {
     );
   },
   downloadUrl(filename: string, token: string) {
-    return `/api/v1/backups/${encodeURIComponent(filename)}?token=${encodeURIComponent(token)}`;
+    return apiUrl(
+      `/api/v1/backups/${encodeURIComponent(filename)}?token=${encodeURIComponent(token)}`,
+    );
   },
 };
 
@@ -810,18 +813,18 @@ export const chatApi = {
     return typed<any>(openApiV1.sendChatMessage({ body: payload }));
   },
   sendStreamUrl() {
-    return '/api/v1/chat';
+    return apiUrl('/api/v1/chat');
   },
   resumeRunStreamUrl(runId: string) {
-    return `/api/v1/chat/runs/${encodeURIComponent(runId)}/stream`;
+    return apiUrl(`/api/v1/chat/runs/${encodeURIComponent(runId)}/stream`);
   },
   liveWebSocketUrl(token: string, host = window.location.host) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${host}/api/v1/live-chat/ws?token=${encodeURIComponent(token)}`;
+    return `${protocol}//${host}${apiUrl('/api/v1/live-chat/ws')}?token=${encodeURIComponent(token)}`;
   },
   unifiedWebSocketUrl(token: string, host = window.location.host) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${host}/api/v1/unified-chat/ws?token=${encodeURIComponent(token)}`;
+    return `${protocol}//${host}${apiUrl('/api/v1/unified-chat/ws')}?token=${encodeURIComponent(token)}`;
   },
   listSessions(params?: ChatSessionListParams) {
     return typed<any>(
@@ -889,7 +892,9 @@ export const chatApi = {
     );
   },
   regenerateMessageUrl(sessionId: string, messageId: string | number) {
-    return `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}/messages/${encodeURIComponent(String(messageId))}/regenerate`;
+    return apiUrl(
+      `/api/v1/chat/sessions/${encodeURIComponent(sessionId)}/messages/${encodeURIComponent(String(messageId))}/regenerate`,
+    );
   },
   createThread(payload: ChatThreadCreateRequest) {
     return typed<any>(openApiV1.createChatThread({ body: payload }));
@@ -913,7 +918,7 @@ export const chatApi = {
     );
   },
   sendThreadMessageUrl(threadId: string) {
-    return `/api/v1/chat/threads/${encodeURIComponent(threadId)}/messages`;
+    return apiUrl(`/api/v1/chat/threads/${encodeURIComponent(threadId)}/messages`);
   },
   listProjects() {
     return typed<any>(openApiV1.listChatProjects());
@@ -1011,13 +1016,15 @@ export const fileApi = {
     }) as Promise<AxiosResponse<Blob>>;
   },
   byNameUrl(filename: string) {
-    return `/api/v1/files/content?filename=${encodeURIComponent(filename)}`;
+    return apiUrl(
+      `/api/v1/files/content?filename=${encodeURIComponent(filename)}`,
+    );
   },
   contentUrl(attachmentId: string) {
-    return `/api/v1/files/${encodeURIComponent(attachmentId)}/content`;
+    return apiUrl(`/api/v1/files/${encodeURIComponent(attachmentId)}/content`);
   },
   tokenUrl(fileToken: string) {
-    return `/api/v1/files/tokens/${encodeURIComponent(fileToken)}`;
+    return apiUrl(`/api/v1/files/tokens/${encodeURIComponent(fileToken)}`);
   },
 };
 
@@ -1221,7 +1228,7 @@ export const logApi = {
     return typed<{ logs?: OpenConfig[] }>(openApiV1.getLogHistory());
   },
   liveUrl() {
-    return '/api/v1/logs/live';
+    return apiUrl('/api/v1/logs/live');
   },
 };
 
@@ -1369,7 +1376,8 @@ export const pluginApi = {
     );
   },
   async installUpload(formData: FormData) {
-    const response = await fetchWithAuth('/api/v1/plugins/install/upload', {
+    // fetchWithAuth 也会补前缀，这里显式包一层以保持"直连 URL 一律 apiUrl"的一致读法。
+    const response = await fetchWithAuth(apiUrl('/api/v1/plugins/install/upload'), {
       method: 'POST',
       body: formData,
     });

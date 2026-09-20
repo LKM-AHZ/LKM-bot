@@ -11,6 +11,17 @@ const t2iShikiRuntimePath = fileURLToPath(
   new URL('../astrbot/core/utils/t2i/template/shiki_runtime.iife.js', import.meta.url)
 );
 
+// 面板挂载的子路径前缀（构建期注入）：默认 '/'（单机根路径部署，行为与上游一致）。
+// 挂在反向代理的子路径时（本部署为社区站同域 /bot/，网关剥前缀后转发）传 VITE_BASE_PATH=/bot/。
+// 构建期 base 决定静态资源引用与 import.meta.env.BASE_URL（前端据此给 API/WS 补前缀，见 src/api/base.ts）。
+const basePath = (() => {
+  const raw = (process.env.VITE_BASE_PATH || '/').trim();
+  if (!raw || raw === '/') return '/';
+  return `/${raw.replace(/^\/+|\/+$/g, '')}/`;
+})();
+// 无尾斜杠形态（'' 或 '/bot'），用于 dev server 的中间件与 proxy 键。
+const basePrefix = basePath.replace(/\/$/, '');
+
 // Vite plugin: run MDI icon font subsetting (build only)
 function mdiSubset() {
   return {
@@ -26,7 +37,7 @@ function t2iShikiRuntimeAsset(): Plugin {
   return {
     name: 'vite-plugin-t2i-shiki-runtime',
     configureServer(server) {
-      server.middlewares.use('/t2i/shiki_runtime.iife.js', (_req, res) => {
+      server.middlewares.use(`${basePrefix}/t2i/shiki_runtime.iife.js`, (_req, res) => {
         try {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'text/javascript; charset=utf-8');
@@ -57,6 +68,7 @@ function t2iShikiRuntimeAsset(): Plugin {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
+  base: basePath,
   plugins: [
     // Only run MDI subsetting during production builds, skip in dev server
     ...(command === 'build' ? [mdiSubset()] : []),
@@ -118,10 +130,14 @@ export default defineConfig(({ command }) => ({
     host: '0.0.0.0',
     port: 3000,
     proxy: {
-      '/api': {
+      // 浏览器在子路径模式下请求 `${basePrefix}/api/...`；剥掉前缀后转发给面板进程
+      // （与生产网关 proxy-rewrite 的行为一致，保证 dev 与线上路径语义相同）。
+      [`${basePrefix}/api`]: {
         target: 'http://127.0.0.1:6185/',
         changeOrigin: true,
-        ws: true
+        ws: true,
+        rewrite: (path) =>
+          basePrefix ? path.replace(new RegExp(`^${basePrefix}`), '') : path
       }
     }
   }

@@ -4,9 +4,10 @@ from dataclasses import dataclass
 
 import jwt
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from astrbot.core.workspace import API_KEY_USERNAME_PREFIX
+from astrbot.dashboard.base_path import dashboard_cookie_path
 from astrbot.dashboard.responses import ApiError
 from astrbot.dashboard.schemas import (
     AccountUpdateRequest,
@@ -233,7 +234,7 @@ def _use_secure_dashboard_jwt_cookie(request: Request) -> bool:
 
 def _set_dashboard_jwt_cookie(
     request: Request,
-    response: JSONResponse,
+    response: Response,
     token: str,
 ) -> None:
     response.set_cookie(
@@ -243,23 +244,23 @@ def _set_dashboard_jwt_cookie(
         httponly=True,
         samesite="strict",
         secure=_use_secure_dashboard_jwt_cookie(request),
-        path="/",
+        path=dashboard_cookie_path(),
     )
 
 
-def _clear_dashboard_jwt_cookie(request: Request, response: JSONResponse) -> None:
+def _clear_dashboard_jwt_cookie(request: Request, response: Response) -> None:
     response.delete_cookie(
         DASHBOARD_JWT_COOKIE_NAME,
         httponly=True,
         samesite="strict",
         secure=_use_secure_dashboard_jwt_cookie(request),
-        path="/",
+        path=dashboard_cookie_path(),
     )
 
 
 def _set_trusted_device_cookie(
     request: Request,
-    response: JSONResponse,
+    response: Response,
     token: str,
 ) -> None:
     response.set_cookie(
@@ -269,7 +270,7 @@ def _set_trusted_device_cookie(
         httponly=True,
         samesite="strict",
         secure=_use_secure_dashboard_jwt_cookie(request),
-        path="/api/auth",
+        path=dashboard_cookie_path("/api/auth"),
     )
 
 
@@ -410,6 +411,39 @@ async def dashboard_login(
     service: AuthService = Depends(get_auth_service),
 ):
     return await _login(request, payload, service)
+
+
+@router.get("/auth/session")
+async def session(
+    request: Request,
+    username: str = Depends(require_dashboard_user),
+) -> JSONResponse:
+    """会话水合：把既有 cookie/Bearer 会话兑换成 token，供前端写入 localStorage。
+
+    面板的 WebSocket/SSE 通道只能以 ``?token=`` 携带凭据（浏览器不为 WS 设请求头），故前端
+    必须持有 token；SSO 免登只写 httpOnly cookie（见 ``auth_sso``），本端点补上
+    「cookie → token」这一步，让内嵌面板在无 localStorage 的全新 iframe 里也能直接进面板。
+
+    不校验密码、不延长信任：无有效会话由 ``require_dashboard_user`` 抛 401。
+    返回体与 ``/auth/login`` 同形，密码升级类提示一律 false（SSO/水合不涉及面板密码强度）。
+    """
+    service = get_auth_service(request)
+    token = service.generate_jwt(username, auth_source="session")
+    response = JSONResponse(
+        {
+            "status": "ok",
+            "message": "",
+            "data": {
+                "token": token,
+                "username": username,
+                "change_pwd_hint": False,
+                "md5_pwd_hint": False,
+                "password_upgrade_required": False,
+            },
+        }
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @router.post("/auth/logout")

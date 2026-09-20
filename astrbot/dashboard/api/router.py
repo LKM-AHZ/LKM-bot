@@ -6,6 +6,7 @@ from fastapi.routing import APIRoute
 from .api_keys import router as api_keys_router
 from .auth import ScopeDependency
 from .auth import router as auth_router
+from .auth_sso import router as auth_sso_router
 from .backups import router as backups_router
 from .bots import router as bots_router
 from .chat import router as chat_router
@@ -37,6 +38,7 @@ def build_api_router() -> APIRouter:
     router = APIRouter(prefix=API_V1_PREFIX)
     child_routers = (
         auth_router,
+        auth_sso_router,
         backups_router,
         config_profiles_router,
         api_keys_router,

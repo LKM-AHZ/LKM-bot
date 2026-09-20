@@ -111,6 +111,30 @@ def _is_dist_compatible(dist_dir: str | Path, current_version: str) -> bool:
     )
 
 
+def _entry_file_exists(dist_path: Path, entry_path: Path) -> bool:
+    """Check whether an index.html entry reference resolves to a file in the dist.
+
+    The Dashboard can be served under a sub-path (this deployment mounts it at
+    ``/bot/`` behind the community gateway, which strips the prefix before
+    proxying). In that case ``index.html`` references ``/bot/assets/...`` while
+    the files still live at the dist root, so a leading path segment that does
+    not exist locally is retried without it.
+
+    Args:
+        dist_path: Dashboard dist directory.
+        entry_path: Reference path with the leading slash already stripped.
+
+    Returns:
+        Whether the referenced file exists inside the dist directory.
+    """
+    if (dist_path / entry_path).is_file():
+        return True
+    if len(entry_path.parts) > 1:
+        stripped = Path(*entry_path.parts[1:])
+        return (dist_path / stripped).is_file()
+    return False
+
+
 def _is_dist_complete(dist_dir: str | Path) -> bool:
     """Check whether a Dashboard dist has a usable local entry bundle.
 
@@ -153,7 +177,7 @@ def _is_dist_complete(dist_dir: str | Path) -> bool:
 
     if not any(path.suffix.lower() == ".js" for path in entry_paths):
         return False
-    return all((dist_path / path).is_file() for path in entry_paths)
+    return all(_entry_file_exists(dist_path, path) for path in entry_paths)
 
 
 def _should_use_bundled_dist(user_dist: str | Path, current_version: str) -> bool:
