@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import (
     ChatMessagePatchRequest,
@@ -22,6 +22,7 @@ from astrbot.dashboard.services.chat_service import (
     ChatServiceError,
 )
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency, require_dashboard_user
 from .multipart import single_upload
 
@@ -40,12 +41,6 @@ def get_service(request: Request) -> ChatService:
 require_chat_scope = ScopeDependency("chat")
 
 
-async def _json_or_empty(request: Request) -> dict[str, Any]:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 async def _json_or_none(request: Request) -> dict[str, Any] | None:

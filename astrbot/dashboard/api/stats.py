@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Request
 
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import ApiError, ok
 from astrbot.dashboard.schemas import GhProxyTestRequest, StorageCleanupRequest
 from astrbot.dashboard.services.stat_service import StatService, StatServiceError

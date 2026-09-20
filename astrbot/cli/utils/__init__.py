@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from .basic import (
     check_astrbot_root,
     check_dashboard,
@@ -10,7 +12,20 @@ from .plugin import (
     install_local_plugin,
     manage_plugin,
 )
-from .version_comparator import VersionComparator
+
+if TYPE_CHECKING:
+    from astrbot.core.utils.version_comparator import VersionComparator
+
+
+def __getattr__(name: str):
+    # Re-exported lazily: importing astrbot.core is heavy and must not happen
+    # when the CLI is merely starting up.
+    if name == "VersionComparator":
+        from astrbot.core.utils.version_comparator import VersionComparator
+
+        return VersionComparator
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "PluginStatus",

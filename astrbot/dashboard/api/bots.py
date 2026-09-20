@@ -6,6 +6,7 @@ from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import BotConfigRequest, EnabledPatch
 from astrbot.dashboard.services.config_service import BotConfigService
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency
 
 router = APIRouter(tags=["Bots"])
@@ -23,12 +24,6 @@ def get_service(request: Request) -> BotConfigService:
     return request.app.state.services.bots
 
 
-async def _json_or_empty(request: Request) -> dict:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def _required_text(value: object, name: str) -> str:

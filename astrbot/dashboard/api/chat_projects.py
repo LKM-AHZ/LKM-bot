@@ -5,7 +5,7 @@ import os
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import ChatProjectRequest
 from astrbot.dashboard.services.chatui_project_service import (
@@ -13,6 +13,7 @@ from astrbot.dashboard.services.chatui_project_service import (
     ChatUIProjectServiceError,
 )
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency, require_dashboard_user
 
 router = APIRouter(tags=["Chat Projects"])
@@ -30,12 +31,6 @@ def get_service(request: Request) -> ChatUIProjectService:
 require_chat_scope = ScopeDependency("chat")
 
 
-async def _json_or_empty(request: Request) -> dict:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def _model_dict(payload) -> dict:

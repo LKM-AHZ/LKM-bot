@@ -6,7 +6,7 @@ from typing import Any
 import httpx
 
 from astrbot import logger
-from astrbot.utils.http_ssl_common import build_ssl_context_with_certifi
+from astrbot.core.utils.http_ssl import build_ssl_context_with_certifi
 
 _SYSTEM_SSL_CTX = build_ssl_context_with_certifi()
 

@@ -5,10 +5,6 @@ import os
 import sys
 from pathlib import Path
 
-import runtime_bootstrap
-
-runtime_bootstrap.initialize_runtime_bootstrap()
-
 DASHBOARD_RESET_PASSWORD_ENV = "ASTRBOT_RESET_DASHBOARD_PASSWORD"
 
 
@@ -29,7 +25,14 @@ def _apply_startup_env_flags(argv: list[str]) -> None:
         os.environ[DASHBOARD_RESET_PASSWORD_ENV] = "1"
 
 
+# Importing runtime_bootstrap pulls in astrbot.core, whose AstrBotConfig
+# constructor consumes ASTRBOT_RESET_DASHBOARD_PASSWORD. Flags must be applied
+# first so astrbot.core never observes a stale environment.
 _apply_startup_env_flags(sys.argv[1:])
+
+import runtime_bootstrap  # noqa: E402
+
+runtime_bootstrap.initialize_runtime_bootstrap()
 
 from astrbot.core import LogBroker, LogManager, db_helper, logger  # noqa: E402
 from astrbot.core.dashboard_assets import resolve_dashboard_dist  # noqa: E402

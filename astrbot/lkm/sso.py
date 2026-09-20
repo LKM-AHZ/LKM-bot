@@ -13,7 +13,9 @@ cookie；票据是显式的、短期的、一次性的换取凭据，且面板�
 
 安全面：
 - 算法白名单**写死 RS256**（防 alg confusion：拿公钥当 HMAC 密钥的经典混淆）；
-- 校验 ``aud=lkm:bot`` + ``type=bot_sso`` + ``account_level=admin``，别的 token 一律不收；
+- 校验 ``iss`` + ``aud=lkm:bot`` + ``type=bot_sso`` + ``account_level=admin``，别的 token
+  一律不收（``iss`` 校验由 PyJWT 的 ``issuer=`` 完成；缺失/不符都归入 ``InvalidTokenError``
+  分支 → 302 回登录页，**不**改成 5xx）；
 - ``jti`` 一次性消费（内存 TTL 表），重放即拒；
 - 票据经 iframe URL query 传递 → 响应带 ``Cache-Control: no-store`` 与 ``Referrer-Policy:
   no-referrer``，且 302 后的 Location 不含票据（不进历史/日志/Referer）；
@@ -36,9 +38,7 @@ import jwt
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse
 
-from astrbot.dashboard.base_path import dashboard_base_path
-
-from .auth import _set_dashboard_jwt_cookie, get_auth_service
+from astrbot.lkm.base_path import dashboard_base_path
 
 
 def _log() -> Any:
@@ -59,9 +59,26 @@ SSO_PUBLIC_KEY_ENV = "LKM_BOT_SSO_PUBLIC_KEY"
 #: PEM 文件路径（k8s Secret / compose 只读挂载首选，免去 env 转义问题）。
 SSO_PUBLIC_KEY_FILE_ENV = "LKM_BOT_SSO_PUBLIC_KEY_FILE"
 
-#: 与社区 auth 域 ``auth.bot_sso`` 同源（单一事实源在那边，这里是消费侧常量）。
-BOT_SSO_AUDIENCE = "lkm:bot"
-BOT_SSO_TYPE = "bot_sso"
+
+def _protocol_value(env_name: str, default: str) -> str:
+    """协议值：同名环境变量可覆盖，未配置/空白 → 代码默认值（进程启动时定值）。
+
+    默认值必须与签发侧 ``auth.bot_sso``（LKM-service）逐字相同，否则票据被对面拒收。
+    跨仓无法共享 import，故真正的单一来源在部署层：``LKM_BOT_SSO_AUDIENCE`` /
+    ``LKM_BOT_SSO_ISSUER`` 由 ``.env`` 只写一次、经 compose 注入两侧（见 ``.env.example``
+    的「LKM Bot」段与 ``x-bot-sso-env`` 锚点）。
+    """
+    return os.environ.get(env_name, "").strip() or default
+
+
+#: 与社区 auth 域 ``auth.bot_sso`` 同源（单一事实源在部署层，这里是消费侧默认值）。
+BOT_SSO_AUDIENCE = _protocol_value("LKM_BOT_SSO_AUDIENCE", "lkm:bot")
+BOT_SSO_TYPE = _protocol_value("LKM_BOT_SSO_TYPE", "bot_sso")
+#: 签发方标识：**本次新增校验**（此前只验 aud/type，iss 签发时写入却从不校验，等于允许
+#: 任何持有同一 audience 的签发方冒充社区 auth）。可经 LKM_BOT_SSO_ISSUER 覆盖（两侧同值）。
+BOT_SSO_ISSUER = _protocol_value("LKM_BOT_SSO_ISSUER", "lkm-auth")
+#: 与签发侧同值（见 LKM-service ``auth.bot_sso.BOT_SSO_ACCOUNT_LEVEL``）。
+BOT_SSO_ACCOUNT_LEVEL = _protocol_value("LKM_BOT_SSO_ACCOUNT_LEVEL", "admin")
 
 #: 已消费票据的保留时长：票据本身 60s 过期，多留一分钟以防「过期边界上的重放」。
 _JTI_RETENTION_S = 120
@@ -153,12 +170,19 @@ async def sso_login(request: Request) -> RedirectResponse:
             public_key,
             algorithms=["RS256"],
             audience=BOT_SSO_AUDIENCE,
+            # iss 校验（本次补齐）：无 issuer= 时 pyjwt 完全不看 iss，任何签得出同 aud 的
+            # 签发方都能换到面板会话。缺失/不符都抛 InvalidTokenError 的子类，落入下面的
+            # fail-safe 分支（302 登录页），不会变成 5xx。
+            issuer=BOT_SSO_ISSUER,
         )
     except jwt.InvalidTokenError as exc:
         _log().warning("Rejected bot SSO ticket: %s", exc)
         return _login_redirect()
 
-    if payload.get("type") != BOT_SSO_TYPE or payload.get("account_level") != "admin":
+    if (
+        payload.get("type") != BOT_SSO_TYPE
+        or payload.get("account_level") != BOT_SSO_ACCOUNT_LEVEL
+    ):
         _log().warning("Rejected bot SSO ticket: wrong type/account_level")
         return _login_redirect()
 
@@ -166,6 +190,10 @@ async def sso_login(request: Request) -> RedirectResponse:
     if not isinstance(jti, str) or not _consume_jti(jti, float(payload.get("exp", 0))):
         _log().warning("Rejected bot SSO ticket: missing or already consumed jti")
         return _login_redirect()
+
+    # 惰性 import：依赖方向是 dashboard → lkm（``astrbot.dashboard.api.router`` 在模块级
+    # import 本模块），顶层反向 import dashboard 会构成循环。
+    from astrbot.dashboard.api.auth import _set_dashboard_jwt_cookie, get_auth_service
 
     service = get_auth_service(request)
     username = service.config["dashboard"]["username"]

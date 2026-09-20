@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
 from astrbot.core import logger
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import (
     SkillByNameUpdateRequest,
@@ -21,6 +21,7 @@ from astrbot.dashboard.services.skills_service import (
     SkillsServiceError,
 )
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency, require_dashboard_user
 from .multipart import multipart_parts, single_upload
 
@@ -39,12 +40,6 @@ def get_service(request: Request) -> SkillsService:
 require_skill_scope = ScopeDependency("skill")
 
 
-async def _json_or_empty(request: Request) -> dict[str, Any]:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def _required_text(value: object, name: str) -> str:

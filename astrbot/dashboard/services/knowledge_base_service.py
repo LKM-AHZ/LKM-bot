@@ -11,10 +11,10 @@ import aiofiles
 
 from astrbot.core import logger
 from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
+from astrbot.core.knowledge_base.kb_visualization import generate_tsne_visualization
 from astrbot.core.provider.provider import EmbeddingProvider, RerankProvider
 from astrbot.core.utils.astrbot_path import get_astrbot_system_tmp_path
 from astrbot.dashboard.schemas import KnowledgeBaseRequest
-from astrbot.dashboard.utils import generate_tsne_visualization
 
 
 class KnowledgeBaseServiceError(Exception):

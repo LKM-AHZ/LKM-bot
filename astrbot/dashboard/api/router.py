@@ -3,10 +3,11 @@
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
+from astrbot.lkm.sso import router as auth_sso_router
+
 from .api_keys import router as api_keys_router
 from .auth import ScopeDependency
 from .auth import router as auth_router
-from .auth_sso import router as auth_sso_router
 from .backups import router as backups_router
 from .bots import router as bots_router
 from .chat import router as chat_router

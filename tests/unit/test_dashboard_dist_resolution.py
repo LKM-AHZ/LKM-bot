@@ -180,7 +180,14 @@ class TestSubPathBaseDist:
 
     若把这类引用当成"缺文件"，内置 dist 会被判不完整 → 后端转而去上游 registry 下载**根 base**
     的 WebUI 覆盖它，子路径部署随即全面 404。
+
+    前缀由配置提供（``astrbot.lkm.base_path``，env ``ASTRBOT_DASHBOARD_BASE_PATH``），core 不再
+    盲剥首段路径——故本类用例统一先声明前缀。
     """
+
+    @pytest.fixture(autouse=True)
+    def _subpath_base(self, monkeypatch):
+        monkeypatch.setenv("ASTRBOT_DASHBOARD_BASE_PATH", "/bot")
 
     def test_subpath_dist_is_served_quietly(self, tmp_path, caplog):
         dist = _make_subpath_dist(tmp_path / "webui", f"v{VERSION}")
@@ -206,4 +213,23 @@ class TestSubPathBaseDist:
         dist = tmp_path / "webui"
         _make_subpath_dist(dist, f"v{VERSION}")
         (dist / "assets" / "app.js").unlink()
+        assert _is_dist_complete(dist) is False
+
+    def test_base_root_keeps_upstream_behavior(self, monkeypatch, tmp_path):
+        """未配置前缀（上游单机部署语义）：根 base 的引用照常解析，不做任何剥离。"""
+        from astrbot.core.dashboard_assets import _is_dist_complete
+
+        monkeypatch.delenv("ASTRBOT_DASHBOARD_BASE_PATH", raising=False)
+        monkeypatch.delenv("DASHBOARD_BASE_PATH", raising=False)
+        dist = tmp_path / "webui"
+        _make_dist(dist, f"v{VERSION}")
+        assert _is_dist_complete(dist) is True
+
+    def test_prefix_is_stripped_only_when_configured(self, monkeypatch, tmp_path):
+        """前缀不匹配时不得盲剥首段：带 ``/other/`` 前缀的引用在 ``/bot`` 部署下判为缺文件。"""
+        from astrbot.core.dashboard_assets import _is_dist_complete
+
+        monkeypatch.setenv("ASTRBOT_DASHBOARD_BASE_PATH", "/bot")
+        dist = tmp_path / "webui"
+        _make_subpath_dist(dist, f"v{VERSION}", base="/other")
         assert _is_dist_complete(dist) is False

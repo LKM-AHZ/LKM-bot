@@ -111,27 +111,46 @@ def _is_dist_compatible(dist_dir: str | Path, current_version: str) -> bool:
     )
 
 
-def _entry_file_exists(dist_path: Path, entry_path: Path) -> bool:
+def _configured_base_prefix() -> str:
+    """Return the configured Dashboard sub-path prefix (``""`` or ``"/bot"``).
+
+    The value itself is owned by the customization layer
+    (``astrbot.lkm.base_path``): core only consumes it. Imported lazily so that
+    core carries no import-time dependency on that layer.
+
+    Returns:
+        Normalized prefix, or an empty string when the Dashboard is served at
+        the site root (upstream single-host behavior).
+    """
+    from astrbot.lkm.base_path import dashboard_base_path
+
+    return dashboard_base_path()
+
+
+def _entry_file_exists(dist_path: Path, entry_path: Path, base_prefix: str) -> bool:
     """Check whether an index.html entry reference resolves to a file in the dist.
 
     The Dashboard can be served under a sub-path (this deployment mounts it at
     ``/bot/`` behind the community gateway, which strips the prefix before
     proxying). In that case ``index.html`` references ``/bot/assets/...`` while
-    the files still live at the dist root, so a leading path segment that does
-    not exist locally is retried without it.
+    the files still live at the dist root, so the prefix reported by
+    ``base_prefix`` is stripped before looking the file up. With an empty prefix
+    the reference is used as-is, matching upstream single-host behavior.
 
     Args:
         dist_path: Dashboard dist directory.
         entry_path: Reference path with the leading slash already stripped.
+        base_prefix: Configured sub-path prefix (``""`` or ``"/bot"``).
 
     Returns:
         Whether the referenced file exists inside the dist directory.
     """
     if (dist_path / entry_path).is_file():
         return True
-    if len(entry_path.parts) > 1:
-        stripped = Path(*entry_path.parts[1:])
-        return (dist_path / stripped).is_file()
+    prefix_parts = Path(base_prefix.lstrip("/")).parts if base_prefix else ()
+    if prefix_parts and entry_path.parts[: len(prefix_parts)] == prefix_parts:
+        stripped = Path(*entry_path.parts[len(prefix_parts) :])
+        return bool(stripped.parts) and (dist_path / stripped).is_file()
     return False
 
 
@@ -177,7 +196,8 @@ def _is_dist_complete(dist_dir: str | Path) -> bool:
 
     if not any(path.suffix.lower() == ".js" for path in entry_paths):
         return False
-    return all(_entry_file_exists(dist_path, path) for path in entry_paths)
+    base_prefix = _configured_base_prefix()
+    return all(_entry_file_exists(dist_path, path, base_prefix) for path in entry_paths)
 
 
 def _should_use_bundled_dist(user_dist: str | Path, current_version: str) -> bool:

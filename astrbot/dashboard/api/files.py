@@ -12,7 +12,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import ChatUploadInitRequest, ChatUploadSessionRequest
 from astrbot.dashboard.services.chat_service import ChatService, ChatServiceError

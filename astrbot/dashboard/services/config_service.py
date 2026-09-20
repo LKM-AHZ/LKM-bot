@@ -30,6 +30,7 @@ from astrbot.core.platform.register import platform_cls_map, platform_registry
 from astrbot.core.provider.register import provider_registry
 from astrbot.core.star.star import star_registry
 from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.core.utils.totp import (
     is_totp_enabled,
     revoke_user_trusted_devices,
@@ -38,7 +39,6 @@ from astrbot.core.utils.totp import (
 )
 from astrbot.core.utils.upload import UploadTooLargeError
 from astrbot.core.utils.webhook_utils import ensure_platform_webhook_config
-from astrbot.dashboard.async_utils import run_maybe_async
 from astrbot.dashboard.responses import ApiError
 
 PROTECTED_2FA_CONFIG_PATHS = (

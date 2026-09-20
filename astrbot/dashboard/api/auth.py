@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, Response
 
 from astrbot.core.workspace import API_KEY_USERNAME_PREFIX
-from astrbot.dashboard.base_path import dashboard_cookie_path
 from astrbot.dashboard.responses import ApiError
 from astrbot.dashboard.schemas import (
     AccountUpdateRequest,
@@ -27,6 +26,7 @@ from astrbot.dashboard.services.auth_service import (
     AuthService,
     AuthServiceResult,
 )
+from astrbot.lkm.base_path import dashboard_cookie_path
 
 DESKTOP_SESSION_HEADER = "X-AstrBot-Desktop-Session"
 

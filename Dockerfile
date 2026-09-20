@@ -1,8 +1,9 @@
 # ── WebUI 构建阶段 ──
-# 面板前端在本仓构建（而非运行期从上游 registry 下载）：本部署把它挂在社区站同域 /bot/ 子路径
-# 下，静态资源引用与 API 前缀都由**构建期** base 决定；上游下载的是根 base 包，在子路径下会全部
-# 404。且后端 `AstrBotUpdater.ensure_dashboard()` 只在 bundled dist 版本匹配时才跳过下载，故
-# 构建产物必须带 `assets/version`（见 dashboard/scripts/write-dist-version.mjs）。
+# 面板前端在本仓构建（而非运行期从上游 registry 下载）：本部署把它挂在社区站同域的子路径下
+# （默认 /bot/，由 ARG VITE_BASE_PATH 决定，见下），静态资源引用与 API 前缀都由**构建期** base
+# 决定；上游下载的是根 base 包，在子路径下会全部 404。且后端
+# `AstrBotUpdater.ensure_dashboard()` 只在 bundled dist 版本匹配时才跳过下载，故构建产物必须带
+# `assets/version`（见 dashboard/scripts/write-dist-version.mjs）。
 FROM node:22-slim AS dashboard
 WORKDIR /dashboard
 # pnpm 版本必须与 lockfile 的生成版本一致：dashboard/pnpm-lock.yaml 是 lockfileVersion 9.0
@@ -16,9 +17,11 @@ COPY dashboard/ ./
 # Core 侧文件，故按同样的相对结构放进构建阶段。
 COPY astrbot/__init__.py /astrbot/__init__.py
 COPY astrbot/core/utils/t2i/template/shiki_runtime.iife.js /astrbot/core/utils/t2i/template/shiki_runtime.iife.js
-# 子路径前缀（默认 /bot/，与根编排的网关路由一致）。构建脚本跳过 vue-tsc（类型检查在开发/CI 侧做，
-# 不让它卡住部署构建）。
-ARG VITE_BASE_PATH=/bot/
+# 前端构建期 base：默认 `/`（上游语义——镜像本身与部署位置无关，不该把某套编排的子路径烘进来）。
+# 挂子路径的部署**必须显式传参**：根编排 compose 从 LKM_BOT_BASE_PATH 派生（见 docker-compose.yml
+# 的 lkmbot.build.args 与 deploy/k8s 侧说明）；不带参数构建得到的是根 base 包，子路径下资源会 404。
+# 构建脚本跳过 vue-tsc（类型检查在开发/CI 侧做，不让它卡住部署构建）。
+ARG VITE_BASE_PATH=/
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 RUN pnpm build:subpath
 

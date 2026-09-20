@@ -11,8 +11,6 @@ import click
 import httpx
 import yaml
 
-from .version_comparator import VersionComparator
-
 
 class PluginStatus(str, Enum):
     INSTALLED = "installed"
@@ -128,6 +126,8 @@ def build_plug_list(plugins_dir: Path) -> list:
         list: List of dicts containing plugin information
 
     """
+    from astrbot.core.utils.version_comparator import VersionComparator
+
     # Get local plugin info
     result: list[dict[str, Any]] = []
     if plugins_dir.is_dir():

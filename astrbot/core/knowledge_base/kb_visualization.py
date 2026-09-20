@@ -3,7 +3,7 @@ import traceback
 from io import BytesIO
 from typing import TYPE_CHECKING, cast
 
-from astrbot.api import logger
+from astrbot.core import logger
 from astrbot.core.knowledge_base.kb_helper import KBHelper
 from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
 

@@ -11,11 +11,11 @@ from fastapi.responses import PlainTextResponse, Response
 from astrbot.api.web import PluginRequest, bind_request_context
 from astrbot.core import logger
 from astrbot.core.log import LogManager
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.asgi_runtime import (
     DashboardRequestState,
     call_request_view,
 )
-from astrbot.dashboard.async_utils import run_maybe_async
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import (
     EnabledPatch,
@@ -49,6 +49,7 @@ from astrbot.dashboard.services.plugin_service import (
     PluginServiceWarning,
 )
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency, require_dashboard_user
 from .multipart import multipart_parts
 
@@ -75,12 +76,6 @@ def get_config_file_service(request: Request) -> ConfigFileService:
     return request.app.state.services.config_files
 
 
-async def _json_or_empty(request: Request) -> dict[str, Any]:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def _required_text(value: object, name: str) -> str:

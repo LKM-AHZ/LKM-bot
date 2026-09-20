@@ -5,7 +5,7 @@ from typing import Any, Literal
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
 
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import ApiError, ok
 from astrbot.dashboard.schemas import (
     ConversationBatchDeleteRequest,
@@ -19,6 +19,7 @@ from astrbot.dashboard.services.conversation_service import (
     ConversationServiceError,
 )
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency, require_dashboard_user
 
 router = APIRouter(tags=["Conversations"])
@@ -36,12 +37,6 @@ def get_service(request: Request) -> ConversationService:
 require_data_scope = ScopeDependency("data")
 
 
-async def _json_or_empty(request: Request) -> dict[str, Any]:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def _model_dict(payload) -> dict[str, Any]:

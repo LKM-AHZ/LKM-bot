@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 
 from astrbot.core import logger
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import (
     BackupImportRequest,
@@ -17,6 +17,7 @@ from astrbot.dashboard.services.backup_service import (
     BackupServiceError,
 )
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, require_dashboard_user, require_scope
 from .multipart import UploadFileAdapter
 
@@ -55,12 +56,6 @@ def _safe_backup_filename(filename: str | None) -> str:
     return filename
 
 
-async def _json_or_empty(request: Request) -> dict:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 async def _run(operation, *, prefix: str):

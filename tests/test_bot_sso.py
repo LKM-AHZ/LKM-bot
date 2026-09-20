@@ -12,6 +12,7 @@ Path 与 302 Location 的作用。
 from __future__ import annotations
 
 import datetime
+import importlib
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
@@ -25,17 +26,17 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from astrbot.dashboard.api import auth_sso
 from astrbot.dashboard.api.router import build_api_router
-from astrbot.dashboard.base_path import (
-    dashboard_base_path,
-    dashboard_cookie_path,
-    with_base,
-)
 from astrbot.dashboard.responses import ApiError, error
 from astrbot.dashboard.services.auth_service import (
     DASHBOARD_JWT_COOKIE_NAME,
     AuthService,
+)
+from astrbot.lkm import sso as auth_sso
+from astrbot.lkm.base_path import (
+    dashboard_base_path,
+    dashboard_cookie_path,
+    with_base,
 )
 
 JWT_SECRET = "bot-sso-test-secret-with-32-bytes!!"
@@ -207,6 +208,86 @@ async def test_sso_rejects_wrong_audience_type_and_level(
 
 
 @pytest.mark.asyncio
+async def test_sso_rejects_wrong_or_missing_issuer(
+    client: httpx.AsyncClient,
+    rsa_keys: tuple[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``iss`` 校验（本次补齐）：签发方不符或缺失都拒——同 aud 的其它签发方不能再冒充。
+
+    此前只验 aud/type/account_level，iss 由签发侧写入却从不校验，等于放行任何持同一
+    audience 的签发方。行为必须仍是 302 回登录页（fail-safe），**不是** 5xx。
+    """
+    private_pem, public_pem = rsa_keys
+    monkeypatch.setenv(auth_sso.SSO_PUBLIC_KEY_ENV, public_pem)
+    for overrides in ({"iss": "evil-issuer"}, {"iss": None}):  # None → 该 claim 被剔除
+        resp = await client.get(
+            "/api/v1/auth/sso",
+            params={"ticket": _ticket(private_pem, **overrides)},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302, overrides
+        assert resp.headers["location"] == "/#/auth/login", overrides
+
+
+def test_protocol_defaults_match_signing_side() -> None:
+    """消费侧默认值必须与签发侧（LKM-service ``auth/bot_sso.py``）逐字相同。
+
+    跨仓无法共享 import，故默认值只能靠两侧断言互锁；部署层另有单源测试（LKM-service 的
+    ``tests/deploy/test_bot_config.py``）比对两侧源码字面量。
+    """
+    assert auth_sso.BOT_SSO_AUDIENCE == "lkm:bot"
+    assert auth_sso.BOT_SSO_TYPE == "bot_sso"
+    assert auth_sso.BOT_SSO_ISSUER == "lkm-auth"
+    assert auth_sso.BOT_SSO_ACCOUNT_LEVEL == "admin"
+
+
+@pytest.mark.asyncio
+async def test_protocol_values_follow_env_override(
+    client: httpx.AsyncClient,
+    rsa_keys: tuple[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """协议值可经同名环境变量覆盖（部署层注入两侧的就是这组名字），验签随之认新值。"""
+    private_pem, public_pem = rsa_keys
+    monkeypatch.setenv(auth_sso.SSO_PUBLIC_KEY_ENV, public_pem)
+    monkeypatch.setenv("LKM_BOT_SSO_AUDIENCE", "lkm:bot-x")
+    monkeypatch.setenv("LKM_BOT_SSO_ISSUER", "auth-x")
+    try:
+        # reload 后模块常量（以及既有端点函数读到的全局）都切到新值
+        importlib.reload(auth_sso)
+        assert auth_sso.BOT_SSO_AUDIENCE == "lkm:bot-x"
+        assert auth_sso.BOT_SSO_ISSUER == "auth-x"
+
+        ok = await client.get(
+            "/api/v1/auth/sso",
+            params={
+                "ticket": _ticket(private_pem, aud="lkm:bot-x", iss="auth-x"),
+            },
+            follow_redirects=False,
+        )
+        assert ok.status_code == 302
+        assert ok.headers["location"] == "/#/welcome"
+
+        stale = await client.get(
+            "/api/v1/auth/sso",
+            params={"ticket": _ticket(private_pem)},  # 默认的 lkm:bot / lkm-auth
+            follow_redirects=False,
+        )
+        assert stale.status_code == 302
+        assert stale.headers["location"] == "/#/auth/login"
+    finally:
+        for name in (
+            "LKM_BOT_SSO_AUDIENCE",
+            "LKM_BOT_SSO_ISSUER",
+            "LKM_BOT_SSO_TYPE",
+            "LKM_BOT_SSO_ACCOUNT_LEVEL",
+        ):
+            monkeypatch.delenv(name, raising=False)
+        importlib.reload(auth_sso)
+
+
+@pytest.mark.asyncio
 async def test_sso_rejects_hs256_forgery(
     client: httpx.AsyncClient,
     rsa_keys: tuple[str, str],
@@ -370,10 +451,13 @@ def test_dashboard_modules_use_log_manager() -> None:
     ``Formatting field not found in record: 'plugin_tag'``，而该异常发生在请求处理路径上，
     表现为 400（真机验收踩到过，单测因不经 loguru 格式化而漏掉）。
     """
-    dashboard_dir = Path(__file__).resolve().parents[1] / "astrbot" / "dashboard"
+    # SSO 端点已迁到定制的 lkm 层（astrbot/lkm/sso.py），同样在请求路径上记日志，故一并纳入扫描。
+    astrbot_dir = Path(__file__).resolve().parents[1] / "astrbot"
+    scanned_dirs = [astrbot_dir / "dashboard", astrbot_dir / "lkm"]
     offenders = [
-        f"{path.relative_to(dashboard_dir)}:{lineno}"
-        for path in dashboard_dir.rglob("*.py")
+        f"{path.relative_to(astrbot_dir)}:{lineno}"
+        for directory in scanned_dirs
+        for path in directory.rglob("*.py")
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)
         if "logging.getLogger" in line and not line.lstrip().startswith("#")
     ]

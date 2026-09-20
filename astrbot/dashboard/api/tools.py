@@ -4,7 +4,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 
-from astrbot.dashboard.async_utils import run_maybe_async
+from astrbot.core.utils.async_utils import run_maybe_async
 from astrbot.dashboard.responses import ApiError, ok
 from astrbot.dashboard.schemas import (
     McpServerByNameRequest,
@@ -15,6 +15,7 @@ from astrbot.dashboard.schemas import (
 )
 from astrbot.dashboard.services.tools_service import ToolsService, ToolsServiceError
 
+from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency, require_dashboard_user, require_scope
 
 router = APIRouter(tags=["Extension Components"])
@@ -36,12 +37,6 @@ async def require_tool_scope(request: Request) -> AuthContext:
 require_mcp_scope = ScopeDependency("mcp")
 
 
-async def _json_or_empty(request: Request) -> dict[str, Any]:
-    try:
-        data = await request.json()
-    except Exception:
-        return {}
-    return data if isinstance(data, dict) else {}
 
 
 def _required_text(value: object, name: str) -> str:
