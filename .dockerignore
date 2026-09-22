@@ -15,14 +15,25 @@ env/
 venv*/
 ENV/
 .conda/
+# 本机特有的凭据/运行状态（.gitignore 已忽略）：Dockerfile 用 `COPY . /LKMBot/`，
+# 不在这里挡掉就会连同开发者本地的 LLM/DB 配置与 cookie 一起烘进镜像层
+# （docker history / 推送到 registry 都能看到）。运行期配置应走 env 或挂载。
+configs/config.yaml
+configs/session
+cmd_config.json
+cookies.json
+logs/
+CharacterModels/
+GenieData/
 # 前端源码需进构建上下文：镜像里的 WebUI 由 dashboard/ 现场构建（子路径 base 必须在构建期
 # 注入；运行期从上游 registry 下载的是根 base 包，在 /bot/ 下会全部 404）。只排除可再生的大目录。
 dashboard/node_modules
 dashboard/dist
 dashboard/.pnpm-store
-!astrbot/dashboard/
-!astrbot/dashboard/dist/
-!astrbot/dashboard/dist/**
+# bundled WebUI 产物（生成物，.gitignore 已忽略）：镜像里由上面的 dashboard/ 阶段现场构建后
+# 用 `COPY --from=dashboard` 放好。这个 COPY 是合并而不是清空，本地产物若进了上下文，
+# 陈旧带哈希的资产会与新产物并存。
+astrbot/dashboard/dist
 data/
 tests/
 .ruff_cache/

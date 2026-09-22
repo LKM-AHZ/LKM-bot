@@ -10,7 +10,9 @@ info:
     Developer API keys currently support these scopes only: bot, provider,
     persona, im, config, chat, data, file, plugin, mcp, skill, plus the sensitive
     config:edit_admin and chat:admin sub-scopes. The config scope also grants bot
-    and provider access, but no parent scope grants a sensitive sub-scope.
+    and provider access, but no parent scope grants a sensitive sub-scope. The
+    system, kb and tool scopes below are only reachable with a dashboard login
+    session and are deliberately not grantable to API keys.
 x-astrbot-scope-definitions:
   bot:
     description: Manage bot and platform configurations.
@@ -56,6 +58,15 @@ x-astrbot-scope-definitions:
   skill:
     description: Manage Skills, archives, files, and Shipyard Neo Skill workflows.
     description_zh: 管理 Skills、Skill 压缩包、Skill 文件和 Shipyard Neo Skill 流程。
+  system:
+    description: System operations such as restart, updates, backups, cron, logs, stats, and API key administration. Dashboard login session only — not grantable to API keys.
+    description_zh: 系统运维（重启、更新、备份、定时任务、日志、统计与 API Key 管理）。仅限面板登录会话，不可授予 API Key。
+  kb:
+    description: Manage knowledge bases and their documents. Dashboard login session only — not grantable to API keys.
+    description_zh: 管理知识库及其文档。仅限面板登录会话，不可授予 API Key。
+  tool:
+    description: Manage LLM tools, plugin commands, and plugin extensions. Dashboard login session only — not grantable to API keys.
+    description_zh: 管理 LLM 工具、插件指令与插件扩展。仅限面板登录会话，不可授予 API Key。
 servers:
   - url: http://localhost:6185
     description: Local LKMBot server
@@ -119,6 +130,10 @@ paths:
       tags: [Auth]
       summary: Logout from the dashboard API
       operationId: logout
+      # 面板会话接口：实现走 require_dashboard_user（Bearer JWT 或 astrbot_dashboard_jwt
+      # cookie），不是文档级的 ApiKeyAuth —— API Key 调不动这些接口
+      security:
+        - BearerAuth: []
       responses:
         "200":
           $ref: "#/components/responses/Ok"
@@ -154,6 +169,9 @@ paths:
       tags: [Auth]
       summary: Start or refresh TOTP setup
       operationId: setupTotp
+      # 同 logout：面板会话接口，api key 不适用
+      security:
+        - BearerAuth: []
       requestBody:
         required: false
         content:
@@ -169,6 +187,9 @@ paths:
       tags: [Auth]
       summary: Generate or rotate TOTP recovery codes
       operationId: recoverTotp
+      # 同 logout：面板会话接口，api key 不适用
+      security:
+        - BearerAuth: []
       responses:
         "200":
           $ref: "#/components/responses/Ok"
@@ -178,6 +199,9 @@ paths:
       tags: [Auth]
       summary: Update dashboard account credentials
       operationId: updateAuthAccount
+      # 同 logout：面板会话接口，api key 不适用
+      security:
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -1167,6 +1191,14 @@ paths:
     get:
       tags: [Chat]
       summary: Open a streaming chat WebSocket
+      # 凭据放 query 是给「无法自定义握手的请求头」的浏览器兜底：query 会被访问日志、代理、
+      # Referer 记录，长期 Key 经此传递有泄露面。实现同时接受头（X-API-Key / Authorization:
+      # ApiKey|Bearer），能带头的客户端应优先用头，query 传参建议用短 TTL 的 Key。
+      description: >-
+        Prefer an `X-API-Key` header (or `Authorization: ApiKey <key>`) when the client can set
+        WebSocket handshake headers. The `api_key`/`key` query parameters exist for browsers that
+        cannot; query strings are routinely recorded by access logs, proxies and Referer headers, so
+        only use them with a short-lived key.
       operationId: openChatWebSocket
       x-websocket: true
       x-astrbot-scope: chat
@@ -1188,6 +1220,13 @@ paths:
     get:
       tags: [Chat]
       summary: Open the live voice chat WebSocket
+      # token 是登录得到的面板会话 JWT（自带过期时间）；因浏览器 WebSocket 无法自定义请求头，
+      # 只能经 query 传递，而 query 会进访问日志/代理日志/Referer
+      description: >-
+        `token` is the dashboard session JWT returned by `POST /api/v1/auth/login` (it carries its
+        own expiry). It is passed as a query parameter because browsers cannot set headers on a
+        WebSocket handshake; note that query strings are captured by access logs, proxies and
+        Referer headers.
       operationId: openLiveChatWebSocket
       x-websocket: true
       x-astrbot-scope: chat
@@ -1205,6 +1244,12 @@ paths:
     get:
       tags: [Chat]
       summary: Open the unified live/chat WebSocket
+      # 同 live-chat/ws：会话 JWT 经 query 传递，原因是浏览器无法在握手时自定义请求头
+      description: >-
+        `token` is the dashboard session JWT returned by `POST /api/v1/auth/login` (it carries its
+        own expiry). It is passed as a query parameter because browsers cannot set headers on a
+        WebSocket handshake; note that query strings are captured by access logs, proxies and
+        Referer headers.
       operationId: openUnifiedChatWebSocket
       x-websocket: true
       x-astrbot-scope: chat
@@ -2221,18 +2266,8 @@ paths:
       x-astrbot-scope: plugin
       parameters:
         - $ref: "#/components/parameters/PluginId"
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                delete_config:
-                  type: boolean
-                delete_data:
-                  type: boolean
-              additionalProperties: true
+      # GET 不带请求体（RFC 9110 / OpenAPI 语义）：delete_config/delete_data 属于下面的
+      # uninstallPlugin(DELETE)，原先贴在 getPlugin 上的那份是复制粘贴残留。
       responses:
         "200":
           $ref: "#/components/responses/Ok"
@@ -2304,8 +2339,9 @@ paths:
               type: object
               properties:
                 level:
-                  type: string
-                  nullable: true
+                  # 3.1/JSON Schema 2020-12 没有 nullable 关键字（写了会被忽略），
+                  # 可空要用类型数组表达；enum 里的 null 与之配套
+                  type: [string, "null"]
                   enum: [DEBUG, INFO, WARNING, ERROR, CRITICAL, null]
                   description: Log level name, or null to follow the global level.
               additionalProperties: true
@@ -5869,8 +5905,8 @@ components:
         install_method:
           type: string
         registry_url:
-          type: string
-          nullable: true
+          # 3.1 里 nullable 不是关键字，可空须写成类型数组
+          type: [string, "null"]
         market_plugin_id:
           type: string
       additionalProperties: false
@@ -5919,8 +5955,8 @@ components:
         install_method:
           type: string
         registry_url:
-          type: string
-          nullable: true
+          # 3.1 里 nullable 不是关键字，可空须写成类型数组
+          type: [string, "null"]
         market_plugin_id:
           type: string
       additionalProperties: false
@@ -5943,8 +5979,8 @@ components:
         install_method:
           type: string
         registry_url:
-          type: string
-          nullable: true
+          # 3.1 里 nullable 不是关键字，可空须写成类型数组
+          type: [string, "null"]
         market_plugin_id:
           type: string
       additionalProperties: false
@@ -6251,7 +6287,9 @@ components:
           type: string
         rule_key:
           type: string
-      additionalProperties: false
+      # 不能设 additionalProperties: false：下面的 BatchSession*Request 用 allOf 组合本 schema，
+      # 而 JSON Schema 2020-12 里该键按子 schema 各自求值，会把派生分支声明的属性判成多余。
+      # 实现侧这些模型继承 OpenModel（pydantic extra="allow"），本就接受额外字段。
 
     BatchSessionProviderRequest:
       allOf:

@@ -3,7 +3,10 @@ name = "LKMBot"
 version = "0.1.0"
 description = "Easy-to-use multi-platform LLM chatbot and development framework"
 readme = "README.md"
-license = { text = "AGPL-3.0-or-later" }
+# PEP 639：用 SPDX 表达式替代旧式 { text = ... } 表（后者会触发 hatchling 的弃用提示），
+# 并显式声明许可证文件，打包时的许可元数据才完整
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.12"
 
 keywords = ["LKMBot", "LKM", "Agent", "Chatbot", "IM"]
@@ -60,7 +63,8 @@ dependencies = [
   "rank-bm25>=0.2.2",
   "jieba>=0.42.1",
   "markitdown-no-magika[docx,xls,xlsx]>=0.1.2",
-  "xinference-client",
+  # 下界取 uv.lock 中已验证的版本：pip 安装路径（coverage_test.yml）不经 lock，无约束会取到任意新版
+  "xinference-client>=3.4.0",
   "tenacity>=9.1.2",
   "shipyard-python-sdk>=0.2.4",
   "shipyard-neo-sdk>=0.2.0",
@@ -95,7 +99,7 @@ Repository = "https://github.com/Alma1314/LKM-bot"
 [tool.ruff]
 exclude = ["astrbot/core/utils/t2i/local_strategy.py", "astrbot/api/all.py", "tests"]
 line-length = 88
-target-version = "py310"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
@@ -113,13 +117,31 @@ ignore = [
   "F403",
   "F405",
   "E501",
-  "ASYNC230", # TODO: handle ASYNC230 in LKMBot
-  "ASYNC240", # TODO: handle ASYNC240 in LKMBot
+]
+
+# 豁免只给上游 astrbot/ 目录，不再全局关闭：
+# - ASYNC230/ASYNC240（阻塞式文件 I/O）：待上游迁移，本仓不改上游代码（实测全仓命中都在 astrbot/）；
+# - UP*/ASYNC109：target-version 已随运行期门槛提到 py312，而上游树仍是 py310 写法（PEP695 泛型、
+#   datetime.UTC 等），全量迁移要改上游文件。
+# 自研文件（main.py / scripts/ 等）不受豁免，新代码仍按 3.12 口径被拦截。
+[tool.ruff.lint.per-file-ignores]
+"astrbot/**" = [
+  "ASYNC109",
+  "ASYNC230",
+  "ASYNC240",
+  "UP017",
+  "UP035",
+  "UP036",
+  "UP040",
+  "UP041",
+  "UP042",
+  "UP046",
+  "UP047",
 ]
 
 [tool.pyright]
 typeCheckingMode = "basic"
-pythonVersion = "3.10"
+pythonVersion = "3.12"
 reportMissingTypeStubs = false
 reportMissingImports = false
 include = ["astrbot"]
@@ -130,16 +152,24 @@ exclude = ["dashboard", "node_modules", "dist", "data", "tests"]
 # 与 .python-version / requires-python 对齐，避免 ty 默认版本带来的口径漂移
 python-version = "3.12"
 
-# 排除范围与 pyright 的 exclude、ruff 的 exclude 保持一致：测试代码不纳入静态类型检查。
-# 理由是测试里大量 mock/替身（SimpleNamespace / MagicMock / 裸 dict 赋给有类型属性）会产生
-# 上千条与真实缺陷无关的诊断；要"修"它们只能靠加宽注解或强转，反而弱化类型。
+# 排除范围与 pyright 的 exclude 保持一致（ruff 侧由 respect-gitignore 默认跳过同一批目录）：
+# 测试代码不纳入静态类型检查——测试里大量 mock/替身（SimpleNamespace / MagicMock / 裸 dict 赋给
+# 有类型属性）会产生上千条与真实缺陷无关的诊断，要"修"它们只能靠加宽注解或强转，反而弱化类型；
+# 其余目录是前端产物/依赖/运行期数据，可能混入生成的 Python，pyright 也不看。
 [tool.ty.src]
-exclude = ["tests"]
+exclude = ["tests", "dashboard", "node_modules", "dist", "data"]
 
 [tool.ty.rules]
-# 全仓 `# type: ignore` 是给 pyright 写的（本仓库 pyright 仍是配置中的检查器）。
-# ty 判定"未使用"并不代表 pyright 也不再需要 → 保留注释本身，只在 ty 侧关掉该提示，
+# 放宽项一律下移到 [[tool.ty.overrides]] 按目录收窄，不放全局：全局关掉等于以后新代码里的
+# 同类问题也永远不报（本仓的 `# type: ignore` 全在 astrbot/ 这棵上游树里）。
+
+# 上游树的 `# type: ignore` 是给 pyright 写的（本仓库 pyright 仍是配置中的检查器）。
+# ty 判定"未使用"并不代表 pyright 也不再需要 → 保留注释本身，只在 ty 侧对这批文件关掉该提示，
 # 否则每条都会让 `ty check` 以非零码退出。
+[[tool.ty.overrides]]
+include = ["astrbot/**"]
+
+[tool.ty.overrides.rules]
 unused-type-ignore-comment = "ignore"
 
 [tool.hatch.metadata]
@@ -161,5 +191,7 @@ packages = ["astrbot"]
 path = "scripts/hatch_build.py"
 
 [build-system]
-requires = ["hatchling"]
+# 下界是 PEP 639（license/license-files 的 SPDX 形式）所需的版本；不设下界时
+# 未来某次 hatchling 大版本变更会在本仓零改动的情况下弄坏 uv sync / wheel 构建
+requires = ["hatchling>=1.27"]
 build-backend = "hatchling.build"

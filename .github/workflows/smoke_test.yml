@@ -41,7 +41,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
-          cache-dependency-path: requirements.txt
+          # 仓库里没有 requirements.txt（依赖以 pyproject.toml + uv.lock 为准，
+          # Dockerfile 里的 requirements.txt 是构建期临时导出的），指向 uv.lock 才能命中缓存
+          cache-dependency-path: uv.lock
 
       - name: Install uv
         run: |
@@ -50,10 +52,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip install --system -r requirements.txt
-        timeout-minutes: 15
+          uv sync --frozen
+        # job 上限是 10 分钟，写 15 永远不会生效（job 先被杀）；8 分钟给安装留预算，
+        # 也给后面 2 分钟的冒烟留出余量
+        timeout-minutes: 8
 
       - name: Run smoke tests
         run: |
-          python scripts/smoke_startup_check.py
+          uv run python scripts/smoke_startup_check.py
         timeout-minutes: 2

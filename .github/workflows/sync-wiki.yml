@@ -14,7 +14,9 @@ on:
 
 concurrency:
   group: sync-wiki-${{ github.ref }}
-  cancel-in-progress: true
+  # 这是会 push 到 wiki 仓库的发布型 workflow：取消在途运行可能掐在 commit/push 中间，
+  # 留下半成品状态并让下一次运行重做；改为串行等待（新运行排队而不是取消旧的）
+  cancel-in-progress: false
 
 jobs:
   sync:
@@ -36,7 +38,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: '3.11'
+          # 与 .python-version / requires-python(>=3.12) 对齐
+          python-version: '3.12'
 
       - name: Run sync unit tests
         working-directory: docs
@@ -50,7 +53,13 @@ jobs:
           WIKI_TOKEN: ${{ secrets.ASTRBOT_WIKI_TOKEN }}
         run: |
           test -n "$WIKI_TOKEN"
-          git clone "https://x-access-token:${WIKI_TOKEN}@github.com/AstrBotDevs/AstrBot.wiki.git" wiki
+          # 不再把 token 拼进 clone URL：那会写进 wiki/.git/config 的 remote.origin.url、
+          # 暴露在 ps 参数表里，还可能被 git 在 clone 失败时回显。改用凭据存储
+          # （0600，仅本次 runner），remote URL 全程不含 token，后续 push 复用同一 helper。
+          git config --global credential.helper store
+          umask 077
+          printf 'https://x-access-token:%s@github.com\n' "$WIKI_TOKEN" > "$HOME/.git-credentials"
+          git clone https://github.com/AstrBotDevs/AstrBot.wiki.git wiki
 
       - name: Generate wiki pages
         run: python docs/scripts/sync_docs_to_wiki.py --source-root docs --wiki-root wiki
@@ -65,5 +74,7 @@ jobs:
             echo "No wiki changes to push"
             exit 0
           fi
-          git commit -m "docs: sync wiki from AstrBot-1/docs"
+          # 原先是 "docs: sync wiki from AstrBot-1/docs"（别的仓库名，复制粘贴残留），
+          # 用实际仓库名以免 wiki 历史里来源对不上
+          git commit -m "docs: sync wiki from ${{ github.repository }}"
           git push

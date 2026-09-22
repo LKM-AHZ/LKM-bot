@@ -1597,7 +1597,7 @@ requires-dist = [
     { name = "watchfiles", specifier = ">=1.0.5" },
     { name = "websockets", specifier = ">=15.0.1" },
     { name = "wechatpy", specifier = ">=1.8.18" },
-    { name = "xinference-client" },
+    { name = "xinference-client", specifier = ">=3.4.0" },
     { name = "xlrd", specifier = ">=2.0.2" },
 ]
 

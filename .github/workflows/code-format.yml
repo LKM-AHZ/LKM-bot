@@ -6,33 +6,45 @@ on:
   push:
     branches: [ master ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   format-check:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 20
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v7
-      
+
     - name: Set up Python
       uses: actions/setup-python@v7
       with:
         python-version: '3.12'
-        
+
     - name: Install UV
-      run: pip install uv
-      
+      # 固定版本：uv 的解析器/lock 语义随版本变化，浮动版本会让门禁结果不可复现
+      run: python -m pip install "uv==0.12.12"
+
     - name: Install dependencies
-      run: uv sync
+      # --locked：lock 与 pyproject 不一致就直接失败，而不是就地改写 uv.lock
+      run: uv sync --locked
 
     # 复用上面 uv sync 建好的环境（ty 已在 dev 依赖组里），避免二次 sync
     - name: Type check with ty
       run: uv run ty check .
 
+    # ruff 已是 dev 依赖、上面 uv sync 已装好：再用 uvx --from ruff==<版本> 会额外下载一份
+    # 单独解析的副本，且版本号在 pyproject 与本文件重复、容易漂移。与 ty 一样走 uv run。
     - name: Check code formatting with ruff
       run: |
-        uvx --from ruff==0.15.22 ruff format --check .
-        
+        uv run ruff format --check .
+
     - name: Check code style with ruff
       run: |
-        uvx --from ruff==0.15.22 ruff check .
+        uv run ruff check .

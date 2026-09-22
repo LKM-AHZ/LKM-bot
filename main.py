@@ -65,7 +65,9 @@ logo_tmpl = r"""
 def check_env() -> None:
     if not (sys.version_info.major == 3 and sys.version_info.minor >= 10):
         logger.error("Please run this project with Python 3.10 or later.")
-        exit()
+        # 用 sys.exit 而不是 site 模块注入的 exit()：后者在 `python -S`/嵌入式解释器里不存在，
+        # 会把「干净退出」变成 NameError；顺带以非零码退出，调用方能感知失败。
+        sys.exit(1)
 
     astrbot_root = get_astrbot_root()
     if astrbot_root not in sys.path:
@@ -99,7 +101,7 @@ async def check_dashboard_files(webui_dir: str | None = None):
 
     # 指定webui目录
     if webui_dir:
-        if os.path.exists(webui_dir):
+        if os.path.exists(webui_dir):  # noqa: ASYNC240 启动期一次性 stat，不在事件循环热路径
             resolved_dist = resolve_dashboard_dist(webui_dir)
             if resolved_dist is not None:
                 logger.info("Using WebUI directory: %s", resolved_dist)
@@ -115,7 +117,10 @@ async def check_dashboard_files(webui_dir: str | None = None):
     try:
         prepared_dist = await AstrBotUpdater().ensure_dashboard()
     except Exception as e:
-        logger.critical(f"Failed to download dashboard files: {e}.")
+        # 保留 exc_info 的原始 traceback，并用惰性 %s 格式化（日志级别关闭时不白建字符串）。
+        # 级别维持 critical 不动：调用方/告警可能就按 CRITICAL 过滤，改成 logger.exception(ERROR)
+        # 会顺手改掉语义。
+        logger.critical("Failed to download dashboard files: %s.", e, exc_info=True)
         return None
 
     # The updater only prepares managed or bundled assets. Resolve without an
@@ -131,8 +136,14 @@ async def check_dashboard_files(webui_dir: str | None = None):
     return str(resolved_dist)
 
 
-async def main_async(webui_dir_arg: str | None) -> None:
-    """主异步入口"""
+async def main_async(webui_dir_arg: str | None, log_broker: LogBroker) -> None:
+    """主异步入口
+
+    Args:
+        webui_dir_arg: 命令行传入的 WebUI 目录，可为 None。
+        log_broker: 日志广播器，由入口构造后显式传入（原先读模块级变量，
+            非 `__main__` 入口调用本函数会 NameError）。
+    """
     # 检查仪表板文件
     webui_dir = await check_dashboard_files(webui_dir_arg)
     if webui_dir is None:
@@ -176,4 +187,4 @@ if __name__ == "__main__":
     LogManager.set_queue_handler(logger, log_broker)
 
     # 只使用一次 asyncio.run()
-    asyncio.run(main_async(args.webui_dir))
+    asyncio.run(main_async(args.webui_dir, log_broker))

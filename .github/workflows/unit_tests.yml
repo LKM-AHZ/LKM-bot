@@ -57,8 +57,12 @@ jobs:
         run: |
           # Ubuntu's AppArmor policy blocks user-namespace capabilities by default.
           # Allow them on this ephemeral runner so the real sandbox tests can run.
+          # 注意：这一步放宽了内核 userns 限制，只适用于 GitHub 托管的**临时** runner，
+          # 不要照搬到自托管/共享 CI。加固过的 runner 上 sysctl 可能被拒——此时降级为警告继续，
+          # 而不是让整个 job 硬失败（下面的 bwrap 自检会如实报出沙箱是否可用）。
           if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
-            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 \
+              || echo "[warn] could not relax AppArmor userns restriction; sandbox tests may fail"
           fi
           bwrap --unshare-all --ro-bind / / /bin/true
 

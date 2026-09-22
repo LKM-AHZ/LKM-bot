@@ -14,8 +14,10 @@ on:
         description: "Release tag to publish assets to (for example: v4.14.6)"
         required: false
 
+# 最小权限：工作流默认只读，只有真正要写 Release 的 publish-release 单独提权。
+# 否则 build-dashboard 里的第三方 action 与 `curl | bash` 安装步骤都会继承 contents: write。
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-dashboard:
@@ -23,9 +25,12 @@ jobs:
     if: github.repository == 'AstrBotDevs/AstrBot'
     runs-on: ubuntu-24.04
     env:
-      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
-      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
-      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      # 只把「是否配置了 R2」这一布尔量下发给全部步骤；真凭据只在 upload 步骤的 env 里出现，
+      # 避免被 pnpm/setup-node 等第三方 action 与上面的安装脚本读到。
+      HAS_R2: ${{ secrets.R2_ACCOUNT_ID != '' && secrets.R2_ACCESS_KEY_ID != '' && secrets.R2_SECRET_ACCESS_KEY != '' }}
+      # workflow_dispatch 的 tag 输入是不可信字符串：经 env 传入、由 shell 变量展开，
+      # 不能把 ${{ inputs.tag }} 直接写进 run 脚本（会注入 shell 语法）。
+      INPUT_TAG: ${{ inputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -39,8 +44,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             tag="${GITHUB_REF_NAME}"
-          elif [ -n "${{ inputs.tag }}" ]; then
-            tag="${{ inputs.tag }}"
+          elif [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
           else
             tag="$(git describe --tags --abbrev=0)"
           fi
@@ -65,21 +70,26 @@ jobs:
       - name: Build dashboard dist
         shell: bash
         working-directory: dashboard
+        env:
+          # 解析出的 tag 同样来自不可信输入（inputs.tag 或 git ref 名），run 脚本里一律走 env
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           pnpm install --frozen-lockfile
           pnpm run build
-          echo "${{ steps.tag.outputs.tag }}" > dist/assets/version
+          echo "$TAG" > dist/assets/version
           # 资产名须与 astrbot/core/dashboard_assets.py 的回退 URL、面板 404 页提示
           # （dashboard/services/static_file_service.py）保持一致，否则自动安装会 404
-          zip -r "LKMBot-${{ steps.tag.outputs.tag }}-dashboard.zip" dist
+          zip -r "LKMBot-$TAG-dashboard.zip" dist
 
       - name: Build core package
         shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           git archive \
             --format=zip \
-            --prefix="AstrBot-${{ steps.tag.outputs.tag }}/" \
-            --output="AstrBot-${{ steps.tag.outputs.tag }}-core.zip" \
+            --prefix="AstrBot-$TAG/" \
+            --output="AstrBot-$TAG-core.zip" \
             HEAD
 
       - name: Upload dashboard artifact
@@ -90,15 +100,24 @@ jobs:
           path: dashboard/LKMBot-${{ steps.tag.outputs.tag }}-dashboard.zip
 
       - name: Upload release packages to Cloudflare R2
-        if: ${{ env.R2_ACCOUNT_ID != '' && env.R2_ACCESS_KEY_ID != '' && env.R2_SECRET_ACCESS_KEY != '' }}
+        if: env.HAS_R2 == 'true'
         env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: "astrbot"
           DASHBOARD_LATEST_OBJECT_NAME: "astrbot-webui-latest.zip"
           CORE_LATEST_OBJECT_NAME: "astrbot-core-latest.zip"
           VERSION_TAG: ${{ steps.tag.outputs.tag }}
         shell: bash
         run: |
-          curl https://rclone.org/install.sh | sudo bash
+          # 不再 `curl https://rclone.org/install.sh | sudo bash`：那是把未固定版本的远端脚本
+          # 以 root 执行。改为固定版本 + 校验官方发布的 sha256 后再装。
+          rclone_version=1.75.1
+          curl -fsSLO "https://downloads.rclone.org/v${rclone_version}/rclone-v${rclone_version}-linux-amd64.zip"
+          echo "982b5aa772841168f8e380f139e9e787b2a105403e32b94da8676a0e1c0a13ab  rclone-v${rclone_version}-linux-amd64.zip" | sha256sum -c -
+          unzip -q "rclone-v${rclone_version}-linux-amd64.zip"
+          sudo install -m 0755 "rclone-v${rclone_version}-linux-amd64/rclone" /usr/local/bin/rclone
 
           mkdir -p ~/.config/rclone
           cat <<EOF > ~/.config/rclone/rclone.conf
@@ -126,8 +145,13 @@ jobs:
     name: Publish GitHub Release
     if: github.repository == 'AstrBotDevs/AstrBot'
     runs-on: ubuntu-24.04
+    # 只有这个 job 需要写仓库内容（建/改 Release、传资产）
+    permissions:
+      contents: write
     needs:
       - build-dashboard
+    env:
+      INPUT_TAG: ${{ inputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -141,8 +165,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             tag="${GITHUB_REF_NAME}"
-          elif [ -n "${{ inputs.tag }}" ]; then
-            tag="${{ inputs.tag }}"
+          elif [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
           else
             tag="$(git describe --tags --abbrev=0)"
           fi
@@ -162,33 +186,46 @@ jobs:
       - name: Resolve release notes
         id: notes
         shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          note_file="changelogs/${{ steps.tag.outputs.tag }}.md"
+          note_file="changelogs/$TAG.md"
           if [ ! -f "$note_file" ]; then
             note_file="$(mktemp)"
-            echo "Release ${{ steps.tag.outputs.tag }}" > "$note_file"
+            echo "Release $TAG" > "$note_file"
           fi
           echo "file=$note_file" >> "$GITHUB_OUTPUT"
 
       - name: Ensure release exists
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         shell: bash
         run: |
-          tag="${{ steps.tag.outputs.tag }}"
+          tag="$TAG"
           if ! gh release view "$tag" >/dev/null 2>&1; then
+            # tag 不存在时 gh release create 会从默认分支 HEAD 现建一个 tag，
+            # 于是 release 指向的位置与实际构建来源（inputs.ref）不一致。先确认 tag 已存在。
+            if ! git rev-parse --verify --quiet "refs/tags/$tag" >/dev/null; then
+              echo "Tag $tag does not exist; refusing to create a tag/release pointing at the default branch." >&2
+              exit 1
+            fi
             gh release create "$tag" --title "$tag" --notes-file "${{ steps.notes.outputs.file }}"
           fi
 
       - name: Remove stale assets from release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         shell: bash
         run: |
-          tag="${{ steps.tag.outputs.tag }}"
+          tag="$TAG"
           while IFS= read -r asset; do
             case "$asset" in
-              *.AppImage|*.dmg|*.zip|*.exe|*.blockmap)
+              # 只删本工作流紧接着会重新上传的那一个资产。原先的 *.zip|*.exe|*.AppImage|...
+              # 会把本工作流并不产出的资产一并删掉（core 包只进 R2，从不作为 release 资产上传），
+              # 删了没有任何东西能补回来。
+              LKMBot-*-dashboard.zip)
                 gh release delete-asset "$tag" "$asset" -y || true
                 ;;
             esac
@@ -197,9 +234,10 @@ jobs:
       - name: Upload assets to release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.tag }}
         shell: bash
         run: |
-          tag="${{ steps.tag.outputs.tag }}"
+          tag="$TAG"
           gh release upload "$tag" release-assets/* --clobber
 
   publish-pypi:
@@ -208,6 +246,8 @@ jobs:
     runs-on: ubuntu-24.04
     needs:
       - publish-release
+    env:
+      INPUT_TAG: ${{ inputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -221,8 +261,8 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
             tag="${GITHUB_REF_NAME}"
-          elif [ -n "${{ inputs.tag }}" ]; then
-            tag="${{ inputs.tag }}"
+          elif [ -n "$INPUT_TAG" ]; then
+            tag="$INPUT_TAG"
           else
             tag="$(git describe --tags --abbrev=0)"
           fi
@@ -240,15 +280,19 @@ jobs:
 
       - name: Unpack dashboard dist into package tree
         shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
         run: |
           mkdir -p astrbot/dashboard/dist
-          unzip -q "${RUNNER_TEMP}/dashboard-artifact/LKMBot-${{ steps.tag.outputs.tag }}-dashboard.zip" -d "${RUNNER_TEMP}/dashboard-artifact/unpacked"
+          unzip -q "${RUNNER_TEMP}/dashboard-artifact/LKMBot-$TAG-dashboard.zip" -d "${RUNNER_TEMP}/dashboard-artifact/unpacked"
           cp -r "${RUNNER_TEMP}/dashboard-artifact/unpacked/dist/." astrbot/dashboard/dist/
 
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.10"
+          # 与 .python-version / requires-python(>=3.12) 对齐：在 3.10 上构建/发布与本仓库声明的
+          # 最低版本不一致（见 .python-version 与 pyproject.toml）
+          python-version: "3.12"
 
       - name: Install uv
         shell: bash
@@ -256,9 +300,19 @@ jobs:
 
       - name: Build package
         shell: bash
-        # Dashboard assets are already in astrbot/dashboard/dist/;
-        # ASTRBOT_BUILD_DASHBOARD is intentionally unset so the hatch hook skips npm.
-        run: uv build
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          # 发布前断言 pyproject 的版本与解析出的 tag 一致：否则从任意 ref 触发都可能把
+          # 不匹配（或已发布过）的版本推到 PyPI。tag 约定为 v<version>（预发布如 v4.28.0-beta.1）
+          pkg_version="$(python -c 'import tomllib;print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+          if [ "v${pkg_version}" != "$TAG" ]; then
+            echo "pyproject version ${pkg_version} does not match tag $TAG" >&2
+            exit 1
+          fi
+          # Dashboard assets are already in astrbot/dashboard/dist/;
+          # ASTRBOT_BUILD_DASHBOARD is intentionally unset so the hatch hook skips npm.
+          uv build
 
       - name: Publish to PyPI
         env:

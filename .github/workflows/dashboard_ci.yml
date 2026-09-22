@@ -35,9 +35,12 @@ jobs:
       - name: Inject Commit SHA
         id: get_sha
         run: |
-          echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          # 写进 $GITHUB_ENV 只对「后续步骤」生效，本步骤的 shell 里 $COMMIT_SHA 还是空的，
+          # 于是 version 文件会被写成空行；这里直接用变量。
+          sha="$(git rev-parse HEAD)"
+          echo "COMMIT_SHA=$sha" >> "$GITHUB_ENV"
           mkdir -p dashboard/dist/assets
-          echo $COMMIT_SHA > dashboard/dist/assets/version
+          echo "$sha" > dashboard/dist/assets/version
           cd dashboard
           zip -r dist.zip dist
 
@@ -47,7 +50,7 @@ jobs:
           name: dist-without-markdown
           path: |
             dashboard/dist
-            !dist/**/*.md
+            !dashboard/dist/**/*.md
 
       - name: Create GitHub Release
         if: github.event_name == 'push'

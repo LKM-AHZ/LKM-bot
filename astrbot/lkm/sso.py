@@ -65,8 +65,9 @@ def _protocol_value(env_name: str, default: str) -> str:
 
     默认值必须与签发侧 ``auth.bot_sso``（LKM-service）逐字相同，否则票据被对面拒收。
     跨仓无法共享 import，故真正的单一来源在部署层：``LKM_BOT_SSO_AUDIENCE`` /
-    ``LKM_BOT_SSO_ISSUER`` 由 ``.env`` 只写一次、经 compose 注入两侧（见 ``.env.example``
-    的「LKM Bot」段与 ``x-bot-sso-env`` 锚点）。
+    ``LKM_BOT_SSO_ISSUER`` / ``LKM_BOT_SSO_TYPE`` / ``LKM_BOT_SSO_ACCOUNT_LEVEL`` 由
+    ``.env`` 只写一次、经 compose 注入两侧（见 ``.env.example`` 的「LKM Bot」段与
+    ``x-bot-sso-env`` 锚点）。TTL 不在本模块：它只在签发侧消费，本侧按 ``exp`` 自行判定。
     """
     return os.environ.get(env_name, "").strip() or default
 

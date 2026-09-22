@@ -16,9 +16,16 @@ logs/
 temp
 cookies.json
 
+# 凭据与密钥：运行期配置/接口 key 常写在 .env 或 *.pem/*.key 里，漏一条就会提交进仓库
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
 # Data files
-data_v2.db
-data_v3.db
+# 按版本号枚举会漏掉下一个 DB_PATH 版本（当前代码已是 data_v4.db）
+data_v*.db
 data
 configs/session
 configs/config.yaml
@@ -40,8 +47,8 @@ yarn.lock
 astrbot/dashboard/dist/
 
 # Operating System
+# `**/.DS_Store` 已覆盖根目录那层，不必再写一条裸 `.DS_Store`
 **/.DS_Store
-.DS_Store
 
 # AstrBot specific
 .astrbot
@@ -49,7 +56,8 @@ astrbot.lock
 
 # Other
 chroma
-venv/*
+# 目录形式：原来的 `venv/*` 只忽略目录内容、不忽略目录本身，且与上面的 `.venv*` 口径不一致
+venv/
 pytest.ini
 AGENTS.md
 IFLOW.md

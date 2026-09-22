@@ -6,9 +6,20 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# GITHUB_TOKEN 只需读源码：部署走 SSH secrets，不需要写任何仓库资源
+permissions:
+  contents: read
+
+# 远端部署用固定暂存目录（abv4.new）做原地替换，两次并发部署会互相覆盖暂存区；
+# 按 workflow 而不是 ref 分组以串行化所有部署；不取消在途运行——部署被中断会留下半成品
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest # 运行环境
+    timeout-minutes: 30
     steps:
       - name: checkout
         uses: actions/checkout@v7
@@ -43,7 +54,16 @@ jobs:
           username: ${{ secrets.USERNAME }}
           password: ${{ secrets.PASSWORDNEKO }}
           script: |
-            mkdir -p /root/docker_data/caddy/caddy_data/static_site/abv4/
-            rm -rf /root/docker_data/caddy/caddy_data/static_site/abv4/*
-            mv /tmp/docs/.vitepress/dist/* /root/docker_data/caddy/caddy_data/static_site/abv4/
+            # 先清空线上目录再 mv 新文件，是「内容已丢、替换还没完成」的窗口：任一步失败站点就空了。
+            # 改为同分区暂存目录 + 一次 rename 切换，旧目录在新内容就位前始终保留；
+            # set -eu 让失败立即中止（原脚本没有，失败会继续往下走）。
+            set -eu
+            static=/root/docker_data/caddy/caddy_data/static_site
+            staging="$static/abv4.new"
+            rm -rf "$staging"
+            mkdir -p "$staging"
+            cp -a /tmp/docs/.vitepress/dist/. "$staging"/
+            if [ -e "$static/abv4" ]; then mv "$static/abv4" "$static/abv4.old"; fi
+            mv "$staging" "$static/abv4"
+            rm -rf "$static/abv4.old"
             rm -rf /tmp/docs/

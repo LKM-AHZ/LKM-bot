@@ -6,7 +6,7 @@ LKMBot is an Agentic AI assistant for personal and group chats, with support for
 
 Important notice:
 
-LKMBot is a **free and open-source software project** protected by the AGPLv3 license. You can find the full source code and related resources on our [**official website**](https://astrbot.app) and [**GitHub**](https://github.com/astrbotdevs/astrbot).
+LKMBot is a **free and open-source software project** protected by the AGPLv3 license. You can find the full source code and related resources on our [**official website**](https://astrbot.app) and [**GitHub**](https://github.com/Alma1314/LKM-bot).
 As of now, LKMBot has **no commercial services of any kind**, and the official team **will never charge users any fees** under any name.
 
 If anyone asks you to pay while using LKMBot, **you are likely being scammed**. Please request a refund immediately and report it to us by email.

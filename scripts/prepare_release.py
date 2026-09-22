@@ -120,10 +120,20 @@ def latest_tag() -> str:
 
     Returns:
         The latest tag name, or an empty string when the repository has no tags.
+
+    Raises:
+        ReleaseError: Git failed for a reason other than "no tags exist" (shallow
+            clone without tag refs, unborn/detached state, missing git, ...). Those
+            used to be swallowed and reported as an empty repository, which made the
+            caller draft the changelog against the whole reachable history.
     """
     try:
         return git(["describe", "--tags", "--abbrev=0"], capture_output=True)
     except ReleaseError:
+        # 只有「仓库确实一条 tag 都没有」才降级成空串；有 tag 却 describe 失败说明是
+        # 浅克隆/仓库状态问题，必须抛出去让调用方看见
+        if git(["tag", "--list"], capture_output=True):
+            raise
         return ""
 
 
@@ -166,8 +176,11 @@ def update_pyproject_version(version: str) -> Path:
 
     for index, line in enumerate(lines):
         stripped = line.strip()
-        if stripped.startswith("[") and stripped.endswith("]"):
-            in_project_section = stripped == "[project]"
+        # 先剥掉行内注释再判断表头：`[tool.x] # note` 这种合法写法原先不满足 endswith("]")，
+        # in_project_section 会停留不变，后面别的表里的 version 键就会被当成 [project].version 改写
+        header = stripped.split("#", 1)[0].strip()
+        if header.startswith("[") and header.endswith("]"):
+            in_project_section = header == "[project]"
             continue
         if not in_project_section:
             continue
@@ -235,27 +248,30 @@ def write_changelog(version: str, commits: list[str]) -> Path:
         Path to the created changelog file.
 
     Raises:
-        ReleaseError: The changelog file already exists.
+        ReleaseError: The changelog file already exists with different content.
     """
     changelog_path = REPO_ROOT / "changelogs" / f"v{version}.md"
+    entries = [f"- {commit}" for commit in commits] or ["- "]
+    content = "\n".join(
+        [
+            "## What's Changed",
+            "",
+            "<!-- Review, group, and polish these entries before publishing. -->",
+            "",
+            *entries,
+            "",
+        ]
+    )
+
     if changelog_path.exists():
+        # 上一次运行若挂在后面的校验/提交阶段，会留下这份草稿；内容一致时直接复用，
+        # 不要拿「文件已存在」把重跑卡死（内容不同才说明该文件不是本次要写的）
+        if changelog_path.read_text(encoding="utf-8") == content:
+            return changelog_path
         raise ReleaseError(f"Changelog already exists: {changelog_path}")
 
     changelog_path.parent.mkdir(parents=True, exist_ok=True)
-    entries = [f"- {commit}" for commit in commits] or ["- "]
-    changelog_path.write_text(
-        "\n".join(
-            [
-                "## What's Changed",
-                "",
-                "<!-- Review, group, and polish these entries before publishing. -->",
-                "",
-                *entries,
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    changelog_path.write_text(content, encoding="utf-8")
     return changelog_path
 
 
@@ -340,6 +356,17 @@ def commit_and_maybe_push(
         git(["add", "dashboard/src/api/generated"])
 
     git(["commit", "-m", f"chore: bump version to {version}"])
+
+    # 上面这份 add 清单是硬编码的，而校验阶段可能有别的副作用（例如 pnpm install 改写了
+    # dashboard/pnpm-lock.yaml）。提交后立刻核对工作区：有遗留就报错，别让流程一边「完成」
+    # 一边把改动丢在工作区里（此时还没 push，用户可以直接 amend）。
+    leftovers = git(["status", "--porcelain"], capture_output=True)
+    if leftovers:
+        raise ReleaseError(
+            "Release preparation left changes outside the committed set; review and commit "
+            f"(or revert) them before pushing:\n{leftovers}"
+        )
+
     if args.push:
         git(["push", "-u", args.remote, branch])
 
@@ -451,10 +478,12 @@ def main(argv: list[str] | None = None) -> int:
             print("No existing tags found; changelog will use all reachable commits.")
 
         commits = release_commits(tag)
+        # 先校验后落盘：原先校验排在版本改写与写 changelog 之后，校验一失败就在 release 分支上
+        # 留下一份半成品（脏工作区 + 已存在的 changelog），重跑还得人工清理
+        run_validation(args)
         update_pyproject_version(version)
         update_package_version(version)
         changelog_path = write_changelog(version, commits)
-        run_validation(args)
 
         if args.commit:
             commit_and_maybe_push(version, branch, changelog_path, args)

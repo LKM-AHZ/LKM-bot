@@ -3,7 +3,7 @@
   "info": {
     "title": "LKMBot OpenAPI v1",
     "version": "0.1.0",
-    "description": "Target REST contract for migrating LKMBot HTTP APIs to /api/v1. Dynamic LKMBot configuration payloads are intentionally modeled as open JSON objects because their schemas are provided at runtime by template endpoints. Developer API keys currently support these scopes only: bot, provider, persona, im, config, chat, data, file, plugin, mcp, skill, plus the sensitive config:edit_admin and chat:admin sub-scopes. The config scope also grants bot and provider access, but no parent scope grants a sensitive sub-scope.\n"
+    "description": "Target REST contract for migrating LKMBot HTTP APIs to /api/v1. Dynamic LKMBot configuration payloads are intentionally modeled as open JSON objects because their schemas are provided at runtime by template endpoints. Developer API keys currently support these scopes only: bot, provider, persona, im, config, chat, data, file, plugin, mcp, skill, plus the sensitive config:edit_admin and chat:admin sub-scopes. The config scope also grants bot and provider access, but no parent scope grants a sensitive sub-scope. The system, kb and tool scopes below are only reachable with a dashboard login session and are deliberately not grantable to API keys.\n"
   },
   "x-astrbot-scope-definitions": {
     "bot": {
@@ -65,6 +65,18 @@
     "skill": {
       "description": "Manage Skills, archives, files, and Shipyard Neo Skill workflows.",
       "description_zh": "管理 Skills、Skill 压缩包、Skill 文件和 Shipyard Neo Skill 流程。"
+    },
+    "system": {
+      "description": "System operations such as restart, updates, backups, cron, logs, stats, and API key administration. Dashboard login session only — not grantable to API keys.",
+      "description_zh": "系统运维（重启、更新、备份、定时任务、日志、统计与 API Key 管理）。仅限面板登录会话，不可授予 API Key。"
+    },
+    "kb": {
+      "description": "Manage knowledge bases and their documents. Dashboard login session only — not grantable to API keys.",
+      "description_zh": "管理知识库及其文档。仅限面板登录会话，不可授予 API Key。"
+    },
+    "tool": {
+      "description": "Manage LLM tools, plugin commands, and plugin extensions. Dashboard login session only — not grantable to API keys.",
+      "description_zh": "管理 LLM 工具、插件指令与插件扩展。仅限面板登录会话，不可授予 API Key。"
     }
   },
   "servers": [
@@ -1744,6 +1756,7 @@
           "Chat"
         ],
         "summary": "Open a streaming chat WebSocket",
+        "description": "Prefer an `X-API-Key` header (or `Authorization: ApiKey <key>`) when the client can set WebSocket handshake headers. The `api_key`/`key` query parameters exist for browsers that cannot; query strings are routinely recorded by access logs, proxies and Referer headers, so only use them with a short-lived key.\n\n**Required scope:** `chat`\n\n**Conditional sensitive scope:** `chat:admin`",
         "operationId": "openChatWebSocket",
         "x-websocket": true,
         "x-astrbot-scope": "chat",
@@ -1770,8 +1783,7 @@
           "101": {
             "description": "WebSocket upgrade accepted"
           }
-        },
-        "description": "**Required scope:** `chat`\n\n**Conditional sensitive scope:** `chat:admin`"
+        }
       }
     },
     "/api/v1/chat/sessions": {
@@ -3406,25 +3418,6 @@
             "$ref": "#/components/parameters/PluginId"
           }
         ],
-        "requestBody": {
-          "required": false,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "delete_config": {
-                    "type": "boolean"
-                  },
-                  "delete_data": {
-                    "type": "boolean"
-                  }
-                },
-                "additionalProperties": true
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -3543,8 +3536,10 @@
                 "type": "object",
                 "properties": {
                   "level": {
-                    "type": "string",
-                    "nullable": true,
+                    "type": [
+                      "string",
+                      "null"
+                    ],
                     "enum": [
                       "DEBUG",
                       "INFO",
@@ -7532,8 +7527,10 @@
             "type": "string"
           },
           "registry_url": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "market_plugin_id": {
             "type": "string"
@@ -7601,8 +7598,10 @@
             "type": "string"
           },
           "registry_url": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "market_plugin_id": {
             "type": "string"
@@ -7635,8 +7634,10 @@
             "type": "string"
           },
           "registry_url": {
-            "type": "string",
-            "nullable": true
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "market_plugin_id": {
             "type": "string"
@@ -7962,8 +7963,7 @@
           "rule_key": {
             "type": "string"
           }
-        },
-        "additionalProperties": false
+        }
       },
       "BatchSessionProviderRequest": {
         "allOf": [

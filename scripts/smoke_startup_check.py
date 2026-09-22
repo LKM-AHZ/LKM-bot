@@ -37,8 +37,8 @@ def _is_ready() -> bool:
         return False
 
 
-def _stop_process(proc: subprocess.Popen[bytes]) -> None:
-    if proc.poll() is not None:
+def _stop_process(proc: subprocess.Popen[bytes] | None) -> None:
+    if proc is None or proc.poll() is not None:
         return
 
     proc.terminate()
@@ -46,7 +46,12 @@ def _stop_process(proc: subprocess.Popen[bytes]) -> None:
         proc.wait(timeout=10)
     except subprocess.TimeoutExpired:
         proc.kill()
-        proc.wait(timeout=10)
+        try:
+            proc.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            # 杀过一轮还收不掉也不再往外抛：本函数是在 main() 的 finally 里调用的，
+            # 抛出去会中断后续的日志与临时目录清理，把它们留在地上
+            pass
 
 
 def main() -> int:
@@ -57,35 +62,45 @@ def main() -> int:
     smoke_root = Path(tempfile.mkdtemp(prefix="astrbot-smoke-root-"))
     env["ASTRBOT_ROOT"] = str(smoke_root)
     log_path = smoke_root / "smoke.log"
-    webui_dir = smoke_root / "webui"
-    webui_dir.mkdir()
-    (webui_dir / "index.html").write_text(
-        "<!doctype html><title>LKMBot</title>",
-        encoding="utf-8",
-    )
+    proc: subprocess.Popen[bytes] | None = None
 
-    with log_path.open("wb") as log_file:
-        proc = subprocess.Popen(
-            [
-                sys.executable,
-                str(REPO_ROOT / "main.py"),
-                "--webui-dir",
-                str(webui_dir),
-            ],
-            cwd=REPO_ROOT,
-            stdout=log_file,
-            stderr=subprocess.STDOUT,
-            env=env,
+    # 预处理与运行共用一个 try/finally：原先 mkdtemp 在 try 之外，mkdir/write_text/
+    # Popen 任一步失败都会把临时根目录留在磁盘上
+    try:
+        # 端口上已经有服务在应答，说明响应不是本次拉起的进程给的 —— 继续探活只会假通过
+        if _is_ready():
+            print(
+                f"{HEALTH_URL} is already serving before startup; "
+                "stop the process using 6185 and retry.",
+                file=sys.stderr,
+            )
+            return 1
+
+        webui_dir = smoke_root / "webui"
+        webui_dir.mkdir()
+        (webui_dir / "index.html").write_text(
+            "<!doctype html><title>LKMBot</title>",
+            encoding="utf-8",
         )
 
-    print(f"Starting smoke test on {HEALTH_URL}")
-    deadline = time.monotonic() + STARTUP_TIMEOUT_SECONDS
-    try:
-        while time.monotonic() < deadline:
-            if _is_ready():
-                print("Smoke test passed")
-                return 0
+        with log_path.open("wb") as log_file:
+            proc = subprocess.Popen(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "main.py"),
+                    "--webui-dir",
+                    str(webui_dir),
+                ],
+                cwd=REPO_ROOT,
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                env=env,
+            )
 
+        print(f"Starting smoke test on {HEALTH_URL}")
+        deadline = time.monotonic() + STARTUP_TIMEOUT_SECONDS
+        while time.monotonic() < deadline:
+            # 先看子进程死活再看健康端点：子进程已死时不该因为端口上「有人应答」而报成功
             return_code = proc.poll()
             if return_code is not None:
                 print(
@@ -94,6 +109,10 @@ def main() -> int:
                 )
                 print(_tail(log_path), file=sys.stderr)
                 return 1
+
+            if _is_ready():
+                print("Smoke test passed")
+                return 0
 
             time.sleep(1)
 

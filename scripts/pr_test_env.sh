@@ -10,6 +10,9 @@ RUN_SYNC=true
 RUN_LINT=true
 RUN_SMOKE=true
 RUN_DASHBOARD=false
+# 记录命令行是否显式给过 dashboard 开关：full profile 的默认值只在没给过时兜底，
+# 否则 --no-dashboard 会被下面「full 强制打开」的默认逻辑吃掉
+DASHBOARD_FLAG_SET=false
 
 usage() {
   cat <<'EOF'
@@ -42,6 +45,7 @@ while (($# > 0)); do
       ;;
     --with-dashboard)
       RUN_DASHBOARD=true
+      DASHBOARD_FLAG_SET=true
       shift
       ;;
     --skip-sync)
@@ -58,6 +62,7 @@ while (($# > 0)); do
       ;;
     --no-dashboard)
       RUN_DASHBOARD=false
+      DASHBOARD_FLAG_SET=true
       shift
       ;;
     -h | --help)
@@ -72,7 +77,7 @@ while (($# > 0)); do
   esac
 done
 
-if [[ "$PROFILE" == "full" && "$RUN_DASHBOARD" == false ]]; then
+if [[ "$PROFILE" == "full" && "$DASHBOARD_FLAG_SET" == false ]]; then
   RUN_DASHBOARD=true
 fi
 
@@ -99,6 +104,13 @@ if [[ "$RUN_LINT" == true ]]; then
   uv run ruff check .
 fi
 
+# PYTEST_ARGS 拆成数组再引用：原来直接 ${PYTEST_ARGS:-} 靠 shell 分词，值里带空格/引号
+# 会切错，带 glob（如 tests/test_*.py）还会被路径展开成当前目录下恰好匹配的文件
+pytest_args=()
+if [[ -n "${PYTEST_ARGS:-}" ]]; then
+  read -r -a pytest_args <<<"${PYTEST_ARGS}"
+fi
+
 echo "==> Running pytest"
 if [[ "$PROFILE" == "neo" ]]; then
   NEO_TESTS=(
@@ -108,50 +120,18 @@ if [[ "$PROFILE" == "neo" ]]; then
     "tests/test_skill_manager_sandbox_cache.py"
     "tests/test_dashboard.py::test_neo_skills_routes"
   )
-  uv run pytest -q "${NEO_TESTS[@]}" ${PYTEST_ARGS:-}
+  uv run pytest -q "${NEO_TESTS[@]}" "${pytest_args[@]}"
 else
-  uv run pytest --cov=. -v -o log_cli=true -o log_level=DEBUG ${PYTEST_ARGS:-}
+  uv run pytest --cov=. -v -o log_cli=true -o log_level=DEBUG "${pytest_args[@]}"
 fi
 
 run_smoke_test() {
-  if ! command -v curl >/dev/null 2>&1; then
-    echo "curl is required for smoke test." >&2
-    return 1
-  fi
-
-  local smoke_port="6185"
-  local smoke_log
-  smoke_log="$(mktemp -t astrbot-smoke.XXXXXX.log)"
-
-  echo "==> Starting smoke test on http://localhost:${smoke_port}"
-  uv run main.py >"$smoke_log" 2>&1 &
-  local app_pid=$!
-
-  for _ in $(seq 1 60); do
-    if curl -sf "http://localhost:${smoke_port}" >/dev/null 2>&1; then
-      echo "==> Smoke test passed"
-      kill "$app_pid" 2>/dev/null || true
-      wait "$app_pid" 2>/dev/null || true
-      rm -f "$smoke_log"
-      return 0
-    fi
-
-    if ! kill -0 "$app_pid" 2>/dev/null; then
-      echo "LKMBot process exited before becoming healthy." >&2
-      tail -n 60 "$smoke_log" || true
-      rm -f "$smoke_log"
-      return 1
-    fi
-
-    sleep 1
-  done
-
-  echo "Smoke test failed: health endpoint did not become ready in time." >&2
-  tail -n 60 "$smoke_log" || true
-  kill "$app_pid" 2>/dev/null || true
-  wait "$app_pid" 2>/dev/null || true
-  rm -f "$smoke_log"
-  return 1
+  # 不复刻一套 bash 版冒烟：CI（.github/workflows/smoke_test.yml）用的就是
+  # scripts/smoke_startup_check.py，这里保持同一个实现，避免两套各写各的探活逻辑。
+  # 该脚本自带临时 ASTRBOT_ROOT 与 stub webui，不写仓库 data/，也不依赖 dashboard dist
+  # 是否已构建（neo profile 从不构建它），并自己在 finally 里收进程、清临时目录。
+  echo "==> Running startup smoke check"
+  uv run python scripts/smoke_startup_check.py
 }
 
 if [[ "$RUN_SMOKE" == true ]]; then

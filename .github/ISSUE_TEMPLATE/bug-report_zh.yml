@@ -81,16 +81,16 @@ body:
     attributes:
       label: 检查清单
       options:
-        - label: 我已在 [Issue 列表](https://github.com/AstrBotDevs/AstrBot/issues)中搜索过相关问题仍无法解决，或该问题从未被报告过。
+        - label: 我已在 [Issue 列表](https://github.com/Alma1314/LKM-bot/issues)中搜索过相关问题仍无法解决，或该问题从未被报告过。
           required: true
         - label: 我已尝试过禁用所有插件，排除了可能是因插件导致的问题。
           required: true
         - label: 我报告的问题与 LKMBot 本体相关，而非在报告某一插件的问题。
           required: true
-        - label: 我已阅读并同意本项目的[贡献者行为准则](https://github.com/AstrBotDevs/AstrBot/blob/master/CODE_OF_CONDUCT.md)。
+        - label: 我已阅读并同意本项目的[贡献者行为准则](https://github.com/Alma1314/LKM-bot/blob/master/CODE_OF_CONDUCT.md)。
           required: true
+        # 勾选项默认就是 required: false，这条不必显式写（写了反而与上面几条的语义读起来不一致）
         - label: (可选)我愿意提交 PR 以帮助修复该问题。
-          required: false
 
   - type: markdown
     attributes:

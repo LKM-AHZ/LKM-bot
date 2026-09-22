@@ -22,8 +22,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
-          fetch-tag: true
+          # 本 workflow 依赖历史与 tag：`git log --since` 判断 24h 内是否有提交、
+          # workflow_dispatch 走 `git describe --tags`；浅克隆会让两者都失败/失真。
+          # 注意输入名是 fetch-tags（旧的 fetch-tag 不是合法输入，会被静默忽略）。
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Check for new commits today
         if: github.event_name == 'schedule'
@@ -39,10 +42,6 @@ jobs:
             echo "$commits"
             echo "has_commits=true" >> $GITHUB_OUTPUT
           fi
-
-      - name: Exit if no commits
-        if: github.event_name == 'schedule' && steps.check-commits.outputs.has_commits == 'false'
-        run: exit 0
 
       - name: Build Dashboard
         run: |
@@ -105,6 +104,9 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build and Push Nightly Image
+        # 24h 内无提交时跳过构建与推送（原先靠一个 `exit 0` 的步骤"退出"，但它只是让该步骤成功，
+        # 后面照样会构建推送；「退出」必须落在真正要跳过的步骤上）
+        if: steps.check-commits.outputs.has_commits != 'false'
         uses: docker/build-push-action@v7.3.0
         with:
           context: .
@@ -127,8 +129,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 1
-          fetch-tag: true
+          # 本 workflow 依赖历史与 tag：`git log --since` 判断 24h 内是否有提交、
+          # workflow_dispatch 走 `git describe --tags`；浅克隆会让两者都失败/失真。
+          # 注意输入名是 fetch-tags（旧的 fetch-tag 不是合法输入，会被静默忽略）。
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Get latest tag (only on manual trigger)
         id: get-latest-tag

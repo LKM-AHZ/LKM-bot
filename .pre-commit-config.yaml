@@ -1,4 +1,3 @@
-default_install_hook_types: [pre-commit, prepare-commit-msg]
 ci:
   autofix_commit_msg: ":balloon: auto fixes by pre-commit hooks"
   autofix_prs: true
@@ -22,4 +21,7 @@ repos:
   rev: v3.21.0
   hooks:
     - id: pyupgrade
-      args: [--py310-plus]
+      # 语言级别与 requires-python / .python-version（3.12）对齐；astrbot/ 是随上游同步的树，
+      # 按 pyproject 里 UP* 的 per-file-ignores 同一口径排除，免得把上游代码改写成 3.12 写法
+      args: [--py312-plus]
+      exclude: ^astrbot/
