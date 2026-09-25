@@ -109,3 +109,16 @@ If there are no errors, you will see a log message similar to `🌈 Dashboard st
 > If deployed on a cloud server, you need to open ports `6180-6200` and `11451` in the cloud provider's console.
 
 Next, you need to deploy any messaging platform to use LKMBot on that platform.
+
+## Configure an HTTP proxy in Docker
+
+Set the HTTP proxy in the WebUI under `Settings → Network → Proxy & Dependency Sources → HTTP Proxy`. LKMBot reaches that address **from inside its own container**, so `http://127.0.0.1:7890` points at the LKMBot container itself rather than the host or another container.
+
+If the proxy runs on the host, or in another container with the port published to the host:
+
+- Mac / Windows (Docker Desktop): `http://host.docker.internal:7890`
+- Linux: `http://172.17.0.1:7890` (replace `172.17.0.1` with your docker0 gateway if it differs)
+
+If LKMBot and the proxy share a Docker network, use the proxy container name, for example `http://clash:7890`.
+
+Clash-style clients commonly use HTTP on `7890` and SOCKS on `7891`. Use `http://` or `socks5://` to match the protocol. For a host-installed proxy, it must listen on a host interface reachable from Docker, such as `0.0.0.0` or the Docker gateway interface, rather than only `127.0.0.1`; publish the proxy port to the host.
