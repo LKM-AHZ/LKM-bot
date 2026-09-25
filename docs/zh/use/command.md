@@ -71,13 +71,13 @@ LKMBot 的指令通过插件机制注册。为了保持主程序轻量，当前�
 
 `/reset` 会：
 
-- 对 AstrBot 内置 Agent Runner，清空当前对话的上下文消息，但保留对话 ID、标题、Persona 和 Token 用量统计。
+- 对 LKMBot 内置 Agent Runner，清空当前对话的上下文消息，但保留对话 ID、标题、Persona 和 Token 用量统计。
 - 对第三方 Agent Runner，例如 `dify`、`coze`、`dashscope`、`deerflow`，清理远端 runner 上下文，但保留本地对话 ID。
 - 当前没有对话时直接返回成功提示，不会创建新的本地对话。
 
 `/new` 会：
 
-- 对 AstrBot 内置 Agent Runner，保留旧对话记录，创建并切换到新的本地对话，并继承当前 Persona。
+- 对 LKMBot 内置 Agent Runner，保留旧对话记录，创建并切换到新的本地对话，并继承当前 Persona。
 - 对第三方 Agent Runner，先清理远端 runner 上下文，再创建并切换到新的本地对话；旧的本地对话记录仍然保留。
 
 DeerFlow 还会尝试删除旧的远端 thread。
