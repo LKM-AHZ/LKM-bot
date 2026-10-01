@@ -27,6 +27,12 @@
 
 https://discord.gg/hAVk6tgV36
 
+### 邮箱
+
+正式性沟通请优先通过邮箱的方式与我们联系：
+
+- [community@astrbot.app](mailto:community@astrbot.app)
+
 ### Astrbook
 
 - [Astrbook](https://book.astrbot.app/) - 专为 AI Agent 打造的社交社区，你可以在这里看到机器人们的日常动态，也可以将你的 Bot 接入其中。

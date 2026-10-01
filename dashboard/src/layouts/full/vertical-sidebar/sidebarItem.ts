@@ -1,7 +1,23 @@
+import { markRaw, type Component } from 'vue';
+import {
+  BookSearch,
+  Bot,
+  Box,
+  Clock3,
+  Database,
+  Ellipsis,
+  Hand,
+  Heart,
+  PencilRuler,
+  Puzzle,
+  SlidersHorizontal,
+  Workflow,
+} from '@lucide/vue';
+
 export interface menu {
   header?: string;
   title?: string;
-  icon?: string;
+  icon?: string | Component;
   to?: string;
   divider?: boolean;
   chip?: string;
@@ -23,58 +39,63 @@ export const MORE_GROUP_KEY = 'core.navigation.groups.more';
 const sidebarItem: menu[] = [
   {
     title: 'core.navigation.welcome',
-    icon: 'mdi-hand-wave-outline',
+    icon: markRaw(Hand),
     to: '/welcome',
   },
   {
     title: 'core.navigation.platforms',
-    icon: 'mdi-robot',
+    icon: markRaw(Bot),
     to: '/platforms',
   },
   {
     title: 'core.navigation.providers',
-    icon: 'mdi-creation',
+    icon: markRaw(Box),
     to: '/providers',
   },
   {
     title: 'core.navigation.extension',
-    icon: 'mdi-puzzle',
+    icon: markRaw(Puzzle),
     to: '/extension',
   },
   {
     title: 'core.navigation.config',
-    icon: 'mdi-cog',
+    icon: markRaw(SlidersHorizontal),
     to: '/config',
   },
   {
     title: 'core.navigation.knowledgeBase',
-    icon: 'mdi-book-open-variant',
+    icon: markRaw(BookSearch),
     to: '/knowledge-base',
   },
   {
     title: 'core.navigation.persona',
-    icon: 'mdi-heart',
+    icon: markRaw(Heart),
     to: '/persona'
   },
   {
     title: 'core.navigation.data',
-    icon: 'mdi-database',
+    icon: markRaw(Database),
     to: '/data'
   },
   {
     title: 'core.navigation.groups.more',
-    icon: 'mdi-dots-horizontal',
+    icon: markRaw(Ellipsis),
     children: [
       {
         title: 'core.navigation.sessionManagement',
-        icon: 'mdi-pencil-ruler',
+        icon: markRaw(PencilRuler),
         to: '/session-management'
       },
       {
         title: 'core.navigation.cron',
-        icon: 'mdi-clock-outline',
+        icon: markRaw(Clock3),
         to: '/cron'
-      }
+      },
+      {
+        title: 'core.navigation.subagent',
+        icon: markRaw(Workflow),
+        to: '/subagent'
+      },
     ]
   }
   // {

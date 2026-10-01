@@ -8,6 +8,12 @@ This documentation may not cover all features comprehensively. If you have any q
 
 <https://discord.gg/hAVk6tgV36>
 
+### Email
+
+For formal inquiries, please reach out to us via email first:
+
+- <community@astrbot.app>
+
 ### GitHub
 
 Welcome to submit Issues or Pull Requests:
