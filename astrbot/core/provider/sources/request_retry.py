@@ -1,4 +1,4 @@
-from collections.abc import AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from typing import TypeVar
 
@@ -135,7 +135,7 @@ async def retry_provider_request_context(
     *,
     retry_rate_limits: bool = True,
     max_attempts: int | None = None,
-) -> AsyncIterator[T]:
+) -> AsyncGenerator[T]:
     manager: AbstractAsyncContextManager[T] | None = None
 
     async def _enter_context() -> T:

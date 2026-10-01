@@ -16,7 +16,7 @@ import shutil
 import struct
 import subprocess
 import tempfile
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -731,7 +731,7 @@ class MediaResolver:
         *,
         target_format: str | None = None,
         preserve_mp3: bool = False,
-    ) -> AsyncIterator[ResolvedMediaFile]:
+    ) -> AsyncGenerator[ResolvedMediaFile]:
         """Yield a resolved local file and clean resolver-owned temp files on exit.
 
         Use this when the consumer only needs the file during the context manager.
