@@ -1419,7 +1419,7 @@ export const pluginApi = {
   },
   page(pluginId: string, pageName: string) {
     return typed<any>(
-      openApiV1.getPluginPageById({
+      openApiV1.getPluginViewById({
         query: { plugin_id: pluginId, page_name: pageName },
       }) as any,
     );

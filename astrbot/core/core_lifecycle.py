@@ -235,6 +235,7 @@ class AstrBotCoreLifecycle:
             self.kb_manager,
             self.cron_manager,
         )
+        self.star_context.html_renderer = html_renderer
 
         # 初始化插件管理器
         self.plugin_manager = PluginManager(self.star_context, self.astrbot_config)
