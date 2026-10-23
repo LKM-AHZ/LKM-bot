@@ -4,11 +4,11 @@
 
 ### Encountering 404 Error When Opening the Dashboard
 
-Download `AstrBot-vxxxxx-dashboard.zip` from the [release](https://github.com/AstrBotDevs/AstrBot/releases) page, extract it, and move it to `LKMBot/data`. If it still doesn't work, try restarting your computer (based on community feedback).
+Download `LKMBot-vxxxxx-dashboard.zip` from the [release](https://github.com/AstrBotDevs/AstrBot/releases) page, extract it, and move it to `LKMBot/data`. If it still doesn't work, try restarting your computer (based on community feedback).
 
 ### First Login Account and Random Password
 
-On first startup, the default WebUI account is `lkmbot`, and the password is randomly generated rather than hardcoded. Instances upgraded from an older version keep their existing account. Check the startup logs and log in with the random initial password shown there:
+On first startup, the WebUI account is `lkmbot` by default, and the default password is randomly generated (it is not a fixed hardcoded value). Check the startup logs and log in with the random initial password shown there:
 
 ```text
 [00:27:40.590] [Core] [INFO] [dashboard.server:523]:
@@ -27,9 +27,36 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
 
 ### Forgot Dashboard Password
 
-If you forgot your LKMBot dashboard password, you can use the CLI tool `lkmbot password` to change the password.
+If you forgot your LKMBot dashboard password, choose the reset method that matches your deployment method.
 
-Another approach you can take is to find the `"dashboard"` field in `LKMBot/data/cmd_config.json`, for example:
+#### Docker Deployment
+
+The image ships with the LKMBot CLI, so you can reset the password inside the container:
+
+```bash
+sudo docker exec -it astrbot astrbot password
+sudo docker restart astrbot # the new password takes effect after a restart
+```
+
+The first `astrbot` is the container name; replace it with your actual container name (check with `sudo docker ps`).
+
+To also change the username, add the `--username` option: `sudo docker exec -it astrbot astrbot password --username <new-username>`.
+
+#### uv / pip Package Deployment
+
+Run the following in the LKMBot working directory (the one initialized with `astrbot init`):
+
+```bash
+astrbot password
+```
+
+To also change the username, add the `--username` option: `astrbot password --username <new-username>`.
+
+Then restart LKMBot for the change to take effect.
+
+#### Other Deployment Methods
+
+For deployments without an available CLI (such as source or panel-based deployments), you can edit the config file directly. Find the `"dashboard"` field in `LKMBot/data/cmd_config.json`, for example:
 
 ```json
   "dashboard": {
@@ -90,7 +117,7 @@ After restart, LKMBot will reload or download WebUI files that match the current
 ### How to Let LKMBot Control My Mac / Windows / Linux Computer?
 
 1. In the LKMBot WebUI, open `Config`, select the profile used by your bot, and go to `AI → Capabilities → Agent Computer Use`. Set `Computer Use Runtime` to `local`. This section requires the built-in LKMBot AI runner.
-2. In the same profile, go to `Platform → General → Administrator IDs` and add your user ID (available through the `/sid` command).
+2. In the same profile, go to `Access Control → Administrators → Administrator IDs` and add your user ID (available through the `/sid` command).
 3. Click `Save Configuration` in the bottom-right corner.
 
 > [!TIP]
@@ -103,7 +130,7 @@ After restart, LKMBot will reload or download WebUI files that match the current
 
 ### No Permission to Execute Admin Commands
 
-1. `/name, /provider, /dashboard_update, /op, /deop, /persona, /llm, /plugin, /model, /groupnew` are the default admin commands. You can use the `/sid` command to get a user's ID, then open `Config`, select the profile used by your bot, add the ID under `Platform → General → Administrator IDs`, and click `Save Configuration` in the bottom-right corner.
+1. `/name, /provider, /dashboard_update, /op, /deop, /persona, /llm, /plugin, /model, /groupnew` are the default admin commands. You can use the `/sid` command to get a user's ID, then open `Config`, select the profile used by your bot, add the ID under `Access Control → Administrators → Administrator IDs`, and click `Save Configuration` in the bottom-right corner.
 
 ### Chinese Characters Garbled When Locally Rendering Markdown Images (t2i)
 

@@ -149,12 +149,10 @@ class AstrBotCoreLifecycle:
                 self.astrbot_config,
                 override_level="DEBUG",
             )
-            LogManager.configure_trace_logger(self.astrbot_config)
         else:
             LogManager.configure_logger(
                 cast("logging.Logger", logger), self.astrbot_config
             )
-            LogManager.configure_trace_logger(self.astrbot_config)
 
         await self.db.initialize()
         if sp.db_helper is self.db:
@@ -402,6 +400,9 @@ class AstrBotCoreLifecycle:
                 logger.error(f"任务 {task.get_name()} 发生错误: {e}")
 
         # 释放数据库引擎连接池
+        from astrbot.core.utils.trace_store import close_trace_store
+
+        await asyncio.to_thread(close_trace_store)
         try:
             await self.db.engine.dispose()
         except Exception as e:
@@ -413,6 +414,9 @@ class AstrBotCoreLifecycle:
         await self.provider_manager.terminate()
         await self.platform_manager.terminate()
         await self.kb_manager.terminate()
+        from astrbot.core.utils.trace_store import close_trace_store
+
+        await asyncio.to_thread(close_trace_store)
         if sp.db_helper is self.db:
             await sp.close()
         self.dashboard_shutdown_event.set()

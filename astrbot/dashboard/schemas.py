@@ -143,6 +143,7 @@ class ChatFlags(BaseModel):
 
 
 class ChatMessageRegenerateRequest(OpenModel):
+    locale: str | None = None
     selected_provider: str | None = None
     selected_model: str | None = None
     enable_streaming: bool | None = None
@@ -156,6 +157,7 @@ class ChatThreadCreateRequest(OpenModel):
 
 
 class ChatThreadMessageRequest(OpenModel):
+    locale: str | None = None
     message: Any
     selected_provider: str | None = None
     selected_model: str | None = None
@@ -195,7 +197,7 @@ class TraceSettingsRequest(BaseModel):
 
 
 class StorageCleanupRequest(BaseModel):
-    target: str = "all"
+    target: Literal["logs", "cache", "traces", "all"] = "all"
 
 
 class GhProxyTestRequest(BaseModel):
@@ -203,6 +205,7 @@ class GhProxyTestRequest(BaseModel):
 
 
 class OpenApiChatRequest(OpenModel):
+    locale: str | None = None
     message: Any = None
     session_id: str | None = None
     conversation_id: str | None = None

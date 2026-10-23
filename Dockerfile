@@ -82,7 +82,9 @@ RUN python -m pip install uv==0.12.12 \
     && echo "3.12" > .python-version \
     && uv export --format requirements.txt --output-file requirements.txt --frozen \
     && uv pip install -r requirements.txt --no-cache-dir --system \
-    && uv pip install "pilk==0.2.4" --no-cache-dir --system
+    && uv pip install "pilk==0.2.4" --no-cache-dir --system \
+    && uv pip install -e . --no-deps --system \
+    && touch /LKMBot/.astrbot
 
 EXPOSE 6185
 
