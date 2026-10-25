@@ -37,8 +37,6 @@ def get_service(request: Request) -> ConversationService:
 require_data_scope = ScopeDependency("data")
 
 
-
-
 def _model_dict(payload) -> dict[str, Any]:
     return payload.model_dump(exclude_none=True)
 

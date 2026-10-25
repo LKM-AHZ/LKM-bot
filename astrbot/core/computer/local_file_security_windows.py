@@ -92,8 +92,8 @@ def open_windows_file(
     ):
         raise PermissionError("Access denied: unsafe restricted Windows path.")
 
-    ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
-    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    ntdll = ctypes.WinDLL("ntdll", use_last_error=True)  # ty: ignore[unresolved-attribute]  # ctypes.WinDLL 是 Windows-only API，Linux typeshed 未提供
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)  # ty: ignore[unresolved-attribute]  # ctypes.WinDLL 是 Windows-only API，Linux typeshed 未提供
     create_file = ntdll.NtCreateFile
     create_file.restype = ctypes.c_int32
     create_file.argtypes = [
@@ -183,11 +183,14 @@ def open_windows_file(
                     )
                 if terminal and status & 0xFFFFFFFF == 0xC00000BA:
                     raise IsADirectoryError(str(root.joinpath(*parts)))
-                raise ctypes.WinError(status_to_error(status))
-            handles.append(handle.value)
+                raise ctypes.WinError(status_to_error(status))  # ty: ignore[unresolved-attribute]  # ctypes.WinError 是 Windows-only API，Linux typeshed 未提供
+            handle_value = handle.value
+            if handle_value is None:
+                raise OSError("Restricted Windows open returned a null handle.")
+            handles.append(handle_value)
             information = _FileInformation()
             if not file_information(handle, ctypes.byref(information)):
-                raise ctypes.WinError(ctypes.get_last_error())
+                raise ctypes.WinError(ctypes.get_last_error())  # ty: ignore[unresolved-attribute]  # ctypes.WinError/get_last_error 是 Windows-only API，Linux typeshed 未提供
             if information.Attributes & 0x400:  # FILE_ATTRIBUTE_REPARSE_POINT
                 raise PermissionError(
                     "Access denied: restricted path contains a reparse point."
@@ -203,11 +206,13 @@ def open_windows_file(
                         "content outside allowed directories."
                     )
                 # Do not truncate before checking the opened object's identity.
-                descriptor = msvcrt.open_osfhandle(
-                    handle.value, modes[access] | os.O_BINARY | os.O_NOINHERIT
+                descriptor = msvcrt.open_osfhandle(  # ty: ignore[unresolved-attribute]  # msvcrt.open_osfhandle 是 Windows-only API，Linux typeshed 未提供
+                    handle_value,
+                    modes[access] | os.O_BINARY | os.O_NOINHERIT,  # ty: ignore[unresolved-attribute]  # os.O_BINARY/O_NOINHERIT 是 Windows-only 常量
                 )
                 handles.pop()  # The CRT descriptor now owns this handle.
                 return descriptor
     finally:
         for handle in reversed(handles):
             close_handle(handle)
+    raise OSError("Restricted Windows open never reached the final component.")

@@ -333,8 +333,8 @@ class LogQueueHandler(logging.Handler):
                 "body": bounded_text(record.getMessage()),
                 **(
                     {
-                        "trace_id": record.trace_id,
-                        "span_id": record.span_id,
+                        "trace_id": getattr(record, "trace_id", None),
+                        "span_id": getattr(record, "span_id", None),
                         "trace_flags": 1,
                     }
                     if getattr(record, "trace_id", None)

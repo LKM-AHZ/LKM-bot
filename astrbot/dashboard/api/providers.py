@@ -28,8 +28,6 @@ def get_service(request: Request) -> ProviderConfigService:
     return request.app.state.services.providers
 
 
-
-
 def _required_text(value: object, name: str) -> str:
     text = str(value or "").strip()
     if not text:

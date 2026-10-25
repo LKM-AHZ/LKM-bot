@@ -31,8 +31,6 @@ def get_service(request: Request) -> ChatUIProjectService:
 require_chat_scope = ScopeDependency("chat")
 
 
-
-
 def _model_dict(payload) -> dict:
     return payload.model_dump(exclude_none=True)
 

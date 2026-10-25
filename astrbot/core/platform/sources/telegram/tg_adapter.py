@@ -587,16 +587,17 @@ class TelegramPlatformAdapter(Platform):
             reply_abm = await self.convert_message(reply_update, context, False)
 
             if reply_abm:
-                quote_text = update.message.quote.text if update.message.quote else None
+                quote = update.message.quote
+                quote_text = quote.text if quote else None
                 reply_chain = reply_abm.message
                 reply_message_str = reply_abm.message_str
-                if quote_text:
+                if quote and quote_text:
                     quote_utf16 = quote_text.encode("utf-16-le")
                     original = update.message.reply_to_message
                     original_utf16 = (original.text or original.caption or "").encode(
                         "utf-16-le"
                     )
-                    start = update.message.quote.position * 2
+                    start = quote.position * 2
                     end = start + len(quote_utf16)
                     # Telegram omits links from quote entities; use the matched source.
                     if original_utf16[start:end] == quote_utf16:

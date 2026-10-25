@@ -33,8 +33,6 @@ def get_service(request: Request) -> PlatformService:
 require_config_scope = ScopeDependency("config")
 
 
-
-
 def _raise_platform_error(exc: PlatformServiceError) -> None:
     raise ApiError(str(exc), status_code=exc.status_code) from exc
 

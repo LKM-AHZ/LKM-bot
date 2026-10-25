@@ -40,8 +40,6 @@ async def require_kb_scope(request: Request) -> AuthContext:
     return await require_scope(request, "kb")
 
 
-
-
 def _to_int(value: Any, default: int) -> int:
     try:
         return int(value)

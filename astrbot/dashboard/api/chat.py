@@ -41,8 +41,6 @@ def get_service(request: Request) -> ChatService:
 require_chat_scope = ScopeDependency("chat")
 
 
-
-
 async def _json_or_none(request: Request) -> dict[str, Any] | None:
     try:
         data = await request.json()

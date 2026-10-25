@@ -5,7 +5,7 @@ import secrets
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, cast
 
 from opentelemetry import context as otel_context
 from opentelemetry import trace as otel_trace
@@ -75,6 +75,8 @@ class TraceSpan:
         self.message_outline = bounded_text(message_outline or "", 4096)
         self.started_at = time.time()
         self._start_ns = time.time_ns()
+        # The SDK may hand back an API `NonRecordingSpan` when tracing is disabled,
+        # so the root stays API-typed; each span is narrowed where SDK members are used.
         self._root = _tracer.start_span(
             self.name,
             context=otel_context.Context(),
@@ -92,7 +94,7 @@ class TraceSpan:
         self._span_count = 1
         self._pending: dict[str, tuple[Span, Any, str]] = {}
         self._plugins: set[str] = set()
-        self._summary = {
+        self._summary: dict[str, Any] = {
             "trace_id": self.trace_id,
             "root_span_id": self.span_id,
             "name": self.name,
@@ -146,7 +148,7 @@ class TraceSpan:
             event: Standard event associated with a span.
             closing: Whether completion must survive the trace payload limit.
         """
-        payload = {
+        payload: dict[str, Any] = {
             "type": "trace",
             "schema_version": 3,
             "trace": self._summary,
@@ -187,7 +189,7 @@ class TraceSpan:
                         key: bounded_text(value, 256)
                         if isinstance(value, str)
                         else value
-                        for key, value in payload["span"]["attributes"].items()
+                        for key, value in (span.attributes or {}).items()
                         if key
                         in {
                             "astrbot.kind",
@@ -246,14 +248,16 @@ class TraceSpan:
             self._root.set_attributes(attrs)
         if not self._started:
             self._started = True
-            self._emit(span=self._root)
+            # `record` only emits once the root is recording, i.e. an SDK span.
+            self._emit(span=cast(Span, self._root))
         if action == "event_received":
             return
 
         current = otel_trace.get_current_span()
         if (
             not current.is_recording()
-            or current.get_span_context().trace_id != self._root.context.trace_id
+            or current.get_span_context().trace_id
+            != self._root.get_span_context().trace_id
         ):
             current = self._root
         parent = format_span_id(current.get_span_context().span_id)
@@ -275,21 +279,24 @@ class TraceSpan:
                 "agent_start": "agent",
                 "agent_tool_call": "tool",
             }[action]
-            span = _tracer.start_span(
-                bounded_text(
-                    str(
-                        fields.get("handler_full_name")
-                        or fields.get("tool_name")
-                        or call_kind
+            span = cast(
+                Span,
+                _tracer.start_span(
+                    bounded_text(
+                        str(
+                            fields.get("handler_full_name")
+                            or fields.get("tool_name")
+                            or call_kind
+                        ),
+                        256,
                     ),
-                    256,
+                    context=otel_trace.set_span_in_context(current),
+                    start_time=now,
+                    attributes={
+                        **attrs,
+                        "astrbot.kind": call_kind,
+                    },
                 ),
-                context=otel_trace.set_span_in_context(current),
-                start_time=now,
-                attributes={
-                    **attrs,
-                    "astrbot.kind": call_kind,
-                },
             )
             span_id = format_span_id(span.context.span_id)
             token = otel_context.attach(otel_trace.set_span_in_context(span))
@@ -331,12 +338,18 @@ class TraceSpan:
                     end_action == action
                     and (
                         action != "handler_end"
-                        or span.attributes.get("astrbot.handler_full_name")
+                        or (span.attributes or {}).get("astrbot.handler_full_name")
                         == fields.get("handler_full_name")
                     )
                 ):
                     break
-                target = format_span_id(span.parent.span_id)
+                span_parent = span.parent
+                # A root span has no parent, so "" can never match a pending key.
+                target = (
+                    format_span_id(span_parent.span_id)
+                    if span_parent is not None
+                    else ""
+                )
             if action != "pipeline_end" and target not in self._pending:
                 return
             # Close abandoned descendants before their ancestor. Their copied
@@ -347,7 +360,7 @@ class TraceSpan:
                 if is_target:
                     span.set_attributes(
                         bounded_attributes(
-                            {**span.attributes, **attrs},
+                            {**(span.attributes or {}), **attrs},
                             max_bytes=MAX_TRACE_BYTES,
                         )
                     )
@@ -369,7 +382,13 @@ class TraceSpan:
                     self._summary["has_errors"] = True
                 span.end(end_time=now)
                 otel_context.detach(token)
-                parent = format_span_id(span.parent.span_id)
+                span_parent = span.parent
+                # A root span has no parent; "" ends the ancestor walk.
+                parent = (
+                    format_span_id(span_parent.span_id)
+                    if span_parent is not None
+                    else ""
+                )
                 self._emit(span=span, closing=True)
                 if is_target:
                     break
@@ -400,7 +419,7 @@ class TraceSpan:
             )
             self._root.end(end_time=now)
             self._finished = True
-            self._emit(span=self._root, closing=True)
+            self._emit(span=cast(Span, self._root), closing=True)
             return
 
         if not enabled or self._events >= MAX_EVENTS or self._bytes >= MAX_TRACE_BYTES:

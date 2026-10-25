@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param()
 
 $ErrorActionPreference = 'Stop'
@@ -37,8 +37,10 @@ if ($ast.Extent.Text -notmatch '\$bootstrapText = ConvertFrom-Json @''' -or
     $ast.Extent.Text -notmatch '\$defaultLanguage = ''en-US''' -or
     $ast.Extent.Text -notmatch '\$Indent = ''  ''' -or
     $ast.Extent.Text -notmatch 'Write-Host "\$Indent\$Prefix    \$Message"' -or
-    $ast.Extent.Text -notmatch 'Write-Host "\$\(\$Indent\)\$\(\$Indent\)astrbot init"' -or
-    $ast.Extent.Text -notmatch 'Write-Host "\$\(\$Indent\)\$\(\$Indent\)astrbot run"' -or
+    # CLI 已更名为 lkmbot（此前是 astrbot）：上游用 astrbot 的那版断言在本仓库
+    # 合并上游代码后必然失败，这里改按本仓库实际的命令名断言。
+    $ast.Extent.Text -notmatch 'Write-Host "\$\(\$Indent\)\$\(\$Indent\)lkmbot init"' -or
+    $ast.Extent.Text -notmatch 'Write-Host "\$\(\$Indent\)\$\(\$Indent\)lkmbot run"' -or
     $ast.Extent.Text -notmatch 'if \(\$Language -eq ''zh-CN''\) \{ ''1'' \} else \{ ''2'' \}') {
     throw 'The bootstrap menu must remain ASCII-only, default to English, and select the source default by language.'
 }

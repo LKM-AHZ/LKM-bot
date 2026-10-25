@@ -51,8 +51,6 @@ def get_file_service(request: Request) -> ConfigFileService:
     return request.app.state.services.config_files
 
 
-
-
 def _alias_error(message: str):
     return error(message)
 

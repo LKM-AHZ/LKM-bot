@@ -1,8 +1,14 @@
 import uuid
 from datetime import datetime, timezone
+from typing import Any, cast
 
 from sqlalchemy import DateTime
 from sqlmodel import Field, MetaData, SQLModel, Text, UniqueConstraint
+
+# SQLModel annotates `Field(sa_type=...)` as a type, but the value is handed to
+# `Column(...)`, which accepts an instance just as well. Keep the explicit instance
+# so timestamps stay naive DATETIME instead of SQLModel's inferred UTCDateTime.
+_NAIVE_DATETIME = cast(type[Any], DateTime(timezone=False))
 
 
 class BaseKBModel(SQLModel, table=False):
@@ -44,11 +50,11 @@ class KnowledgeBase(BaseKBModel, table=True):
     # Keep existing database timestamps unchanged across SQLModel upgrades.
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
         sa_column_kwargs={"onupdate": datetime.now(timezone.utc)},
     )
     doc_count: int = Field(default=0, nullable=False)
@@ -91,11 +97,11 @@ class KBDocument(BaseKBModel, table=True):
     media_count: int = Field(default=0, nullable=False)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
         sa_column_kwargs={"onupdate": datetime.now(timezone.utc)},
     )
 
@@ -129,5 +135,5 @@ class KBMedia(BaseKBModel, table=True):
     mime_type: str = Field(max_length=100, nullable=False)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
     )

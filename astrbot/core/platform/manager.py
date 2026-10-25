@@ -260,7 +260,9 @@ class PlatformManager:
         self, task: asyncio.Task, platform: Platform | None = None
     ) -> None:
         meta = platform.meta() if platform else None
-        platform_id = (meta.id or platform.config.get("id")) if meta else None
+        platform_id = (
+            (meta.id or platform.config.get("id")) if platform and meta else None
+        )
         platform_type = meta.name if meta else None
         with log_context(platform_id, platform_type):
             # 设置平台状态为运行中

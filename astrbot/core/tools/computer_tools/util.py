@@ -155,9 +155,7 @@ def get_local_permission_policy(
             if sandbox["status"] == "unsupported":
                 recovery = "Run LKMBot in an environment that supports Local process isolation."
             elif sandbox["status"] == "missing" and backend == "bubblewrap":
-                recovery = (
-                    "Install bubblewrap on the LKMBot host, then restart LKMBot."
-                )
+                recovery = "Install bubblewrap on the LKMBot host, then restart LKMBot."
             elif backend == "seatbelt":
                 recovery = (
                     "Restore macOS Seatbelt (`sandbox-exec`) availability, "

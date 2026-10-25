@@ -56,8 +56,6 @@ def _safe_backup_filename(filename: str | None) -> str:
     return filename
 
 
-
-
 async def _run(operation, *, prefix: str):
     try:
         result = await run_maybe_async(operation)

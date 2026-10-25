@@ -26,8 +26,6 @@ def get_service(request: Request) -> T2iService:
 require_config_scope = ScopeDependency("config")
 
 
-
-
 def _raise_t2i_error(exc: T2iServiceError) -> None:
     raise ApiError(str(exc), status_code=exc.status_code) from exc
 

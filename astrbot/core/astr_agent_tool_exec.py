@@ -248,7 +248,9 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[AstrAgentContext]):
             # agent will send message to user via using tools
             pass
         llm_resp = runner.get_final_llm_resp()
-        task_meta = extras.get("background_task_result", {})
+        task_meta = extras.get("background_task_result")
+        if not isinstance(task_meta, dict):
+            task_meta = {}
         summary_note = (
             f"[BackgroundTask] {summary_name} "
             f"(task_id={task_meta.get('task_id', task_id)}) finished. "

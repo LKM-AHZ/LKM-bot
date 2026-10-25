@@ -35,8 +35,6 @@ def get_service(request: Request) -> SessionManagementService:
 require_data_scope = ScopeDependency("data")
 
 
-
-
 def _service_error(exc: SessionManagementServiceError) -> dict:
     return error(str(exc))
 

@@ -36,8 +36,6 @@ def get_service(request: Request) -> PersonaService:
 require_persona_scope = ScopeDependency("persona")
 
 
-
-
 def _model_dict(payload) -> dict[str, Any]:
     """Serialize a request model while preserving explicit null updates.
 

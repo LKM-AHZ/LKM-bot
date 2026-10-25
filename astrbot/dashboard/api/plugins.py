@@ -119,8 +119,6 @@ def get_config_file_service(request: Request) -> ConfigFileService:
     return request.app.state.services.config_files
 
 
-
-
 def _required_text(value: object, name: str) -> str:
     text = str(value or "").strip()
     if not text:

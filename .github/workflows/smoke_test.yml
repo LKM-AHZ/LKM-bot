@@ -11,6 +11,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   smoke-test:
     name: Smoke test (${{ matrix.os }}, Python ${{ matrix.python-version }})
@@ -23,21 +30,21 @@ jobs:
           - ubuntu-latest
           - macos-latest
           - windows-latest
+        # 只留 requires-python 的下限：3.10/3.11 两档在 `uv sync` 时会被项目约束
+        # （requires-python >=3.12）重新选成 3.12，实测 3.10 lane 的日志是
+        # "Using CPython 3.12.3 interpreter" —— 15 个 job 里有 10 个在重复跑同一个解释器。
+        # 需要覆盖多版本时，应先放宽 requires-python，而不是往矩阵里堆数字。
         python-version:
-          - '3.10'
-          - '3.11'
           - '3.12'
-          - '3.13'
-          - '3.14'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
@@ -48,7 +55,9 @@ jobs:
       - name: Install uv
         run: |
           python -m pip install --upgrade pip
-          python -m pip install uv
+          # 与 code-format.yml 一致地钉住 uv：uv 的解析器/lock 语义随版本变化，
+          # 浮动版本会让 `uv sync --locked` 的结果取决于安装当天的最新版。
+          python -m pip install "uv==0.12.12"
 
       - name: Install dependencies
         run: |

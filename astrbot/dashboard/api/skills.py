@@ -40,8 +40,6 @@ def get_service(request: Request) -> SkillsService:
 require_skill_scope = ScopeDependency("skill")
 
 
-
-
 def _required_text(value: object, name: str) -> str:
     text = str(value or "").strip()
     if not text:

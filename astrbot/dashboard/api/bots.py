@@ -24,8 +24,6 @@ def get_service(request: Request) -> BotConfigService:
     return request.app.state.services.bots
 
 
-
-
 def _required_text(value: object, name: str) -> str:
     text = str(value or "").strip()
     if not text:

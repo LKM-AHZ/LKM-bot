@@ -10,7 +10,7 @@ import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Any, BinaryIO
+from typing import IO, Any
 from urllib.parse import quote, quote_plus
 
 from astrbot import __version__
@@ -216,8 +216,8 @@ class DiagnosticRedactor:
 
     def copy_log(
         self,
-        source: BinaryIO,
-        target: BinaryIO,
+        source: IO[bytes],
+        target: IO[bytes],
         limit: int,
         *,
         start_time: int | None = None,

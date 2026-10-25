@@ -37,8 +37,6 @@ async def require_tool_scope(request: Request) -> AuthContext:
 require_mcp_scope = ScopeDependency("mcp")
 
 
-
-
 def _required_text(value: object, name: str) -> str:
     text = str(value or "").strip()
     if not text:

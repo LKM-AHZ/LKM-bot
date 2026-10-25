@@ -3,6 +3,7 @@ import os
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 from sqlalchemy import Column, DateTime, Text, bindparam
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -18,6 +19,11 @@ from astrbot.core.knowledge_base.retrieval.tokenizer import (
 
 FTS_TABLE_NAME = "documents_fts"
 FTS_REBUILD_BATCH_SIZE = 1000
+
+# SQLModel annotates `Field(sa_type=...)` as a type, but the value is handed to
+# `Column(...)`, which accepts an instance just as well. Keep the explicit instance
+# so timestamps stay naive DATETIME instead of SQLModel's inferred UTCDateTime.
+_NAIVE_DATETIME = cast(type[Any], DateTime(timezone=False))
 
 
 class BaseDocModel(SQLModel, table=False):
@@ -38,8 +44,8 @@ class Document(BaseDocModel, table=True):
     text: str = Field(nullable=False)
     metadata_: str | None = Field(default=None, sa_column=Column("metadata", Text))
     # Retain the legacy local timestamps without reinterpreting them as UTC.
-    created_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=False))
-    updated_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=False))
+    created_at: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
+    updated_at: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
 
 
 class DocumentStorage:

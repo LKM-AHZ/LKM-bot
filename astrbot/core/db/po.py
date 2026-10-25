@@ -1,22 +1,27 @@
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 from deprecated import deprecated
 from sqlalchemy import DateTime, Index, desc
 from sqlmodel import JSON, Field, SQLModel, Text, UniqueConstraint
+
+# SQLModel annotates `Field(sa_type=...)` as a type, but the value is handed to
+# `Column(...)`, which accepts an instance just as well. Keep the explicit instance
+# so timestamps stay naive DATETIME instead of SQLModel's inferred UTCDateTime.
+_NAIVE_DATETIME = cast(type[Any], DateTime(timezone=False))
 
 
 class TimestampMixin(SQLModel):
     # Preserve legacy storage instead of SQLModel's inferred UTCDateTime type.
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
     )
     updated_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
-        sa_type=DateTime(timezone=False),
+        sa_type=_NAIVE_DATETIME,
         sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
     )
 
@@ -30,7 +35,7 @@ class PlatformStat(SQLModel, table=True):
     __tablename__: str = "platform_stats"
 
     id: int = Field(primary_key=True, sa_column_kwargs={"autoincrement": True})
-    timestamp: datetime = Field(nullable=False, sa_type=DateTime(timezone=False))
+    timestamp: datetime = Field(nullable=False, sa_type=_NAIVE_DATETIME)
     platform_id: str = Field(nullable=False)
     platform_type: str = Field(nullable=False)  # such as "aiocqhttp", "slack", etc.
     count: int = Field(default=0, nullable=False)
@@ -209,10 +214,8 @@ class CronJob(TimestampMixin, SQLModel, table=True):
     persistent: bool = Field(default=True)
     run_once: bool = Field(default=False)
     status: str = Field(default="scheduled", max_length=32)
-    last_run_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=False))
-    next_run_time: datetime | None = Field(
-        default=None, sa_type=DateTime(timezone=False)
-    )
+    last_run_at: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
+    next_run_time: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
     last_error: str | None = Field(default=None, sa_type=Text)
 
 
@@ -418,11 +421,9 @@ class ApiKey(TimestampMixin, SQLModel, table=True):
     key_prefix: str = Field(max_length=24, nullable=False)
     scopes: list | None = Field(default=None, sa_type=JSON)
     created_by: str = Field(max_length=255, nullable=False)
-    last_used_at: datetime | None = Field(
-        default=None, sa_type=DateTime(timezone=False)
-    )
-    expires_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=False))
-    revoked_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=False))
+    last_used_at: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
+    expires_at: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
+    revoked_at: datetime | None = Field(default=None, sa_type=_NAIVE_DATETIME)
 
     __table_args__ = (
         UniqueConstraint(
@@ -448,9 +449,7 @@ class DashboardTrustedDevice(TimestampMixin, SQLModel, table=True):
     )
     token_hash: str = Field(max_length=64, nullable=False, unique=True, index=True)
     totp_secret_hash: str = Field(max_length=64, nullable=False, index=True)
-    expires_at: datetime = Field(
-        nullable=False, index=True, sa_type=DateTime(timezone=False)
-    )
+    expires_at: datetime = Field(nullable=False, index=True, sa_type=_NAIVE_DATETIME)
 
 
 class ChatUIProject(TimestampMixin, SQLModel, table=True):
