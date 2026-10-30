@@ -8,7 +8,7 @@ from astrbot.dashboard.schemas import (
     ProviderConfigRequest,
     ProviderSourceRequest,
 )
-from astrbot.dashboard.services.config_service import ProviderConfigService
+from astrbot.dashboard.services.provider_config_service import ProviderConfigService
 
 from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency

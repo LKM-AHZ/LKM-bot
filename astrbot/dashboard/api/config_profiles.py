@@ -13,12 +13,10 @@ from astrbot.dashboard.schemas import (
     RenameRequest,
 )
 from astrbot.dashboard.services.auth_service import CONFIG_EDIT_ADMIN_SCOPE
-from astrbot.dashboard.services.config_service import (
-    ConfigDisplayService,
-    ConfigFileService,
-    ConfigProfileService,
-    ConfigRoutingService,
-)
+from astrbot.dashboard.services.config_display_service import ConfigDisplayService
+from astrbot.dashboard.services.config_file_service import ConfigFileService
+from astrbot.dashboard.services.config_profile_service import ConfigProfileService
+from astrbot.dashboard.services.config_routing_service import ConfigRoutingService
 
 from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency

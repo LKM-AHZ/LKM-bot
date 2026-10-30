@@ -34,10 +34,8 @@ from astrbot.dashboard.schemas import (
     PluginValidateRepoRequest,
     PluginVersionSupportRequest,
 )
-from astrbot.dashboard.services.config_service import (
-    ConfigDisplayService,
-    ConfigFileService,
-)
+from astrbot.dashboard.services.config_display_service import ConfigDisplayService
+from astrbot.dashboard.services.config_file_service import ConfigFileService
 from astrbot.dashboard.services.plugin_page_service import (
     PLUGIN_PAGE_ASSET_TOKEN_TYPE,
     PluginPageContentPayload,

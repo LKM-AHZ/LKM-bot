@@ -15,17 +15,14 @@ from astrbot.dashboard.responses import ApiError, error
 from astrbot.dashboard.services.api_key_service import ApiKeyService
 from astrbot.dashboard.services.auth_service import AuthService
 from astrbot.dashboard.services.backup_service import BackupService
+from astrbot.dashboard.services.bot_config_service import BotConfigService
 from astrbot.dashboard.services.chat_service import ChatService
 from astrbot.dashboard.services.chatui_project_service import ChatUIProjectService
 from astrbot.dashboard.services.command_service import CommandService
-from astrbot.dashboard.services.config_service import (
-    BotConfigService,
-    ConfigDisplayService,
-    ConfigFileService,
-    ConfigProfileService,
-    ConfigRoutingService,
-    ProviderConfigService,
-)
+from astrbot.dashboard.services.config_display_service import ConfigDisplayService
+from astrbot.dashboard.services.config_file_service import ConfigFileService
+from astrbot.dashboard.services.config_profile_service import ConfigProfileService
+from astrbot.dashboard.services.config_routing_service import ConfigRoutingService
 from astrbot.dashboard.services.conversation_service import ConversationService
 from astrbot.dashboard.services.cron_service import CronService
 from astrbot.dashboard.services.file_service import FileService
@@ -37,6 +34,7 @@ from astrbot.dashboard.services.persona_service import PersonaService
 from astrbot.dashboard.services.platform_service import PlatformService
 from astrbot.dashboard.services.plugin_page_service import PluginPageService
 from astrbot.dashboard.services.plugin_service import PluginService
+from astrbot.dashboard.services.provider_config_service import ProviderConfigService
 from astrbot.dashboard.services.session_management_service import (
     SessionManagementService,
 )

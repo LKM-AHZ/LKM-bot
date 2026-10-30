@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import BotConfigRequest, EnabledPatch
-from astrbot.dashboard.services.config_service import BotConfigService
+from astrbot.dashboard.services.bot_config_service import BotConfigService
 
 from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency

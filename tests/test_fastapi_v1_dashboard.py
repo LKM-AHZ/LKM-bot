@@ -20,6 +20,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from PIL import Image as PILImage
 
+import astrbot.dashboard.services.config_display_service as config_display_service
 import astrbot.dashboard.services.config_service as config_service
 import astrbot.dashboard.services.stat_service as stat_service
 from astrbot.core import file_token_service
@@ -41,6 +42,7 @@ from astrbot.dashboard.services.plugin_service import (
     PLUGIN_UPDATE_SOURCE_REQUIRED_MESSAGE,
     PluginServiceError,
 )
+from astrbot.dashboard.services.provider_config_service import ProviderConfigService
 from astrbot.dashboard.services.skills_service import SkillArchive, SkillsServiceError
 
 JWT_SECRET = "fastapi-v1-test-secret-with-32-bytes"
@@ -2253,7 +2255,7 @@ async def test_v1_safe_provider_routes_accept_slash_ids(
         return {"provider_source_id": requested_source_id, "models": ["model/a"]}
 
     monkeypatch.setattr(
-        config_service.ProviderConfigService,
+        ProviderConfigService,
         "list_provider_source_models",
         fake_list_models,
     )
@@ -3761,10 +3763,10 @@ async def test_v1_platform_logo_refreshes_stale_tokens_and_supports_repeated_rea
         config_metadata=None,
     )
     monkeypatch.setattr(file_token_service, "staged_files", {})
-    monkeypatch.setattr(config_service, "platform_registry", [platform])
-    monkeypatch.setitem(config_service.platform_cls_map, platform.name, FakePlatform)
+    monkeypatch.setattr(config_display_service, "platform_registry", [platform])
+    monkeypatch.setitem(config_display_service.platform_cls_map, platform.name, FakePlatform)
     monkeypatch.setattr(
-        config_service,
+        config_display_service,
         "inspect",
         SimpleNamespace(getfile=lambda _cls: str(tmp_path / "adapter.py")),
     )

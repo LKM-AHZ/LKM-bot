@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from astrbot.dashboard.services.config_service import ConfigProfileService
+from astrbot.dashboard.services.config_profile_service import ConfigProfileService
 
 
 def test_get_system_config_includes_effective_server_time() -> None:
@@ -19,7 +19,9 @@ def test_get_system_config_includes_effective_server_time() -> None:
         runtime={"os": "windows", "sandbox": {"status": "unsupported"}},
     )
 
-    with patch("astrbot.dashboard.services.config_service.datetime") as mock_datetime:
+    with patch(
+        "astrbot.dashboard.services.config_profile_service.datetime"
+    ) as mock_datetime:
         mock_datetime.now.return_value = fixed_time
         result = service.get_system_config()
 
@@ -45,7 +47,9 @@ async def test_profile_mutations_await_config_manager() -> None:
         lifecycle, runtime={"os": "windows", "sandbox": {"status": "unsupported"}}
     )
 
-    with pytest.raises(ValueError, match="Invalid local filesystem scope for member") as exc:
+    with pytest.raises(
+        ValueError, match="Invalid local filesystem scope for member"
+    ) as exc:
         await service.create_profile(
             "Invalid",
             {

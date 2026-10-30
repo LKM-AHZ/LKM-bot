@@ -1,191 +1,153 @@
-![LKMBot-Logo-Simplified](https://github.com/user-attachments/assets/36fb04e4-cc75-4454-bd8b-049d11aa86f9)
+> **LKMBot** 是本仓库维护的 LKM 品牌发行版，基于 AstrBot 开发。为兼容现有插件和历史数据，
+> 内部 Python 包名 `astrbot`、旧环境变量及 API 字段名暂时保留；面向用户的产品名和主命令均为
+> `LKMBot` / `lkmbot`。
 
-> **LKMBot** is the LKM-branded distribution maintained in this repository. It is based on
-> AstrBot and intentionally retains the internal `astrbot` Python package, legacy environment
-> variables, and API field names so existing plugins and data remain compatible.
+## 代码结构与开发入口
 
-<div align="center">
+目录与入口核对日期：2026-10-31。开发环境需要 Python 3.12+；发行名为 LKMBot，内部
+Python 包继续使用 `astrbot`，以兼容现有插件和数据。
 
-<a href="https://github.com/Alma1314/LKM-bot/blob/master/README_zh.md">简体中文</a> ｜
+| 路径 | 职责 |
+|---|---|
+| `main.py`、`runtime_bootstrap.py` | 启动参数、运行路径初始化与源码启动入口 |
+| `astrbot/core/initial_loader.py`、`astrbot/core/core_lifecycle.py` | Bot Core 与 Dashboard 的启动和关闭 |
+| `astrbot/core/pipeline/`、`astrbot/core/platform/`、`astrbot/core/provider/`、`astrbot/core/star/` | 消息阶段、平台适配、模型与插件生命周期 |
+| `astrbot/api/`、`astrbot/builtin_stars/` | 插件公共 API 与内置插件 |
+| `astrbot/dashboard/api/`、`astrbot/dashboard/services/`、`astrbot/dashboard/server.py` | FastAPI 路由、服务逻辑、Hypercorn 与静态资源 |
+| `astrbot/lkm/` | 社区 SSO 与面板子路径集成 |
+| `dashboard/src/` | Vue WebUI，开发命令见 [Dashboard 指南](./dashboard/README.md) |
+| `openspec/`、`tests/`、`docs/` | API 规格、回归测试与中英文使用/开发文档 |
+| `scripts/` | 构建、发布和 API 文档工具 |
 
-<br>
+先在仓库根目录执行 `uv sync`、`uv run main.py`；另开终端进入 `dashboard/` 执行
+`pnpm install`、`pnpm dev`。社区集成优先放在 `astrbot/lkm/`，保留现有 `astrbot` 命名空间。
+`dashboard/src/api/generated/` 和打包后的 `astrbot/dashboard/dist/` 不直接编辑；API 变更后
+在 `dashboard/` 运行 `pnpm generate:api`，同步相应测试和文档。
 
-<div>
-<a href="https://trendshift.io/repositories/21369" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21369" alt="AstrBotDevs%2FAstrBot | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-<a href="https://hellogithub.com/repository/AstrBotDevs/AstrBot" target="_blank"><img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=d127d50cd5e54c5382328acc3bb25483&claim_uid=ZO9by7qCXgSd6Lp&t=2" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-</div>
+Dashboard 配置服务按职责归属文件：`config_profile_service.py` 管理配置档和系统设置，
+`config_routing_service.py` 管理会话配置路由，`config_display_service.py` 构造编辑器元数据，
+`config_file_service.py` 处理配置附件，`bot_config_service.py` / `provider_config_service.py`
+管理平台与模型源。共享校验和保存逻辑保留在 `config_service.py`；
+`astrbot/dashboard/api/app.py` 统一装配，各路由直接导入所需服务。
 
-<br>
+嵌入 LKM-Website 时，完整栈部署以父仓库的 [部署手册](../docs/DEPLOYMENT.md) 为准；
+单独克隆时可查看 [LKM-Website 文档](https://github.com/LKM-AHZ/LKM-Website/tree/master/docs)。
 
-<div>
-<a href="https://github.com/AstrBotDevs/AstrBot/releases/latest"><img src="https://img.shields.io/github/v/release/AstrBotDevs/AstrBot?color=76bad9"></a>
-<a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.12+-blue.svg" alt="python"></a>
-<a href="https://deepwiki.com/AstrBotDevs/AstrBot"><img src="https://img.shields.io/badge/-Ask_DeepWiki-007ec6?logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAPoAAAD6AG1e1JrAAACIUlEQVRYw%2B2XP2gUQRTGv7d3JhYWQawkIBaCVWzETos0gmAnVoKNTSoLK0E7EQQrC20sBVFBtLPQRgTBtBaKjYgIQUSxiJq7fT%2BLvCGPJZdNLt4dQj5Y3u7sznzfzLw%2Fs9IO%2FicANiniCujEfWdsQgBLxAbsbraPZcmBfcAt4DNwKQsZNfEUsAB8YRV12LfA6ZHuedg7AO7ed%2Fc%2BUBcbQhbiu%2B6wXIM6EnZWkszMJe2Ke0n6I2la0v51hFeSMLN6OwIK6jJwEBdUYb2MAxRSz6sY4geiahFgLe1Hwq6YWe3us8AN4FQQU4QM64SPY69Xyr43fADgNjAPXHb3peSsD4FDQ0VLEjAHvIhBPS6AHvA1bBO9JPAXcHFbIRtJ5yzwIQZ9CZwAusDJENIkLqsG8DpNyIZJwSUk9wLHgakcesC1JCCjiHm1kYDNOEjptCxpSVK%2F8f73OFLxPLAYM3oCzEX7MXf%2FlJbc%2F8kWpA4HgQdpYI9IWAbeh83whi84cHXL%2B58EPBoQhnmm94EzwE3gZ2p%2FDhzdbhg%2BTaRr01x7ftb4%2FjBwFzjXrCvDpmLW9crVLNeR9CaapoGemb2TdCERW1tNaBNQ8jktwmozqwtpqRNtdWAjARYk39IS12ZWRX7vmJmA71nQZgi36gN7gCvAj5xc3P0jcH7kx7Ik5IC73wsh14GZsZySow5002l4Jr0b6%2Bm4eSyvpAn8lEzsx2QHo8RfUrlN%2BuPq4ksAAAAASUVORK5CYII%3D&labelColor=000000"></a>
-<a href="https://zread.ai/AstrBotDevs/AstrBot" target="_blank"><img src="https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff" alt="zread"/></a>
-<a href="https://hub.docker.com/r/soulter/astrbot"><img alt="Docker pull" src="https://img.shields.io/docker/pulls/soulter/astrbot.svg?color=76bad9"/></a>
-<a href="https://cloud.astrbot.app/market"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.soulter.top%2Fastrbot%2Fplugin-num&query=%24.result&suffix=%20plugins&label=Marketplace&cacheSeconds=3600"></a>
-<a href="https://gitcode.com/Soulter/AstrBot"><img src="https://gitcode.com/Soulter/AstrBot/star/badge.svg"></a>
-</div>
+## 主要功能
 
-<br>
+1. 💯 免费 & 开源。
+2. ✨ AI 大模型对话，多模态，Agent，MCP，Skills，知识库，人格设定，自动压缩对话。
+3. 🤖 支持接入 Dify、阿里云百炼、Coze 等智能体平台。
+4. 🌐 多平台，支持 QQ、企业微信、飞书、钉钉、微信公众号、Telegram、Slack 以及[更多](#支持的消息平台)。
+5. 📦 插件扩展，已有 1000+ 个插件可一键安装。
+6. 🛡️ [Agent Sandbox](https://docs.astrbot.app/use/astrbot-agent-sandbox.html) 隔离化环境，安全地执行任何代码、调用 Shell、会话级资源复用。
+7. 💻 WebUI 支持。
+8. 🌈 Web ChatUI 支持，ChatUI 内置代理沙盒、网页搜索等。
+9. 🌐 国际化（i18n）支持。
 
-<a href="https://astrbot.app/">Documentation</a> ｜
-<a href="https://blog.astrbot.app/">Blog</a> ｜
-<a href="https://astrbot.featurebase.app/roadmap">Roadmap</a> ｜
-<a href="https://github.com/AstrBotDevs/AstrBot/issues">Issue Tracker</a> ｜
-<a href="mailto:community@astrbot.app">Email Support</a>
-</div>
+## 快速开始
 
-LKMBot is an open-source all-in-one Agent chatbot platform that integrates with mainstream instant messaging apps. It provides reliable and scalable conversational AI infrastructure for individuals, developers, and teams. Whether you're building a personal AI companion, intelligent customer service, automation assistant, or enterprise knowledge base, LKMBot enables you to quickly build production-ready AI applications within your IM platform workflows.
-
-![screenshot_1 5x_postspark_2026-02-27_22-37-45](https://github.com/user-attachments/assets/f17cdb90-52d7-4773-be2e-ff64b566af6b)
-
-## Key Features
-
-1. 💯 Free & Open Source.
-2. ✨ AI LLM Conversations, Multimodal, Agent, MCP, Skills, Knowledge Base, Persona Settings, Auto Context Compression.
-3. 🤖 Supports integration with Dify, Alibaba Cloud Bailian, Coze, and other agent platforms.
-4. 🌐 Multi-Platform: QQ, WeChat Work, Feishu, DingTalk, WeChat Official Accounts, Telegram, Slack, and [more](#supported-messaging-platforms).
-5. 📦 Plugin Extensions with 1000+ plugins available for one-click installation.
-6. 🛡️ [Agent Sandbox](https://docs.astrbot.app/use/astrbot-agent-sandbox.html) for isolated, safe execution of code, shell calls, and session-level resource reuse.
-7. 💻 WebUI Support.
-8. 🌈 Web ChatUI Support with built-in agent sandbox and web search.
-9. 🌐 Internationalization (i18n) Support.
-
-## Quick Start
-
-### One-Click Deployment
+### 一键部署
 
 > [!NOTE]
-> Requires [uv](https://docs.astral.sh/uv/) to be installed.
-> For macOS users: due to macOS security checks, the first run of the `lkmbot` command may take longer (about 10-20s).
+> 需要安装 [uv](https://docs.astral.sh/uv/)。
+> 对于 macOS 用户：由于 macOS 安全检查，首次运行 `astrbot` 命令可能需要较长时间（约 10-20 秒）。
 
-For users who want to quickly experience LKMBot, are familiar with command-line usage, and can install a `uv` environment on their own, we recommend the `uv` one-click deployment method ⚡️:
+对于想快速体验 LKMBot、且熟悉命令行并能够自行安装 `uv` 环境的用户，我们推荐使用 `uv` 一键部署方式 ⚡️。
 
 ```bash
 git clone https://github.com/Alma1314/LKM-bot.git
 cd LKM-bot
 uv tool install . --python 3.12
-lkmbot init # Only execute this command for the first time to initialize the environment
+lkmbot init # 仅首次执行此命令以初始化环境
 lkmbot run
 ```
 
-Update `lkmbot`:
+后续更新 `lkmbot`：
 
 ```bash
 git pull --ff-only
 uv tool install --force . --python 3.12
 ```
 
-### Docker Deployment
+### Docker 部署
 
-For users familiar with containers and looking for a more stable, production-ready deployment method, we recommend deploying LKMBot with Docker / Docker Compose.
+对于熟悉容器、希望获得更稳定且更适合生产环境部署方式的用户，我们推荐使用 Docker / Docker Compose 部署 LKMBot。
+## 支持的消息平台
 
-Please refer to the official documentation: [Deploy LKMBot with Docker](https://docs.astrbot.app/deploy/astrbot/docker.html#%E4%BD%BF%E7%94%A8-docker-%E9%83%A8%E7%BD%B2-astrbot).
+将 LKMBot 连接到你常用的聊天平台。
 
-### Desktop Application Deployment
-
-For users who want to use LKMBot on desktop and mainly use ChatUI, we recommend LKMBot App.
-
-Visit [AstrBot-desktop](https://github.com/AstrBotDevs/AstrBot-desktop) to download and install; this method is designed for desktop usage and is not recommended for server scenarios.
-
-### Launcher Deployment
-
-For desktop users who also want fast deployment and isolated multi-instance usage, we recommend LKMBot Launcher.
-
-Visit [LKMBot Launcher](https://github.com/Raven95676/astrbot-launcher) to download and install.
-
-**More deployment methods**
-
-If you need panel-based management or deeper customization, see [BT-Panel Deployment](https://docs.astrbot.app/deploy/astrbot/btpanel.html), [1Panel Deployment](https://docs.astrbot.app/deploy/astrbot/1panel.html), [CasaOS Deployment](https://docs.astrbot.app/deploy/astrbot/casaos.html), or [Source Deployment](https://docs.astrbot.app/deploy/astrbot/cli.html).
-
-
-## ❤️ Sponsors
-
-Welcome to sponsor us via [Afdian](https://afdian.com/a/astrbot_team) or [contact us](mailto:community@astrbot.app).
-
-<p align="center">
-  <a target="_blank" href="https://astrbot.app/#/sponsors">
-    <img alt="sponsors" src="https://sponsors.astrbot.app/?v=1">
-  </a>
-</p>
-
-
-## Supported Messaging Platforms
-
-Connect LKMBot to your favorite chat platform.
-
-| Platform | Maintainer |
+| 平台 | 维护方 |
 |---------|---------------|
-| QQ | Official |
-| OneBot v11 protocol implementation | Official |
-| Telegram | Official |
-| Wecom & Wecom AI Bot | Official |
-| WeChat Official Accounts | Official |
-| Feishu (Lark) | Official |
-| DingTalk | Official |
-| Slack | Official |
-| Discord | Official |
-| LINE | Official |
-| Satori | Official |
-| KOOK | Official |
-| Misskey | Official |
-| Mattermost | Official |
-| WhatsApp (Coming Soon) | Official |
-| [Matrix](https://github.com/stevessr/astrbot_plugin_matrix_adapter) | Community |
-| [Rocket.Chat](https://github.com/NET-Homeless/astrbot_plugin_rocket_chat_adapter) | Community |
-| [VoceChat](https://github.com/HikariFroya/astrbot_plugin_vocechat) | Community |
+| **QQ** | 官方维护 |
+| **OneBot v11** | 官方维护 |
+| **Telegram** | 官方维护 |
+| **企微应用 & 企微智能机器人** | 官方维护 |
+| **微信公众号** | 官方维护 |
+| **飞书** | 官方维护 |
+| **钉钉** | 官方维护 |
+| **Slack** | 官方维护 |
+| **Discord** | 官方维护 |
+| **LINE** | 官方维护 |
+| **Satori** | 官方维护 |
+| **KOOK** | 官方维护 |
+| **Misskey** | 官方维护 |
+| **Mattermost** | 官方维护 |
+| **WhatsApp（将支持）** | 官方维护 |
+| [**Matrix**](https://github.com/stevessr/astrbot_plugin_matrix_adapter) | 社区维护 |
+| [**Rocket.Chat**](https://github.com/NET-Homeless/astrbot_plugin_rocket_chat_adapter) | 社区维护 |
+| [**VoceChat**](https://github.com/HikariFroya/astrbot_plugin_vocechat) | 社区维护 |
 
-## Supported Model Services
+## 支持的模型提供商
 
-| Service | Type |
+| 提供商 | 类型 |
 |---------|---------------|
-| OpenAI and Compatible Services | LLM Services |
-| Anthropic | LLM Services |
-| Google Gemini | LLM Services |
-| Moonshot AI | LLM Services |
-| Zhipu AI | LLM Services |
-| DeepSeek | LLM Services |
-| Ollama (Self-hosted) | LLM Services |
-| LM Studio (Self-hosted) | LLM Services |
-| [MiraRouter](https://mirarouter.com/) | LLM Services (API Gateway, supports all models) |
-| [AIHubMix](https://aihubmix.com/?aff=4bfH) | LLM Services (API Gateway, supports all models) |
-| [CompShare](https://www.compshare.cn/?ytag=GPU_YY-gh_astrbot&referral_code=FV7DcGowN4hB5UuXKgpE74) | LLM Services |
-| [302.AI](https://share.302.ai/rr1M3l) | LLM Services |
-| [TokenPony](https://www.tokenpony.cn/3YPyf) | LLM Services |
-| [SiliconFlow](https://docs.siliconflow.cn/cn/usercases/use-siliconcloud-in-astrbot) | LLM Services |
-| [PPIO Cloud](https://ppio.com/user/register?invited_by=AIOONE) | LLM Services |
-| ModelScope | LLM Services |
-| OneAPI | LLM Services |
-| Dify | LLMOps Platforms |
-| Alibaba Cloud Bailian Applications | LLMOps Platforms |
-| Coze | LLMOps Platforms |
-| OpenAI Whisper | Speech-to-Text Services |
-| SenseVoice | Speech-to-Text Services |
-| Xiaomi MiMo Omni | Speech-to-Text Services |
-| OpenAI TTS | Text-to-Speech Services |
-| Gemini TTS | Text-to-Speech Services |
-| GPT-Sovits-Inference | Text-to-Speech Services |
-| GPT-Sovits | Text-to-Speech Services |
-| FishAudio | Text-to-Speech Services |
-| Edge TTS | Text-to-Speech Services |
-| Alibaba Cloud Bailian TTS | Text-to-Speech Services |
-| Azure TTS | Text-to-Speech Services |
-| Minimax TTS | Text-to-Speech Services |
-| Xiaomi MiMo TTS | Text-to-Speech Services |
-| Volcano Engine TTS | Text-to-Speech Services |
+| OpenAI 及兼容服务 | LLM |
+| Anthropic | LLM |
+| Google Gemini | LLM |
+| Moonshot AI | LLM |
+| 智谱 AI | LLM |
+| DeepSeek | LLM |
+| Ollama (本地部署) | LLM |
+| LM Studio (本地部署) | LLM |
+| [MiraRouter](https://mirarouter.com/) | LLM (API 网关, 支持所有模型) |
+| [AIHubMix](https://aihubmix.com/?aff=4bfH) | LLM (API 网关, 支持所有模型) |
+| [优云智算](https://www.compshare.cn/?ytag=GPU_YY-gh_astrbot&referral_code=FV7DcGowN4hB5UuXKgpE74) | LLM (API 网关, 支持所有模型) |
+| [302.AI](https://share.302.ai/rr1M3l) | LLM (API 网关, 支持所有模型)|
+| [小马算力](https://www.tokenpony.cn/3YPyf) | LLM (API 网关, 支持所有模型)|
+| [硅基流动](https://docs.siliconflow.cn/cn/usercases/use-siliconcloud-in-astrbot) | LLM (API 网关, 支持所有模型)  |
+| [PPIO 派欧云](https://ppio.com/user/register?invited_by=AIOONE) | LLM (API 网关, 支持所有模型) |
+| ModelScope | LLM |
+| OneAPI | LLM |
+| Dify | LLMOps 平台 |
+| 阿里云百炼应用 | LLMOps 平台 |
+| Coze | LLMOps 平台 |
+| OpenAI Whisper | 语音转文本 |
+| SenseVoice | 语音转文本 |
+| Xiaomi MiMo Omni | 语音转文本 |
+| OpenAI TTS | 文本转语音 |
+| Gemini TTS | 文本转语音 |
+| GPT-Sovits-Inference | 文本转语音 |
+| GPT-Sovits | 文本转语音 |
+| FishAudio | 文本转语音 |
+| Edge TTS | 文本转语音 |
+| 阿里云百炼 TTS | 文本转语音 |
+| Azure TTS | 文本转语音 |
+| Minimax TTS | 文本转语音 |
+| Xiaomi MiMo TTS | 文本转语音 |
+| 火山引擎 TTS | 文本转语音 |
 
-## ❤️ Contributing
+## ❤️ 贡献
 
-Issues and Pull Requests are always welcome! Feel free to submit your changes to this project :)
+欢迎任何 Issues/Pull Requests！只需要将你的更改提交到此项目 ：)
 
-### How to Contribute
+### 如何贡献
 
-You can contribute by reviewing issues or helping with pull request reviews. Any issues or PRs are welcome to encourage community participation. Of course, these are just suggestions—you can contribute in any way you like. For adding new features, please discuss through an Issue first.
+你可以通过查看问题或帮助审核 PR（拉取请求）来贡献。任何问题或 PR 都欢迎参与，以促进社区贡献。当然，这些只是建议，你可以以任何方式进行贡献。对于新功能的添加，请先通过 Issue 讨论。
 
-### Development Environment
+### 开发环境
 
-LKMBot uses `ruff` for code formatting and linting.
+LKMBot 使用 `ruff` 进行代码格式化和检查。
 
 ```bash
 git clone https://github.com/Alma1314/LKM-bot.git
@@ -193,12 +155,46 @@ pip install pre-commit
 pre-commit install
 ```
 
+## 🌍 社区
+
+### QQ 群组
+
+我们有 15 个以上的交流群，详情请参阅[社区](https://docs.astrbot.app/community.html)。
+
+### Discord 频道
+
+<a href="https://discord.gg/hAVk6tgV36"><img alt="Discord_community" src="https://img.shields.io/badge/Discord-AstrBot-purple?style=for-the-badge&color=76bad9"></a>
+
+## ❤️ Special Thanks
+
+特别感谢所有 Contributors 和插件开发者对 LKMBot 的贡献 ❤️
+
+<a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=300&columns=15" />
+</a>
+
+开源伙伴 ❤️
+
+- [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) - 出色的猫猫框架
+- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) - QQ 中强大的“数字生命”！
+
 ## ⭐ Star History
 
 > [!TIP]
-> If this project has helped you in your life or work, or if you're interested in its future development, please give the project a Star. It's the driving force behind maintaining this open-source project <3
+> 如果本项目对您的生活 / 工作产生了帮助，或者您关注本项目的未来发展，请给项目 Star，这是我们维护这个开源项目的动力 <3
 
 <div align="center">
 
 [![Star History Chart](https://api.star-history.com/svg?repos=astrbotdevs/astrbot&type=Date)](https://star-history.com/#astrbotdevs/astrbot&Date)
 
+</div>
+
+<div align="center">
+
+_陪伴与能力从来不应该是对立面。我们希望创造的是一个既能理解情绪、给予陪伴，也能可靠完成工作的机器人。_
+
+_私は、高性能ですから!_
+
+<img src="https://files.astrbot.app/watashiwa-koseino-desukara.gif" width="100"/>
+
+</div>
