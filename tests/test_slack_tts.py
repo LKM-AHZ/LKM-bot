@@ -15,7 +15,7 @@ from astrbot.api.platform import (
 )
 from astrbot.core.message.message_event_result import MessageEventResult
 from astrbot.core.pipeline.respond.stage import RespondStage
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
 from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
 
@@ -57,7 +57,7 @@ def slack_sender(request, slack_event, monkeypatch):
     monkeypatch.setattr(Platform, "send_by_session", AsyncMock())
     adapter = object.__new__(SlackAdapter)
     adapter.web_client = slack_event.web_client
-    session = MessageSesion(
+    session = MessageSession(
         platform_name="slack",
         message_type=MessageType.GROUP_MESSAGE,
         session_id="C123",

@@ -30,7 +30,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
 )
 from astrbot.core import sp
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.media_utils import MediaResolver
@@ -557,7 +557,7 @@ class LarkPlatformAdapter(Platform):
 
     async def send_by_session(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         fallback_chat_id = None

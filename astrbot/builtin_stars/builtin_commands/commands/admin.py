@@ -1,6 +1,5 @@
 from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core.updater import AstrBotUpdater
 
 
 class AdminCommands:
@@ -8,7 +7,10 @@ class AdminCommands:
         self.context = context
 
     async def update_dashboard(self, event: AstrMessageEvent) -> None:
-        """更新管理面板"""
-        await event.send(MessageChain().message("⏳ Updating dashboard..."))
-        await AstrBotUpdater().ensure_dashboard()
-        await event.send(MessageChain().message("✅ Dashboard updated successfully."))
+        """告知管理面板已随社区站发布，不再由机器人更新。"""
+        await event.send(
+            MessageChain().message(
+                "The dashboard ships with the community website and is no longer "
+                "updated by the bot."
+            )
+        )

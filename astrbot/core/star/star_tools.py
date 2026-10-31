@@ -10,7 +10,7 @@ from deprecated import deprecated
 from astrbot.api.platform import AstrBotMessage, MessageMember, MessageType
 from astrbot.core.message.components import BaseMessageComponent
 from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.star.context import Context
 from astrbot.core.star.star import star_map
 from astrbot.core.utils.astrbot_path import get_astrbot_data_path
@@ -34,7 +34,7 @@ class StarTools:
     @classmethod
     async def send_message(
         cls,
-        session: str | MessageSesion,
+        session: str | MessageSession,
         message_chain: MessageChain,
     ) -> bool:
         """Sends a message to a session by unified message origin.

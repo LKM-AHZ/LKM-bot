@@ -21,7 +21,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
 )
 from astrbot.core import astrbot_config
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.webhook_utils import log_webhook_info
 
@@ -91,7 +91,7 @@ class MattermostPlatformAdapter(Platform):
 
     async def send_by_session(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         await self.client.send_message_chain(session.session_id, message_chain)

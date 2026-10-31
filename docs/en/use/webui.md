@@ -249,7 +249,7 @@ In the browser WebUI, open `⋮ → Update LKMBot` in the upper-right corner, ex
 
 You can also use the `/dashboard_update` command to manually update the admin panel (admin command).
 
-Admin panel files are located in the data/dist directory. If you need to manually replace them, download `dist.zip` from https://github.com/AstrBotDevs/AstrBot/releases/ and extract it to the data directory.
+The admin panel ships with the community website and is served by Astro at `/bot/`; it is no longer bundled into the LKMBot package. `data/dist` remains a static fallback directory (build it with the deployment prefix).
 
 ## Customizing WebUI Port
 

@@ -2,9 +2,6 @@ from pathlib import Path
 
 import click
 
-# Static assets bundled inside the installed wheel (built by hatch_build.py).
-_BUNDLED_DIST = Path(__file__).parent.parent.parent / "dashboard" / "dist"
-
 
 def check_astrbot_root(path: str | Path) -> bool:
     """Check if the path is an LKMBot root directory"""
@@ -23,16 +20,18 @@ def get_astrbot_root() -> Path:
 
 
 async def check_dashboard(astrbot_root: Path) -> None:
-    """Check if the dashboard is installed"""
-    from astrbot.core.updater import AstrBotUpdater
+    """Report the optional static panel directory, if one is configured.
 
-    # If the wheel ships bundled dashboard assets, no network download is needed.
-    if _BUNDLED_DIST.exists():
-        click.echo("Dashboard is bundled with the package – skipping download.")
+    Args:
+        astrbot_root: LKMBot root directory whose ``data/dist`` may hold a
+            prebuilt standalone panel.
+    """
+    from astrbot.core.dashboard_assets import resolve_dashboard_dist
+
+    dashboard_path = resolve_dashboard_dist(astrbot_root / "dist")
+    if dashboard_path is None:
+        click.echo(
+            "No static panel files configured; the panel is served by the website."
+        )
         return
-
-    try:
-        dashboard_path = await AstrBotUpdater().ensure_dashboard()
-        click.echo(f"Dashboard is ready at {dashboard_path}")
-    except Exception as exc:
-        click.echo(f"Failed to prepare Dashboard: {exc}")
+    click.echo(f"Dashboard is ready at {dashboard_path}")

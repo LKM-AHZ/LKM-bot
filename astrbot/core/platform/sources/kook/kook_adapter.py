@@ -21,7 +21,7 @@ from astrbot.core.message.components import (
     Record,
     Video,
 )
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.media_utils import MediaResolver
 
@@ -70,7 +70,7 @@ class KookPlatformAdapter(Platform):
         self._roles_cache = KookRolesRecord("", self.client.http_client)
 
     async def send_by_session(
-        self, session: MessageSesion, message_chain: MessageChain
+        self, session: MessageSession, message_chain: MessageChain
     ):
         inner_message = AstrBotMessage()
         inner_message.session_id = session.session_id

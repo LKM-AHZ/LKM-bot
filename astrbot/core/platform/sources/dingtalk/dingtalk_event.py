@@ -2,7 +2,7 @@ from typing import Any
 
 from astrbot import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 
 
 class DingtalkMessageEvent(AstrMessageEvent):
@@ -31,7 +31,7 @@ class DingtalkMessageEvent(AstrMessageEvent):
             )
         else:
             await self.adapter.send_by_session(
-                MessageSesion(
+                MessageSession(
                     platform_name=self.platform_meta.id,
                     message_type=self.get_message_type(),
                     session_id=self.session_id,

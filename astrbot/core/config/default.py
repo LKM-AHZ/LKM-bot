@@ -300,7 +300,6 @@ DEFAULT_CONFIG = {
     "trace_retention_days": 7,
     "pip_install_arg": "",
     "pypi_index_url": "https://mirrors.aliyun.com/pypi/simple/",
-    "persona": [],  # deprecated
     "timezone": "Asia/Shanghai",
     "callback_api_base": "",
     "default_kb_collection": "",  # 默认知识库名称, 已经过时

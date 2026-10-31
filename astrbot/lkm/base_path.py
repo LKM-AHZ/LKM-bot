@@ -8,10 +8,10 @@
   ``/bot`` 只让面板自己的请求携带它。
 - **重定向 Location**：302 必须回到浏览器可见的前缀下（``/bot/#/...``），而不是后端视角的根。
 
-前端侧的前缀由**构建期** base 决定（``VITE_BASE_PATH``，见 ``dashboard/vite.config.ts``）；
+前端侧的前缀由**构建期** base 决定（``VITE_BASE_PATH``，见社区站 ``bot-panel/vite.config.ts``）；
 本模块只管后端这两处运行时依赖。
 
-配置：``ASTRBOT_DASHBOARD_BASE_PATH``（兼容 ``DASHBOARD_BASE_PATH``），留空 = 挂在根路径
+配置：``ASTRBOT_DASHBOARD_BASE_PATH``，留空 = 挂在根路径
 （默认，保持上游单机部署行为不变）。值会被规范化为 ``""`` 或 ``"/bot"`` 形态（无尾斜杠）。
 """
 
@@ -20,7 +20,6 @@ from __future__ import annotations
 import os
 
 BASE_PATH_ENV = "ASTRBOT_DASHBOARD_BASE_PATH"
-BASE_PATH_ENV_LEGACY = "DASHBOARD_BASE_PATH"
 
 
 def dashboard_base_path() -> str:
@@ -29,9 +28,7 @@ def dashboard_base_path() -> str:
     每次调用都读环境变量：该值在进程生命周期内不变，但测试需要能按用例覆盖，且读取成本
     可以忽略（``os.environ`` 是内存字典）。
     """
-    raw = (
-        os.environ.get(BASE_PATH_ENV) or os.environ.get(BASE_PATH_ENV_LEGACY) or ""
-    ).strip()
+    raw = (os.environ.get(BASE_PATH_ENV) or "").strip()
     if not raw or raw == "/":
         return ""
     return "/" + raw.strip("/")

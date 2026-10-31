@@ -27,7 +27,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
     register_platform_adapter,
 )
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import (
     BUTTON_ACTION_EXPIRED_MESSAGE,
     ButtonActionExpiredError,
@@ -73,7 +73,7 @@ class DiscordPlatformAdapter(Platform):
     @override
     async def send_by_session(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         """通过会话发送消息"""

@@ -621,9 +621,6 @@ class FakeAstrBotUpdater:
     async def update(self, *_args, **_kwargs) -> None:
         return None
 
-    async def ensure_dashboard(self) -> Path:
-        return Path("data/dist")
-
 
 class FakeAstrBotConfig(dict):
     def save_config(self, post_config: dict) -> None:

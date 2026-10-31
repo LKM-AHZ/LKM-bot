@@ -8,7 +8,7 @@ from slack_sdk.web.internal_utils import _to_v2_file_upload_item
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import File, Plain
 from astrbot.api.platform import MessageType
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.platform import Platform
 from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
 from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
@@ -257,7 +257,7 @@ async def test_slack_send_by_session_preserves_plain_and_failure_behavior(
     }
     if fail_upload:
         adapter.web_client.files_upload_v2.side_effect = RuntimeError("upload failed")
-    session = MessageSesion(
+    session = MessageSession(
         platform_name="slack", message_type=MessageType.GROUP_MESSAGE, session_id="C123"
     )
     chain = MessageChain(

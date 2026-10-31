@@ -22,7 +22,7 @@ from astrbot.core.persona_mgr import PersonaManager
 from astrbot.core.platform import Platform
 from astrbot.core.platform.astr_message_event import (
     AstrMessageEvent,
-    MessageSesion,
+    MessageSession,
     current_message_event,
     streaming_response_event,
 )
@@ -665,7 +665,7 @@ class Context:
 
     async def send_message(
         self,
-        session: str | MessageSesion,
+        session: str | MessageSession,
         message_chain: MessageChain,
     ) -> bool:
         """根据 session(unified_msg_origin) 主动发送消息。
@@ -681,12 +681,12 @@ class Context:
             ValueError: session 字符串不合法时抛出。
 
         Note:
-            当 session 为字符串时，会尝试解析为 MessageSession 对象。(类名为MessageSesion是因为历史遗留拼写错误)
+            当 session 为字符串时，会尝试解析为 MessageSession 对象。
             qq_official(QQ 官方 API 平台) 不支持此方法。
         """
         if isinstance(session, str):
             try:
-                session = MessageSesion.from_str(session)
+                session = MessageSession.from_str(session)
             except BaseException as e:
                 raise ValueError("不合法的 session 字符串: " + str(e))
 

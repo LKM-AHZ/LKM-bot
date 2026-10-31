@@ -81,9 +81,10 @@ class UpdateService:
             if update_type == "dashboard":
                 return UpdateServiceResult(
                     data={
-                        "has_new_version": dashboard_version != f"v{VERSION}",
+                        "has_new_version": False,
                         "current_version": dashboard_version,
-                    }
+                    },
+                    message="管理面板已随社区站发布，不再单独更新。",
                 )
             update_result = await self._updater.check_update(False)
             return UpdateServiceResult(
@@ -273,21 +274,15 @@ class UpdateService:
             logger.debug(f"Update task failed: {exc!s}")
 
     async def update_dashboard(self) -> UpdateServiceResult:
-        try:
-            try:
-                await self._updater.ensure_dashboard()
-            except Exception as exc:
-                logger.error(f"Failed to ensure Dashboard assets: {exc}")
-                raise UpdateServiceError(f"管理面板修复失败: {exc}") from exc
-            return UpdateServiceResult(
-                message="管理面板已与当前 LKMBot 版本同步。",
-                headers=self.clear_site_data_headers,
-            )
-        except UpdateServiceError:
-            raise
-        except Exception as exc:
-            logger.error(f"/api/update_dashboard: {traceback.format_exc()}")
-            raise UpdateServiceError(exc.__str__()) from exc
+        """Report that the panel is no longer updated by the bot process.
+
+        Returns:
+            A message-only result; the frontend panel ships with the website.
+        """
+        return UpdateServiceResult(
+            message="管理面板已随社区站发布，无需在机器人内更新。",
+            headers=self.clear_site_data_headers,
+        )
 
     async def install_pip_package(self, data: object) -> UpdateServiceResult:
         if self.demo_mode:
@@ -316,7 +311,6 @@ class UpdateService:
             "message": "正在准备更新...",
             "overall_percent": 0,
             "stages": {
-                "dashboard": self._empty_stage("pending"),
                 "core": self._empty_stage("pending"),
             },
         }

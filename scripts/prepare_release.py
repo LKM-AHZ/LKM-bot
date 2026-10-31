@@ -315,16 +315,9 @@ def run_validation(args: argparse.Namespace) -> None:
     Raises:
         ReleaseError: A validation command fails.
     """
-    if args.generate_api_client:
-        run_command(["pnpm", "generate:api"], cwd=REPO_ROOT / "dashboard")
-
     if not args.skip_checks:
         run_command(["uv", "run", "ruff", "format", "--check", "."])
         run_command(["uv", "run", "ruff", "check", "."])
-
-    if args.dashboard_build:
-        run_command(["pnpm", "install"], cwd=REPO_ROOT / "dashboard")
-        run_command(["pnpm", "build"], cwd=REPO_ROOT / "dashboard")
 
 
 def commit_and_maybe_push(
@@ -352,14 +345,11 @@ def commit_and_maybe_push(
             str(changelog_path.relative_to(REPO_ROOT)),
         ]
     )
-    if args.generate_api_client:
-        git(["add", "dashboard/src/api/generated"])
-
     git(["commit", "-m", f"chore: bump version to {version}"])
 
-    # 上面这份 add 清单是硬编码的，而校验阶段可能有别的副作用（例如 pnpm install 改写了
-    # dashboard/pnpm-lock.yaml）。提交后立刻核对工作区：有遗留就报错，别让流程一边「完成」
-    # 一边把改动丢在工作区里（此时还没 push，用户可以直接 amend）。
+    # 上面这份 add 清单是硬编码的，而校验阶段可能有别的副作用。提交后立刻核对工作区：
+    # 有遗留就报错，别让流程一边「完成」一边把改动丢在工作区里（此时还没 push，用户可以直接
+    # amend）。
     leftovers = git(["status", "--porcelain"], capture_output=True)
     if leftovers:
         raise ReleaseError(
@@ -425,16 +415,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("version", help="Release version without the leading v")
     parser.add_argument("--base-branch", default="master", help="Release base branch")
     parser.add_argument("--remote", default="origin", help="Git remote name")
-    parser.add_argument(
-        "--generate-api-client",
-        action="store_true",
-        help="Run dashboard API client generation before validation",
-    )
-    parser.add_argument(
-        "--dashboard-build",
-        action="store_true",
-        help="Run dashboard install and build validation",
-    )
     parser.add_argument(
         "--skip-checks",
         action="store_true",

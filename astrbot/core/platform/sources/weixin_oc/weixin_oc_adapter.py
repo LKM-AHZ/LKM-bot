@@ -36,7 +36,7 @@ from astrbot.api.platform import (
     register_platform_adapter,
 )
 from astrbot.core import astrbot_config
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.media_utils import (
     MEDIA_MIME_EXTENSIONS,
@@ -1659,7 +1659,7 @@ class WeixinOCAdapter(Platform):
 
     async def send_by_session(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         target_user = session.session_id

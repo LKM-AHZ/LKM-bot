@@ -23,7 +23,7 @@ from astrbot.api.platform import (
     register_platform_adapter,
 )
 from astrbot.core import logger
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.webhook_server import FastAPIWebhookServer
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.media_utils import MediaResolver
@@ -392,7 +392,7 @@ class WeixinOfficialAccountPlatformAdapter(Platform):
     @override
     async def send_by_session(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         await super().send_by_session(session, message_chain)

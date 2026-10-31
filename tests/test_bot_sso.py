@@ -89,7 +89,6 @@ def _reset_sso_state(monkeypatch: pytest.MonkeyPatch):
         auth_sso.SSO_PUBLIC_KEY_ENV,
         auth_sso.SSO_PUBLIC_KEY_FILE_ENV,
         "ASTRBOT_DASHBOARD_BASE_PATH",
-        "DASHBOARD_BASE_PATH",
     ):
         monkeypatch.delenv(name, raising=False)
     yield

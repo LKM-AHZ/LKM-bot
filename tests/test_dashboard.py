@@ -326,92 +326,38 @@ def _resolve_dashboard_password(core_lifecycle_td: AstrBotCoreLifecycle) -> str:
     return password
 
 
-def test_dashboard_uses_bundled_dist_when_data_dist_is_stale(
+def test_dashboard_serves_data_dist_when_index_exists(
     core_lifecycle_td: AstrBotCoreLifecycle,
     monkeypatch,
     tmp_path,
 ):
-    from astrbot.core.config.default import VERSION
-
     data_dir = tmp_path / "data"
     user_dist = data_dir / "dist"
-    bundled_dist = tmp_path / "bundled-dist"
     user_dist.mkdir(parents=True)
-    bundled_dist.mkdir()
-    (bundled_dist / "index.html").write_text(
-        '<script type="module" src="/assets/app.js"></script>',
-        encoding="utf-8",
-    )
-    (bundled_dist / "assets").mkdir()
-    (bundled_dist / "assets" / "app.js").write_text(
-        "export {};",
-        encoding="utf-8",
-    )
-    (bundled_dist / "assets" / "version").write_text(
-        f"v{VERSION}",
-        encoding="utf-8",
-    )
+    (user_dist / "index.html").write_text("panel", encoding="utf-8")
 
     monkeypatch.setattr(
         "astrbot.core.dashboard_assets.get_astrbot_data_path",
         lambda: str(data_dir),
-    )
-    monkeypatch.setattr(
-        "astrbot.core.dashboard_assets._get_bundled_dist_path",
-        lambda: bundled_dist,
     )
 
     shutdown_event = asyncio.Event()
     server = AstrBotDashboard(core_lifecycle_td, core_lifecycle_td.db, shutdown_event)
 
-    assert server.data_path == str(bundled_dist)
+    assert server.data_path == str(user_dist.absolute())
 
 
-def test_dashboard_falls_back_to_mismatched_data_dist_without_bundled(
+def test_dashboard_ignores_data_dist_without_index(
     core_lifecycle_td: AstrBotCoreLifecycle,
     monkeypatch,
     tmp_path,
 ):
     data_dir = tmp_path / "data"
-    user_dist = data_dir / "dist"
-    bundled_dist = tmp_path / "bundled-dist"
-    (user_dist / "assets").mkdir(parents=True)
-    (user_dist / "assets" / "version").write_text("v0.0.1", encoding="utf-8")
-    (user_dist / "index.html").write_text("stale", encoding="utf-8")
+    (data_dir / "dist").mkdir(parents=True)
 
     monkeypatch.setattr(
         "astrbot.core.dashboard_assets.get_astrbot_data_path",
         lambda: str(data_dir),
-    )
-    monkeypatch.setattr(
-        "astrbot.core.dashboard_assets._get_bundled_dist_path",
-        lambda: bundled_dist,
-    )
-
-    shutdown_event = asyncio.Event()
-    server = AstrBotDashboard(core_lifecycle_td, core_lifecycle_td.db, shutdown_event)
-
-    assert server.data_path == str(user_dist)
-
-
-def test_dashboard_ignores_incomplete_mismatched_data_dist_without_bundled(
-    core_lifecycle_td: AstrBotCoreLifecycle,
-    monkeypatch,
-    tmp_path,
-):
-    data_dir = tmp_path / "data"
-    user_dist = data_dir / "dist"
-    bundled_dist = tmp_path / "bundled-dist"
-    (user_dist / "assets").mkdir(parents=True)
-    (user_dist / "assets" / "version").write_text("v0.0.1", encoding="utf-8")
-
-    monkeypatch.setattr(
-        "astrbot.core.dashboard_assets.get_astrbot_data_path",
-        lambda: str(data_dir),
-    )
-    monkeypatch.setattr(
-        "astrbot.core.dashboard_assets._get_bundled_dist_path",
-        lambda: bundled_dist,
     )
 
     shutdown_event = asyncio.Event()
@@ -3170,197 +3116,6 @@ async def test_do_update_rejects_desktop_managed_backend(
     assert data["status"] == "error"
     assert data["message"] == DESKTOP_MANAGED_RESTART_MESSAGE
     assert calls == []
-
-
-def test_extract_dashboard_rejects_zip_path_traversal(tmp_path: Path):
-    from astrbot.core.dashboard_assets import _extract_package
-
-    archive_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "data"
-    with zipfile.ZipFile(archive_path, "w") as zf:
-        zf.writestr("../evil.txt", "unsafe")
-
-    with pytest.raises(ValueError, match="Unsafe dashboard archive path"):
-        _extract_package(archive_path, extract_path)
-
-    assert not (tmp_path / "evil.txt").exists()
-
-
-def test_extract_dashboard_replaces_dist_only_after_validation(tmp_path: Path):
-    from astrbot.core.dashboard_assets import _extract_package
-
-    archive_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "data"
-    old_dist = extract_path / "dist"
-    (old_dist / "assets").mkdir(parents=True)
-    (old_dist / "index.html").write_text("old", encoding="utf-8")
-    (old_dist / "assets" / "old.js").write_text("old", encoding="utf-8")
-    with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr(
-            "dist/index.html",
-            '<script type="module" src="/assets/new.js"></script>',
-        )
-        archive.writestr("dist/assets/new.js", "export {};")
-        archive.writestr("dist/assets/version", "v9.9.9")
-
-    _extract_package(archive_path, extract_path, expected_version="v9.9.9")
-
-    assert "new.js" in (old_dist / "index.html").read_text(encoding="utf-8")
-    assert (old_dist / "assets" / "new.js").is_file()
-    assert not (old_dist / "assets" / "old.js").exists()
-
-
-@pytest.mark.parametrize(
-    ("index_html", "version", "error"),
-    [
-        (
-            '<script type="module" src="/assets/missing.js"></script>',
-            "v9.9.9",
-            "incomplete",
-        ),
-        (
-            '<script type="module" src="/assets/new.js"></script>',
-            "v9.9.8",
-            "does not match",
-        ),
-    ],
-)
-def test_extract_dashboard_keeps_existing_dist_when_validation_fails(
-    tmp_path: Path,
-    index_html: str,
-    version: str,
-    error: str,
-):
-    from astrbot.core.dashboard_assets import _extract_package
-
-    archive_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "data"
-    old_dist = extract_path / "dist"
-    old_dist.mkdir(parents=True)
-    (old_dist / "index.html").write_text("old", encoding="utf-8")
-    with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr("dist/index.html", index_html)
-        if "new.js" in index_html:
-            archive.writestr("dist/assets/new.js", "export {};")
-        archive.writestr("dist/assets/version", version)
-
-    with pytest.raises(RuntimeError, match=error):
-        _extract_package(archive_path, extract_path, expected_version="v9.9.9")
-
-    assert (old_dist / "index.html").read_text(encoding="utf-8") == "old"
-
-
-def test_extract_dashboard_rolls_back_when_replacement_fails(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-):
-    from astrbot.core.dashboard_assets import _extract_package
-
-    archive_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "data"
-    old_dist = extract_path / "dist"
-    old_dist.mkdir(parents=True)
-    (old_dist / "index.html").write_text("old", encoding="utf-8")
-    with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr(
-            "dist/index.html",
-            '<script type="module" src="/assets/new.js"></script>',
-        )
-        archive.writestr("dist/assets/new.js", "export {};")
-        archive.writestr("dist/assets/version", "v9.9.9")
-
-    original_replace = Path.replace
-
-    def fail_staged_replace(path: Path, target: Path):
-        if path.name == "dist" and path.parent.name.startswith(".dashboard-stage-"):
-            raise OSError("simulated replacement failure")
-        return original_replace(path, target)
-
-    monkeypatch.setattr(Path, "replace", fail_staged_replace)
-
-    with pytest.raises(OSError, match="simulated replacement failure"):
-        _extract_package(archive_path, extract_path, expected_version="v9.9.9")
-
-    assert (old_dist / "index.html").read_text(encoding="utf-8") == "old"
-
-
-def test_extract_dashboard_preserves_backup_when_rollback_fails(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-):
-    from astrbot.core.dashboard_assets import _extract_package
-
-    archive_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "data"
-    old_dist = extract_path / "dist"
-    old_dist.mkdir(parents=True)
-    (old_dist / "index.html").write_text("old", encoding="utf-8")
-    with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr(
-            "dist/index.html",
-            '<script type="module" src="/assets/new.js"></script>',
-        )
-        archive.writestr("dist/assets/new.js", "export {};")
-        archive.writestr("dist/assets/version", "v9.9.9")
-
-    original_replace = Path.replace
-
-    def fail_replacement_and_rollback(path: Path, target: Path):
-        if path.name == "dist" and path.parent.name.startswith(".dashboard-stage-"):
-            raise OSError("simulated replacement failure")
-        if path.name == "previous-dist":
-            raise OSError("simulated rollback failure")
-        return original_replace(path, target)
-
-    monkeypatch.setattr(Path, "replace", fail_replacement_and_rollback)
-
-    with pytest.raises(RuntimeError, match="must be restored from"):
-        _extract_package(archive_path, extract_path, expected_version="v9.9.9")
-
-    staging_dirs = list(extract_path.glob(".dashboard-stage-*"))
-    assert len(staging_dirs) == 1
-    preserved_backup = staging_dirs[0] / "previous-dist" / "index.html"
-    assert preserved_backup.read_text(encoding="utf-8") == "old"
-
-
-def test_extract_dashboard_preserves_backup_when_target_reappears(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-):
-    from astrbot.core.dashboard_assets import _extract_package
-
-    archive_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "data"
-    target_dist = extract_path / "dist"
-    target_dist.mkdir(parents=True)
-    (target_dist / "index.html").write_text("old", encoding="utf-8")
-    with zipfile.ZipFile(archive_path, "w") as archive:
-        archive.writestr(
-            "dist/index.html",
-            '<script type="module" src="/assets/new.js"></script>',
-        )
-        archive.writestr("dist/assets/new.js", "export {};")
-        archive.writestr("dist/assets/version", "v9.9.9")
-
-    original_replace = Path.replace
-
-    def recreate_target_before_failure(path: Path, target: Path):
-        if path.name == "dist" and path.parent.name.startswith(".dashboard-stage-"):
-            target.mkdir(parents=True)
-            (target / "index.html").write_text("concurrent", encoding="utf-8")
-            raise OSError("simulated replacement failure")
-        return original_replace(path, target)
-
-    monkeypatch.setattr(Path, "replace", recreate_target_before_failure)
-
-    with pytest.raises(RuntimeError, match="must be restored from"):
-        _extract_package(archive_path, extract_path, expected_version="v9.9.9")
-
-    staging_dirs = list(extract_path.glob(".dashboard-stage-*"))
-    assert len(staging_dirs) == 1
-    preserved_backup = staging_dirs[0] / "previous-dist" / "index.html"
-    assert preserved_backup.read_text(encoding="utf-8") == "old"
-    assert (target_dist / "index.html").read_text(encoding="utf-8") == "concurrent"
 
 
 @pytest.mark.asyncio

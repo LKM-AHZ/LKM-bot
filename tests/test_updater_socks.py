@@ -13,7 +13,7 @@ import certifi
 import httpx
 import pytest
 
-from astrbot.core import dashboard_assets, process_restart
+from astrbot.core import process_restart
 from astrbot.core import updater as core_updater
 from astrbot.core.star.updater import _PluginUpdater
 from astrbot.core.updater import AstrBotUpdater, UpdateProgress
@@ -632,104 +632,6 @@ async def test_plugin_update_validates_git_checkout_before_replacing_plugin(
 
 
 @pytest.mark.asyncio
-async def test_astrbot_updater_prepares_both_packages_before_applying(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    updater = AstrBotUpdater()
-    calls: list[str] = []
-    progress_events: list[UpdateProgress] = []
-    fetch_count = 0
-    observer_failed = False
-    release_data = {
-        "tag_name": "v99.0.0",
-        "zipball_url": "https://example.com/core.zip",
-    }
-
-    async def fake_fetch_release_info(_url: str):
-        nonlocal fetch_count
-        fetch_count += 1
-        return [release_data]
-
-    async def fake_download_dashboard(*, path: str, **kwargs) -> None:
-        calls.append("download-dashboard")
-        assert kwargs["version"] == "v99.0.0"
-        with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("dist/index.html", "dashboard")
-        await kwargs["progress_callback"](
-            {"downloaded": 10, "total": 10, "percent": 1, "speed": 1}
-        )
-
-    async def fake_download_core(*, path: Path, **kwargs) -> Path:
-        calls.append("download-core")
-        assert kwargs["latest"] is False
-        assert kwargs["version"] == "v99.0.0"
-        assert kwargs["release_data"] is release_data
-        with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("AstrBot-main/README.md", "core")
-        await kwargs["progress_callback"](
-            {"downloaded": 10, "total": 10, "percent": 1, "speed": 1}
-        )
-        return path
-
-    def fake_apply_core(_path: Path) -> None:
-        calls.append("apply-core")
-
-    def fake_extract_dashboard(
-        _path: Path,
-        _data_path: Path,
-        _expected_version: str | None = None,
-    ) -> None:
-        assert _expected_version == "v99.0.0"
-        calls.append("apply-dashboard")
-
-    async def record_progress(event: UpdateProgress) -> None:
-        nonlocal observer_failed
-        progress_events.append(event)
-        if not observer_failed:
-            observer_failed = True
-            raise RuntimeError("observer failed")
-
-    monkeypatch.setattr(
-        core_updater,
-        "get_astrbot_temp_path",
-        lambda: str(tmp_path / "temp"),
-    )
-    monkeypatch.setattr(updater, "_fetch_release_info", fake_fetch_release_info)
-    monkeypatch.setattr(
-        core_updater,
-        "get_astrbot_data_path",
-        lambda: str(tmp_path / "data"),
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_download_package",
-        fake_download_dashboard,
-    )
-    monkeypatch.setattr(updater, "_download_core_package", fake_download_core)
-    monkeypatch.setattr(updater, "_apply_core_package", fake_apply_core)
-    monkeypatch.setattr(
-        core_updater,
-        "_extract_package",
-        fake_extract_dashboard,
-    )
-
-    await updater.update(progress_callback=record_progress)
-
-    assert calls == [
-        "download-dashboard",
-        "download-core",
-        "apply-core",
-        "apply-dashboard",
-    ]
-    assert fetch_count == 1
-    assert observer_failed is True
-    assert any(event.stage == "verify" for event in progress_events)
-    assert progress_events[-1].stage == "apply"
-    assert progress_events[-1].status == "done"
-
-
-@pytest.mark.asyncio
 async def test_astrbot_updater_exposes_release_info_without_download_details(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -758,243 +660,6 @@ async def test_astrbot_updater_exposes_release_info_without_download_details(
     assert releases[0].body == "release notes"
     assert update is not None
     assert update.body == "release notes"
-
-
-@pytest.mark.asyncio
-async def test_astrbot_updater_does_not_apply_unverified_packages(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    updater = AstrBotUpdater()
-    calls: list[str] = []
-
-    async def fake_fetch_release_info(_url: str):
-        return [
-            {
-                "tag_name": "v99.0.0",
-                "zipball_url": "https://example.com/core.zip",
-            }
-        ]
-
-    async def fake_download_dashboard(*, path: str, **_kwargs) -> None:
-        calls.append("download-dashboard")
-        Path(path).write_bytes(b"not a zip")
-
-    async def fake_download_core(*, path: Path, **_kwargs) -> Path:
-        calls.append("download-core")
-        with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("AstrBot-main/README.md", "core")
-        return path
-
-    monkeypatch.setattr(
-        core_updater,
-        "get_astrbot_temp_path",
-        lambda: str(tmp_path / "temp"),
-    )
-    monkeypatch.setattr(updater, "_fetch_release_info", fake_fetch_release_info)
-    monkeypatch.setattr(
-        core_updater,
-        "_download_package",
-        fake_download_dashboard,
-    )
-    monkeypatch.setattr(updater, "_download_core_package", fake_download_core)
-    monkeypatch.setattr(
-        updater,
-        "_apply_core_package",
-        lambda _path: calls.append("apply-core"),
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_extract_package",
-        lambda *_args: calls.append("apply-dashboard"),
-    )
-
-    with pytest.raises(zipfile.BadZipFile):
-        await updater.update(version="v99.0.0")
-
-    assert calls == ["download-dashboard", "download-core"]
-
-
-@pytest.mark.asyncio
-async def test_astrbot_updater_ensure_dashboard_uses_compatible_managed_assets(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    updater = AstrBotUpdater()
-    data_dist = tmp_path / "data" / "dist"
-    data_dist.mkdir(parents=True)
-    bundled_dist = tmp_path / "bundled-dist"
-
-    monkeypatch.setattr(
-        core_updater,
-        "get_astrbot_data_path",
-        lambda: str(tmp_path / "data"),
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_get_bundled_dist_path",
-        lambda: bundled_dist,
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_is_dist_compatible",
-        lambda path, _version: path == data_dist,
-    )
-
-    assert await updater.ensure_dashboard() == data_dist
-
-
-@pytest.mark.asyncio
-async def test_astrbot_updater_ensure_dashboard_downloads_matching_assets(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    updater = AstrBotUpdater()
-    data_path = tmp_path / "data"
-    data_dist = data_path / "dist"
-    calls: list[dict] = []
-
-    async def fake_download_dashboard(**kwargs) -> None:
-        calls.append(kwargs)
-        data_dist.mkdir(parents=True)
-        (data_dist / "index.html").write_text("dashboard", encoding="utf-8")
-
-    monkeypatch.setattr(core_updater, "get_astrbot_data_path", lambda: str(data_path))
-    monkeypatch.setattr(
-        core_updater,
-        "_get_bundled_dist_path",
-        lambda: tmp_path / "missing-bundled-dist",
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_is_dist_compatible",
-        lambda path, _version: path == data_dist and (path / "index.html").is_file(),
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_should_use_bundled_dist",
-        lambda *_args: False,
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_download_package",
-        fake_download_dashboard,
-    )
-
-    assert await updater.ensure_dashboard() == data_dist
-    assert calls == [
-        {
-            "version": f"v{core_updater.VERSION}",
-            "allow_insecure_ssl_fallback": False,
-        }
-    ]
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "desktop_managed",
-    [False, True],
-    ids=["standalone", "desktop-managed"],
-)
-async def test_astrbot_updater_stale_fallback_is_standalone_only(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    desktop_managed: bool,
-) -> None:
-    updater = AstrBotUpdater()
-    data_path = tmp_path / "data"
-    data_dist = data_path / "dist"
-    (data_dist / "assets").mkdir(parents=True)
-    (data_dist / "index.html").write_text(
-        '<script type="module" src="/assets/old.js"></script>',
-        encoding="utf-8",
-    )
-    (data_dist / "assets" / "old.js").write_text("old", encoding="utf-8")
-    (data_dist / "assets" / "version").write_text("v0.0.1", encoding="utf-8")
-
-    async def fail_download(**_kwargs) -> None:
-        raise RuntimeError("unavailable")
-
-    if desktop_managed:
-        monkeypatch.setenv("ASTRBOT_DESKTOP_MANAGED", "1")
-    else:
-        monkeypatch.delenv("ASTRBOT_DESKTOP_MANAGED", raising=False)
-    monkeypatch.setattr(core_updater, "get_astrbot_data_path", lambda: str(data_path))
-    monkeypatch.setattr(
-        core_updater,
-        "_get_bundled_dist_path",
-        lambda: tmp_path / "missing-bundled-dist",
-    )
-    monkeypatch.setattr(
-        core_updater,
-        "_download_package",
-        fail_download,
-    )
-
-    if desktop_managed:
-        with pytest.raises(RuntimeError, match="unavailable"):
-            await updater.ensure_dashboard()
-    else:
-        assert await updater.ensure_dashboard() == data_dist
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("desktop_managed", [False, True])
-async def test_astrbot_updater_first_install_fails_when_offline_without_assets(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    desktop_managed: bool,
-) -> None:
-    updater = AstrBotUpdater()
-    data_path = tmp_path / "data"
-
-    async def fail_download(**_kwargs) -> None:
-        raise RuntimeError("offline")
-
-    if desktop_managed:
-        monkeypatch.setenv("ASTRBOT_DESKTOP_MANAGED", "1")
-    else:
-        monkeypatch.delenv("ASTRBOT_DESKTOP_MANAGED", raising=False)
-    monkeypatch.setattr(core_updater, "get_astrbot_data_path", lambda: str(data_path))
-    monkeypatch.setattr(
-        core_updater,
-        "_get_bundled_dist_path",
-        lambda: tmp_path / "missing-bundled-dist",
-    )
-    monkeypatch.setattr(core_updater, "_download_package", fail_download)
-
-    with pytest.raises(RuntimeError, match="offline"):
-        await updater.ensure_dashboard()
-
-
-@pytest.mark.asyncio
-async def test_astrbot_updater_does_not_return_incomplete_assets_on_failure(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    updater = AstrBotUpdater()
-    data_path = tmp_path / "data"
-    data_dist = data_path / "dist"
-    (data_dist / "assets").mkdir(parents=True)
-    (data_dist / "index.html").write_text(
-        '<script type="module" src="/assets/missing.js"></script>',
-        encoding="utf-8",
-    )
-
-    async def fail_download(**_kwargs) -> None:
-        raise RuntimeError("unavailable")
-
-    monkeypatch.delenv("ASTRBOT_DESKTOP_MANAGED", raising=False)
-    monkeypatch.setattr(core_updater, "get_astrbot_data_path", lambda: str(data_path))
-    monkeypatch.setattr(
-        core_updater,
-        "_get_bundled_dist_path",
-        lambda: tmp_path / "missing-bundled-dist",
-    )
-    monkeypatch.setattr(core_updater, "_download_package", fail_download)
-
-    with pytest.raises(RuntimeError, match="unavailable"):
-        await updater.ensure_dashboard()
 
 
 @pytest.mark.asyncio
@@ -1133,100 +798,6 @@ async def test_astrbot_updater_falls_back_when_hosted_core_package_is_not_zip(
         "https://cdn.example/core/v99.0.0/source.zip",
         "https://github.example/archive.zip",
     ]
-
-
-@pytest.mark.asyncio
-async def test_download_dashboard_falls_back_when_hosted_package_is_not_zip(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-) -> None:
-    calls: list[str] = []
-
-    async def fake_download_file(
-        url: str,
-        path: str,
-        show_progress: bool = False,  # noqa: ARG001
-        progress_callback=None,  # noqa: ARG001
-        allow_insecure_ssl_fallback: bool = True,  # noqa: ARG001
-    ) -> None:
-        calls.append(url)
-        parsed = urlparse(url)
-        if (
-            parsed.scheme == "https"
-            and parsed.hostname == "astrbot-registry.soulter.top"
-        ):
-            Path(path).write_bytes(b"not a zip")
-            return
-        with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("dist/index.html", "dashboard")
-
-    monkeypatch.setattr(dashboard_assets, "download_file", fake_download_file)
-
-    zip_path = tmp_path / "dashboard.zip"
-    await dashboard_assets._download_package(
-        path=str(zip_path),
-        version="v99.0.0",
-        extract=False,
-    )
-
-    assert zipfile.is_zipfile(zip_path)
-    assert calls == [
-        "https://astrbot-registry.soulter.top/download/astrbot-dashboard/v99.0.0/dist.zip",
-        "https://github.com/Alma1314/LKM-bot/releases/download/v99.0.0/LKMBot-v99.0.0-dashboard.zip",
-    ]
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    ("version", "expected_version"),
-    [
-        ("v99.0.0", "v99.0.0"),
-        ("a" * 40, None),
-    ],
-)
-async def test_download_dashboard_propagates_expected_version_to_extractor(
-    monkeypatch: pytest.MonkeyPatch,
-    tmp_path: Path,
-    version: str,
-    expected_version: str | None,
-) -> None:
-    captured: dict[str, object] = {}
-
-    async def fake_download_file(_url: str, path: str, **_kwargs) -> None:
-        with zipfile.ZipFile(path, "w") as archive:
-            archive.writestr("dist/index.html", "dashboard")
-
-    def fake_extract_package(
-        zip_path: Path,
-        extract_path: Path,
-        expected_version: str | None = None,
-    ) -> None:
-        captured.update(
-            zip_path=zip_path,
-            extract_path=extract_path,
-            expected_version=expected_version,
-        )
-
-    monkeypatch.setattr(dashboard_assets, "download_file", fake_download_file)
-    monkeypatch.setattr(
-        dashboard_assets,
-        "_extract_package",
-        fake_extract_package,
-    )
-
-    zip_path = tmp_path / "dashboard.zip"
-    extract_path = tmp_path / "extract"
-    await dashboard_assets._download_package(
-        path=zip_path,
-        extract_path=extract_path,
-        version=version,
-    )
-
-    assert captured == {
-        "zip_path": zip_path,
-        "extract_path": extract_path,
-        "expected_version": expected_version,
-    }
 
 
 @pytest.mark.asyncio
@@ -1859,3 +1430,86 @@ def test_repo_unzip_file_handles_archives_without_explicit_root_dir_entry(
     assert captured["move"] == (expected_file, target_dir)
     assert captured["cleanup"] == expected_root
     assert captured["removed"] == "temp.zip"
+
+
+@pytest.mark.asyncio
+async def test_astrbot_updater_downloads_verifies_and_applies_core(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    updater = AstrBotUpdater()
+    calls: list[str] = []
+    progress_events: list[UpdateProgress] = []
+    release_data = {
+        "tag_name": "v99.0.0",
+        "zipball_url": "https://example.com/core.zip",
+    }
+
+    async def fake_fetch_release_info(_url: str):
+        return [release_data]
+
+    async def fake_download_core(*, path: Path, **kwargs) -> Path:
+        calls.append("download-core")
+        assert kwargs["latest"] is False
+        assert kwargs["version"] == "v99.0.0"
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr("AstrBot-main/README.md", "core")
+        await kwargs["progress_callback"](
+            {"downloaded": 10, "total": 10, "percent": 1, "speed": 1}
+        )
+        return path
+
+    def fake_apply_core(_path: Path) -> None:
+        calls.append("apply-core")
+
+    async def record_progress(event: UpdateProgress) -> None:
+        progress_events.append(event)
+
+    monkeypatch.setattr(
+        core_updater,
+        "get_astrbot_temp_path",
+        lambda: str(tmp_path / "temp"),
+    )
+    monkeypatch.setattr(updater, "_fetch_release_info", fake_fetch_release_info)
+    monkeypatch.setattr(updater, "_download_core_package", fake_download_core)
+    monkeypatch.setattr(updater, "_apply_core_package", fake_apply_core)
+
+    await updater.update(progress_callback=record_progress)
+
+    assert calls == ["download-core", "apply-core"]
+    assert {event.stage for event in progress_events} == {"core", "verify", "apply"}
+    assert [event.stage for event in progress_events[-2:]] == ["apply", "apply"]
+    assert progress_events[-1].status == "done"
+
+
+@pytest.mark.asyncio
+async def test_astrbot_updater_does_not_apply_unverified_core(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    updater = AstrBotUpdater()
+    calls: list[str] = []
+
+    async def fake_fetch_release_info(_url: str):
+        return [{"tag_name": "v99.0.0", "zipball_url": "https://example.com/core.zip"}]
+
+    async def fake_download_core(*, path: Path, **_kwargs) -> Path:
+        calls.append("download-core")
+        Path(path).write_bytes(b"not a zip")
+        return path
+
+    monkeypatch.setattr(
+        core_updater,
+        "get_astrbot_temp_path",
+        lambda: str(tmp_path / "temp"),
+    )
+    monkeypatch.setattr(updater, "_fetch_release_info", fake_fetch_release_info)
+    monkeypatch.setattr(updater, "_download_core_package", fake_download_core)
+    monkeypatch.setattr(
+        updater, "_apply_core_package", lambda _path: calls.append("apply-core")
+    )
+
+    with pytest.raises(zipfile.BadZipFile):
+        await updater.update(version="v99.0.0")
+
+    assert calls == ["download-core"]

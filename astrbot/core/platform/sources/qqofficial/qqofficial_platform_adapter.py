@@ -39,7 +39,7 @@ from astrbot.api.platform import (
     PlatformMetadata,
 )
 from astrbot.core.message.components import BaseMessageComponent
-from astrbot.core.platform.astr_message_event import MessageSesion
+from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.media_utils import MediaResolver
 
@@ -373,14 +373,14 @@ class QQOfficialPlatformAdapter(Platform):
 
     async def send_by_session(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         await self._send_by_session_common(session, message_chain)
 
     async def _send_by_session_common(
         self,
-        session: MessageSesion,
+        session: MessageSession,
         message_chain: MessageChain,
     ) -> None:
         """Send a message after resolving the QQ Official delivery session.
@@ -393,7 +393,7 @@ class QQOfficialPlatformAdapter(Platform):
             None.
         """
         if session.message_type == MessageType.GROUP_MESSAGE:
-            session = MessageSesion(
+            session = MessageSession(
                 session.platform_id,
                 session.message_type,
                 session.session_id.rsplit("_", 1)[-1],

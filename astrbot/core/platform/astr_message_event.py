@@ -34,7 +34,7 @@ from astrbot.core.utils.metrics import Metric
 from astrbot.core.utils.trace import TraceSpan
 
 from .astrbot_message import AstrBotMessage, Group
-from .message_session import MessageSesion, MessageSession  # noqa
+from .message_session import MessageSession  # noqa
 from .platform_metadata import PlatformMetadata
 
 streaming_response_event: ContextVar["AstrMessageEvent | None"] = ContextVar(

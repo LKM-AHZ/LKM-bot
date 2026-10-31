@@ -1,6 +1,5 @@
 import asyncio
 import os
-import shutil
 import tempfile
 import zipfile
 from collections.abc import Awaitable, Callable
@@ -10,23 +9,12 @@ from typing import Literal
 
 from astrbot.core import logger
 from astrbot.core.config.default import VERSION
-from astrbot.core.dashboard_assets import (
-    _download_package,
-    _extract_package,
-    _get_bundled_dist_path,
-    _is_dist_compatible,
-    _is_dist_complete,
-    _read_dashboard_version,
-    _should_use_bundled_dist,
-)
-from astrbot.core.desktop_runtime import is_desktop_managed_backend
 from astrbot.core.repository import GitHubRepository
 from astrbot.core.utils.astrbot_path import (
-    get_astrbot_data_path,
     get_astrbot_path,
     get_astrbot_temp_path,
 )
-from astrbot.core.utils.io import ensure_dir, remove_dir
+from astrbot.core.utils.io import ensure_dir
 
 from .zip_updater import ReleaseInfo, _RepoZipUpdater
 
@@ -47,7 +35,7 @@ class UpdateProgress:
         speed_kib_per_second: Current download speed in KiB/s.
     """
 
-    stage: Literal["dashboard", "core", "verify", "apply"]
+    stage: Literal["core", "verify", "apply"]
     status: Literal["running", "done"]
     message: str
     overall_percent: int
@@ -141,7 +129,7 @@ class AstrBotUpdater(_RepoZipUpdater):
         proxy: str = "",
         progress_callback: UpdateProgressCallback | None = None,
     ) -> None:
-        """Download, validate, and apply matching Core and Dashboard packages.
+        """Download, validate, and apply the Core package.
 
         Args:
             version: Release tag or commit hash. None selects the latest release.
@@ -153,11 +141,11 @@ class AstrBotUpdater(_RepoZipUpdater):
             None.
 
         Raises:
-            Exception: If either package cannot be prepared or applied.
+            Exception: If the package cannot be prepared or applied.
         """
 
         async def emit_progress(
-            stage: Literal["dashboard", "core", "verify", "apply"],
+            stage: Literal["core", "verify", "apply"],
             status: Literal["running", "done"],
             message: str,
             percent: int,
@@ -183,21 +171,12 @@ class AstrBotUpdater(_RepoZipUpdater):
             except Exception:
                 logger.exception("LKMBot update progress observer failed.")
 
-        async def dashboard_progress(payload: dict) -> None:
-            await emit_progress(
-                "dashboard",
-                "running",
-                "正在下载 WebUI...",
-                int(float(payload.get("percent") or 0) * 45),
-                payload,
-            )
-
         async def core_progress(payload: dict) -> None:
             await emit_progress(
                 "core",
                 "running",
                 "正在下载 LKMBot 项目代码...",
-                45 + int(float(payload.get("percent") or 0) * 45),
+                int(float(payload.get("percent") or 0) * 90),
                 payload,
             )
 
@@ -237,35 +216,13 @@ class AstrBotUpdater(_RepoZipUpdater):
             dir=update_temp_parent,
         ) as update_temp_dir_name:
             update_temp_dir = Path(update_temp_dir_name)
-            dashboard_zip_path = update_temp_dir / "dashboard.zip"
             core_zip_path = update_temp_dir / "core.zip"
-
-            await emit_progress(
-                "dashboard",
-                "running",
-                "正在下载 WebUI...",
-                0,
-            )
-            await _download_package(
-                path=str(dashboard_zip_path),
-                version=target_version,
-                proxy=proxy,
-                progress_callback=dashboard_progress,
-                extract=False,
-                allow_insecure_ssl_fallback=False,
-            )
-            await emit_progress(
-                "dashboard",
-                "done",
-                "WebUI 下载完成。",
-                45,
-            )
 
             await emit_progress(
                 "core",
                 "running",
                 "正在下载 LKMBot 项目代码...",
-                45,
+                0,
             )
             await self._download_core_package(
                 latest=False,
@@ -290,11 +247,10 @@ class AstrBotUpdater(_RepoZipUpdater):
             )
 
             def verify_packages() -> None:
-                for zip_path in (dashboard_zip_path, core_zip_path):
-                    with zipfile.ZipFile(zip_path, "r") as archive:
-                        corrupt_member = archive.testzip()
-                    if corrupt_member:
-                        raise ValueError(f"更新包校验失败: {corrupt_member}")
+                with zipfile.ZipFile(core_zip_path, "r") as archive:
+                    corrupt_member = archive.testzip()
+                if corrupt_member:
+                    raise ValueError(f"更新包校验失败: {corrupt_member}")
 
             await asyncio.to_thread(verify_packages)
             await emit_progress(
@@ -311,76 +267,12 @@ class AstrBotUpdater(_RepoZipUpdater):
                 91,
             )
             await asyncio.to_thread(self._apply_core_package, core_zip_path)
-            await asyncio.to_thread(
-                _extract_package,
-                dashboard_zip_path,
-                Path(get_astrbot_data_path()),
-                target_version if len(target_version) != 40 else None,
-            )
             await emit_progress(
                 "apply",
                 "done",
                 "更新文件应用完成。",
                 92,
             )
-
-    async def ensure_dashboard(self) -> Path:
-        """Ensure acceptable Dashboard assets exist for the active runtime.
-
-        Desktop-managed runtimes only receive assets matching the running Core.
-        Standalone runtimes retain the legacy offline fallback to a structurally
-        complete ``data/dist`` when a matching package cannot be prepared.
-
-        Returns:
-            Directory containing the Dashboard assets to serve.
-
-        Raises:
-            Exception: If no acceptable Dashboard can be prepared.
-        """
-        data_dist_path = Path(get_astrbot_data_path()) / "dist"
-        bundled_dist = _get_bundled_dist_path()
-        if _is_dist_compatible(data_dist_path, VERSION):
-            return data_dist_path
-        if not data_dist_path.exists() and _is_dist_compatible(
-            bundled_dist,
-            VERSION,
-        ):
-            return bundled_dist
-
-        if _should_use_bundled_dist(data_dist_path, VERSION):
-            try:
-                remove_dir(str(data_dist_path))
-                shutil.copytree(bundled_dist, data_dist_path)
-                return data_dist_path
-            except Exception as exc:
-                logger.warning(
-                    "Failed to replace the managed Dashboard with bundled assets: %s",
-                    exc,
-                )
-                return bundled_dist
-
-        existing_version = _read_dashboard_version(data_dist_path)
-        try:
-            await _download_package(
-                version=f"v{VERSION}",
-                allow_insecure_ssl_fallback=False,
-            )
-        except Exception:
-            if not is_desktop_managed_backend() and _is_dist_complete(data_dist_path):
-                logger.warning(
-                    "Using existing standalone Dashboard %s because a compatible "
-                    "package could not be prepared for v%s.",
-                    existing_version or "unknown",
-                    VERSION,
-                )
-                return data_dist_path
-            raise
-
-        if not _is_dist_compatible(data_dist_path, VERSION):
-            raise RuntimeError(
-                f"Downloaded Dashboard is not compatible with LKMBot v{VERSION}"
-            )
-        return data_dist_path
 
     async def _download_core_package(
         self,

@@ -249,7 +249,7 @@ UMO 有别名时显示别名，带点划线的文字可悬停查看完整 UMO。
 
 也可以使用 `/dashboard_update` 命令手动更新管理面板（管理员指令）。
 
-管理面板文件在 data/dist 目录下。如果需要手动替换，请在 https://github.com/AstrBotDevs/AstrBot/releases/ 下载 `dist.zip` 然后解压到 data 目录下。
+管理面板前端随社区站发布，由 Astro 在 `/bot/` 提供，不再内置在 LKMBot 包内；`data/dist` 仅作为静态兜底目录（需自带与部署前缀一致的构建）。
 
 ## 自定义 WebUI 端口
 

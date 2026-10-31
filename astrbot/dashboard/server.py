@@ -559,20 +559,14 @@ class AstrBotDashboard:
     def _resolve_dashboard_ssl_config(
         ssl_config: dict,
     ) -> tuple[bool, dict[str, str]]:
-        cert_file = (
-            os.environ.get("DASHBOARD_SSL_CERT")
-            or os.environ.get("ASTRBOT_DASHBOARD_SSL_CERT")
-            or ssl_config.get("cert_file", "")
+        cert_file = os.environ.get("ASTRBOT_DASHBOARD_SSL_CERT") or ssl_config.get(
+            "cert_file", ""
         )
-        key_file = (
-            os.environ.get("DASHBOARD_SSL_KEY")
-            or os.environ.get("ASTRBOT_DASHBOARD_SSL_KEY")
-            or ssl_config.get("key_file", "")
+        key_file = os.environ.get("ASTRBOT_DASHBOARD_SSL_KEY") or ssl_config.get(
+            "key_file", ""
         )
-        ca_certs = (
-            os.environ.get("DASHBOARD_SSL_CA_CERTS")
-            or os.environ.get("ASTRBOT_DASHBOARD_SSL_CA_CERTS")
-            or ssl_config.get("ca_certs", "")
+        ca_certs = os.environ.get("ASTRBOT_DASHBOARD_SSL_CA_CERTS") or ssl_config.get(
+            "ca_certs", ""
         )
 
         if not cert_file or not key_file:
@@ -613,31 +607,25 @@ class AstrBotDashboard:
     def run(self):
         ip_addr = []
         dashboard_config = self.core_lifecycle.astrbot_config.get("dashboard", {})
-        # Environment beats config for both. Each accepts two names -- the unprefixed one first,
-        # then the ASTRBOT_-prefixed one -- so DASHBOARD_HOST wins over ASTRBOT_DASHBOARD_HOST if
-        # both are set. Unset everywhere, the dashboard binds 0.0.0.0:6185, i.e. every interface.
+        # Environment beats config for both. Unset everywhere, the dashboard binds
+        # 0.0.0.0:6185, i.e. every interface.
         #
-        # The host chain is also read by AuthService.can_skip_default_password_auth, which only
+        # The host value is also read by AuthService.can_skip_default_password_auth, which only
         # allows that skip when the resolved host is 127.0.0.1, localhost or ::1. So these
         # variables decide where the dashboard listens and, indirectly, whether the default
         # password gate can be waived.
-        port = (
-            os.environ.get("DASHBOARD_PORT")
-            or os.environ.get("ASTRBOT_DASHBOARD_PORT")
-            or dashboard_config.get("port", 6185)
+        port = os.environ.get("ASTRBOT_DASHBOARD_PORT") or dashboard_config.get(
+            "port", 6185
         )
-        host = (
-            os.environ.get("DASHBOARD_HOST")
-            or os.environ.get("ASTRBOT_DASHBOARD_HOST")
-            or dashboard_config.get("host", "0.0.0.0")
+        host = os.environ.get("ASTRBOT_DASHBOARD_HOST") or dashboard_config.get(
+            "host", "0.0.0.0"
         )
         enable = dashboard_config.get("enable", True)
         ssl_config = dashboard_config.get("ssl", {})
         if not isinstance(ssl_config, dict):
             ssl_config = {}
         ssl_enable = _parse_env_bool(
-            os.environ.get("DASHBOARD_SSL_ENABLE")
-            or os.environ.get("ASTRBOT_DASHBOARD_SSL_ENABLE"),
+            os.environ.get("ASTRBOT_DASHBOARD_SSL_ENABLE"),
             bool(ssl_config.get("enable", False)),
         )
         resolved_ssl_config: dict[str, str] = {}

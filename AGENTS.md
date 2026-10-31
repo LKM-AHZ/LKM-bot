@@ -11,13 +11,10 @@ Exposed an API server on `http://localhost:6185` by default.
 
 ### Dashboard(WebUI)
 
-```
-cd dashboard
-pnpm install # First time only. Use npm install -g pnpm if pnpm is not installed.
-pnpm dev
-```
-
-Runs on `http://localhost:3000` by default.
+The panel frontend lives in the community website repository under
+`LKM-official-website/bot-panel/` and is served by Astro at `/bot/`. Build it from
+the website repository with `pnpm run build:bot-panel`; the bot process only
+serves the panel API.
 
 ## Pre-commit setup
 
@@ -49,7 +46,7 @@ ruff check .
 4. When committing, ensure to use conventional commits messages, such as `feat: add new agent for data analysis` or `fix: resolve bug in provider manager`.
 5. Use **English** for all comments and logs.
 6. For path handling, use `pathlib.Path` instead of string paths, and use `astrbot.core.utils.astrbot_path` to get the LKMBot data and temp directory.
-7. When backend API routes, request/response schemas, or OpenAPI definitions change, regenerate the frontend API client by running `cd dashboard && pnpm generate:api`.
+7. When backend API routes, request/response schemas, or OpenAPI definitions change, regenerate the panel API client in the website repository: `cd ../LKM-official-website/bot-panel && pnpm generate:api`.
 8. When updating the project version, keep `[project].version` in `pyproject.toml` and `__version__` in `astrbot/__init__.py` in sync. `VERSION` in `astrbot/core/config/default.py` should derive from `astrbot.__version__` instead of hardcoding a separate version string.
 9. When designing WebUI dialogs, use `text-h3 pa-4 pb-0 pl-6` as the base class for dialog titles, and use `variant="text"` or `variant="tonal"` for dialog buttons.
 10. Consider cross-platform compatibility (e.g., Windows, macOS, and Linux, as well as Arm64 and x86 CPU architectures) and compatibility with Python 3.12+ (the minimum in `pyproject.toml`).
@@ -115,8 +112,6 @@ uv run python scripts/prepare_release.py 4.25.0
 The script updates `pyproject.toml` and `astrbot/__init__.py`, creates `changelogs/v4.25.0.md`, runs the required Python checks, and prints the remaining steps. Use these flags when needed:
 
 ```bash
-uv run python scripts/prepare_release.py 4.25.0 --generate-api-client
-uv run python scripts/prepare_release.py 4.25.0 --dashboard-build
 uv run python scripts/prepare_release.py 4.25.0 --commit --push
 ```
 

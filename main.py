@@ -37,7 +37,6 @@ runtime_bootstrap.initialize_runtime_bootstrap()
 from astrbot.core import LogBroker, LogManager, db_helper, logger  # noqa: E402
 from astrbot.core.dashboard_assets import resolve_dashboard_dist  # noqa: E402
 from astrbot.core.initial_loader import InitialLoader  # noqa: E402
-from astrbot.core.updater import AstrBotUpdater  # noqa: E402
 from astrbot.core.utils.astrbot_path import (  # noqa: E402
     get_astrbot_config_path,
     get_astrbot_knowledge_base_path,
@@ -51,15 +50,7 @@ from astrbot.core.utils.runtime_env import is_packaged_desktop_runtime  # noqa: 
 # 将父目录添加到 sys.path
 sys.path.append(Path(__file__).parent.as_posix())
 
-logo_tmpl = r"""
-     ___           _______.___________..______      .______     ______   .___________.
-    /   \         /       |           ||   _  \     |   _  \   /  __  \  |           |
-   /  ^  \       |   (----`---|  |----`|  |_)  |    |  |_)  | |  |  |  | `---|  |----`
-  /  /_\  \       \   \       |  |     |      /     |   _  <  |  |  |  |     |  |
- /  _____  \  .----)   |      |  |     |  |\  \----.|  |_)  | |  `--'  |     |  |
-/__/     \__\ |_______/       |__|     | _| `._____||______/   \______/      |__|
-
-"""
+logo_tmpl = r"""理科迷爱好者社区官方bot"""
 
 
 def check_env() -> None:
@@ -90,49 +81,23 @@ def check_env() -> None:
 
 
 async def check_dashboard_files(webui_dir: str | None = None):
-    """Resolve and repair dashboard static files for startup.
+    """Resolve the optional static panel directory for startup.
+
+    The panel frontend is served by the website at ``/bot/``; this only resolves
+    an explicitly configured directory or a legacy ``data/dist`` copy so a
+    standalone deployment can still serve prebuilt files from the bot process.
 
     Args:
         webui_dir: Optional explicit WebUI directory path from CLI.
 
     Returns:
-        The directory path to serve, or None when no usable WebUI can be prepared.
+        The directory path to serve, or None when no static panel is configured.
     """
-
-    # 指定webui目录
-    if webui_dir:
-        if os.path.exists(webui_dir):  # noqa: ASYNC240 启动期一次性 stat，不在事件循环热路径
-            resolved_dist = resolve_dashboard_dist(webui_dir)
-            if resolved_dist is not None:
-                logger.info("Using WebUI directory: %s", resolved_dist)
-                return str(resolved_dist)
-            logger.warning(
-                "WebUI directory is incompatible with this desktop-managed core: "
-                "%s. Attempting repair.",
-                webui_dir,
-            )
-        else:
-            logger.warning("WebUI directory not found: %s. Using default.", webui_dir)
-
-    try:
-        prepared_dist = await AstrBotUpdater().ensure_dashboard()
-    except Exception as e:
-        # 保留 exc_info 的原始 traceback，并用惰性 %s 格式化（日志级别关闭时不白建字符串）。
-        # 级别维持 critical 不动：调用方/告警可能就按 CRITICAL 过滤，改成 logger.exception(ERROR)
-        # 会顺手改掉语义。
-        logger.critical("Failed to download dashboard files: %s.", e, exc_info=True)
-        return None
-
-    # The updater only prepares managed or bundled assets. Resolve without an
-    # explicit path so the legacy Desktop package exception cannot admit an
-    # unversioned data/dist returned after a failed repair.
-    resolved_dist = resolve_dashboard_dist()
+    resolved_dist = resolve_dashboard_dist(webui_dir)
     if resolved_dist is None:
-        logger.critical(
-            "Prepared dashboard files are not compatible with the running core: %s.",
-            prepared_dist,
-        )
+        logger.info("No static panel files configured; /bot/ is served by the website.")
         return None
+    logger.info("Serving static panel files from %s", resolved_dist)
     return str(resolved_dist)
 
 
@@ -147,9 +112,10 @@ async def main_async(webui_dir_arg: str | None, log_broker: LogBroker) -> None:
     # 检查仪表板文件
     webui_dir = await check_dashboard_files(webui_dir_arg)
     if webui_dir is None:
-        logger.warning(
-            "Dashboard file validation failed, so WebUI features will be unavailable. "
-            "Check the network connection or specify the --webui-dir argument manually."
+        logger.info(
+            "No static panel files are served by the bot process. The panel is "
+            "served by the website at /bot/; use --webui-dir only for a standalone "
+            "prebuilt panel."
         )
 
     db = db_helper
