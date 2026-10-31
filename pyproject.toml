@@ -1,6 +1,6 @@
 [project]
 name = "LKMBot"
-version = "0.1.0"
+version = "4.29.3"
 description = "Easy-to-use multi-platform LLM chatbot and development framework"
 readme = "README.md"
 # PEP 639：用 SPDX 表达式替代旧式 { text = ... } 表（后者会触发 hatchling 的弃用提示），
@@ -172,6 +172,50 @@ include = ["astrbot/**"]
 
 [tool.ty.overrides.rules]
 unused-type-ignore-comment = "ignore"
+
+# Files introduced or changed by upstream whose diagnostics come from
+# platform-specific stdlib attributes (Windows ctypes) or third-party SDK stubs
+# that ty cannot resolve; upstream does not run ty. Keep the ignores narrow and
+# per rule so untouched code is still checked. Remove an entry once the upstream
+# file (or its stub) becomes well-typed.
+[[tool.ty.overrides]]
+include = [
+    "astrbot/core/computer/windows_job.py",
+    "astrbot/core/platform/sources/discord/discord_platform_adapter.py",
+    "astrbot/core/platform/sources/lark/lark_event.py",
+    "astrbot/core/platform/sources/lark/lark_group_info.py",
+    "astrbot/core/platform/sources/line/line_adapter.py",
+    "astrbot/core/platform/sources/qqofficial/qqofficial_group_info.py",
+    "astrbot/core/platform/sources/telegram/tg_adapter.py",
+]
+
+[tool.ty.overrides.rules]
+unresolved-attribute = "ignore"
+
+[[tool.ty.overrides]]
+include = [
+    "astrbot/core/platform/sources/kook/kook_adapter.py",
+    "astrbot/core/platform/sources/kook/kook_event.py",
+    "astrbot/core/platform/sources/lark/lark_adapter.py",
+    "astrbot/core/platform/sources/qqofficial/qqofficial_group_info.py",
+    "astrbot/core/platform/sources/qqofficial/qqofficial_message_event.py",
+    "astrbot/core/pipeline/waking_check/umo_auto_name.py",
+    "astrbot/dashboard/services/bot_cleanup_service.py",
+]
+
+[tool.ty.overrides.rules]
+invalid-argument-type = "ignore"
+
+[[tool.ty.overrides]]
+include = [
+    "astrbot/core/platform/sources/line/line_adapter.py",
+    "astrbot/core/pipeline/waking_check/umo_auto_name.py",
+    "astrbot/core/platform/sources/lark/lark_group_info.py",
+]
+
+[tool.ty.overrides.rules]
+invalid-assignment = "ignore"
+no-matching-overload = "ignore"
 
 [tool.hatch.metadata]
 allow-direct-references = true

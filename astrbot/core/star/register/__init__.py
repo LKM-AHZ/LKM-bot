@@ -1,6 +1,7 @@
 from .star import register_star
 from .star_handler import (
     register_after_message_sent,
+    register_button_action,
     register_command,
     register_command_group,
     register_custom_filter,
@@ -26,6 +27,7 @@ from .star_handler import (
 
 __all__ = [
     "register_after_message_sent",
+    "register_button_action",
     "register_command",
     "register_command_group",
     "register_custom_filter",

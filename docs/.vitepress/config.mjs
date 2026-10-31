@@ -178,7 +178,15 @@ export default defineConfig({
                 items: [
                   { text: "Agent 沙盒环境", link: "/astrbot-agent-sandbox" },
                   { text: "主动型能力", link: "/proactive-agent" },
-                  { text: "网页搜索", link: "/websearch" },
+                  {
+                    text: "网页搜索",
+                    link: "/websearch",
+                    collapsed: true,
+                    items: [
+                      { text: "SerpApi", link: "/websearch/serpapi" },
+                      { text: "DeepSeek Search API", link: "/websearch/deepseek" },
+                    ],
+                  },
                   { text: "知识库", link: "/knowledge-base" },
                   { text: "上下文压缩", link: "/context-compress" },
                 ],
@@ -449,7 +457,15 @@ export default defineConfig({
                 items: [
                   { text: "Agent Sandbox", link: "/astrbot-agent-sandbox" },
                   { text: "Proactive Capabilities", link: "/proactive-agent" },
-                  { text: "Web Search", link: "/websearch" },
+                  {
+                    text: "Web Search",
+                    link: "/websearch",
+                    collapsed: true,
+                    items: [
+                      { text: "SerpApi", link: "/websearch/serpapi" },
+                      { text: "DeepSeek Search API", link: "/websearch/deepseek" },
+                    ],
+                  },
                   { text: "Knowledge Base", link: "/knowledge-base" },
                   { text: "Context Compression", link: "/context-compress" },
                 ],

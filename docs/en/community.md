@@ -37,6 +37,8 @@ Welcome to submit Issues or Pull Requests:
 - Group 14: 1103419483
 - Group 15: 258637629
 - Group 16: 1044542496
+- Group 17: 201300335
+- Group 18: 167034393
 - **LKMBot Core Development Group: 975206796** (LKMBot development members are usually active here. Welcome to anyone interested in programming/AI technology~)
 
 ## Become an LKMBot Organization Member
