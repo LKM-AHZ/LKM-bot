@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.platform import (
+from astrbot.core.message.components import Unknown
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageType,
     PlatformMetadata,
-    Unknown,
 )
 from astrbot.core.message.components import (
     ActionRow,

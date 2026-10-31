@@ -270,7 +270,6 @@ def mock_event():
     event.message_obj.sender = MagicMock()
     event.message_obj.sender.user_id = "test_user"
     event.message_obj.sender.nickname = "Test User"
-    event.message_obj.group_id = None
     event.message_obj.group = None
     event.get_platform_name = MagicMock(return_value="test_platform")
     event.get_platform_id = MagicMock(return_value="test_platform")

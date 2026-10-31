@@ -1,5 +1,6 @@
-from astrbot.api import sp, star
+from astrbot.api import sp
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
+from astrbot.core import star
 
 
 class SetUnsetCommands:

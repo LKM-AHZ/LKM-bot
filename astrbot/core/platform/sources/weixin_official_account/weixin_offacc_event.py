@@ -14,7 +14,7 @@ from astrbot.api.message_components import (
     Plain,
     Record,
 )
-from astrbot.api.platform import AstrBotMessage, PlatformMetadata
+from astrbot.core.platform import AstrBotMessage, PlatformMetadata
 from astrbot.core.utils.media_utils import convert_audio_to_amr
 
 

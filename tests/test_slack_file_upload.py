@@ -7,7 +7,7 @@ from slack_sdk.web.internal_utils import _to_v2_file_upload_item
 
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import File, Plain
-from astrbot.api.platform import MessageType
+from astrbot.core.platform import MessageType
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.platform import Platform
 from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter

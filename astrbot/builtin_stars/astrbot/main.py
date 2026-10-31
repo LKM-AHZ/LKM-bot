@@ -4,10 +4,10 @@ from collections.abc import Iterable
 from sys import maxsize
 
 import astrbot.api.message_components as Comp
-from astrbot.api import star
+from astrbot.core import star
 from astrbot.api.event import AstrMessageEvent, filter
 from astrbot.api.message_components import Image, Json, Plain
-from astrbot.api.provider import LLMResponse, ProviderRequest
+from astrbot.core.provider.entities import LLMResponse, ProviderRequest
 from astrbot.core import logger
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.message_type import MessageType

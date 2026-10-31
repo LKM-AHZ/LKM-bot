@@ -17,7 +17,7 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import AstrBotMessage, Group, MessageMember, PlatformMetadata
+from astrbot.core.platform import AstrBotMessage, Group, MessageMember, PlatformMetadata
 from astrbot.core.platform.button_interaction import encode_button_callback
 from astrbot.core.utils.media_utils import resolve_media_ref_to_base64_data
 

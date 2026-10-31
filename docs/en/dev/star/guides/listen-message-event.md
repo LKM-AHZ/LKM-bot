@@ -74,7 +74,7 @@ In LKMBot, message chains are represented as lists of type `List[BaseMessageComp
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.star import Context, Star
+from astrbot.core.star import Context, Star
 
 
 class MyPlugin(Star):
@@ -290,7 +290,7 @@ The ProviderRequest object contains all information about the LLM request, inclu
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.provider import ProviderRequest
+from astrbot.core.provider.entities import ProviderRequest
 
 
 @filter.on_llm_request()
@@ -346,7 +346,7 @@ You can obtain the `ProviderResponse` object and modify it.
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.provider import LLMResponse
+from astrbot.core.provider.entities import LLMResponse
 
 
 @filter.on_llm_response()
@@ -440,7 +440,7 @@ After the Agent finishes running, the `on_agent_done` hook is triggered. This ho
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.provider import LLMResponse
+from astrbot.core.provider.entities import LLMResponse
 from astrbot.core.agent.run_context import ContextWrapper
 from astrbot.core.astr_agent_context import AstrAgentContext
 

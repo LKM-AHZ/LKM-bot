@@ -12,7 +12,7 @@ from slack_sdk.web.async_client import AsyncWebClient
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import *
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,
@@ -133,11 +133,11 @@ class SlackAdapter(Platform):
         except Exception:
             # 默认作为群组消息处理
             abm.type = MessageType.GROUP_MESSAGE
-            abm.group_id = channel_id
+            abm.set_group(channel_id)
 
         # 设置会话ID
         if abm.type == MessageType.GROUP_MESSAGE:
-            abm.session_id = abm.group_id
+            abm.session_id = abm.group.group_id if abm.group else ""
         else:
             abm.session_id = user_id
 
@@ -262,7 +262,7 @@ class SlackAdapter(Platform):
         abm.self_id = cast(str, self.bot_self_id)
         abm.sender = MessageMember(user_id=user_id, nickname=user_name)
         abm.type = MessageType.FRIEND_MESSAGE if is_im else MessageType.GROUP_MESSAGE
-        abm.group_id = None if is_im else channel_id
+        abm.set_group(None if is_im else channel_id)
         abm.session_id = user_id if is_im else channel_id
         abm.message_id = interaction_id
         abm.message_str = ""

@@ -16,7 +16,7 @@ from astrbot.api.message_components import (
     Record,
     Video,
 )
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,

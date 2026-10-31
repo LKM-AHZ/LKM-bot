@@ -9,7 +9,7 @@ from telegram import Message, MessageEntity, TextQuote
 
 import astrbot.api.message_components as Comp
 from astrbot.api.event import MessageChain
-from astrbot.api.platform import Group
+from astrbot.core.platform import Group
 from astrbot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
@@ -387,7 +387,6 @@ async def test_telegram_get_group_enriches_available_metadata():
     event = TelegramPlatformEvent.__new__(TelegramPlatformEvent)
     event.message_obj = SimpleNamespace(
         group=Group(group_id="-100123#42", group_name="Cached title"),
-        group_id="-100123#42",
     )
     event.client = client
 
@@ -419,7 +418,6 @@ async def test_telegram_get_group_keeps_basic_metadata_when_apis_fail():
     event = TelegramPlatformEvent.__new__(TelegramPlatformEvent)
     event.message_obj = SimpleNamespace(
         group=Group(group_id="-100123#42", group_name="Cached title"),
-        group_id="-100123#42",
     )
     event.client = client
 
@@ -458,7 +456,7 @@ async def test_telegram_partial_quote_uses_exact_quote_text():
     assert isinstance(reply, Comp.Reply)
     assert reply.id == "42"
     assert reply.message_str == quoted_text
-    assert reply.text == quoted_text
+    assert reply.message_str == quoted_text
     assert reply.chain is not None
     assert len(reply.chain) == 1
     assert isinstance(reply.chain[0], Comp.Plain)
@@ -494,7 +492,6 @@ async def test_telegram_reply_without_quote_text_uses_full_message(quote_text):
     reply = result.message[0]
     assert isinstance(reply, Comp.Reply)
     assert reply.message_str == original_text
-    assert reply.text == original_text
     assert reply.chain is not None
     assert len(reply.chain) == 1
     assert isinstance(reply.chain[0], Comp.Plain)
@@ -540,7 +537,7 @@ async def test_telegram_hidden_links_survive_conversion_and_reply(in_caption):
     )
     result = await adapter.convert_message(reply_update, _build_context())
     reply = result.message[0]
-    assert reply.message_str == reply.text == expected
+    assert reply.message_str == expected
     assert [part.text for part in reply.chain if isinstance(part, Comp.Plain)] == [
         expected
     ]
@@ -573,7 +570,7 @@ async def test_telegram_partial_quote_preserves_only_overlapping_links(position)
 
     expected = "文档 (https://example.com/docs)" if position == 5 else "文档"
     reply = result.message[0]
-    assert reply.message_str == reply.text == expected
+    assert reply.message_str == expected
     assert reply.chain == [Comp.Plain(expected)]
 
 
@@ -1161,7 +1158,7 @@ async def test_telegram_callback_query_becomes_button_interaction():
     adapter.handle_msg.assert_awaited_once()
     message = adapter.handle_msg.await_args.args[0]
     assert message.session_id == "-100123"
-    assert message.group_id == "-100123"
+    assert message.group.group_id == "-100123"
     assert message.message_id == "callback-1"
     assert len(message.message) == 1
     interaction = message.message[0]

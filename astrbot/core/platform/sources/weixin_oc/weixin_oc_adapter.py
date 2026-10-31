@@ -27,16 +27,16 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import (
+from astrbot.core import astrbot_config
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
-    register_platform_adapter,
 )
-from astrbot.core import astrbot_config
 from astrbot.core.platform.astr_message_event import MessageSession
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.media_utils import (
     MEDIA_MIME_EXTENSIONS,

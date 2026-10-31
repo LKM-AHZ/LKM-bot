@@ -52,7 +52,7 @@ Now create `fake_platform_adapter.py`:
 ```py
 import asyncio
 
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     Platform,
     AstrBotMessage,
     MessageMember,
@@ -66,7 +66,7 @@ from astrbot.api.message_components import (
     Record,
 )  # Message chain components, import as needed
 from astrbot.core.platform.message_session import MessageSession
-from astrbot.api.platform import register_platform_adapter
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot import logger
 from .client import FakeClient
 from .fake_platform_event import FakePlatformEvent
@@ -157,7 +157,7 @@ class FakePlatformAdapter(Platform):
 
 ```py
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.api.platform import AstrBotMessage, PlatformMetadata
+from astrbot.core.platform import AstrBotMessage, PlatformMetadata
 from astrbot.api.message_components import Plain, Image
 from .client import FakeClient
 
@@ -250,7 +250,7 @@ message_event.track_temporary_local_file(temp_media_path)
 Finally, in `main.py`, simply import the `fake_platform_adapter` module during initialization. The decorator will handle registration automatically.
 
 ```py
-from astrbot.api.star import Context, Star
+from astrbot.core.star import Context, Star
 
 
 class MyPlugin(Star):

@@ -11,7 +11,7 @@ from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
 
 
 def test_poke_to_dict_matches_onebot_v11_segment_format():
-    poke = Comp.Poke(type="126", id=2003)
+    poke = Comp.Poke(poke_type="126", id=2003)
     assert poke.toDict() == {
         "type": "poke",
         "data": {"type": "126", "id": "2003"},
@@ -21,13 +21,13 @@ def test_poke_to_dict_matches_onebot_v11_segment_format():
 @pytest.mark.asyncio
 async def test_respond_stage_treats_poke_with_target_as_non_empty():
     stage = RespondStage()
-    chain = [Comp.Poke(type="126", id=2003)]
+    chain = [Comp.Poke(poke_type="126", id=2003)]
     assert await stage._is_empty_message_chain(chain) is False
 
 
 @pytest.mark.asyncio
 async def test_aiocqhttp_parse_json_outputs_standard_poke_data():
-    chain = MessageChain([Comp.Poke(type="126", id=2003)])
+    chain = MessageChain([Comp.Poke(poke_type="126", id=2003)])
     data = await AiocqhttpMessageEvent._parse_onebot_json(chain)
     assert data == [{"type": "poke", "data": {"type": "126", "id": "2003"}}]
 
@@ -35,7 +35,7 @@ async def test_aiocqhttp_parse_json_outputs_standard_poke_data():
 @pytest.mark.asyncio
 async def test_aiocqhttp_send_message_dispatches_onebot_v11_poke_payload():
     bot = AsyncMock()
-    chain = MessageChain([Comp.Poke(type="126", id=2003)])
+    chain = MessageChain([Comp.Poke(poke_type="126", id=2003)])
 
     await AiocqhttpMessageEvent.send_message(
         bot=bot,

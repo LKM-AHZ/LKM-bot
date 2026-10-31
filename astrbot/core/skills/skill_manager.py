@@ -6,7 +6,6 @@ import re
 import shlex
 import shutil
 import tempfile
-import uuid
 import zipfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -69,33 +68,12 @@ def _is_ignored_zip_entry(name: str) -> bool:
     return parts[0] == "__MACOSX"
 
 
-def _normalize_skill_markdown_path(
-    skill_dir: Path,
-    *,
-    rename_legacy: bool = True,
-) -> Path | None:
-    """Return the canonical `SKILL.md` path for a skill directory.
-
-    If only legacy `skill.md` exists, it is renamed to `SKILL.md` in-place.
-    """
+def _resolve_skill_markdown_path(skill_dir: Path) -> Path | None:
+    """Return the `SKILL.md` path for a skill directory, when present."""
     canonical = skill_dir / "SKILL.md"
-    entries = set()
-    if skill_dir.exists():
-        entries = {entry.name for entry in skill_dir.iterdir()}
-    if "SKILL.md" in entries:
+    if skill_dir.exists() and canonical.is_file():
         return canonical
-    legacy = skill_dir / "skill.md"
-    if "skill.md" not in entries:
-        return None
-    try:
-        if not rename_legacy:
-            return legacy
-        tmp = skill_dir / f".{uuid.uuid4().hex}.tmp_skill_md"
-        legacy.rename(tmp)
-        tmp.rename(canonical)
-    except OSError:
-        return legacy
-    return canonical
+    return None
 
 
 @dataclass
@@ -346,10 +324,7 @@ class SkillManager:
             try:
                 if not skills_dir.is_dir():
                     continue
-                direct_skill_md = _normalize_skill_markdown_path(
-                    skills_dir,
-                    rename_legacy=False,
-                )
+                direct_skill_md = _resolve_skill_markdown_path(skills_dir)
                 if direct_skill_md is not None and _SKILL_NAME_RE.match(plugin_name):
                     result.append((plugin_name, plugin_name, skills_dir, preset))
 
@@ -362,12 +337,7 @@ class SkillManager:
                         skill_name = skill_dir.name
                         if not _SKILL_NAME_RE.match(skill_name):
                             continue
-                        if (
-                            _normalize_skill_markdown_path(
-                                skill_dir, rename_legacy=False
-                            )
-                            is None
-                        ):
+                        if _resolve_skill_markdown_path(skill_dir) is None:
                             continue
                         result.append((skill_name, plugin_name, skill_dir, preset))
                     except OSError as exc:
@@ -590,7 +560,7 @@ class SkillManager:
                 if not entry.is_dir():
                     continue
                 skill_name = entry.name
-                skill_md = _normalize_skill_markdown_path(entry)
+                skill_md = _resolve_skill_markdown_path(entry)
                 if skill_md is None:
                     continue
             except OSError as exc:
@@ -640,9 +610,7 @@ class SkillManager:
             if skill_name in skills_by_name:
                 continue
             try:
-                skill_md = _normalize_skill_markdown_path(
-                    skill_dir, rename_legacy=False
-                )
+                skill_md = _resolve_skill_markdown_path(skill_dir)
             except OSError as exc:
                 logger.warning(
                     f"Skip unreadable plugin skill directory {skill_dir}: {exc}"
@@ -729,7 +697,7 @@ class SkillManager:
 
     def is_sandbox_only_skill(self, name: str) -> bool:
         skill_dir = Path(self.skills_root) / name
-        skill_md_exists = _normalize_skill_markdown_path(skill_dir) is not None
+        skill_md_exists = _resolve_skill_markdown_path(skill_dir) is not None
         if skill_md_exists:
             return False
         cache = self._load_sandbox_skills_cache()
@@ -894,7 +862,7 @@ class SkillManager:
                     skill_name = archive_hint
 
                     src_dir = Path(tmp_dir)
-                    normalized_path = _normalize_skill_markdown_path(src_dir)
+                    normalized_path = _resolve_skill_markdown_path(src_dir)
                     if normalized_path is None:
                         raise ValueError(
                             "SKILL.md not found in the root of the zip archive."
@@ -937,7 +905,7 @@ class SkillManager:
                             skill_name = archive_root_name_normalized
 
                         src_dir = Path(tmp_dir) / archive_root_name
-                        normalized_path = _normalize_skill_markdown_path(src_dir)
+                        normalized_path = _resolve_skill_markdown_path(src_dir)
                         if normalized_path is None:
                             continue
 

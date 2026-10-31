@@ -5,7 +5,7 @@ from typing import Any
 from deprecated import deprecated
 
 import astrbot.api.message_components as Comp
-from astrbot.api.platform import AstrBotMessage, MessageMember, MessageType
+from astrbot.core.platform import AstrBotMessage, Group, MessageMember, MessageType
 from astrbot.core.utils.media_utils import MediaResolver
 
 
@@ -389,7 +389,7 @@ def create_base_message(
         session_prefix = "room"
         session_id = f"{session_prefix}%{room_id}"
         message.type = MessageType.GROUP_MESSAGE
-        message.group_id = room_id
+        message.group = Group(group_id=room_id)
     elif is_chat:
         session_prefix = "chat"
         session_id = f"{session_prefix}%{sender_info['sender_id']}"

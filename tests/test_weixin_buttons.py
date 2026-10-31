@@ -8,7 +8,7 @@ from astrbot.api.message_components import (
     Button,
     Plain,
 )
-from astrbot.api.platform import AstrBotMessage, MessageMember, MessageType
+from astrbot.core.platform import AstrBotMessage, MessageMember, MessageType
 from astrbot.core.platform.astr_message_event import AstrMessageEvent
 from astrbot.core.platform.message_session import MessageSession
 from astrbot.core.platform.platform import Platform

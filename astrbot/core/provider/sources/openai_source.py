@@ -17,7 +17,6 @@ from openai.types.completion_usage import CompletionUsage
 
 import astrbot.core.message.components as Comp
 from astrbot import logger
-from astrbot.api.provider import Provider
 from astrbot.core.agent.message import (
     AudioURLPart,
     ContentPart,
@@ -28,6 +27,7 @@ from astrbot.core.agent.message import (
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.exceptions import EmptyModelOutputError
 from astrbot.core.message.message_event_result import MessageChain
+from astrbot.core.provider import Provider
 from astrbot.core.provider.entities import LLMResponse, TokenUsage, ToolCallsResult
 from astrbot.core.utils.media_utils import (
     describe_media_ref,

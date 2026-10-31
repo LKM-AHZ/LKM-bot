@@ -7,7 +7,6 @@ from astrbot.core.tools import web_search_tools as tools
 from astrbot.core.tools.web_search_tools import (
     AnySearchWebSearchTool,
     _anysearch_search,
-    normalize_legacy_web_search_config,
 )
 
 
@@ -86,15 +85,6 @@ class _FakeConfig(dict):
         self.saved = True
 
 
-def test_normalize_legacy_web_search_config_migrates_firecrawl_key():
-    config = _FakeConfig(
-        {"provider_settings": {"websearch_firecrawl_key": "firecrawl-key"}}
-    )
-
-    tools.normalize_legacy_web_search_config(config)
-
-    assert config["provider_settings"]["websearch_firecrawl_key"] == ["firecrawl-key"]
-    assert config.saved is True
 
 
 @pytest.mark.asyncio
@@ -746,13 +736,6 @@ async def test_tavily_search_tool_normalizes_date_filters(
 # --- Exa tests ---
 
 
-def test_normalize_legacy_web_search_config_migrates_exa_key():
-    config = _FakeConfig({"provider_settings": {"websearch_exa_key": "exa-key"}})
-
-    tools.normalize_legacy_web_search_config(config)
-
-    assert config["provider_settings"]["websearch_exa_key"] == ["exa-key"]
-    assert config.saved is True
 
 
 @pytest.mark.asyncio
@@ -1030,11 +1013,6 @@ async def test_anysearch_search_tool_clamps_max_results(monkeypatch):
     assert payload.get("max_results") == 1
 
 
-def test_normalize_legacy_config_converts_anysearch_string_key():
-    """A legacy string key is migrated to a single-element list."""
-    config = _FakeConfig({"provider_settings": {"websearch_anysearch_key": "old-string-key"}})
-    normalize_legacy_web_search_config(config)  # ֱ�ӵ��ã������շ���ֵ
-    assert config["provider_settings"]["websearch_anysearch_key"] == ["old-string-key"]
 
 
 @pytest.mark.asyncio

@@ -87,7 +87,7 @@ def test_satori_button_interaction_enters_portable_pipeline():
 
     assert message is not None
     assert message.session_id == "channel-1"
-    assert message.group_id == "guild-1"
+    assert message.group.group_id == "guild-1"
     assert message.sender.user_id == "user-1"
     assert message.message_str == "approve"
     interaction = message.message[0]

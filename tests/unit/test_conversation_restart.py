@@ -209,7 +209,7 @@ async def test_restart_permissions_follow_pipeline_isolation(
             profiles[profile] = stage
         message = AstrBotMessage()
         message.type = MessageType.GROUP_MESSAGE
-        message.group_id = "group"
+        message.set_group("group")
         message.self_id = "bot"
         message.sender = MessageMember(user_id="member")
         text = "/new" if entry == "new_conv" else "/reset"
@@ -536,68 +536,5 @@ def test_config_preserves_isolation(tmp_path):
     assert loaded["platform_settings"]["unique_session"] is True
 
 
-@pytest.mark.parametrize("locale", ["zh-CN", "en-US", "ru-RU", "ja-JP"])
-def test_restart_config_metadata_and_translations(locale):
-    key = "allow_member_new_conversation"
-    assert key not in DEFAULT_CONFIG["platform_settings"]
-    assert (
-        key
-        not in CONFIG_METADATA_2["platform_group"]["metadata"]["platform_settings"][
-            "items"
-        ]
-    )
-    assert (
-        f"platform_settings.{key}"
-        not in CONFIG_METADATA_3["platform_group"]["metadata"]["general"]["items"]
-    )
-    path = (
-        Path(__file__).resolve().parents[2]
-        / "dashboard/src/i18n/locales"
-        / locale
-        / "features"
-    )
-    metadata = json.loads((path / "config-metadata.json").read_text(encoding="utf-8"))
-    settings = metadata["platform_group"]["general"]["platform_settings"]
-    assert key not in settings
-    assert settings["unique_session"]["description"]
-    assert settings["unique_session"]["hint"]
-    if locale == "zh-CN":
-        assert (
-            settings["unique_session"]["hint"]
-            == CONFIG_METADATA_3["platform_group"]["metadata"]["general"]["items"][
-                "platform_settings.unique_session"
-            ]["hint"]
-        )
-    permissions = json.loads((path / "command.json").read_text(encoding="utf-8-sig"))[
-        "permission"
-    ]
-    assert permissions["groupAdmin"]
-    assert permissions["groupAdminHint"]
-    assert permissions["followIsolation"]
-    assert permissions["followIsolationHint"]
-    assert permissions["adminHint"]
 
 
-@pytest.mark.parametrize(("locale", "language"), [("zh-CN", "zh"), ("en-US", "en")])
-def test_restart_docs_use_current_permission_labels(locale, language):
-    root = Path(__file__).resolve().parents[2]
-    translations = json.loads(
-        (
-            root / "dashboard/src/i18n/locales" / locale / "features/command.json"
-        ).read_text(encoding="utf-8-sig")
-    )
-    guide = (root / "docs" / language / "use/command.md").read_text(encoding="utf-8")
-    for key in ("everyone", "admin", "groupAdmin", "followIsolation"):
-        assert translations["permission"][key] in guide
-    assert translations["filters"]["showSystemPlugins"] in guide
-    assert "allow_member_new_conversation" not in guide
-    assert "Allow Non-Administrators to Start Group Conversations" not in guide
-    assert "允许非管理员在群聊中新建对话" not in guide
-    if language == "zh":
-        assert "清空当前对话的上下文" in guide
-        assert "创建并切换到一个新对话" in guide
-        assert "执行相同的新建对话流程" not in guide
-    else:
-        assert "Clear the context of the current conversation." in guide
-        assert "Create and switch to a new conversation." in guide
-        assert "use the same restart flow" not in guide

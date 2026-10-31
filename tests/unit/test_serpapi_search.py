@@ -820,13 +820,3 @@ def test_serpapi_tool_is_registered_and_gated(enabled, provider, expected, tool_
     assert tool_class.__name__ in tools.__all__
 
 
-@pytest.mark.parametrize("key,expected", [("old-key", ["old-key"]), ("", [])])
-def test_serpapi_normalizes_string_keys(key, expected):
-    config = MagicMock()
-    settings = {"websearch_serpapi_key": key}
-    config.get.return_value = settings
-
-    tools.normalize_legacy_web_search_config(config)
-
-    assert settings["websearch_serpapi_key"] == expected
-    config.save_config.assert_called_once()

@@ -11,7 +11,7 @@ from botpy import ConnectionSession
 
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import At, Image, Plain, Reply
-from astrbot.api.platform import Group
+from astrbot.core.platform import Group
 from astrbot.core.message.message_event_result import (
     MessageEventResult,
     ResultContentType,
@@ -123,7 +123,7 @@ async def test_parse_group_message_create_plain_message_has_no_at_component():
 
     assert abm.type == MessageType.GROUP_MESSAGE
     assert abm.sender.user_id == "member-1"
-    assert abm.group_id == "group-1"
+    assert abm.group.group_id == "group-1"
     assert abm.group is not None
     assert abm.group.group_name == "Incoming Group"
     assert abm.message_str == "plain group message"
@@ -203,7 +203,7 @@ async def test_parse_group_message_create_bot_mention_cleans_plain_text(
     assert abm.message[1].text == "hello there"
     assert abm.message_str == "hello there"
     assert abm.sender.user_id == "member-1"
-    assert abm.group_id == "group-1"
+    assert abm.group.group_id == "group-1"
 
 
 @pytest.mark.parametrize(
@@ -306,7 +306,7 @@ async def test_group_message_create_handler_maps_group_session_and_scene():
     assert remembered_scenes == [("group-1", "group")]
     assert remembered_ids == [("group-1", "msg-1")]
     assert committed[0].type == MessageType.GROUP_MESSAGE
-    assert committed[0].group_id == "group-1"
+    assert committed[0].group.group_id == "group-1"
     assert committed[0].session_id == "group-1"
 
 
@@ -320,7 +320,7 @@ async def test_get_group_uses_authenticated_client_for_ws_and_webhook(use_webhoo
         message,
         MessageType.GROUP_MESSAGE,
     )
-    abm.session_id = abm.group_id
+    abm.session_id = abm.group.group_id if abm.group else ""
 
     if use_webhook:
         adapter = QQOfficialWebhookPlatformAdapter(
@@ -376,7 +376,7 @@ async def test_get_group_keeps_incoming_metadata_when_group_info_api_fails():
         message,
         MessageType.GROUP_MESSAGE,
     )
-    abm.session_id = abm.group_id
+    abm.session_id = abm.group.group_id if abm.group else ""
     bot = SimpleNamespace(
         api=SimpleNamespace(
             _http=SimpleNamespace(request=AsyncMock(side_effect=PermissionError))
@@ -548,7 +548,7 @@ async def test_get_group_loads_channel_and_parent_guild_metadata():
         message,
         MessageType.GROUP_MESSAGE,
     )
-    abm.session_id = abm.group_id
+    abm.session_id = abm.group.group_id if abm.group else ""
     api = SimpleNamespace(
         get_channel=AsyncMock(
             return_value={

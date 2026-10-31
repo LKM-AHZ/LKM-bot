@@ -87,7 +87,7 @@ def mock_event():
     message_obj = MagicMock()
     message_obj.message = [Plain(text="Hello")]
     message_obj.sender = MagicMock(user_id="user123", nickname="TestUser")
-    message_obj.group_id = None
+    message_obj.set_group(None)
     message_obj.group = None
 
     event = MagicMock(spec=AstrMessageEvent)

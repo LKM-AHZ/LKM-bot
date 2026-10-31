@@ -6,14 +6,14 @@ from typing import Any
 import astrbot.api.message_components as Comp
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     Platform,
     PlatformMetadata,
-    register_platform_adapter,
 )
 from astrbot.core.platform.astr_message_event import MessageSession
+from astrbot.core.platform.register import register_platform_adapter
 
 from .misskey_api import MisskeyAPI
 

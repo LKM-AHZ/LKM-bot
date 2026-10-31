@@ -13,7 +13,7 @@ from aiocqhttp.exceptions import ActionFailed
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import *
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
@@ -150,7 +150,7 @@ class AiocqhttpAdapter(Platform):
         abm.type = MessageType.OTHER_MESSAGE
         if event.get("group_id"):
             abm.type = MessageType.GROUP_MESSAGE
-            abm.group_id = str(event.group_id)
+            abm.set_group(str(event.group_id))
         else:
             abm.type = MessageType.FRIEND_MESSAGE
         abm.session_id = (
@@ -174,7 +174,7 @@ class AiocqhttpAdapter(Platform):
         )
         abm.type = MessageType.OTHER_MESSAGE
         if event.get("group_id"):
-            abm.group_id = str(event.group_id)
+            abm.set_group(str(event.group_id))
             abm.type = MessageType.GROUP_MESSAGE
         else:
             abm.type = MessageType.FRIEND_MESSAGE
@@ -214,7 +214,7 @@ class AiocqhttpAdapter(Platform):
         )
         if event["message_type"] == "group":
             abm.type = MessageType.GROUP_MESSAGE
-            abm.group_id = str(event.group_id)
+            abm.set_group(str(event.group_id))
             abm.group = Group(str(event.group_id))
             abm.group.group_name = event.get("group_name")
         elif event["message_type"] == "private":

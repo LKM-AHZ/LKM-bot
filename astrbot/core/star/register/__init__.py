@@ -1,4 +1,3 @@
-from .star import register_star
 from .star_handler import (
     register_after_message_sent,
     register_button_action,
@@ -47,7 +46,6 @@ __all__ = [
     "register_permission_type",
     "register_platform_adapter_type",
     "register_regex",
-    "register_star",
     "register_on_using_llm_tool",
     "register_on_llm_tool_respond",
 ]

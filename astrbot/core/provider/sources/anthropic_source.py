@@ -12,9 +12,9 @@ from anthropic.types.message_delta_usage import MessageDeltaUsage
 from anthropic.types.usage import Usage
 
 from astrbot import logger
-from astrbot.api.provider import Provider
 from astrbot.core.agent.message import AudioURLPart, ContentPart, ImageURLPart, TextPart
 from astrbot.core.exceptions import EmptyModelOutputError
+from astrbot.core.provider import Provider
 from astrbot.core.provider.entities import LLMResponse, TokenUsage
 from astrbot.core.provider.func_tool_manager import ToolSet
 from astrbot.core.utils.media_utils import (

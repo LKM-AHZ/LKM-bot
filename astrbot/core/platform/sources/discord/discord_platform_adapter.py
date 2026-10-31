@@ -19,13 +19,13 @@ from astrbot.api.message_components import (
     Record,
     Reply,
 )
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
+    Group,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
-    register_platform_adapter,
 )
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import (
@@ -33,6 +33,7 @@ from astrbot.core.platform.button_interaction import (
     ButtonActionExpiredError,
     decode_button_callback,
 )
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.star import star_map
@@ -98,7 +99,7 @@ class DiscordPlatformAdapter(Platform):
         if channel:
             message_obj.type = self._get_message_type(channel)
             if message_obj.type == MessageType.GROUP_MESSAGE:
-                message_obj.group_id = self._get_channel_id(channel)
+                message_obj.group = Group(group_id=self._get_channel_id(channel))
                 group_name = self._get_group_name(channel)
                 if message_obj.group and group_name:
                     message_obj.group.group_name = group_name
@@ -107,7 +108,7 @@ class DiscordPlatformAdapter(Platform):
                 f"[Discord] Can't get channel info for {channel_id_str}, will guess message type.",
             )
             message_obj.type = MessageType.GROUP_MESSAGE
-            message_obj.group_id = session.session_id
+            message_obj.group = Group(group_id=session.session_id)
 
         message_obj.message_str = message_chain.get_plain_text()
         message_obj.sender = MessageMember(
@@ -269,7 +270,7 @@ class DiscordPlatformAdapter(Platform):
         abm = AstrBotMessage()
         abm.type = self._get_message_type(message.channel)
         if abm.type == MessageType.GROUP_MESSAGE:
-            abm.group_id = self._get_channel_id(message.channel)
+            abm.group = Group(group_id=self._get_channel_id(message.channel))
             group_name = self._get_group_name(message.channel)
             if abm.group and group_name:
                 abm.group.group_name = group_name
@@ -337,8 +338,8 @@ class DiscordPlatformAdapter(Platform):
                 if interaction.guild_id is not None
                 else MessageType.FRIEND_MESSAGE
             )
-            abm.group_id = (
-                str(interaction.channel_id)
+            abm.group = (
+                Group(group_id=str(interaction.channel_id))
                 if interaction.channel_id is not None
                 else None
             )
@@ -652,7 +653,7 @@ class DiscordPlatformAdapter(Platform):
             if channel is not None:
                 abm.type = self._get_message_type(channel, ctx.guild_id)
                 if abm.type == MessageType.GROUP_MESSAGE:
-                    abm.group_id = self._get_channel_id(channel)
+                    abm.group = Group(group_id=self._get_channel_id(channel))
                     group_name = self._get_group_name(channel)
                     if abm.group and group_name:
                         abm.group.group_name = group_name
@@ -664,7 +665,7 @@ class DiscordPlatformAdapter(Platform):
                     else MessageType.FRIEND_MESSAGE
                 )
                 if abm.type == MessageType.GROUP_MESSAGE:
-                    abm.group_id = str(ctx.channel_id)
+                    abm.group = Group(group_id=str(ctx.channel_id))
 
             abm.message_str = message_str_for_filter
             abm.sender = MessageMember(

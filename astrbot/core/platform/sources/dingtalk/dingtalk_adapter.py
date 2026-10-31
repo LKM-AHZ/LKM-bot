@@ -24,14 +24,14 @@ from astrbot.api.message_components import (
     Record,
     Video,
 )
-from astrbot.api.platform import (
+from astrbot.core import sp
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
 )
-from astrbot.core import sp
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import (
     decode_button_callback,
@@ -219,10 +219,10 @@ class DingtalkPlatformAdapter(Platform):
                         abm.message.append(At(qq=id))
                         if index == 0 and id == abm.self_id:
                             leading_at_is_self = True
-            abm.group_id = message.conversation_id
+            abm.set_group(message.conversation_id)
             if abm.group:
                 abm.group.group_name = message.conversation_title
-            abm.session_id = abm.group_id
+            abm.session_id = abm.group.group_id if abm.group else ""
         else:
             abm.session_id = abm.sender.user_id
 
@@ -429,7 +429,7 @@ class DingtalkPlatformAdapter(Platform):
         abm.sender = MessageMember(user_id=user_id, nickname=user_id)
         abm.session_id = space_id if is_group and space_id else user_id
         if is_group:
-            abm.group_id = abm.session_id
+            abm.set_group(abm.session_id)
         abm.message_id = interaction_id
         abm.message_str = action_id
         abm.message = [

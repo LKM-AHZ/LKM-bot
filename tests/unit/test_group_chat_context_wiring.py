@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from astrbot.api.message_components import Json, Plain
-from astrbot.api.provider import LLMResponse
+from astrbot.core.provider.entities import LLMResponse
 from astrbot.builtin_stars.astrbot.group_chat_context import GroupChatContext
 from astrbot.builtin_stars.astrbot.main import Main
 from astrbot.core.message.message_event_result import MessageChain

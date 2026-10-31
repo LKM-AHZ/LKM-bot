@@ -19,7 +19,7 @@ from astrbot.api.message_components import (
     Record,
     Video,
 )
-from astrbot.api.platform import Group, MessageMember
+from astrbot.core.platform import Group, MessageMember
 
 
 class AiocqhttpMessageEvent(AstrMessageEvent):

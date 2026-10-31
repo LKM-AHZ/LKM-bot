@@ -1,5 +1,5 @@
-from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
+from astrbot.core import star
 from astrbot.core.umo_alias import get_event_auto_name, normalize_umo_name
 
 

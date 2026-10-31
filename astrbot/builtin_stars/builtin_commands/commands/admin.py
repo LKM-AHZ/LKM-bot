@@ -1,5 +1,5 @@
-from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageChain
+from astrbot.core import star
 
 
 class AdminCommands:

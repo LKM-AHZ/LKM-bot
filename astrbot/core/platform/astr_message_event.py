@@ -10,8 +10,6 @@ from contextvars import ContextVar
 from time import time
 from typing import Any
 
-from deprecated import deprecated
-
 from astrbot import logger
 from astrbot.core.agent.tool import ToolSet
 from astrbot.core.db.po import Conversation
@@ -264,7 +262,8 @@ class AstrMessageEvent(abc.ABC):
 
     def get_group_id(self) -> str:
         """获取群组id。如果不是群组消息，返回空字符串。"""
-        return getattr(self.message_obj, "group_id", "")
+        group = self.message_obj.group
+        return group.group_id if group else ""
 
     def get_self_id(self) -> str:
         """获取机器人自身的id。"""
@@ -377,14 +376,6 @@ class AstrMessageEvent(abc.ABC):
 
         默认实现为空，由具体平台按需重写。
         """
-
-    @deprecated(version="3.5.18", reason="No longer invoked by the message scheduler.")
-    async def _pre_send(self) -> None:
-        """调度器会在执行 send() 前调用该方法 deprecated in v3.5.18"""
-
-    @deprecated(version="3.5.18", reason="No longer invoked by the message scheduler.")
-    async def _post_send(self) -> None:
-        """调度器会在执行 send() 后调用该方法 deprecated in v3.5.18"""
 
     def set_result(self, result: MessageEventResult | str) -> None:
         """设置消息事件的结果。

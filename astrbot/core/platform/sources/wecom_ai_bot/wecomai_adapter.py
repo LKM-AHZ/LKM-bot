@@ -15,7 +15,7 @@ from typing import Any
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import At, ButtonInteraction, Image, Plain
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
@@ -691,7 +691,7 @@ class WecomAIBotAdapter(Platform):
             else MessageType.FRIEND_MESSAGE
         )
         if abm.type == MessageType.GROUP_MESSAGE and message_data.get("chatid"):
-            abm.group_id = str(message_data["chatid"])
+            abm.set_group(str(message_data["chatid"]))
         abm.session_id = session_id
 
         # 消息内容

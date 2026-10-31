@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,

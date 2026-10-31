@@ -13,7 +13,7 @@ from astrbot.api.message_components import (
     ButtonInteraction,
     Plain,
 )
-from astrbot.api.platform import MessageType
+from astrbot.core.platform import MessageType
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
 from astrbot.core.platform.sources.lark.lark_event import LarkMessageEvent

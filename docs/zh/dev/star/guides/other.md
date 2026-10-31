@@ -58,7 +58,7 @@ plugins = self.context.get_all_stars()  # 返回 StarMetadata 包含了插件类
 ## 获取加载的所有平台
 
 ```py
-from astrbot.api.platform import Platform
+from astrbot.core.platform import Platform
 
 platforms = self.context.platform_manager.get_insts()  # List[Platform]
 ```

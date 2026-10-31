@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 
 from astrbot import logger
-from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
+from astrbot.core import star
 from astrbot.core.provider.entities import ProviderType
 from astrbot.core.utils.error_redaction import safe_error
 

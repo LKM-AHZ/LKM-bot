@@ -1,5 +1,5 @@
-from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, filter
+from astrbot.core import star
 from astrbot.core.star.filter.command import GreedyStr
 
 from .commands import (

@@ -1,7 +1,7 @@
 """会话ID命令"""
 
-from astrbot.api import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
+from astrbot.core import star
 
 
 class SIDCommand:

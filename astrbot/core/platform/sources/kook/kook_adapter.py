@@ -5,15 +5,6 @@ import re
 from astrbot import logger
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import At, AtAll, Image, Plain
-from astrbot.api.platform import (
-    AstrBotMessage,
-    Group,
-    MessageMember,
-    MessageType,
-    Platform,
-    PlatformMetadata,
-    register_platform_adapter,
-)
 from astrbot.core.message.components import (
     BaseMessageComponent,
     ButtonInteraction,
@@ -21,8 +12,17 @@ from astrbot.core.message.components import (
     Record,
     Video,
 )
+from astrbot.core.platform import (
+    AstrBotMessage,
+    Group,
+    MessageMember,
+    MessageType,
+    Platform,
+    PlatformMetadata,
+)
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot.core.utils.media_utils import MediaResolver
 
 from .kook_client import KookClient
@@ -509,14 +509,14 @@ class KookPlatformAdapter(Platform):
         )
         if data.channel_type == KookChannelType.GROUP:
             abm.type = MessageType.GROUP_MESSAGE
-            abm.group_id = target_id
+            abm.set_group(target_id)
             abm.session_id = target_id
         elif data.channel_type == KookChannelType.PERSON:
             abm.type = MessageType.FRIEND_MESSAGE
             abm.session_id = user_id
         else:
             abm.type = MessageType.OTHER_MESSAGE
-            abm.group_id = target_id
+            abm.set_group(target_id)
             abm.session_id = target_id
 
         abm.message_str = action_id
@@ -558,12 +558,12 @@ class KookPlatformAdapter(Platform):
                 abm.session_id = session_id
             case KookChannelType.PERSON:
                 abm.type = MessageType.FRIEND_MESSAGE
-                abm.group_id = ""
+                abm.set_group("")
                 abm.session_id = data.author_id or "unknown"
             case KookChannelType.BROADCAST:
                 session_id = data.target_id or "unknown"
                 abm.type = MessageType.OTHER_MESSAGE
-                abm.group_id = session_id
+                abm.set_group(session_id)
                 abm.session_id = session_id
             case _:
                 raise ValueError(f"不支持的频道类型: {channel_type}")

@@ -6,7 +6,6 @@ from typing import Any
 
 from astrbot import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.api.platform import AstrBotMessage, Group, MessageMember, PlatformMetadata
 from astrbot.core.message.components import (
     ActionRow,
     At,
@@ -21,7 +20,13 @@ from astrbot.core.message.components import (
     Reply,
     Video,
 )
-from astrbot.core.platform import MessageType
+from astrbot.core.platform import (
+    AstrBotMessage,
+    Group,
+    MessageMember,
+    MessageType,
+    PlatformMetadata,
+)
 from astrbot.core.platform.button_interaction import encode_button_callback
 
 from .kook_client import KookClient
@@ -48,7 +53,9 @@ class KookEvent(AstrMessageEvent):
     ):
         super().__init__(message_str, message_obj, platform_meta, session_id)
         self.client = client
-        self.channel_id = message_obj.group_id or message_obj.session_id
+        self.channel_id = (
+            message_obj.group.group_id if message_obj.group else ""
+        ) or message_obj.session_id
         self.astrbot_message_type: MessageType = message_obj.type
         self._file_message_counter = 0
 

@@ -12,7 +12,8 @@ import aiohttp
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import At, ButtonInteraction, Plain
-from astrbot.api.platform import (
+from astrbot.core import astrbot_config
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,
@@ -20,7 +21,6 @@ from astrbot.api.platform import (
     Platform,
     PlatformMetadata,
 )
-from astrbot.core import astrbot_config
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.webhook_utils import log_webhook_info
@@ -327,7 +327,7 @@ class MattermostPlatformAdapter(Platform):
         abm.type = (
             MessageType.FRIEND_MESSAGE if is_direct else MessageType.GROUP_MESSAGE
         )
-        abm.group_id = None if is_direct else channel_id
+        abm.group = None if is_direct else Group(group_id=channel_id)
         abm.session_id = channel_id
         abm.message_id = interaction_id
         abm.timestamp = int(time.time())

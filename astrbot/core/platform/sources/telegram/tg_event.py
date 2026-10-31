@@ -28,7 +28,7 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import AstrBotMessage, Group, MessageType, PlatformMetadata
+from astrbot.core.platform import AstrBotMessage, Group, MessageType, PlatformMetadata
 from astrbot.core.platform.button_interaction import encode_button_callback
 from astrbot.core.utils.metrics import Metric
 
@@ -314,7 +314,9 @@ class TelegramPlatformEvent(AstrMessageEvent):
     async def send_typing(self) -> None:
         message_thread_id = None
         if self.get_message_type() == MessageType.GROUP_MESSAGE:
-            user_name = self.message_obj.group_id
+            user_name = (
+                self.message_obj.group.group_id if self.message_obj.group else ""
+            )
         else:
             user_name = self.get_sender_id()
 
@@ -425,7 +427,8 @@ class TelegramPlatformEvent(AstrMessageEvent):
 
     async def send(self, message: MessageChain) -> None:
         if self.get_message_type() == MessageType.GROUP_MESSAGE:
-            await self.send_with_client(self.client, message, self.message_obj.group_id)
+            group_id = self.message_obj.group.group_id if self.message_obj.group else ""
+            await self.send_with_client(self.client, message, group_id)
         else:
             await self.send_with_client(self.client, message, self.get_sender_id())
         await super().send(message)
@@ -535,7 +538,10 @@ class TelegramPlatformEvent(AstrMessageEvent):
         try:
             # 解析 chat_id（去掉超级群的 "#<thread_id>" 片段）
             if self.get_message_type() == MessageType.GROUP_MESSAGE:
-                chat_id = (self.message_obj.group_id or "").split("#")[0]
+                group_id = (
+                    self.message_obj.group.group_id if self.message_obj.group else ""
+                )
+                chat_id = (group_id or "").split("#")[0]
             else:
                 chat_id = self.get_sender_id()
 
@@ -673,7 +679,9 @@ class TelegramPlatformEvent(AstrMessageEvent):
         message_thread_id = None
 
         if self.get_message_type() == MessageType.GROUP_MESSAGE:
-            user_name = self.message_obj.group_id
+            user_name = (
+                self.message_obj.group.group_id if self.message_obj.group else ""
+            )
         else:
             user_name = self.get_sender_id()
 

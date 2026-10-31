@@ -36,7 +36,7 @@ llm_resp = await self.context.llm_generate(
 一次请求可以同时回答多个问题。`state` 会原样传给判断模型，类型为 `str | list | dict`：
 
 ```py
-from astrbot.api.provider import (
+from astrbot.core.provider.entities import (
     DecisionBooleanQuestion,
     DecisionChoiceAnswer,
     DecisionChoiceQuestion,

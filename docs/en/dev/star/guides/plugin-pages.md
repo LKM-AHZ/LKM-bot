@@ -42,7 +42,7 @@ Users open views from the plugin detail page in the WebUI.
 Plugin backend code should use `astrbot.api.web`. Avoid exposing raw FastAPI, Starlette, or Quart request objects as the public API for your plugin business logic.
 
 ```python
-from astrbot.api.star import Context, Star
+from astrbot.core.star import Context, Star
 from astrbot.api.web import error_response, json_response, request
 
 PLUGIN_NAME = "astrbot_plugin_view_demo"

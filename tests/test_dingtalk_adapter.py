@@ -287,7 +287,7 @@ def test_dingtalk_card_callback_converts_to_button_interaction():
 
     assert result is not None
     assert result.session_id == "conversation"
-    assert result.group_id == "conversation"
+    assert result.group.group_id == "conversation"
     assert result.message_str == "approve"
     assert result.message_id == "interaction"
     assert result.timestamp == 1_700_000_000

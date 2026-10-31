@@ -3,9 +3,7 @@ from __future__ import annotations
 import logging
 from asyncio import Queue
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any, Protocol, cast
-
-from deprecated import deprecated
+from typing import TYPE_CHECKING, Any, Protocol
 
 from astrbot.core.agent.hooks import BaseAgentRunHooks
 from astrbot.core.agent.message import ContentPart, Message
@@ -40,17 +38,10 @@ from astrbot.core.provider.provider import (
     STTProvider,
     TTSProvider,
 )
-from astrbot.core.star.filter.platform_adapter_type import (
-    ADAPTER_NAME_2_TYPE,
-    PlatformAdapterType,
-)
 from astrbot.core.utils.astrbot_path import get_astrbot_system_tmp_path
 
 from ..exceptions import ProviderNotFoundError
-from .filter.command import CommandFilter
-from .filter.regex import RegexFilter
 from .star import StarMetadata, star_map, star_registry
-from .star_handler import EventType, StarHandlerMetadata, star_handlers_registry
 
 logger = logging.getLogger("astrbot")
 
@@ -96,17 +87,6 @@ def _registered_plugin_module_path(root_dir_name: str, flag: str | None) -> str 
     return None
 
 
-def _legacy_plugin_module_path(parts: list[str]) -> str:
-    resolved_parts = []
-    for index, part in enumerate(parts):
-        resolved_parts.append(part)
-        if part in _PLUGIN_MODULE_FLAGS and index + 1 < len(parts):
-            resolved_parts.append(parts[index + 1])
-            resolved_parts.append("main")
-            break
-    return ".".join(resolved_parts)
-
-
 def _resolve_tool_handler_module_path(tool: FunctionTool) -> str:
     module_path = getattr(tool, "__module__", None)
     module_parts = _split_module_path(module_path)
@@ -117,7 +97,7 @@ def _resolve_tool_handler_module_path(tool: FunctionTool) -> str:
     if root_info:
         flag, root_dir_name = root_info
         registered_module_path = _registered_plugin_module_path(root_dir_name, flag)
-        return registered_module_path or _legacy_plugin_module_path(module_parts)
+        return registered_module_path or ".".join(module_parts)
 
     registered_module_path = _registered_plugin_module_path(module_parts[0], "plugins")
     return registered_module_path or ".".join(module_parts)
@@ -395,21 +375,6 @@ class Context:
         """获取 LLM Tool Manager，其用于管理注册的所有的 Function-calling tools"""
         return self.provider_manager.llm_tools
 
-    @deprecated(reason="Use activate_llm_tool_async() instead.")
-    def activate_llm_tool(self, name: str) -> bool:
-        """激活一个已经注册的函数调用工具。
-
-        Args:
-            name: 工具名称。
-
-        Returns:
-            如果成功激活返回 True，如果没找到工具返回 False。
-
-        Note:
-            注册的工具默认是激活状态。
-        """
-        return self.provider_manager.llm_tools.activate_llm_tool(name, star_map)
-
     async def activate_llm_tool_async(self, name: str) -> bool:
         """Asynchronously activate a registered function-calling tool.
 
@@ -426,18 +391,6 @@ class Context:
             name,
             star_map,
         )
-
-    @deprecated(reason="Use deactivate_llm_tool_async() instead.")
-    def deactivate_llm_tool(self, name: str) -> bool:
-        """停用一个已经注册的函数调用工具。
-
-        Args:
-            name: 工具名称。
-
-        Returns:
-            如果成功停用返回 True，如果没找到工具返回 False。
-        """
-        return self.provider_manager.llm_tools.deactivate_llm_tool(name)
 
     async def deactivate_llm_tool_async(self, name: str) -> bool:
         """Asynchronously deactivate a registered function-calling tool.
@@ -497,32 +450,6 @@ class Context:
         """获取所有用于 Embedding 任务的 Provider。"""
         return self.provider_manager.embedding_provider_insts
 
-    @deprecated(reason="Use get_using_provider_async() instead.")
-    def get_using_provider(self, umo: str | None = None) -> Provider | None:
-        """获取当前使用的用于文本生成任务的 LLM Provider(Chat_Completion 类型)。
-
-        Args:
-            umo: unified_message_origin 值，如果传入并且用户启用了提供商会话隔离，
-                 则使用该会话偏好的对话模型（提供商）。
-
-        Returns:
-            当前使用的对话模型（提供商），如果未设置则返回 None。
-
-        Raises:
-            ValueError: 该会话来源配置的的对话模型（提供商）的类型不正确。
-        """
-        prov = self.provider_manager.get_using_provider(
-            provider_type=ProviderType.CHAT_COMPLETION,
-            umo=umo,
-        )
-        if prov is None:
-            return None
-        if not isinstance(prov, Provider):
-            raise ValueError(
-                f"该会话来源的对话模型（提供商）的类型不正确: {type(prov)}"
-            )
-        return prov
-
     async def get_using_provider_async(
         self,
         umo: str | None = None,
@@ -554,27 +481,6 @@ class Context:
             )
         return prov
 
-    @deprecated(reason="Use get_using_tts_provider_async() instead.")
-    def get_using_tts_provider(self, umo: str | None = None) -> TTSProvider | None:
-        """获取当前使用的用于 TTS 任务的 Provider。
-
-        Args:
-            umo: unified_message_origin 值，如果传入，则使用该会话偏好的提供商。
-
-        Returns:
-            当前使用的 TTS 提供者，如果未设置则返回 None。
-
-        Raises:
-            ValueError: 返回的提供者不是 TTSProvider 类型。
-        """
-        prov = self.provider_manager.get_using_provider(
-            provider_type=ProviderType.TEXT_TO_SPEECH,
-            umo=umo,
-        )
-        if prov and not isinstance(prov, TTSProvider):
-            raise ValueError("返回的 Provider 不是 TTSProvider 类型")
-        return prov
-
     async def get_using_tts_provider_async(
         self,
         umo: str | None = None,
@@ -598,27 +504,6 @@ class Context:
             return None
         if not isinstance(prov, TTSProvider):
             raise ValueError("返回的 Provider 不是 TTSProvider 类型")
-        return prov
-
-    @deprecated(reason="Use get_using_stt_provider_async() instead.")
-    def get_using_stt_provider(self, umo: str | None = None) -> STTProvider | None:
-        """获取当前使用的用于 STT 任务的 Provider。
-
-        Args:
-            umo: unified_message_origin 值，如果传入，则使用该会话偏好的提供商。
-
-        Returns:
-            当前使用的 STT 提供者，如果未设置则返回 None。
-
-        Raises:
-            ValueError: 返回的提供者不是 STTProvider 类型。
-        """
-        prov = self.provider_manager.get_using_provider(
-            provider_type=ProviderType.SPEECH_TO_TEXT,
-            umo=umo,
-        )
-        if prov and not isinstance(prov, STTProvider):
-            raise ValueError("返回的 Provider 不是 STTProvider 类型")
         return prov
 
     async def get_using_stt_provider_async(
@@ -804,30 +689,6 @@ class Context:
         """获取事件队列。"""
         return self._event_queue
 
-    @deprecated(version="4.0.0", reason="Use get_platform_inst instead")
-    def get_platform(self, platform_type: PlatformAdapterType | str) -> Platform | None:
-        """获取指定类型的平台适配器。
-
-        Args:
-            platform_type: 平台类型或平台名称。
-
-        Returns:
-            平台适配器实例，如果未找到则返回 None。
-
-        Note:
-            该方法已经过时，请使用 get_platform_inst 方法。(>= LKMBot v4.0.0)
-        """
-        for platform in self.platform_manager.platform_insts:
-            name = platform.meta().name
-            if isinstance(platform_type, str):
-                if name == platform_type:
-                    return platform
-            elif (
-                name in ADAPTER_NAME_2_TYPE
-                and ADAPTER_NAME_2_TYPE[name] & platform_type
-            ):
-                return platform
-
     def get_platform_inst(self, platform_id: str) -> Platform | None:
         """获取指定 ID 的平台适配器实例。
 
@@ -859,108 +720,3 @@ class Context:
             provider: 提供者实例。
         """
         self.provider_manager.provider_insts.append(provider)
-
-    @deprecated(reason="Use decorator-based tool registration instead.")
-    def register_llm_tool(
-        self,
-        name: str,
-        func_args: list,
-        desc: str,
-        func_obj: Callable[..., Awaitable[Any]],
-    ) -> None:
-        """[DEPRECATED]为函数调用（function-calling / tools-use）添加工具。
-
-        Args:
-            name: 函数名。
-            func_args: 函数参数列表，格式为
-                [{"type": "string", "name": "arg_name", "description": "arg_description"}, ...]。
-            desc: 函数描述。
-            func_obj: 异步处理函数。
-
-        Note:
-            异步处理函数会接收到额外的关键词参数：event: AstrMessageEvent, context: Context。
-            该方法已弃用，请使用新的注册方式。
-        """
-        md = StarHandlerMetadata(
-            event_type=EventType.OnLLMRequestEvent,
-            handler_full_name=func_obj.__module__ + "_" + cast(Any, func_obj).__name__,
-            handler_name=cast(Any, func_obj).__name__,
-            handler_module_path=func_obj.__module__,
-            handler=func_obj,
-            event_filters=[],
-            desc=desc,
-        )
-        star_handlers_registry.append(md)
-        self.provider_manager.llm_tools.add_func(name, func_args, desc, func_obj)
-
-    @deprecated(reason="Use deactivate_llm_tool() to disable a tool instead.")
-    def unregister_llm_tool(self, name: str) -> None:
-        """[DEPRECATED]删除一个函数调用工具。
-
-        Args:
-            name: 工具名称。
-
-        Note:
-            如果再要启用，需要重新注册。
-            该方法已弃用。
-        """
-        self.provider_manager.llm_tools.remove_func(name)
-
-    @deprecated(reason="Use the command decorator (@filter.command) instead.")
-    def register_commands(
-        self,
-        star_name: str,
-        command_name: str,
-        desc: str,
-        priority: int,
-        awaitable: Callable[..., Awaitable[Any]],
-        use_regex=False,
-        ignore_prefix=False,
-    ) -> None:
-        """[DEPRECATED]注册一个命令。
-
-        Args:
-            star_name: 插件（Star）名称。
-            command_name: 命令名称。
-            desc: 命令描述。
-            priority: 优先级。1-10。
-            awaitable: 异步处理函数。
-            use_regex: 是否使用正则表达式匹配命令。
-            ignore_prefix: 是否忽略命令前缀。
-
-        Note:
-            推荐使用装饰器注册指令。该方法将在未来的版本中被移除。
-        """
-        md = StarHandlerMetadata(
-            event_type=EventType.AdapterMessageEvent,
-            handler_full_name=awaitable.__module__
-            + "_"
-            + cast(Any, awaitable).__name__,
-            handler_name=cast(Any, awaitable).__name__,
-            handler_module_path=awaitable.__module__,
-            handler=awaitable,
-            event_filters=[],
-            desc=desc,
-        )
-        if use_regex:
-            md.event_filters.append(RegexFilter(regex=command_name))
-        else:
-            md.event_filters.append(
-                CommandFilter(command_name=command_name, handler_md=md),
-            )
-        star_handlers_registry.append(md)
-
-    @deprecated(
-        reason="Start background tasks in the plugin's initialize() method instead."
-    )
-    def register_task(self, task: Awaitable, desc: str) -> None:
-        """[DEPRECATED]注册一个异步任务。
-
-        Args:
-            task: 异步任务。
-            desc: 任务描述。
-
-        Note:
-            该方法已弃用。
-        """
-        self._register_tasks.append(task)

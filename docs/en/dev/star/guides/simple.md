@@ -4,7 +4,7 @@ The `main.py` file in the plugin template is a minimal plugin instance.
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
-from astrbot.api.star import Context, Star
+from astrbot.core.star import Context, Star
 from astrbot.api import logger  # Use the logger interface provided by LKMBot
 
 

@@ -6,7 +6,7 @@ from botpy import Client
 from botpy.http import Route
 
 from astrbot import logger
-from astrbot.api.platform import Group
+from astrbot.core.platform import Group
 
 GROUP_INFO_CACHE_TTL = 3600
 GROUP_INFO_FAILURE_TTL = 300

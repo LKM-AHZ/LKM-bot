@@ -10,7 +10,7 @@ from astrbot.api.message_components import (
     ButtonInteraction,
     Plain,
 )
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,

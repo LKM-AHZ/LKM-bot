@@ -46,7 +46,6 @@ from astrbot.core.utils.event_loop_diagnostics import (
     create_event_loop_diagnostic_tasks,
 )
 from astrbot.core.utils.llm_metadata import update_llm_metadata
-from astrbot.core.utils.migra_helper import migra
 from astrbot.core.utils.temp_dir_cleaner import TempDirCleaner
 
 from . import astrbot_config, html_renderer
@@ -184,18 +183,6 @@ class AstrBotCoreLifecycle:
                 TempDirCleaner.DEFAULT_MAX_SIZE,
             ),
         )
-
-        # apply migration
-        try:
-            await migra(
-                self.db,
-                self.astrbot_config_mgr,
-                self.umop_config_router,
-                self.astrbot_config_mgr,
-            )
-        except Exception as e:
-            logger.error(f"LKMBot migration failed: {e!s}")
-            logger.error(traceback.format_exc())
 
         # 初始化事件队列
         self.event_queue = Queue()

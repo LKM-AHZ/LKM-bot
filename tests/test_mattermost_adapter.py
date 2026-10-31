@@ -6,7 +6,7 @@ import pytest
 
 import astrbot.api.message_components as Comp
 from astrbot.api.event import MessageChain
-from astrbot.api.platform import Group
+from astrbot.core.platform import Group
 from astrbot.core.pipeline.preprocess_stage import stage as preprocess_stage
 from astrbot.core.platform.button_interaction import (
     decode_button_callback,

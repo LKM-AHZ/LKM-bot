@@ -37,7 +37,7 @@ A Decision Provider handles low-latency structured choices, such as whether to r
 One request can answer multiple questions. `state` is passed to the decision model as-is and must be a `str`, `list`, or `dict`:
 
 ```py
-from astrbot.api.provider import (
+from astrbot.core.provider.entities import (
     DecisionBooleanQuestion,
     DecisionChoiceAnswer,
     DecisionChoiceQuestion,

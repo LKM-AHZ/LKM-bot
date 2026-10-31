@@ -22,14 +22,14 @@ from lark_oapi.event.callback.model.p2_card_action_trigger import (
 import astrbot.api.message_components as Comp
 from astrbot import logger
 from astrbot.api.event import MessageChain
-from astrbot.api.platform import (
+from astrbot.core import sp
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
 )
-from astrbot.core import sp
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
@@ -621,7 +621,7 @@ class LarkPlatformAdapter(Platform):
             else MessageType.FRIEND_MESSAGE
         )
         if message.chat_type == "group":
-            abm.group_id = message.chat_id
+            abm.set_group(message.chat_id)
         abm.self_id = self.bot_open_id or self.bot_name
         abm.message_str = ""
 
@@ -743,7 +743,7 @@ class LarkPlatformAdapter(Platform):
 
         abm.sender = MessageMember(user_id=sender_open_id, nickname=sender_name)
         if abm.type == MessageType.GROUP_MESSAGE:
-            abm.session_id = abm.group_id
+            abm.session_id = abm.group.group_id if abm.group else ""
         else:
             abm.session_id = abm.sender.user_id
             if message.chat_type == "p2p" and message.chat_id:
@@ -841,7 +841,7 @@ class LarkPlatformAdapter(Platform):
             nickname=sender_id[:8],
         )
         if message_type == MessageType.GROUP_MESSAGE and chat_id:
-            abm.group_id = chat_id
+            abm.set_group(chat_id)
             abm.session_id = chat_id
         else:
             abm.session_id = sender_id

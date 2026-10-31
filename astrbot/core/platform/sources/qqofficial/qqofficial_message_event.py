@@ -39,7 +39,7 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import AstrBotMessage, Group, PlatformMetadata
+from astrbot.core.platform import AstrBotMessage, Group, PlatformMetadata
 from astrbot.core.platform.button_interaction import encode_button_callback
 from astrbot.core.platform.sources.qqofficial.qqofficial_chunked_upload import (
     QQOFFICIAL_CHUNKED_UPLOAD_THRESHOLD,
@@ -144,7 +144,9 @@ class QQOfficialMessageEvent(AstrMessageEvent):
             an explicit group identifier.
         """
         del kwargs
-        target_id = group_id or self.message_obj.group_id
+        target_id = group_id or (
+            self.message_obj.group.group_id if self.message_obj.group else ""
+        )
         if not target_id:
             return None
 

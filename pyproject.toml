@@ -92,13 +92,12 @@ dev = [
 
 [project.scripts]
 lkmbot = "astrbot.cli.__main__:cli"
-astrbot = "astrbot.cli.__main__:cli"
 
 [project.urls]
 Repository = "https://github.com/Alma1314/LKM-bot"
 
 [tool.ruff]
-exclude = ["astrbot/core/utils/t2i/local_strategy.py", "astrbot/api/all.py", "tests"]
+exclude = ["astrbot/core/utils/t2i/local_strategy.py", "tests"]
 line-length = 88
 target-version = "py312"
 

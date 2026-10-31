@@ -14,16 +14,16 @@ from wechatpy.utils import check_signature
 
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import Image, Plain, Record
-from astrbot.api.platform import (
+from astrbot.core import logger
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
-    register_platform_adapter,
 )
-from astrbot.core import logger
 from astrbot.core.platform.astr_message_event import MessageSession
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot.core.platform.webhook_server import FastAPIWebhookServer
 from astrbot.core.utils.astrbot_path import get_astrbot_temp_path
 from astrbot.core.utils.media_utils import MediaResolver

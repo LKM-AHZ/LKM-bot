@@ -6,7 +6,7 @@ import uuid
 from collections import defaultdict, deque
 
 from astrbot import logger
-from astrbot.api import star
+from astrbot.core import star
 from astrbot.api.event import AstrMessageEvent
 from astrbot.api.message_components import (
     At,
@@ -21,8 +21,9 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import MessageType
-from astrbot.api.provider import Provider, ProviderRequest
+from astrbot.core.platform import MessageType
+from astrbot.core.provider import Provider
+from astrbot.core.provider.entities import ProviderRequest
 from astrbot.core.agent.message import TextPart
 from astrbot.core.astrbot_config_mgr import AstrBotConfigManager
 

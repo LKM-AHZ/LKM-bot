@@ -20,7 +20,6 @@ from astrbot.core.astr_main_agent_resources import (
 from astrbot.core.config.agent_runner import resolve_context_compression_config
 from astrbot.core.cron.events import CronMessageEvent
 from astrbot.core.message.message_event_result import (
-    CommandResult,
     MessageChain,
     MessageEventResult,
 )
@@ -392,7 +391,7 @@ async def call_local_llm_tool(
     handler: T.Callable[
         ...,
         T.Awaitable[MessageEventResult | mcp.types.CallToolResult | str | None]
-        | T.AsyncGenerator[MessageEventResult | CommandResult | str | None, None],
+        | T.AsyncGenerator[MessageEventResult | str | None, None],
     ],
     method_name: str,
     *args,
@@ -461,7 +460,7 @@ async def call_local_llm_tool(
                     # 这里逐步执行异步生成器, 对于每个 yield 返回的 ret, 执行下面的代码
                     # 返回值只能是 MessageEventResult 或者 None（无返回值）
                     _has_yielded = True
-                    if isinstance(ret, MessageEventResult | CommandResult):
+                    if isinstance(ret, MessageEventResult):
                         # 如果返回值是 MessageEventResult, 设置结果并继续
                         event.set_result(ret)
                         yield
@@ -478,7 +477,7 @@ async def call_local_llm_tool(
     elif inspect.iscoroutine(ready_to_call):
         # 如果只是一个协程, 直接执行
         ret = await ready_to_call
-        if isinstance(ret, MessageEventResult | CommandResult):
+        if isinstance(ret, MessageEventResult):
             event.set_result(ret)
             yield
         else:

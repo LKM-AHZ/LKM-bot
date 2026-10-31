@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import Plain
-from astrbot.api.platform import Group, MessageMember
+from astrbot.core.platform import Group, MessageMember
 
 from .client import MattermostClient
 

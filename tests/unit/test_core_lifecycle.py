@@ -447,7 +447,6 @@ class TestAstrBotCoreLifecycleInitialize:
                 return_value=mock_astrbot_updater,
             ),
             patch("astrbot.core.core_lifecycle.EventBus", return_value=mock_event_bus),
-            patch("astrbot.core.core_lifecycle.migra", new_callable=AsyncMock),
             patch(
                 "astrbot.core.core_lifecycle.update_llm_metadata",
                 new_callable=AsyncMock,
@@ -485,102 +484,6 @@ class TestAstrBotCoreLifecycleInitialize:
         # Verify pipeline scheduler loaded
         assert lifecycle.pipeline_scheduler_mapping is not None
 
-    @pytest.mark.asyncio
-    async def test_initialize_handles_migration_failure(
-        self, mock_log_broker, mock_db, mock_astrbot_config
-    ):
-        """Test that initialize handles migration failures gracefully."""
-        lifecycle = AstrBotCoreLifecycle(mock_log_broker, mock_db)
-
-        mock_db.initialize = AsyncMock()
-
-        mock_html_renderer = MagicMock()
-        mock_html_renderer.initialize = AsyncMock()
-
-        mock_umop_config_router = MagicMock()
-        mock_umop_config_router.initialize = AsyncMock()
-
-        mock_astrbot_config_mgr = MagicMock()
-        mock_astrbot_config_mgr.initialize = AsyncMock()
-        mock_astrbot_config_mgr.default_conf = {}
-        mock_astrbot_config_mgr.confs = {}
-
-        # Mock components that need to be created for initialize to continue
-        with (
-            patch("astrbot.core.core_lifecycle.astrbot_config", mock_astrbot_config),
-            patch("astrbot.core.core_lifecycle.html_renderer", mock_html_renderer),
-            patch(
-                "astrbot.core.core_lifecycle.UmopConfigRouter",
-                return_value=mock_umop_config_router,
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.AstrBotConfigManager",
-                return_value=mock_astrbot_config_mgr,
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.PersonaManager",
-                return_value=MagicMock(initialize=AsyncMock()),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.ProviderManager",
-                return_value=MagicMock(initialize=AsyncMock()),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.PlatformManager",
-                return_value=MagicMock(initialize=AsyncMock()),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.ConversationManager",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.PlatformMessageHistoryManager",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.KnowledgeBaseManager",
-                return_value=MagicMock(initialize=AsyncMock()),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.CronJobManager",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.Context",
-                return_value=MagicMock(_register_tasks=[]),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.PluginManager",
-                return_value=MagicMock(reload=AsyncMock()),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.PipelineScheduler",
-                return_value=MagicMock(initialize=AsyncMock()),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.AstrBotUpdater",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.EventBus",
-                return_value=MagicMock(),
-            ),
-            patch(
-                "astrbot.core.core_lifecycle.migra",
-                AsyncMock(side_effect=Exception("Migration failed")),
-            ),
-            patch("astrbot.core.core_lifecycle.logger") as mock_logger,
-            patch(
-                "astrbot.core.core_lifecycle.update_llm_metadata",
-                new_callable=AsyncMock,
-            ),
-        ):
-            mock_logger.level = logging.INFO
-            # Should not raise, just log the error
-            await lifecycle.initialize()
-
-            # Verify migration error was logged
-            mock_logger.error.assert_called()
 
 
 class TestAstrBotCoreLifecycleStart:

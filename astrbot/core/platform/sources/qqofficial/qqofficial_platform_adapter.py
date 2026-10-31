@@ -30,7 +30,8 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import (
+from astrbot.core.message.components import BaseMessageComponent
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,
@@ -38,7 +39,6 @@ from astrbot.api.platform import (
     Platform,
     PlatformMetadata,
 )
-from astrbot.core.message.components import BaseMessageComponent
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.utils.media_utils import MediaResolver
@@ -237,8 +237,8 @@ class botClient(Client):
             force_group_mention=True,
             bot=self,
         )
-        abm.group_id = cast(str, message.group_openid)
-        abm.session_id = abm.group_id
+        abm.set_group(cast(str, message.group_openid))
+        abm.session_id = abm.group.group_id if abm.group else ""
         self.platform.remember_session_scene(abm.session_id, "group")
         self._commit(abm)
 
@@ -250,8 +250,8 @@ class botClient(Client):
             MessageType.GROUP_MESSAGE,
             bot=self,
         )
-        abm.group_id = cast(str, message.group_openid)
-        abm.session_id = abm.group_id
+        abm.set_group(cast(str, message.group_openid))
+        abm.session_id = abm.group.group_id if abm.group else ""
         self.platform.remember_session_scene(abm.session_id, "group")
         self._commit(abm)
 
@@ -261,8 +261,8 @@ class botClient(Client):
             message,
             MessageType.GROUP_MESSAGE,
         )
-        abm.group_id = message.channel_id
-        abm.session_id = abm.group_id
+        abm.set_group(message.channel_id)
+        abm.session_id = abm.group.group_id if abm.group else ""
         self.platform.remember_session_scene(abm.session_id, "channel")
         self._commit(abm)
 
@@ -707,12 +707,12 @@ class QQOfficialPlatformAdapter(Platform):
         if interaction.scene == "group":
             abm.type = MessageType.GROUP_MESSAGE
             abm.session_id = str(interaction.group_openid or "")
-            abm.group_id = abm.session_id
+            abm.set_group(abm.session_id)
             sender_id = str(interaction.group_member_openid or "")
         elif interaction.scene == "guild":
             abm.type = MessageType.GROUP_MESSAGE
             abm.session_id = str(interaction.channel_id or "")
-            abm.group_id = abm.session_id
+            abm.set_group(abm.session_id)
             sender_id = str(resolved.user_id or "")
         else:
             abm.type = MessageType.FRIEND_MESSAGE
@@ -975,7 +975,6 @@ class QQOfficialPlatformAdapter(Platform):
                     id=str(quoted_message_id or quoted_element_message_id or ""),
                     chain=quoted_chain,
                     message_str=quoted_message_str,
-                    text=quoted_message_str,
                 )
             )
 

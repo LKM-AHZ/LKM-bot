@@ -20,9 +20,9 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import (
+from astrbot.core.message.components import At
+from astrbot.core.platform import (
     AstrBotMessage,
-    At,
     Group,
     MessageMember,
     MessageType,

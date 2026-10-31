@@ -111,7 +111,6 @@ from astrbot.core.tools.web_search_tools import (
     SerpApiWebSearchTool,
     TavilyExtractWebPageTool,
     TavilyWebSearchTool,
-    normalize_legacy_web_search_config,
 )
 from astrbot.core.utils.astrbot_path import (
     get_astrbot_system_tmp_path,
@@ -937,16 +936,10 @@ def _append_system_reminders(
         user_nickname = event.message_obj.sender.nickname
         system_parts.append(f"User ID: {user_id}, Nickname: {user_nickname}")
 
-    if cfg.get("group_name_display") and event.message_obj.group_id:
-        if not event.message_obj.group:
-            logger.error(
-                "Group name display enabled but group object is None. Group ID: %s",
-                event.message_obj.group_id,
-            )
-        else:
-            group_name = event.message_obj.group.group_name
-            if group_name:
-                system_parts.append(f"Group name: {group_name}")
+    if cfg.get("group_name_display") and event.message_obj.group:
+        group_name = event.message_obj.group.group_name
+        if group_name:
+            system_parts.append(f"Group name: {group_name}")
 
     if cfg.get("datetime_system_prompt"):
         now = None
@@ -1216,7 +1209,6 @@ async def _apply_web_search_tools(
     plugin_context: Context,
 ) -> None:
     cfg = plugin_context.get_config(umo=event.unified_msg_origin)
-    normalize_legacy_web_search_config(cfg)
     prov_settings = cfg.get("provider_settings", {})
 
     if not prov_settings.get("web_search", False):

@@ -6,7 +6,7 @@ import pytest
 
 from astrbot.api.event import AstrMessageEvent, MessageChain
 from astrbot.api.message_components import Plain, Record
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
@@ -36,7 +36,7 @@ def slack_event(monkeypatch):
     monkeypatch.setattr(AstrMessageEvent, "send", AsyncMock())
     message = AstrBotMessage()
     message.type = MessageType.GROUP_MESSAGE
-    message.group_id = "C123"
+    message.set_group("C123")
     message.sender = MessageMember(user_id="U123", nickname="Tester")
     message.message = []
     client = AsyncMock()

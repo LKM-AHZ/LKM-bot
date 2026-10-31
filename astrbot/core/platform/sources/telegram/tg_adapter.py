@@ -23,14 +23,13 @@ from telegram.ext import MessageHandler as TelegramMessageHandler
 import astrbot.api.message_components as Comp
 from astrbot.api import logger
 from astrbot.api.event import MessageChain
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
-    register_platform_adapter,
 )
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import (
@@ -38,6 +37,7 @@ from astrbot.core.platform.button_interaction import (
     ButtonActionExpiredError,
     decode_button_callback,
 )
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.filter.command_group import CommandGroupFilter
 from astrbot.core.star.star import star_map
@@ -509,14 +509,14 @@ class TelegramPlatformAdapter(Platform):
             message.type = MessageType.FRIEND_MESSAGE
         else:
             message.type = MessageType.GROUP_MESSAGE
-            message.group_id = str(chat.id)
+            message.group = Group(group_id=str(chat.id))
             if (
                 source_message is not None
                 and getattr(source_message, "is_topic_message", False)
                 and getattr(source_message, "message_thread_id", None)
             ):
-                message.group_id += f"#{source_message.message_thread_id}"
-                message.session_id = message.group_id
+                message.group.group_id += f"#{source_message.message_thread_id}"
+                message.session_id = message.group.group_id
 
         source_message_id = (
             str(source_message.message_id) if source_message is not None else None

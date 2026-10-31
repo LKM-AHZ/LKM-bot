@@ -3,7 +3,6 @@
 import asyncio
 import contextlib
 import functools
-import inspect
 import json
 import keyword
 import logging
@@ -97,9 +96,6 @@ class ImportDependencyRecoveryMode(Enum):
 class ImportDependencyRecoveryState:
     mode: ImportDependencyRecoveryMode
     install_plan: MissingRequirementsPlan | None = None
-
-
-PLUGIN_TOOL_STATE_MIGRATION_KEY = "inactivated_llm_tools_plugin_state_migrated_v1"
 
 
 @contextlib.contextmanager
@@ -275,17 +271,6 @@ class PluginManager:
                     await self.reload(plugin_name)
                     reloaded_plugins.add(plugin_name)
                     break
-
-    @staticmethod
-    def _get_classes(arg: ModuleType):
-        """获取指定模块（可以理解为一个 python 文件）下所有的类"""
-        classes = []
-        clsmembers = inspect.getmembers(arg, inspect.isclass)
-        for name, _ in clsmembers:
-            if name.lower().endswith("plugin") or name.lower() == "main":
-                classes.append(name)
-                break
-        return classes
 
     @staticmethod
     def _get_modules(path):
@@ -928,46 +913,6 @@ class PluginManager:
             if cls._is_plugin_llm_tool(func_tool, plugin_module_path):
                 yield func_tool
 
-    async def _migrate_legacy_plugin_tool_inactivation_state(
-        self,
-        inactivated_llm_tools: list,
-        inactivated_plugins: list,
-    ) -> list:
-        """Remove plugin-owned tools from the legacy manual tool blacklist.
-
-        Args:
-            inactivated_llm_tools: Persisted inactive tool names.
-            inactivated_plugins: Persisted inactive plugin module paths.
-
-        Returns:
-            Updated inactive tool names.
-        """
-        migrated = await sp.global_get(PLUGIN_TOOL_STATE_MIGRATION_KEY, False)
-        if migrated:
-            return inactivated_llm_tools
-
-        plugin_tool_names: set[str] = set()
-        inactive_plugin_paths = set(inactivated_plugins)
-        for star_metadata in star_registry:
-            if not star_metadata.module_path:
-                continue
-            plugin_disabled = star_metadata.module_path in inactive_plugin_paths
-            for func_tool in self._iter_plugin_llm_tools(star_metadata.module_path):
-                plugin_tool_names.add(func_tool.name)
-                if func_tool.name in inactivated_llm_tools:
-                    func_tool.active = not plugin_disabled
-
-        if not plugin_tool_names and inactivated_llm_tools:
-            return inactivated_llm_tools
-
-        updated_tools = [
-            name for name in inactivated_llm_tools if name not in plugin_tool_names
-        ]
-        if updated_tools != inactivated_llm_tools:
-            await sp.global_put("inactivated_llm_tools", updated_tools)
-        await sp.global_put(PLUGIN_TOOL_STATE_MIGRATION_KEY, True)
-        return updated_tools
-
     async def reload_failed_plugin(self, dir_name):
         """
         重新加载未注册（加载失败）的插件
@@ -1288,66 +1233,11 @@ class PluginManager:
                             )
 
                 else:
-                    # v3.4.0 以前的方式注册插件
-                    logger.debug(
-                        f"Plugin {path} was not registered with the decorator; "
-                        "attempting the legacy loading method.",
+                    # 插件没有通过 Star 基类或装饰器注册：旧版按类名猜测的加载方式已移除。
+                    raise Exception(
+                        f"插件 {root_dir_name} 未通过 Star 注册。请让插件主类继承 "
+                        "astrbot.core.star.Star，或使用 astrbot.api.event.filter 装饰器注册。",
                     )
-                    classes = self._get_classes(module)
-                    if not classes:
-                        raise Exception(
-                            f"插件 {root_dir_name} 未通过 Star 注册，也没有找到旧版插件类。"
-                            "请确认插件主类继承 astrbot.api.star.Star，或类名以 Plugin 结尾 / 命名为 Main。",
-                        )
-
-                    plugin_cls = getattr(module, classes[0])
-                    obj = None
-
-                    if path not in inactivated_plugins:
-                        # 只有没有禁用插件时才实例化插件类
-                        if plugin_config:
-                            try:
-                                obj = plugin_cls(
-                                    context=self.context,
-                                    config=plugin_config,
-                                )  # 实例化插件类
-                            except TypeError as _:
-                                obj = plugin_cls(
-                                    context=self.context,
-                                )  # 实例化插件类
-                        else:
-                            obj = plugin_cls(
-                                context=self.context,
-                            )  # 实例化插件类
-
-                    metadata = self._load_plugin_metadata(
-                        plugin_path=plugin_dir_path,
-                        plugin_obj=obj,
-                    )
-                    if not metadata:
-                        raise Exception(f"无法找到插件 {plugin_dir_path} 的元数据。")
-
-                    if not ignore_version_check:
-                        is_valid, error_message = (
-                            self._validate_astrbot_version_specifier(
-                                metadata.astrbot_version,
-                            )
-                        )
-                        if not is_valid:
-                            raise PluginVersionUnsupportedError(
-                                error_message
-                                or "The plugin does not support the current LKMBot version."
-                            )
-
-                    metadata.star_cls = obj
-                    metadata.config = plugin_config
-                    metadata.module = module
-                    metadata.root_dir_name = root_dir_name
-                    metadata.reserved = reserved
-                    metadata.star_cls_type = plugin_cls
-                    metadata.module_path = path
-                    star_map[path] = metadata
-                    star_registry.append(metadata)
 
                 # 禁用/启用插件
                 metadata.activated = metadata.module_path not in inactivated_plugins
@@ -1432,12 +1322,6 @@ class PluginManager:
                 self._cleanup_plugin_state(root_dir_name, reserved)
 
         if not specified_module_path and not specified_dir_name:
-            inactivated_llm_tools = (
-                await self._migrate_legacy_plugin_tool_inactivation_state(
-                    inactivated_llm_tools,
-                    inactivated_plugins,
-                )
-            )
             inactive_tool_names = set(inactivated_llm_tools)
             for concrete_tool in llm_tools.func_list:
                 if concrete_tool.name in inactive_tool_names:

@@ -18,7 +18,7 @@ import pytest
 
 from astrbot.api.event import MessageChain
 from astrbot.api.message_components import Plain
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     MessageMember,
     MessageType,
@@ -56,7 +56,7 @@ def _make_group_event() -> QQOfficialMessageEvent:
     abm = AstrBotMessage()
     abm.message_id = "msg-1"
     abm.session_id = "group-1"
-    abm.group_id = "group-1"
+    abm.set_group("group-1")
     abm.self_id = "bot-1"
     abm.sender = MessageMember(user_id="member-1", nickname="u")
     abm.type = MessageType.GROUP_MESSAGE

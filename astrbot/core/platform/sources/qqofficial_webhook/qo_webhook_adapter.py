@@ -9,7 +9,12 @@ from botpy.interaction import Interaction
 
 from astrbot import logger
 from astrbot.api.event import MessageChain
-from astrbot.api.platform import AstrBotMessage, MessageType, Platform, PlatformMetadata
+from astrbot.core.platform import (
+    AstrBotMessage,
+    MessageType,
+    Platform,
+    PlatformMetadata,
+)
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.utils.webhook_utils import log_webhook_info
 
@@ -42,8 +47,8 @@ class botClient(Client):
             force_group_mention=True,
             bot=self,
         )
-        abm.group_id = cast(str, message.group_openid)
-        abm.session_id = abm.group_id
+        abm.set_group(cast(str, message.group_openid))
+        abm.session_id = abm.group.group_id if abm.group else ""
         self.platform.remember_session_scene(abm.session_id, "group")
         self._commit(abm)
 
@@ -55,8 +60,8 @@ class botClient(Client):
             MessageType.GROUP_MESSAGE,
             bot=self,
         )
-        abm.group_id = cast(str, message.group_openid)
-        abm.session_id = abm.group_id
+        abm.set_group(cast(str, message.group_openid))
+        abm.session_id = abm.group.group_id if abm.group else ""
         self.platform.remember_session_scene(abm.session_id, "group")
         self._commit(abm)
 
@@ -66,8 +71,8 @@ class botClient(Client):
             message,
             MessageType.GROUP_MESSAGE,
         )
-        abm.group_id = message.channel_id
-        abm.session_id = abm.group_id
+        abm.set_group(message.channel_id)
+        abm.session_id = abm.group.group_id if abm.group else ""
         self.platform.remember_session_scene(abm.session_id, "channel")
         self._commit(abm)
 

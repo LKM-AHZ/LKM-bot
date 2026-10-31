@@ -363,7 +363,7 @@ async def test_session_isolation_precedes_registration(
     bus = EventBus(event_queue, {"test-conf-id": scheduler}, mock_config_manager)
     message = AstrBotMessage()
     message.type = message_type
-    message.group_id = group_id
+    message.set_group(group_id)
     message.self_id = "bot"
     message.sender = MessageMember(user_id="alice")
     message.message = [Plain("/hello")]

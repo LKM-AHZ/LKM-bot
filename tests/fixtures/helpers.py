@@ -381,7 +381,7 @@ class MockPluginConfig:
 
 # 默认的插件主代码模板
 DEFAULT_PLUGIN_MAIN_TEMPLATE = '''
-from astrbot.api import star
+from astrbot.core import star
 
 class Main(star.Star):
     """测试插件主类。"""

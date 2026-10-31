@@ -19,7 +19,7 @@ from astrbot.api.message_components import (
     Plain,
     Record,
 )
-from astrbot.api.platform import Group, MessageMember
+from astrbot.core.platform import Group, MessageMember
 from astrbot.core.platform.button_interaction import encode_button_callback
 from astrbot.core.utils.media_utils import MediaResolver, file_uri_to_path
 

@@ -19,17 +19,17 @@ from astrbot.api.message_components import (
     Record,
     Reply,
 )
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     AstrBotMessage,
     Group,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
-    register_platform_adapter,
 )
 from astrbot.core.platform.astr_message_event import MessageSession
 from astrbot.core.platform.button_interaction import decode_button_callback
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot.core.utils.config_number import coerce_int_config
 from astrbot.core.utils.media_utils import MediaResolver
 
@@ -403,7 +403,7 @@ class SatoriPlatformAdapter(Platform):
         abm.timestamp = timestamp
         if isinstance(guild, dict) and guild.get("id"):
             abm.type = MessageType.GROUP_MESSAGE
-            abm.group_id = str(guild["id"])
+            abm.set_group(str(guild["id"]))
         else:
             abm.type = MessageType.FRIEND_MESSAGE
         abm.message_str = action_id

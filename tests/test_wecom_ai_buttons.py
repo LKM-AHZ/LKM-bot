@@ -11,7 +11,7 @@ from astrbot.api.message_components import (
     ButtonInteraction,
     Plain,
 )
-from astrbot.api.platform import AstrBotMessage, MessageMember, MessageType
+from astrbot.core.platform import AstrBotMessage, MessageMember, MessageType
 from astrbot.core.platform.button_interaction import decode_button_callback
 from astrbot.core.platform.platform_metadata import PlatformMetadata
 from astrbot.core.platform.sources.wecom_ai_bot.wecomai_adapter import (

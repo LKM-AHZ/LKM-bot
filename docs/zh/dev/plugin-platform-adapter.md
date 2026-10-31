@@ -52,7 +52,7 @@ class FakeClient:
 ```py
 import asyncio
 
-from astrbot.api.platform import (
+from astrbot.core.platform import (
     Platform,
     AstrBotMessage,
     MessageMember,
@@ -66,7 +66,7 @@ from astrbot.api.message_components import (
     Record,
 )  # 消息链中的组件，可以根据需要导入
 from astrbot.core.platform.astr_message_event import MessageSession
-from astrbot.api.platform import register_platform_adapter
+from astrbot.core.platform.register import register_platform_adapter
 from astrbot import logger
 from .client import FakeClient
 from .fake_platform_event import FakePlatformEvent
@@ -152,7 +152,7 @@ class FakePlatformAdapter(Platform):
 
 ```py
 from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.api.platform import AstrBotMessage, PlatformMetadata
+from astrbot.core.platform import AstrBotMessage, PlatformMetadata
 from astrbot.api.message_components import Plain, Image
 from .client import FakeClient
 
@@ -243,7 +243,7 @@ message_event.track_temporary_local_file(temp_media_path)
 最后，main.py 只需这样，在初始化的时候导入 fake_platform_adapter 模块。装饰器会自动注册。
 
 ```py
-from astrbot.api.star import Context, Star
+from astrbot.core.star import Context, Star
 
 
 class MyPlugin(Star):

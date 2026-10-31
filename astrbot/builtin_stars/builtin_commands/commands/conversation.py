@@ -1,9 +1,9 @@
 from sqlalchemy import case, func, select
 from sqlmodel import col
 
-from astrbot.api import sp, star
+from astrbot.api import sp
 from astrbot.api.event import AstrMessageEvent, MessageEventResult
-from astrbot.core import logger
+from astrbot.core import logger, star
 from astrbot.core.agent.runners.deerflow.constants import (
     DEERFLOW_PROVIDER_TYPE,
     DEERFLOW_THREAD_ID_KEY,

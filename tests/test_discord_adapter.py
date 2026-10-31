@@ -19,7 +19,7 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.api.platform import Group, MessageType
+from astrbot.core.platform import Group, MessageType
 from astrbot.core.message.message_event_result import MessageChain
 from astrbot.core.platform.button_interaction import (
     decode_button_callback,
@@ -336,7 +336,6 @@ async def test_discord_private_message_does_not_get_group_name():
 
     assert abm.type == MessageType.FRIEND_MESSAGE
     assert abm.group is None
-    assert abm.group_id == ""
     assert abm.sender.nickname == "tester"
 
 
@@ -376,7 +375,6 @@ async def test_discord_get_group_name_falls_back_when_one_name_is_missing(
     event.message_obj = SimpleNamespace(
         type=MessageType.GROUP_MESSAGE,
         group=Group(group_id="123", group_name="cached"),
-        group_id="123",
     )
     event.client = SimpleNamespace(
         get_channel=lambda channel_id: channel,
@@ -416,7 +414,6 @@ async def test_discord_get_group_fetches_uncached_guild_name():
     event.message_obj = SimpleNamespace(
         type=MessageType.GROUP_MESSAGE,
         group=Group(group_id="123"),
-        group_id="123",
     )
     event.client = client
 
@@ -470,7 +467,6 @@ async def test_discord_get_group_enriches_guild_metadata_from_complete_cache():
     event.message_obj = SimpleNamespace(
         type=MessageType.GROUP_MESSAGE,
         group=Group(group_id="123", group_name="general"),
-        group_id="123",
     )
     event.client = client
 
@@ -494,7 +490,6 @@ async def test_discord_get_group_returns_none_for_private_message():
     event.message_obj = SimpleNamespace(
         type=MessageType.FRIEND_MESSAGE,
         group=None,
-        group_id="123",
     )
     event.client = SimpleNamespace()
 
@@ -511,7 +506,6 @@ async def test_discord_get_group_keeps_basic_metadata_when_channel_fetch_fails()
     event.message_obj = SimpleNamespace(
         type=MessageType.GROUP_MESSAGE,
         group=Group(group_id="123", group_name="general"),
-        group_id="123",
     )
     event.client = client
 

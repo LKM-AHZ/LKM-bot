@@ -737,13 +737,6 @@ class Reply(BaseMessageComponent):
     message_str: str | None = ""
     """被引用的消息解析后的纯文本消息字符串"""
 
-    text: str | None = ""
-    """deprecated"""
-    qq: int | None = 0
-    """deprecated"""
-    seq: int | None = 0
-    """deprecated"""
-
     def __init__(self, **_) -> None:
         super().__init__(**_)
 
@@ -756,25 +749,19 @@ class Poke(BaseMessageComponent):
     type: ComponentType = ComponentType.Poke
     _type: str | int = "126"
     id: int | str | None = 0
-    qq: int | str | None = 0  # deprecated: legacy field, kept for compatibility
 
     def __init__(self, poke_type: str | int | None = None, **_) -> None:
-        # Backward compatible with old signature: Poke(type="poke", ...)
-        legacy_type = _.pop("type", None)
-        if poke_type is None:
-            poke_type = legacy_type
         if poke_type in (None, "", "poke", "Poke"):
             poke_type = "126"
         super().__init__(_type=str(poke_type), **_)
 
     def target_id(self) -> str | None:
-        """Return normalized target id, compatible with old `qq` field."""
-        for value in (self.id, self.qq):
-            if value is None:
-                continue
-            text = str(value).strip()
-            if text and text != "0":
-                return text
+        """Return the normalized target id."""
+        if self.id is None:
+            return None
+        text = str(self.id).strip()
+        if text and text != "0":
+            return text
         return None
 
     def toDict(self):

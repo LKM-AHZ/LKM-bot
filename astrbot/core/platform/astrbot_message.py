@@ -71,22 +71,11 @@ class AstrBotMessage:
     def __str__(self) -> str:
         return str(self.__dict__)
 
-    @property
-    def group_id(self) -> str:
-        """向后兼容的 group_id 属性
-        群组id，如果为私聊，则为空
-        """
-        if self.group:
-            return self.group.group_id
-        return ""
-
-    @group_id.setter
-    def group_id(self, value: str | None) -> None:
-        """设置 group_id"""
-        if value:
-            if self.group:
-                self.group.group_id = value
-            else:
-                self.group = Group(group_id=value)
-        else:
+    def set_group(self, group_id: str | None) -> None:
+        """Set or clear the group id while preserving other group fields."""
+        if not group_id:
             self.group = None
+        elif self.group:
+            self.group.group_id = group_id
+        else:
+            self.group = Group(group_id=group_id)

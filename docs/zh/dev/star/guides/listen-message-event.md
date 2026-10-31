@@ -74,7 +74,7 @@ class AstrBotMessage:
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.star import Context, Star
+from astrbot.core.star import Context, Star
 
 
 class MyPlugin(Star):
@@ -292,7 +292,7 @@ ProviderRequest 对象包含了 LLM 请求的所有信息，包括请求的文�
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.provider import ProviderRequest
+from astrbot.core.provider.entities import ProviderRequest
 
 
 @filter.on_llm_request()
@@ -347,7 +347,7 @@ async def my_custom_hook_1(
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.provider import LLMResponse
+from astrbot.core.provider.entities import LLMResponse
 
 
 @filter.on_llm_response()
@@ -441,7 +441,7 @@ async def on_llm_tool_respond(
 
 ```python
 from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.api.provider import LLMResponse
+from astrbot.core.provider.entities import LLMResponse
 from astrbot.core.agent.run_context import ContextWrapper
 from astrbot.core.astr_agent_context import AstrAgentContext
 

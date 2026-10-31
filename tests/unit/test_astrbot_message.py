@@ -165,49 +165,49 @@ class TestAstrBotMessage:
 
 
 class TestAstrBotMessageGroupId:
-    """Tests for AstrBotMessage group_id property."""
+    """Tests for AstrBotMessage group handling."""
 
-    def test_group_id_returns_empty_when_no_group(self):
-        """Test group_id returns empty string when group is None."""
+    def test_group_is_none_without_a_group(self):
+        """A message without a group keeps group None."""
         message = AstrBotMessage()
-        assert message.group_id == ""
+        assert message.group is None
 
     def test_group_id_returns_group_id_when_group_exists(self):
-        """Test group_id returns the group's id when group exists."""
+        """Group id is read from the group object."""
         message = AstrBotMessage()
         message.group = Group(group_id="group123")
 
-        assert message.group_id == "group123"
+        assert message.group.group_id == "group123"
 
-    def test_group_id_setter_creates_new_group(self):
-        """Test group_id setter creates a new group if none exists."""
+    def test_set_group_creates_new_group(self):
+        """set_group creates a group when none exists."""
         message = AstrBotMessage()
-        message.group_id = "new_group123"
+        message.set_group("new_group123")
 
         assert message.group is not None
         assert message.group.group_id == "new_group123"
 
-    def test_group_id_setter_updates_existing_group(self):
-        """Test group_id setter updates existing group's id."""
+    def test_set_group_replaces_existing_group(self):
+        """set_group replaces the existing group's id."""
         message = AstrBotMessage()
         message.group = Group(group_id="old_group")
-        message.group_id = "new_group"
+        message.set_group("new_group")
 
         assert message.group.group_id == "new_group"
 
-    def test_group_id_setter_with_none_removes_group(self):
-        """Test group_id setter with None removes the group."""
+    def test_set_group_with_none_removes_group(self):
+        """set_group(None) removes the group."""
         message = AstrBotMessage()
         message.group = Group(group_id="group123")
-        message.group_id = None
+        message.set_group(None)
 
         assert message.group is None
 
-    def test_group_id_setter_with_empty_string_removes_group(self):
-        """Test group_id setter with empty string removes the group."""
+    def test_set_group_with_empty_string_removes_group(self):
+        """set_group("") removes the group."""
         message = AstrBotMessage()
         message.group = Group(group_id="group123")
-        message.group_id = ""
+        message.set_group("")
 
         assert message.group is None
 

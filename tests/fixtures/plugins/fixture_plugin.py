@@ -4,7 +4,8 @@
 这是一个最小化的测试插件，用于验证插件系统的功能。
 """
 
-from astrbot.api import llm_tool, star
+from astrbot.api import llm_tool
+from astrbot.core import star
 from astrbot.api.event import AstrMessageEvent, MessageEventResult, filter
 
 

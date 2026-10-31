@@ -12,8 +12,8 @@ SYSTEM_DEFAULT_PERSONA_ID = "default"
 """Reserved persona id for the built-in system default persona.
 
 Its value is intentionally the literal string ``"default"``. The Agent Runner
-config schema (``astrbot.core.config.agent_runner``), the migration helper and
-the WebUI contract still rely on that raw string, so this constant only
+config schema (``astrbot.core.config.agent_runner``) and the WebUI contract
+still rely on that raw string, so this constant only
 centralizes the in-module usages; keep it in sync with those call sites if the
 reserved id ever changes.
 """

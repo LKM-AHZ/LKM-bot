@@ -18,7 +18,6 @@ from opentelemetry.trace import format_span_id, get_current_span, get_tracer_pro
 
 from astrbot.core.log import LogBroker, LogManager
 from astrbot.core.utils import trace as trace_module
-from astrbot.core.utils.migra_helper import migrate_config_on_load
 from astrbot.core.utils.storage_cleaner import StorageCleaner
 from astrbot.core.utils.telemetry import (
     MAX_ATTRIBUTE_BYTES,
@@ -657,28 +656,6 @@ def test_foreign_database_is_not_modified(tmp_path):
         store.close()
 
 
-@pytest.mark.parametrize(
-    "size,expected", [(20, 80), (50, 200), (0, 80), (-1, 80), ("bad", 80)]
-)
-def test_config_migration(tmp_path, size, expected):
-    config = {
-        "trace_enable": False,
-        "trace_log_enable": True,
-        "trace_log_path": "logs/old.jsonl",
-        "trace_log_max_mb": size,
-    }
-    old = tmp_path / "old.jsonl"
-    old.write_text("keep", encoding="utf-8")
-    assert migrate_config_on_load(config, tmp_path / "cmd_config.json")
-    assert config["trace_enable"] is False
-    assert config["trace_db_path"] == "logs/traces.db"
-    assert config["trace_db_max_mb"] == expected
-    assert not any(key.startswith("trace_log_") for key in config)
-    assert old.read_text() == "keep"
-    config["trace_db_max_mb"] = 123
-    config["trace_log_max_mb"] = 5
-    migrate_config_on_load(config, tmp_path / "cmd_config.json")
-    assert config["trace_db_max_mb"] == 123
 
 
 def test_log_cleanup_protects_databases(tmp_path):
