@@ -1088,7 +1088,7 @@ CONFIG_METADATA_2 = {
                     "unified_webhook_mode": {
                         "description": "统一 Webhook 模式",
                         "type": "bool",
-                        "hint": "Webhook 模式下使用 LKMBot 统一 Webhook 入口，无需单独开启端口。回调地址为 /api/platform/webhook/{webhook_uuid}。",
+                        "hint": "Webhook 模式下使用 LKMBot 统一 Webhook 入口，无需单独开启端口。回调地址为 /api/v1/webhooks/platforms/{webhook_uuid}。",
                     },
                     **PERSONAL_WECHAT_CONFIG_METADATA,
                     "webhook_uuid": {

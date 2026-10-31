@@ -581,7 +581,7 @@ class PluginPageService:
         extra_query_params: dict[str, str] | None = None,
     ) -> str:
         query = urlencode(extra_query_params or {})
-        return urlunsplit(("", "", "/api/plugin/page/bridge-sdk.js", query, ""))
+        return urlunsplit(("", "", "/api/v1/plugins/page-bridge-sdk.js", query, ""))
 
     def process_plugin_page_html(
         self,
@@ -598,8 +598,13 @@ class PluginPageService:
         """
 
         def replace_bridge_url(match: re.Match[str]) -> str:
-            raw_url = match.group("url")
-            if raw_url.strip() != "/api/plugin/page/bridge-sdk.js":
+            raw_url = match.group("url").strip()
+            # Older plugin HTML may still hardcode the retired /api/... path;
+            # retarget it to the v1 URL so the iframe keeps loading the SDK.
+            if raw_url not in (
+                "/api/v1/plugins/page-bridge-sdk.js",
+                "/api/plugin/page/bridge-sdk.js",
+            ):
                 return match.group(0)
             url = self.get_plugin_page_bridge_sdk_url(extra_query_params)
             return f"{match.group('attr')}={match.group('quote')}{url}{match.group('quote')}"
@@ -607,7 +612,7 @@ class PluginPageService:
         processed_html = _HTML_ASSET_ATTR_RE.sub(replace_bridge_url, html_text)
         if theme:
             processed_html = self.apply_theme_to_html(processed_html, theme)
-        if "/api/plugin/page/bridge-sdk.js" not in processed_html:
+        if "/api/v1/plugins/page-bridge-sdk.js" not in processed_html:
             bridge_tag = f'<script src="{self.get_plugin_page_bridge_sdk_url(extra_query_params)}"></script>'
             if "</body>" in processed_html:
                 processed_html = processed_html.replace(

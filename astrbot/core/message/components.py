@@ -280,9 +280,9 @@ class Record(BaseMessageComponent):
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
 
-        return f"{callback_host}/api/file/{token}"
+        return f"{callback_host}/api/v1/files/tokens/{token}"
 
 
 class Video(BaseMessageComponent):
@@ -383,9 +383,9 @@ class Video(BaseMessageComponent):
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
 
-        return f"{callback_host}/api/file/{token}"
+        return f"{callback_host}/api/v1/files/tokens/{token}"
 
     async def to_dict(self):
         """需要和 toDict 区分开，toDict 是同步方法"""
@@ -395,7 +395,7 @@ class Video(BaseMessageComponent):
         elif callback_host := astrbot_config.get("callback_api_base"):
             callback_host = str(callback_host).removesuffix("/")
             token = await file_token_service.register_file(url_or_path)
-            payload_file = f"{callback_host}/api/file/{token}"
+            payload_file = f"{callback_host}/api/v1/files/tokens/{token}"
             logger.debug(f"Generated video file callback link: {payload_file}")
         else:
             payload_file = url_or_path
@@ -582,9 +582,9 @@ class Image(BaseMessageComponent):
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
 
-        return f"{callback_host}/api/file/{token}"
+        return f"{callback_host}/api/v1/files/tokens/{token}"
 
 
 class Reply(BaseMessageComponent):
@@ -897,9 +897,9 @@ class File(BaseMessageComponent):
 
         token = await file_token_service.register_file(file_path)
 
-        logger.debug(f"已注册：{callback_host}/api/file/{token}")
+        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
 
-        return f"{callback_host}/api/file/{token}"
+        return f"{callback_host}/api/v1/files/tokens/{token}"
 
     async def to_dict(self):
         """需要和 toDict 区分开，toDict 是同步方法"""
@@ -909,7 +909,7 @@ class File(BaseMessageComponent):
         elif callback_host := astrbot_config.get("callback_api_base"):
             callback_host = str(callback_host).removesuffix("/")
             token = await file_token_service.register_file(url_or_path)
-            payload_file = f"{callback_host}/api/file/{token}"
+            payload_file = f"{callback_host}/api/v1/files/tokens/{token}"
             logger.debug(f"Generated file callback link: {payload_file}")
         else:
             payload_file = url_or_path

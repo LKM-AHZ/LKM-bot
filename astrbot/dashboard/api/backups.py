@@ -17,16 +17,10 @@ from astrbot.dashboard.services.backup_service import (
     BackupServiceError,
 )
 
-from ._helpers import json_or_empty as _json_or_empty
-from .auth import AuthContext, require_dashboard_user, require_scope
+from .auth import AuthContext, require_scope
 from .multipart import UploadFileAdapter
 
 router = APIRouter(tags=["Backups"])
-legacy_router = APIRouter(
-    prefix="/api/backup",
-    tags=["Dashboard Backups"],
-    include_in_schema=False,
-)
 
 
 def get_service(request: Request) -> BackupService:
@@ -110,30 +104,9 @@ async def list_backups(
     )
 
 
-@legacy_router.get("/list")
-async def list_dashboard_backups(
-    page: int = Query(default=1),
-    page_size: int = Query(default=20),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.list_backups(page=page, page_size=page_size),
-        prefix="获取备份列表失败",
-    )
-
-
 @router.post("/backups")
 async def create_backup(
     _auth: AuthContext = Depends(require_system_scope),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(service.export_backup, prefix="创建备份失败")
-
-
-@legacy_router.post("/export")
-async def export_dashboard_backup(
-    _username: str = Depends(require_dashboard_user),
     service: BackupService = Depends(get_service),
 ):
     return await _run(service.export_backup, prefix="创建备份失败")
@@ -151,18 +124,6 @@ async def upload_backup(
     )
 
 
-@legacy_router.post("/upload")
-async def upload_dashboard_backup(
-    file: UploadFile = File(...),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.upload_backup(UploadFileAdapter(file)),
-        prefix="上传备份文件失败",
-    )
-
-
 @router.post("/backups/upload/init")
 async def init_backup_upload(
     payload: BackupUploadInitRequest,
@@ -171,18 +132,6 @@ async def init_backup_upload(
 ):
     return await _run(
         lambda: service.upload_init(_model_dict(payload), owner=auth.username),
-        prefix="初始化分片上传失败",
-    )
-
-
-@legacy_router.post("/upload/init")
-async def init_dashboard_backup_upload(
-    payload: BackupUploadInitRequest,
-    username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.upload_init(_model_dict(payload), owner=username),
         prefix="初始化分片上传失败",
     )
 
@@ -206,25 +155,6 @@ async def upload_backup_chunk(
     )
 
 
-@legacy_router.post("/upload/chunk")
-async def upload_dashboard_backup_chunk(
-    upload_id: str = Form(...),
-    chunk_index: str = Form(...),
-    chunk: UploadFile = File(...),
-    username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.upload_chunk(
-            upload_id=upload_id,
-            chunk_index_str=chunk_index,
-            chunk_file=UploadFileAdapter(chunk),
-            owner=username,
-        ),
-        prefix="上传分片失败",
-    )
-
-
 @router.post("/backups/upload/complete")
 async def complete_backup_upload(
     payload: BackupUploadSessionRequest,
@@ -233,18 +163,6 @@ async def complete_backup_upload(
 ):
     return await _run(
         lambda: service.upload_complete(_model_dict(payload), owner=auth.username),
-        prefix="完成分片上传失败",
-    )
-
-
-@legacy_router.post("/upload/complete")
-async def complete_dashboard_backup_upload(
-    payload: BackupUploadSessionRequest,
-    username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.upload_complete(_model_dict(payload), owner=username),
         prefix="完成分片上传失败",
     )
 
@@ -261,18 +179,6 @@ async def abort_backup_upload(
     )
 
 
-@legacy_router.post("/upload/abort")
-async def abort_dashboard_backup_upload(
-    payload: BackupUploadSessionRequest,
-    username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.upload_abort(_model_dict(payload), owner=username),
-        prefix="取消上传失败",
-    )
-
-
 @router.post("/backups/upload/status")
 async def status_backup_upload(
     payload: BackupUploadSessionRequest,
@@ -285,18 +191,6 @@ async def status_backup_upload(
     )
 
 
-@legacy_router.post("/upload/status")
-async def status_dashboard_backup_upload(
-    payload: BackupUploadSessionRequest,
-    username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.upload_status(_model_dict(payload), owner=username),
-        prefix="查询上传状态失败",
-    )
-
-
 @router.get("/backups/tasks/{task_id}")
 async def get_backup_progress(
     task_id: str,
@@ -304,18 +198,6 @@ async def get_backup_progress(
     service: BackupService = Depends(get_service),
 ):
     return await _run(lambda: service.get_progress(task_id), prefix="获取任务进度失败")
-
-
-@legacy_router.get("/progress")
-async def get_dashboard_backup_progress(
-    task_id: str | None = Query(default=None),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.get_progress(task_id),
-        prefix="获取任务进度失败",
-    )
 
 
 @router.get("/backups/{filename:path}")
@@ -330,15 +212,6 @@ async def download_backup(
         scheme, separator, credentials = auth_header.partition(" ")
         if separator and scheme.lower() == "bearer":
             token = credentials.strip() or None
-    return _download_backup(filename=filename, token=token, service=service)
-
-
-@legacy_router.get("/download")
-async def download_dashboard_backup(
-    filename: str | None = Query(default=None),
-    token: str | None = Query(default=None),
-    service: BackupService = Depends(get_service),
-):
     return _download_backup(filename=filename, token=token, service=service)
 
 
@@ -357,19 +230,6 @@ async def rename_backup(
     )
 
 
-@legacy_router.post("/rename")
-async def rename_dashboard_backup(
-    payload: BackupRenameRequest,
-    filename: str | None = Query(default=None),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    return await _run(
-        lambda: service.rename_backup({"filename": filename, **_model_dict(payload)}),
-        prefix="重命名备份失败",
-    )
-
-
 @router.delete("/backups/{filename:path}")
 async def delete_backup(
     filename: str,
@@ -378,20 +238,6 @@ async def delete_backup(
 ):
     return await _run(
         lambda: service.delete_backup({"filename": _safe_backup_filename(filename)}),
-        prefix="删除备份失败",
-    )
-
-
-@legacy_router.post("/delete")
-async def delete_dashboard_backup(
-    request: Request,
-    filename: str | None = Query(default=None),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    return await _run(
-        lambda: service.delete_backup({"filename": filename, **body}),
         prefix="删除备份失败",
     )
 
@@ -408,20 +254,6 @@ async def check_backup(
     )
 
 
-@legacy_router.post("/check")
-async def check_dashboard_backup(
-    request: Request,
-    filename: str | None = Query(default=None),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    return await _run(
-        lambda: service.check_backup({"filename": filename, **body}),
-        prefix="预检查备份文件失败",
-    )
-
-
 @router.post("/backups/{filename:path}/import")
 async def import_backup(
     filename: str,
@@ -433,19 +265,5 @@ async def import_backup(
         lambda: service.import_backup(
             {"filename": _safe_backup_filename(filename), **_model_dict(payload)}
         ),
-        prefix="导入备份失败",
-    )
-
-
-@legacy_router.post("/import")
-async def import_dashboard_backup(
-    request: Request,
-    filename: str | None = Query(default=None),
-    _username: str = Depends(require_dashboard_user),
-    service: BackupService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    return await _run(
-        lambda: service.import_backup({"filename": filename, **body}),
         prefix="导入备份失败",
     )

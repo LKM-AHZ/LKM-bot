@@ -116,10 +116,10 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-You do not need to import the bridge SDK manually. LKMBot injects `/api/plugin/page/bridge-sdk.js` into returned HTML. If an inline script must access `window.AstrBotPluginView` synchronously, move it to an external module file or explicitly include the SDK before your script:
+You do not need to import the bridge SDK manually. LKMBot injects `/api/v1/plugins/page-bridge-sdk.js` into returned HTML. If an inline script must access `window.AstrBotPluginView` synchronously, move it to an external module file or explicitly include the SDK before your script:
 
 ```html
-<script src="/api/plugin/page/bridge-sdk.js"></script>
+<script src="/api/v1/plugins/page-bridge-sdk.js"></script>
 ```
 
 ## Backend Web APIs
@@ -290,21 +290,15 @@ async def stream_events(self):
 
 Returning a `dict`, `list`, `(body, status_code)`, or a lower-level Response object still works. New plugins should prefer `astrbot.api.web` helpers so plugin code remains decoupled from the Dashboard's internal web framework.
 
-### Quart Compatibility
+### Request Object
 
-For backward compatibility, handlers registered through `context.register_web_api()` still run inside a Quart-compatible request context. Existing plugins can continue to use:
-
-```python
-from quart import jsonify, request
-```
-
-New plugins and new documentation should use:
+Handlers registered through `context.register_web_api()` run in the Dashboard's native request context:
 
 ```python
 from astrbot.api.web import json_response, request
 ```
 
-Do not mix the two `request` proxies in the same handler. Migrate one handler at a time.
+The legacy Quart-compatible request context has been removed, so `from quart import request` no longer works. Plugins still using it must migrate to `astrbot.api.web`.
 
 ## Bridge API
 

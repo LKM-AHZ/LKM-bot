@@ -116,10 +116,10 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/plugin/page/bridge-sdk.js`。如果内联脚本必须同步访问 `window.AstrBotPluginView`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
+不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/v1/plugins/page-bridge-sdk.js`。如果内联脚本必须同步访问 `window.AstrBotPluginView`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
 
 ```html
-<script src="/api/plugin/page/bridge-sdk.js"></script>
+<script src="/api/v1/plugins/page-bridge-sdk.js"></script>
 ```
 
 ## 后端 Web API
@@ -290,21 +290,15 @@ async def stream_events(self):
 
 直接返回 `dict`、`list`、`(body, status_code)` 或底层 Response 对象仍然可用；文档和新插件推荐优先使用 `astrbot.api.web` helper，让插件代码和 Dashboard 内部框架解耦。
 
-### Quart 兼容
+### 请求对象
 
-为了兼容旧插件，通过 `context.register_web_api()` 注册的 handler 仍会进入 Quart 兼容请求上下文。旧代码可以继续使用：
-
-```python
-from quart import jsonify, request
-```
-
-新插件和新文档推荐使用：
+通过 `context.register_web_api()` 注册的 handler 运行在 Dashboard 原生请求上下文中：
 
 ```python
 from astrbot.api.web import json_response, request
 ```
 
-不要在同一个 handler 中混用两个 `request` 代理，迁移时按 handler 逐步替换即可。
+旧版 Quart 兼容请求上下文已移除，`from quart import request` 不再可用。仍在使用 Quart 写法的插件需要改为 `astrbot.api.web`。
 
 ## Bridge API
 

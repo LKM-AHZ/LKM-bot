@@ -2743,52 +2743,11 @@ paths:
         "200":
           $ref: "#/components/responses/Ok"
 
-  /api/v1/plugins/pages:
-    get:
-      tags: [Plugin Views]
-      summary: List plugin views by query ID (alias of /plugins/views)
-      description: Deprecated compatibility alias kept for a transition period. New clients should use /plugins/views.
-      operationId: listPluginPagesById
-      deprecated: true
-      x-astrbot-scope: plugin
-      parameters:
-        - name: plugin_id
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Ok"
-
   /api/v1/plugins/view:
     get:
       tags: [Plugin Views]
       summary: Get plugin view entry HTML by query ID
       operationId: getPluginViewById
-      x-astrbot-scope: plugin
-      parameters:
-        - name: plugin_id
-          in: query
-          required: true
-          schema:
-            type: string
-        - name: page_name
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Html"
-
-  /api/v1/plugins/page:
-    get:
-      tags: [Plugin Views]
-      summary: Get plugin view entry HTML by query ID (alias of /plugins/view)
-      description: Deprecated compatibility alias kept for a transition period. New clients should use /plugins/view.
-      operationId: getPluginPageById
-      deprecated: true
       x-astrbot-scope: plugin
       parameters:
         - name: plugin_id
@@ -2817,44 +2776,11 @@ paths:
         "200":
           $ref: "#/components/responses/Ok"
 
-  /api/v1/plugins/{plugin_id}/pages:
-    get:
-      tags: [Plugin Views]
-      summary: List plugin views (alias of /plugins/{plugin_id}/views)
-      description: Deprecated compatibility alias kept for a transition period. New clients should use /plugins/{plugin_id}/views.
-      operationId: listPluginPages
-      deprecated: true
-      x-astrbot-scope: plugin
-      parameters:
-        - $ref: "#/components/parameters/PluginId"
-      responses:
-        "200":
-          $ref: "#/components/responses/Ok"
-
   /api/v1/plugins/{plugin_id}/views/{view_name}:
     get:
       tags: [Plugin Views]
       summary: Get plugin view entry HTML
       operationId: getPluginView
-      x-astrbot-scope: plugin
-      parameters:
-        - $ref: "#/components/parameters/PluginId"
-        - name: view_name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          $ref: "#/components/responses/Html"
-
-  /api/v1/plugins/{plugin_id}/pages/{view_name}:
-    get:
-      tags: [Plugin Views]
-      summary: Get plugin view entry HTML (alias of /plugins/{plugin_id}/views/{view_name})
-      description: Deprecated compatibility alias kept for a transition period. New clients should use /plugins/{plugin_id}/views/{view_name}.
-      operationId: getPluginPage
-      deprecated: true
       x-astrbot-scope: plugin
       parameters:
         - $ref: "#/components/parameters/PluginId"
@@ -2907,8 +2833,11 @@ paths:
     get:
       tags: [Plugin Views]
       summary: Get the plugin page bridge SDK
+      description: >
+        Loaded by sandboxed plugin view iframes with a scoped asset_token query
+        parameter instead of a dashboard session, so it is not callable with an
+        API key and carries no API scope.
       operationId: getPluginPageBridgeSdk
-      x-astrbot-scope: plugin
       responses:
         "200":
           description: JavaScript bridge SDK

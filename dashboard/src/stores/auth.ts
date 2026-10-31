@@ -4,10 +4,6 @@ import {
   authApi,
   providerApi,
   systemConfigApi,
-  UPGRADE_RECOVERY_EVENT,
-  UPGRADE_RECOVERY_TOKEN_KEY,
-  type ApiEnvelope,
-  type VersionData,
 } from '@/api/v1';
 import { httpClient } from '@/api/http';
 import { useProviderModelSelection } from '@/composables/useProviderModelSelection';
@@ -73,44 +69,6 @@ export const useAuthStore = defineStore("auth", {
 
         if (res.data.status === 'error') {
           return Promise.reject(res.data.message);
-        }
-
-        const legacyToken = String(res.data.data?.token || '');
-        if (res.legacyFallback && legacyToken) {
-          const versionRes = await httpClient.get<ApiEnvelope<VersionData>>(
-            '/api/stat/version',
-            {
-              headers: {
-                Authorization: `Bearer ${legacyToken}`,
-              },
-              validateStatus: () => true,
-            },
-          );
-          const versionData = versionRes.data?.data || {};
-          const coreVersion = String(versionData.version || '')
-            .trim()
-            .replace(/^v/i, '');
-          const dashboardVersion = String(versionData.dashboard_version || '')
-            .trim()
-            .replace(/^v/i, '');
-          if (
-            versionRes.status < 400 &&
-            coreVersion &&
-            dashboardVersion &&
-            coreVersion !== dashboardVersion
-          ) {
-            sessionStorage.setItem(UPGRADE_RECOVERY_TOKEN_KEY, legacyToken);
-            window.dispatchEvent(
-              new CustomEvent(UPGRADE_RECOVERY_EVENT, {
-                detail: {
-                  version: versionData.version,
-                  dashboard_version: versionData.dashboard_version,
-                  blocking: true,
-                },
-              }),
-            );
-            return 'upgrade_recovery_required';
-          }
         }
 
         await this.finishAuthenticatedSession(res.data.data);

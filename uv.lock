@@ -1587,7 +1587,6 @@ requires-dist = [
     { name = "python-telegram-bot", specifier = ">=22.6" },
     { name = "qq-botpy", specifier = "==1.2.1" },
     { name = "qrcode", specifier = ">=8.2" },
-    { name = "quart", specifier = ">=0.20.0" },
     { name = "rank-bm25", specifier = ">=0.2.2" },
     { name = "reportlab", specifier = ">=5.0.0" },
     { name = "shipyard-neo-sdk", specifier = ">=0.2.0" },

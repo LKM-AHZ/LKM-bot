@@ -15,15 +15,9 @@ from astrbot.dashboard.services.platform_service import (
     PlatformServiceError,
 )
 
-from ._helpers import json_or_empty as _json_or_empty
-from .auth import AuthContext, ScopeDependency, require_dashboard_user
+from .auth import AuthContext, ScopeDependency
 
 router = APIRouter(tags=["Platforms"])
-legacy_router = APIRouter(
-    prefix="/api/platform",
-    tags=["Dashboard Platforms"],
-    include_in_schema=False,
-)
 
 
 def get_service(request: Request) -> PlatformService:
@@ -99,36 +93,4 @@ async def receive_platform_webhook(
 ):
     return await _run_webhook(
         lambda: service.handle_webhook_callback(webhook_uuid, DashboardRequest(request))
-    )
-
-
-@legacy_router.api_route("/webhook/{webhook_uuid}", methods=["GET", "POST"])
-async def dashboard_platform_webhook(
-    webhook_uuid: str,
-    request: Request,
-    service: PlatformService = Depends(get_service),
-):
-    return await _run_webhook(
-        lambda: service.handle_webhook_callback(webhook_uuid, DashboardRequest(request))
-    )
-
-
-@legacy_router.get("/stats")
-async def get_dashboard_platform_stats(
-    _username: str = Depends(require_dashboard_user),
-    service: PlatformService = Depends(get_service),
-):
-    return await _run(service.get_platform_stats)
-
-
-@legacy_router.post("/registration/{platform_type}")
-async def handle_dashboard_platform_registration(
-    platform_type: str,
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PlatformService = Depends(get_service),
-):
-    payload = await _json_or_empty(request)
-    return await _run(
-        lambda: service.handle_platform_registration(platform_type, payload)
     )

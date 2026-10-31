@@ -13,14 +13,9 @@ from astrbot.dashboard.services.update_service import (
     UpdateServiceResult,
 )
 
-from .auth import AuthContext, require_dashboard_user, require_scope
+from .auth import AuthContext, require_scope
 
 router = APIRouter(tags=["Updates"])
-legacy_router = APIRouter(
-    prefix="/api/update",
-    tags=["Dashboard Updates"],
-    include_in_schema=False,
-)
 
 
 def get_service(request: Request) -> UpdateService:
@@ -91,26 +86,9 @@ async def check_updates(
     return await _run(lambda: service.check_update(update_type))
 
 
-@legacy_router.get("/check")
-async def check_dashboard_updates(
-    update_type: str | None = Query(default=None, alias="type"),
-    _username: str = Depends(require_dashboard_user),
-    service: UpdateService = Depends(get_service),
-):
-    return await _run(lambda: service.check_update(update_type))
-
-
 @router.get("/updates/releases")
 async def update_releases(
     _auth: AuthContext = Depends(require_system_scope),
-    service: UpdateService = Depends(get_service),
-):
-    return await _run(service.get_releases)
-
-
-@legacy_router.get("/releases")
-async def dashboard_update_releases(
-    _username: str = Depends(require_dashboard_user),
     service: UpdateService = Depends(get_service),
 ):
     return await _run(service.get_releases)
@@ -125,28 +103,10 @@ async def update_progress(
     return await _run(lambda: service.get_update_progress(task_id))
 
 
-@legacy_router.get("/progress")
-async def dashboard_update_progress(
-    progress_id: str | None = Query(default=None, alias="id"),
-    _username: str = Depends(require_dashboard_user),
-    service: UpdateService = Depends(get_service),
-):
-    return await _run(lambda: service.get_update_progress(progress_id or ""))
-
-
 @router.post("/updates/core")
 async def update_core(
     payload: UpdateRequest,
     _auth: AuthContext = Depends(require_system_scope),
-    service: UpdateService = Depends(get_service),
-):
-    return await _run(lambda: service.update_project(_model_dict(payload)))
-
-
-@legacy_router.post("/do")
-async def update_dashboard_core(
-    payload: UpdateRequest,
-    _username: str = Depends(require_dashboard_user),
     service: UpdateService = Depends(get_service),
 ):
     return await _run(lambda: service.update_project(_model_dict(payload)))
@@ -160,27 +120,10 @@ async def update_dashboard(
     return await _run(service.update_dashboard)
 
 
-@legacy_router.post("/dashboard")
-async def update_dashboard_assets(
-    _username: str = Depends(require_dashboard_user),
-    service: UpdateService = Depends(get_service),
-):
-    return await _run(service.update_dashboard)
-
-
 @router.post("/pip/install")
 async def install_pip_package(
     payload: PipInstallRequest,
     _auth: AuthContext = Depends(require_system_scope),
-    service: UpdateService = Depends(get_service),
-):
-    return await _run(lambda: service.install_pip_package(_model_dict(payload)))
-
-
-@legacy_router.post("/pip-install")
-async def install_dashboard_pip_package(
-    payload: PipInstallRequest,
-    _username: str = Depends(require_dashboard_user),
     service: UpdateService = Depends(get_service),
 ):
     return await _run(lambda: service.install_pip_package(_model_dict(payload)))

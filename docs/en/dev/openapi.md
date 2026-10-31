@@ -28,6 +28,19 @@ X-API-Key: abk_xxx
 
 The local OpenAPI schema is available at `http://localhost:6185/api/v1/openapi.json`, and the interactive docs are available at `http://localhost:6185/api/v1/docs`.
 
+## Migrating from legacy `/api/*` routes
+
+The legacy Dashboard `/api/*` compatibility routes have been removed in favor of `/api/v1/*`. External URLs that changed:
+
+| Legacy | Replacement |
+|---|---|
+| `/api/file/{token}` (media callback) | `/api/v1/files/tokens/{token}` |
+| `/api/platform/webhook/{uuid}` | `/api/v1/webhooks/platforms/{uuid}` |
+| `/api/plugin/page/bridge-sdk.js` | `/api/v1/plugins/page-bridge-sdk.js` |
+| `/api/plugin/get`, `/api/plugin/detail`, ... | `/api/v1/plugins`, `/api/v1/plugins/by-id` |
+
+Plugin web API handlers no longer run inside a Quart-compatible request context; use `from astrbot.api.web import request` instead. The complete route list is in `/api/v1/openapi.json`.
+
 ## Scope Permissions
 
 API Keys can be configured with `scopes`. See the [API Scope–Endpoint Reference](./openapi-scopes.md) for each scope's purpose, inheritance rules, and complete endpoint list.

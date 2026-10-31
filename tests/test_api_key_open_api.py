@@ -32,7 +32,7 @@ async def _create_api_key(
 ) -> tuple[str, str]:
     test_client = app.test_client()
     create_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": f"{name_prefix}-{uuid.uuid4().hex[:8]}", "scopes": scopes},
         headers=authenticated_header,
     )
@@ -102,7 +102,7 @@ async def authenticated_header(
 ):
     test_client = app.test_client()
     response = await test_client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={
             "username": core_lifecycle_td.astrbot_config["dashboard"]["username"],
             "password": _resolve_dashboard_password(core_lifecycle_td),
@@ -161,8 +161,7 @@ async def test_api_key_scope_and_revoke(
     assert denied_res.status_code == 403
 
     revoke_res = await test_client.post(
-        "/api/apikey/revoke",
-        json={"key_id": key_id},
+        f"/api/v1/api-keys/{key_id}/revoke",
         headers=authenticated_header,
     )
     assert revoke_res.status_code == 200
@@ -841,7 +840,7 @@ async def test_open_api_key_scope_normalization(
     test_client = app.test_client()
 
     config_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": "config-contained-scopes-key", "scopes": ["config"]},
         headers=authenticated_header,
     )
@@ -852,7 +851,7 @@ async def test_open_api_key_scope_normalization(
     assert set(config_data["data"]["scopes"]) == {"config", "bot", "provider"}
 
     extra_scope_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": "mcp-skill-scope-key", "scopes": ["mcp", "skill"]},
         headers=authenticated_header,
     )
@@ -863,7 +862,7 @@ async def test_open_api_key_scope_normalization(
     assert set(extra_scope_data["data"]["scopes"]) == {"mcp", "skill"}
 
     edit_admin_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={
             "name": "config-edit-admin-key",
             "scopes": ["config", "config:edit_admin"],
@@ -881,7 +880,7 @@ async def test_open_api_key_scope_normalization(
     }
 
     orphan_subscope_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": "orphan-edit-admin-key", "scopes": ["config:edit_admin"]},
         headers=authenticated_header,
     )
@@ -892,7 +891,7 @@ async def test_open_api_key_scope_normalization(
     )
 
     chat_admin_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": "chat-admin-key", "scopes": ["chat", "chat:admin"]},
         headers=authenticated_header,
     )
@@ -902,15 +901,13 @@ async def test_open_api_key_scope_normalization(
     assert set(chat_admin_data["data"]["scopes"]) == {"chat", "chat:admin"}
 
     orphan_chat_admin_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": "orphan-chat-admin-key", "scopes": ["chat:admin"]},
         headers=authenticated_header,
     )
     orphan_chat_admin_data = await orphan_chat_admin_res.get_json()
     assert orphan_chat_admin_data["status"] == "error"
-    assert orphan_chat_admin_data["message"] == (
-        "chat:admin requires the chat scope"
-    )
+    assert orphan_chat_admin_data["message"] == ("chat:admin requires the chat scope")
 
 
 @pytest.mark.asyncio
@@ -979,7 +976,7 @@ async def test_file_scope_is_available_for_developer_api_key(
 ):
     test_client = app.test_client()
     create_res = await test_client.post(
-        "/api/apikey/create",
+        "/api/v1/api-keys",
         json={"name": "file-scope-key", "scopes": ["file"]},
         headers=authenticated_header,
     )

@@ -345,7 +345,7 @@ class ResultDecorateStage(Stage):
                                 token = await file_token_service.register_file(
                                     audio_path,
                                 )
-                                url = f"{callback_api_base}/api/file/{token}"
+                                url = f"{callback_api_base}/api/v1/files/tokens/{token}"
                                 logger.debug(f"Registered: {url}")
 
                             new_chain.append(
@@ -405,7 +405,7 @@ class ResultDecorateStage(Stage):
                             and self.ctx.astrbot_config["callback_api_base"]
                         ):
                             token = await file_token_service.register_file(url)
-                            url = f"{self.ctx.astrbot_config['callback_api_base']}/api/file/{token}"
+                            url = f"{self.ctx.astrbot_config['callback_api_base']}/api/v1/files/tokens/{token}"
                             logger.debug(f"Registered: {url}")
                             result.chain = [Image.fromURL(url)]
                         else:

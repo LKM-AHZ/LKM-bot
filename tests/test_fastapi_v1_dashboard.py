@@ -722,11 +722,11 @@ def _register_dashboard_alias_routes(
                 providers.append(provider)
         return ok(providers)
 
-    @alias_get("/api/stat/start-time")
+    @alias_get("/api/v1/stats/start-time")
     async def dashboard_alias_start_time():
         return ok({"start_time": 1234567890})
 
-    @alias_get("/api/session/active-umos")
+    @alias_get("/api/v1/sessions/active-umos")
     async def dashboard_alias_active_umos():
         return ok(
             {
@@ -862,23 +862,23 @@ def _register_dashboard_alias_routes(
             }
         )
 
-    @alias_get("/api/skills")
+    @alias_get("/api/v1/skills")
     async def dashboard_alias_skill_list():
         return ok({"skills": [{"name": "demo_skill"}], "runtime": "local"})
 
-    @alias_post("/api/skills/update")
+    @alias_post("/api/v1/skills/update")
     async def dashboard_alias_skill_update(request: Request):
         return ok({"payload": await _request_json(request)})
 
-    @alias_post("/api/skills/delete")
+    @alias_post("/api/v1/skills/delete")
     async def dashboard_alias_skill_delete(request: Request):
         return ok({"payload": await _request_json(request)})
 
-    @alias_get("/api/skills/download")
+    @alias_get("/api/v1/skills/download")
     async def dashboard_alias_skill_download(request: Request):
         return ok({"name": request.query_params.get("name")})
 
-    @alias_get("/api/skills/files")
+    @alias_get("/api/v1/skills/files")
     async def dashboard_alias_skill_files(request: Request):
         return ok(
             {
@@ -887,7 +887,7 @@ def _register_dashboard_alias_routes(
             }
         )
 
-    @alias_get("/api/skills/file")
+    @alias_get("/api/v1/skills/file")
     async def dashboard_alias_skill_file_get(request: Request):
         return ok(
             {
@@ -896,7 +896,7 @@ def _register_dashboard_alias_routes(
             }
         )
 
-    @alias_post("/api/skills/file")
+    @alias_post("/api/v1/skills/file")
     async def dashboard_alias_skill_file_update(request: Request):
         return ok({"payload": await _request_json(request)})
 
@@ -1114,7 +1114,7 @@ async def test_version_routes_return_startup_runtime_snapshot(
     async with httpx.AsyncClient(
         transport=transport, base_url="http://testserver"
     ) as client:
-        for path in ("/api/v1/stats/version", "/api/stat/version"):
+        for path in ("/api/v1/stats/version", "/api/v1/stats/version"):
             response = await client.get(path, headers=_jwt_headers())
             assert response.status_code == 200
             payload = response.json()
@@ -1585,37 +1585,6 @@ async def test_v1_conversation_list_returns_summary_without_history(
 
 
 @pytest.mark.asyncio
-async def test_legacy_conversation_list_preserves_history_by_default(
-    asgi_client: httpx.AsyncClient,
-):
-    response = await asgi_client.get(
-        "/api/conversation/list",
-        headers=_jwt_headers(),
-    )
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["status"] == "ok"
-    assert payload["data"]["conversations"][0]["history"] == "[]"
-
-
-@pytest.mark.asyncio
-async def test_legacy_conversation_list_returns_summary_without_history(
-    asgi_client: httpx.AsyncClient,
-):
-    response = await asgi_client.get(
-        "/api/conversation/list",
-        params={"include_history": "false"},
-        headers=_jwt_headers(),
-    )
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["status"] == "ok"
-    assert "history" not in payload["data"]["conversations"][0]
-
-
-@pytest.mark.asyncio
 async def test_conversation_list_normalizes_comma_separated_filters(
     asgi_client: httpx.AsyncClient,
     fake_core_lifecycle,
@@ -1687,15 +1656,12 @@ async def test_v1_conversation_detail_requires_user_id(
 
 
 @pytest.mark.asyncio
-async def test_dashboard_alias_conversation_detail_uses_fastapi_service(
+async def test_v1_conversation_detail_uses_conversation_service(
     asgi_client: httpx.AsyncClient,
 ):
-    response = await asgi_client.post(
-        "/api/conversation/detail",
-        json={
-            "user_id": "webchat:FriendMessage:webchat!user!session-1",
-            "cid": "conversation/with/slash",
-        },
+    response = await asgi_client.get(
+        "/api/v1/conversations/conversation%2Fwith%2Fslash",
+        params={"user_id": "webchat:FriendMessage:webchat!user!session-1"},
         headers=_jwt_headers(),
     )
 
@@ -1703,27 +1669,6 @@ async def test_dashboard_alias_conversation_detail_uses_fastapi_service(
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["data"]["cid"] == "conversation/with/slash"
-
-
-@pytest.mark.asyncio
-async def test_v1_bots_matches_dashboard_platform_alias_list(
-    asgi_client: httpx.AsyncClient,
-):
-    headers = _jwt_headers()
-
-    dashboard_alias_response = await asgi_client.get(
-        "/api/config/platform/list",
-        headers=headers,
-    )
-    v1_response = await asgi_client.get("/api/v1/bots", headers=headers)
-
-    assert dashboard_alias_response.status_code == 200
-    assert v1_response.status_code == 200
-    dashboard_alias_data = dashboard_alias_response.json()
-    v1_data = v1_response.json()
-    assert dashboard_alias_data["status"] == "ok"
-    assert v1_data["status"] == "ok"
-    assert v1_data["data"]["bots"] == dashboard_alias_data["data"]["platforms"]
 
 
 @pytest.mark.asyncio
@@ -1939,7 +1884,6 @@ async def test_config_update_revokes_only_affected_shell_sessions(
     [
         "/api/v1/system-config",
         "/api/v1/config-profiles/default",
-        "/api/config/astrbot/update",
     ],
 )
 async def test_config_api_saves_local_permissions_without_isolation(
@@ -1972,12 +1916,10 @@ async def test_config_api_saves_local_permissions_without_isolation(
             "admin": {"filesystem_scope": "none"},
         },
     }
-    legacy = path.startswith("/api/config/")
-    response = await asgi_client.request(
-        "POST" if legacy else "PUT",
+    response = await asgi_client.put(
         path,
         headers=_jwt_headers(),
-        json={"conf_id": "default", "config": payload} if legacy else payload,
+        json=payload,
     )
 
     assert response.status_code == 200
@@ -2035,30 +1977,6 @@ async def test_v1_system_config_returns_system_metadata(
     assert data["status"] == "ok"
     assert "system_group" in data["data"]["metadata"]
     assert "platform_group" not in data["data"]["metadata"]
-
-
-@pytest.mark.asyncio
-async def test_v1_providers_matches_dashboard_provider_alias_list(
-    asgi_client: httpx.AsyncClient,
-):
-    headers = _jwt_headers()
-
-    dashboard_alias_response = await asgi_client.get(
-        "/api/config/provider/list?provider_type=chat_completion",
-        headers=headers,
-    )
-    v1_response = await asgi_client.get(
-        "/api/v1/providers?capability=chat",
-        headers=headers,
-    )
-
-    assert dashboard_alias_response.status_code == 200
-    assert v1_response.status_code == 200
-    dashboard_alias_data = dashboard_alias_response.json()
-    v1_data = v1_response.json()
-    assert dashboard_alias_data["status"] == "ok"
-    assert v1_data["status"] == "ok"
-    assert v1_data["data"]["providers"] == dashboard_alias_data["data"]
 
 
 @pytest.mark.asyncio
@@ -2413,7 +2331,7 @@ async def test_v1_config_scope_includes_bot_and_provider(
 async def test_dashboard_alias_route_still_works_through_asgi_app(
     asgi_client: httpx.AsyncClient,
 ):
-    response = await asgi_client.get("/api/stat/start-time")
+    response = await asgi_client.get("/api/v1/stats/start-time")
 
     assert response.status_code == 200
     data = response.json()
@@ -3406,54 +3324,6 @@ def test_astrbot_web_request_proxy_exposes_typed_methods():
 
 
 @pytest.mark.asyncio
-async def test_v1_plugin_extension_supports_quart_request_context(
-    asgi_client: httpx.AsyncClient,
-    fake_core_lifecycle,
-):
-    from quart import g as quart_g
-    from quart import jsonify as quart_jsonify
-    from quart import request as quart_request
-
-    async def quart_plugin_extension(item_id: str):
-        return quart_jsonify(
-            {
-                "status": "ok",
-                "data": {
-                    "item_id": item_id,
-                    "path": quart_request.path,
-                    "method": quart_request.method,
-                    "source": quart_request.args.get("source"),
-                    "payload": await quart_request.get_json(),
-                    "username": quart_g.username,
-                },
-            }
-        )
-
-    fake_core_lifecycle.star_context.registered_web_apis = [
-        ("/quart/<item_id>", quart_plugin_extension, ["POST"], "quart")
-    ]
-
-    response = await asgi_client.post(
-        "/api/v1/plugins/extensions/quart/demo-item?source=v1",
-        json={"value": "demo"},
-        headers=_jwt_headers(),
-    )
-
-    assert response.status_code == 200
-    assert response.headers["content-type"].startswith("application/json")
-    data = response.json()
-    assert data["status"] == "ok"
-    assert data["data"] == {
-        "item_id": "demo-item",
-        "path": "/api/plug/quart/demo-item",
-        "method": "POST",
-        "source": "v1",
-        "payload": {"value": "demo"},
-        "username": "fastapi-v1-test",
-    }
-
-
-@pytest.mark.asyncio
 async def test_multipart_parts_preserves_duplicate_form_values():
     from starlette.datastructures import FormData
 
@@ -3764,7 +3634,9 @@ async def test_v1_platform_logo_refreshes_stale_tokens_and_supports_repeated_rea
     )
     monkeypatch.setattr(file_token_service, "staged_files", {})
     monkeypatch.setattr(config_display_service, "platform_registry", [platform])
-    monkeypatch.setitem(config_display_service.platform_cls_map, platform.name, FakePlatform)
+    monkeypatch.setitem(
+        config_display_service.platform_cls_map, platform.name, FakePlatform
+    )
     monkeypatch.setattr(
         config_display_service,
         "inspect",
@@ -3842,21 +3714,6 @@ def test_v1_openapi_alias_websocket_routes_are_mounted(asgi_app):
     assert str(asgi_app.url_path_for("chat_ws")) == "/api/v1/chat/ws"
     assert str(asgi_app.url_path_for("live_chat_ws")) == "/api/v1/live-chat/ws"
     assert str(asgi_app.url_path_for("unified_chat_ws")) == "/api/v1/unified-chat/ws"
-
-
-def test_dashboard_config_aliases_are_registered_on_fastapi(asgi_app):
-    assert (
-        str(asgi_app.url_path_for("dashboard_alias_platform_list"))
-        == "/api/config/platform/list"
-    )
-    assert (
-        str(asgi_app.url_path_for("dashboard_alias_provider_list"))
-        == "/api/config/provider/list"
-    )
-    assert (
-        str(asgi_app.url_path_for("update_dashboard_alias_provider_source"))
-        == "/api/config/provider_sources/update"
-    )
 
 
 @pytest.mark.asyncio
@@ -4450,8 +4307,12 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
     service.log_broker.publish({"time": base, "data": "outside-before"})
     service.log_broker.publish({"time": base + 1, "data": "selected memory log"})
     service.log_broker.publish({"time": base + 3, "data": "outside-after"})
-    service.log_broker.log_cache.append({"type": "trace", "time": base, "data": "outside"})
-    service.log_broker.log_cache.append({"type": "trace", "time": base + 1, "data": "selected"})
+    service.log_broker.log_cache.append(
+        {"type": "trace", "time": base, "data": "outside"}
+    )
+    service.log_broker.log_cache.append(
+        {"type": "trace", "time": base + 1, "data": "selected"}
+    )
     path = logs_dir / "traces.db"
     service.config["trace_db_path"] = str(path)
     store = TraceStore(path, {"trace_db_max_mb": 8})
@@ -4481,19 +4342,36 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
         response = await asgi_client.get(
             "/api/v1/logs/export",
             headers=_jwt_headers(),
-            params={"redact": str(redact).lower(), "start_time": base + 1, "end_time": base + 2},
+            params={
+                "redact": str(redact).lower(),
+                "start_time": base + 1,
+                "end_time": base + 2,
+            },
         )
         assert response.status_code == 200
         with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
             disk_log = archive.read("logs/astrbot.log").decode()
             assert disk_log == (
-                selected.replace("private-range-value", "[REDACTED]") if redact else selected
+                selected.replace("private-range-value", "[REDACTED]")
+                if redact
+                else selected
             )
             assert archive.read("logs/undated.log") == b""
-            assert archive.read("logs/astrbot.in-memory.log") == b"selected memory log\n"
-            assert json.loads(archive.read("traces/history.in-memory.jsonl"))["data"] == "selected"
-            history = [json.loads(line) for line in archive.read("traces/history.jsonl").splitlines()]
-            assert [item["trace"]["trace_id"] for item in history] == [f"{3:032x}", f"{2:032x}"]
+            assert (
+                archive.read("logs/astrbot.in-memory.log") == b"selected memory log\n"
+            )
+            assert (
+                json.loads(archive.read("traces/history.in-memory.jsonl"))["data"]
+                == "selected"
+            )
+            history = [
+                json.loads(line)
+                for line in archive.read("traces/history.jsonl").splitlines()
+            ]
+            assert [item["trace"]["trace_id"] for item in history] == [
+                f"{3:032x}",
+                f"{2:032x}",
+            ]
             assert "config.json" in archive.namelist()
             assert "environment.json" in archive.namelist()
             manifest = json.loads(archive.read("manifest.json"))
@@ -4518,7 +4396,9 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
         ({"end_time": "invalid"}, 422),
     ],
 )
-async def test_diagnostic_export_rejects_invalid_time_ranges(asgi_client, params, status):
+async def test_diagnostic_export_rejects_invalid_time_ranges(
+    asgi_client, params, status
+):
     response = await asgi_client.get(
         "/api/v1/logs/export", headers=_jwt_headers(), params=params
     )
@@ -4602,9 +4482,13 @@ async def test_v1_log_export_keeps_archive_names_unique(
     monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
     data_dir = tmp_path / "data"
     (data_dir / "logs").mkdir(parents=True)
-    (data_dir / "logs" / "astrbot.in-memory.log").write_text("file log", encoding="utf-8")
+    (data_dir / "logs" / "astrbot.in-memory.log").write_text(
+        "file log", encoding="utf-8"
+    )
     (data_dir / "traces").mkdir()
-    (data_dir / "traces" / "history.in-memory.jsonl").write_text("file trace", encoding="utf-8")
+    (data_dir / "traces" / "history.in-memory.jsonl").write_text(
+        "file trace", encoding="utf-8"
+    )
     (data_dir / "manifest.json").write_text("trace log", encoding="utf-8")
     service = asgi_app.state.services.logs
     service.config["log_file_path"] = "manifest.json"
@@ -4749,7 +4633,9 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
     )
     (logs / "astrbot.1.log").write_text(plugin_secret, encoding="utf-8")
     (logs / "binary.log").write_bytes(b"\x00binary-private-data")
-    service.log_broker.publish({"time": 1, "level": "INFO", "data": f"{secret} peer=8.8.8.8"})
+    service.log_broker.publish(
+        {"time": 1, "level": "INFO", "data": f"{secret} peer=8.8.8.8"}
+    )
     service.log_broker.publish(
         {"type": "trace", "time": 2, "fields": {"api_key": secret, "enabled": True}}
     )
@@ -4763,7 +4649,14 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
             return {
                 "trace": {"trace_id": "a" * 32},
                 "spans": [
-                    {"attributes": {"api_key": trace_secret, "message": plugin_secret, "peer": "::ffff:8.8.8.8", "ipv6": "2606:4700:4700:0:0:0:0:1111"}}
+                    {
+                        "attributes": {
+                            "api_key": trace_secret,
+                            "message": plugin_secret,
+                            "peer": "::ffff:8.8.8.8",
+                            "ipv6": "2606:4700:4700:0:0:0:0:1111",
+                        }
+                    }
                 ],
             }
 
@@ -4796,13 +4689,23 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
             assert (private not in all_text) is redact
         assert "binary-private-data" not in all_text
         if not redact:
-            assert archive.read("logs/astrbot.log") == (logs / "astrbot.log").read_bytes()
+            assert (
+                archive.read("logs/astrbot.log") == (logs / "astrbot.log").read_bytes()
+            )
         exported = json.loads(archive.read("config.json"))["profiles"]["default"]
         if redact:
-            assert exported["diagnostic_network"]["public_endpoint"] == "http://[PUBLIC_IP_1]:8080/v1"
-            assert exported["diagnostic_network"]["public_ipv6"] == "https://[PUBLIC_IP_2]:443/v1"
+            assert (
+                exported["diagnostic_network"]["public_endpoint"]
+                == "http://[PUBLIC_IP_1]:8080/v1"
+            )
+            assert (
+                exported["diagnostic_network"]["public_ipv6"]
+                == "https://[PUBLIC_IP_2]:443/v1"
+            )
             assert b"peer=[PUBLIC_IP_1]" in archive.read("logs/astrbot.in-memory.log")
-            trace = json.loads(archive.read("traces/history.jsonl"))["spans"][0]["attributes"]
+            trace = json.loads(archive.read("traces/history.jsonl"))["spans"][0][
+                "attributes"
+            ]
             assert trace["peer"] == "[PUBLIC_IP_1]"
             assert trace["ipv6"] == "[PUBLIC_IP_2]"
             assert "8.8.8.8" not in all_text
@@ -4810,11 +4713,16 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
         else:
             assert exported["diagnostic_network"] == config["diagnostic_network"]
             assert "::ffff:8.8.8.8" in all_text
-        assert exported["diagnostic_network"]["local_endpoint"] == "http://192.168.1.2:6185/health"
+        assert (
+            exported["diagnostic_network"]["local_endpoint"]
+            == "http://192.168.1.2:6185/health"
+        )
         assert exported["dashboard"]["password_storage_upgraded"] is True
         assert exported["dashboard"]["password_change_required"] is False
         assert exported["max_tokens"] == 4096
-        assert exported["provider_sources"][0]["key"] == ["[REDACTED]" if redact else secret]
+        assert exported["provider_sources"][0]["key"] == [
+            "[REDACTED]" if redact else secret
+        ]
         assert json.loads(archive.read("plugins.json"))["plugins"][0]["enabled"] is True
         manifest = json.loads(archive.read("manifest.json"))
         assert manifest["trace_history"]["count"] == 1

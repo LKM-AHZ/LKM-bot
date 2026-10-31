@@ -6,14 +6,9 @@ from astrbot.dashboard.responses import ApiError, ok
 from astrbot.dashboard.schemas import CronJobRequest
 from astrbot.dashboard.services.cron_service import CronService, CronServiceError
 
-from .auth import AuthContext, require_dashboard_user, require_scope
+from .auth import AuthContext, require_scope
 
 router = APIRouter(tags=["Cron"])
-legacy_router = APIRouter(
-    prefix="/api/cron",
-    tags=["Dashboard Cron"],
-    include_in_schema=False,
-)
 
 
 async def require_system_scope(request: Request) -> AuthContext:
@@ -110,52 +105,6 @@ async def delete_cron_job(
 async def run_cron_job(
     job_id: str,
     _auth: AuthContext = Depends(require_system_scope),
-    service: CronService = Depends(get_service),
-):
-    return await _run_job(job_id, service)
-
-
-@legacy_router.get("/jobs")
-async def list_dashboard_cron_jobs(
-    job_type: str | None = Query(default=None, alias="type"),
-    _username: str = Depends(require_dashboard_user),
-    service: CronService = Depends(get_service),
-):
-    return await _list_jobs(job_type, service)
-
-
-@legacy_router.post("/jobs")
-async def create_dashboard_cron_job(
-    payload: CronJobRequest,
-    _username: str = Depends(require_dashboard_user),
-    service: CronService = Depends(get_service),
-):
-    return await _create_job(payload, service)
-
-
-@legacy_router.patch("/jobs/{job_id}")
-async def update_dashboard_cron_job(
-    job_id: str,
-    payload: CronJobRequest,
-    _username: str = Depends(require_dashboard_user),
-    service: CronService = Depends(get_service),
-):
-    return await _update_job(job_id, payload, service)
-
-
-@legacy_router.delete("/jobs/{job_id}")
-async def delete_dashboard_cron_job(
-    job_id: str,
-    _username: str = Depends(require_dashboard_user),
-    service: CronService = Depends(get_service),
-):
-    return await _delete_job(job_id, service)
-
-
-@legacy_router.post("/jobs/{job_id}/run")
-async def run_dashboard_cron_job(
-    job_id: str,
-    _username: str = Depends(require_dashboard_user),
     service: CronService = Depends(get_service),
 ):
     return await _run_job(job_id, service)

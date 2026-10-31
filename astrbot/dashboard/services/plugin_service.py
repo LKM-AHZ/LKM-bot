@@ -278,7 +278,7 @@ class PluginService:
         if not plugin.logo_path:
             return None
         logo_token = await logo_token_resolver(plugin.logo_path)
-        return f"/api/file/{logo_token}" if logo_token else None
+        return f"/api/v1/files/tokens/{logo_token}" if logo_token else None
 
     async def get_plugin_logo_token(self, logo_path: str) -> str | None:
         """Get a reusable logo token, replacing expired cached tokens.

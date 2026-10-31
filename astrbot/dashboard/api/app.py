@@ -48,32 +48,8 @@ from astrbot.dashboard.services.update_service import (
     call_pip_install,
 )
 
-from .api_keys import legacy_router as legacy_api_keys_router
-from .auth import legacy_router as legacy_auth_router
-from .backups import legacy_router as legacy_backups_router
-from .bots import legacy_router as legacy_bots_router
-from .chat import legacy_router as legacy_chat_router
-from .chat_projects import legacy_router as legacy_chat_projects_router
-from .config_profiles import legacy_router as legacy_config_profiles_router
-from .conversations import legacy_router as legacy_conversations_router
-from .cron import legacy_router as legacy_cron_router
-from .extensions import legacy_router as legacy_extensions_router
-from .files import legacy_router as legacy_files_router
-from .knowledge_bases import legacy_router as legacy_knowledge_bases_router
-from .live_chat import legacy_router as legacy_live_chat_router
-from .logs import legacy_router as legacy_logs_router
-from .personas import legacy_router as legacy_personas_router
-from .platform import legacy_router as legacy_platform_router
-from .plugins import legacy_router as legacy_plugins_router
-from .providers import legacy_router as legacy_providers_router
 from .router import API_V1_PREFIX, build_api_router
-from .sessions import legacy_router as legacy_sessions_router
-from .skills import legacy_router as legacy_skills_router
 from .static_files import router as static_files_router
-from .stats import legacy_router as legacy_stats_router
-from .t2i import legacy_router as legacy_t2i_router
-from .tools import legacy_router as legacy_tools_router
-from .updates import legacy_router as legacy_updates_router
 
 CLEAR_SITE_DATA_HEADERS = {"Clear-Site-Data": '"cache"'}
 
@@ -190,31 +166,6 @@ def create_dashboard_asgi_app(
             status_code=500,
         )
 
-    # Legacy dashboard routes keep old /api/* callers working without entering OpenAPI.
-    app.include_router(legacy_api_keys_router)
-    app.include_router(legacy_auth_router)
-    app.include_router(legacy_backups_router)
-    app.include_router(legacy_config_profiles_router)
-    app.include_router(legacy_bots_router)
-    app.include_router(legacy_providers_router)
-    app.include_router(legacy_chat_router)
-    app.include_router(legacy_chat_projects_router)
-    app.include_router(legacy_conversations_router)
-    app.include_router(legacy_cron_router)
-    app.include_router(legacy_extensions_router)
-    app.include_router(legacy_files_router)
-    app.include_router(legacy_knowledge_bases_router)
-    app.include_router(legacy_live_chat_router)
-    app.include_router(legacy_logs_router)
-    app.include_router(legacy_sessions_router)
-    app.include_router(legacy_skills_router)
-    app.include_router(legacy_stats_router)
-    app.include_router(legacy_tools_router)
-    app.include_router(legacy_platform_router)
-    app.include_router(legacy_plugins_router)
-    app.include_router(legacy_t2i_router)
-    app.include_router(legacy_personas_router)
-    app.include_router(legacy_updates_router)
     app.include_router(build_api_router())
     app.include_router(static_files_router)
     return app

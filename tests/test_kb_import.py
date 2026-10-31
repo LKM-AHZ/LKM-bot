@@ -107,7 +107,7 @@ async def authenticated_header(
     """Handles login and returns an authenticated header."""
     test_client = app.test_client()
     response = await test_client.post(
-        "/api/auth/login",
+        "/api/v1/auth/login",
         json={
             "username": core_lifecycle_td.astrbot_config["dashboard"]["username"],
             "password": _resolve_dashboard_password(core_lifecycle_td),
@@ -133,7 +133,6 @@ async def test_import_documents(
 
     # Test data
     import_data = {
-        "kb_id": "test_kb_id",
         "documents": [
             {"file_name": "test_file_1.txt", "chunks": ["chunk1", "chunk2"]},
             {"file_name": "test_file_2.md", "chunks": ["chunk3", "chunk4", "chunk5"]},
@@ -142,7 +141,9 @@ async def test_import_documents(
 
     # Send request
     response = await test_client.post(
-        "/api/kb/document/import", json=import_data, headers=authenticated_header
+        "/api/v1/knowledge-bases/test_kb_id/documents/import",
+        json={"documents": import_data["documents"]},
+        headers=authenticated_header,
     )
 
     # Verify response
@@ -158,7 +159,7 @@ async def test_import_documents(
     # Since we mocked upload_document, it should be fast, but we might need to poll progress
     for _ in range(10):
         progress_response = await test_client.get(
-            f"/api/kb/document/upload/progress?task_id={task_id}",
+            f"/api/v1/knowledge-bases/tasks/{task_id}",
             headers=authenticated_header,
         )
         progress_data = await progress_response.get_json()
@@ -237,18 +238,10 @@ async def test_import_documents_invalid_input(
     """Tests import documents with invalid input."""
     test_client = app.test_client()
 
-    # Missing kb_id
-    response = await test_client.post(
-        "/api/kb/document/import", json={"documents": []}, headers=authenticated_header
-    )
-    data = await response.get_json()
-    assert data["status"] == "error"
-    assert "缺少参数 kb_id" in data["message"]
-
     # Missing documents
     response = await test_client.post(
-        "/api/kb/document/import",
-        json={"kb_id": "test_kb"},
+        "/api/v1/knowledge-bases/test_kb/documents/import",
+        json={},
         headers=authenticated_header,
     )
     data = await response.get_json()
@@ -257,9 +250,8 @@ async def test_import_documents_invalid_input(
 
     # Invalid document format
     response = await test_client.post(
-        "/api/kb/document/import",
+        "/api/v1/knowledge-bases/test_kb/documents/import",
         json={
-            "kb_id": "test_kb",
             "documents": [{"file_name": "test"}],  # Missing chunks
         },
         headers=authenticated_header,
@@ -270,9 +262,8 @@ async def test_import_documents_invalid_input(
 
     # Invalid chunks type
     response = await test_client.post(
-        "/api/kb/document/import",
+        "/api/v1/knowledge-bases/test_kb/documents/import",
         json={
-            "kb_id": "test_kb",
             "documents": [{"file_name": "test", "chunks": "not-a-list"}],
         },
         headers=authenticated_header,
@@ -283,9 +274,8 @@ async def test_import_documents_invalid_input(
 
     # Invalid chunks content
     response = await test_client.post(
-        "/api/kb/document/import",
+        "/api/v1/knowledge-bases/test_kb/documents/import",
         json={
-            "kb_id": "test_kb",
             "documents": [{"file_name": "test", "chunks": ["valid", ""]}],
         },
         headers=authenticated_header,
@@ -340,7 +330,9 @@ async def test_list_documents_trims_search_and_turns_empty_to_none():
     await service.list_documents(kb_id="kb1", page=1, page_size=10, search="   ")
 
     kb_helper.list_documents.assert_awaited_once_with(
-        offset=0, limit=10, search=None,
+        offset=0,
+        limit=10,
+        search=None,
     )
 
 
@@ -352,7 +344,10 @@ async def test_list_documents_total_comes_from_count_documents():
     kb_helper.count_documents.return_value = 42
 
     result = await service.list_documents(
-        kb_id="kb1", page=1, page_size=10, search="  foo  ",
+        kb_id="kb1",
+        page=1,
+        page_size=10,
+        search="  foo  ",
     )
 
     assert result["total"] == 42

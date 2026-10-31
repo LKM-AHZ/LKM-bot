@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 from typing import Any
-from urllib.parse import quote
 
 import jwt
 from fastapi import APIRouter, Body, Depends, Query, Request
@@ -50,11 +49,10 @@ from astrbot.dashboard.services.plugin_service import (
 )
 
 from ._helpers import json_or_empty as _json_or_empty
-from .auth import AuthContext, ScopeDependency, require_dashboard_user
+from .auth import AuthContext, ScopeDependency
 from .multipart import multipart_parts
 
 router = APIRouter(tags=["Plugins"])
-legacy_router = APIRouter(tags=["Dashboard Plugins"], include_in_schema=False)
 
 
 require_plugin_scope = ScopeDependency("plugin")
@@ -213,14 +211,6 @@ def _match_registered_web_api(registered_web_apis, subpath: str, method: str):
     return None
 
 
-def _plugin_extension_legacy_path(plugin_path: str, request: Request) -> str:
-    encoded_path = quote(plugin_path.lstrip("/"), safe="/:@!$&'()*+,;=-._~")
-    path = f"/api/plug/{encoded_path}"
-    if request.url.query:
-        return f"{path}?{request.url.query}"
-    return path
-
-
 async def _call_plugin_extension(
     plugin_path: str,
     request: Request,
@@ -259,7 +249,6 @@ async def _call_plugin_extension(
             view_handler,
             path_values,
             g_obj=g_obj,
-            quart_compat_path=_plugin_extension_legacy_path(plugin_path, request),
         )
 
 
@@ -676,9 +665,14 @@ async def delete_plugin_source(
 @router.get("/plugins/page-bridge-sdk.js")
 async def get_plugin_page_bridge_sdk(
     request: Request,
-    _auth: AuthContext = Depends(require_plugin_scope),
     page_service: PluginPageService = Depends(get_page_service),
 ):
+    """Serve the plugin view bridge SDK.
+
+    Plugin view iframes are sandboxed without same-origin access, so this route
+    authenticates through the scoped ``asset_token`` query parameter enforced by
+    the dashboard auth middleware rather than a dashboard session dependency.
+    """
     return await _serve_plugin_page_bridge_sdk(
         request=request,
         page_service=page_service,
@@ -874,7 +868,6 @@ async def set_plugin_enabled_by_id(
 
 
 @router.get("/plugins/views")
-@router.get("/plugins/pages")  # deprecated alias
 async def list_plugin_pages_by_id(
     plugin_id: str = Query(...),
     _auth: AuthContext = Depends(require_plugin_scope),
@@ -889,7 +882,6 @@ async def list_plugin_pages_by_id(
 
 
 @router.get("/plugins/view")
-@router.get("/plugins/page")  # deprecated alias
 async def get_plugin_page_by_id(
     request: Request,
     plugin_id: str = Query(...),
@@ -1148,7 +1140,6 @@ async def update_plugin(
 
 
 @router.get("/plugins/{plugin_id}/views")
-@router.get("/plugins/{plugin_id}/pages")  # deprecated alias
 async def list_plugin_pages(
     plugin_id: str,
     _auth: AuthContext = Depends(require_plugin_scope),
@@ -1163,7 +1154,6 @@ async def list_plugin_pages(
 
 
 @router.get("/plugins/{plugin_id}/views/{view_name}")
-@router.get("/plugins/{plugin_id}/pages/{view_name}")  # deprecated alias
 async def get_plugin_page(
     plugin_id: str,
     view_name: str,
@@ -1209,274 +1199,3 @@ async def get_plugin_view_token_asset(
     except PluginPageServiceError as exc:
         return _plugin_page_error_response(exc.status_code, exc.public_message)
     return _plugin_page_payload_response(payload)
-
-
-@legacy_router.get("/api/plugin/get")
-async def dashboard_list_plugins(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-    page_service: PluginPageService = Depends(get_page_service),
-):
-    return await _list_plugins(
-        request=request,
-        service=service,
-        page_service=page_service,
-    )
-
-
-@legacy_router.get("/api/plugin/detail")
-async def dashboard_get_plugin_detail(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-    page_service: PluginPageService = Depends(get_page_service),
-):
-    return await _get_plugin_detail(
-        plugin_id=request.query_params.get("name"),
-        service=service,
-        page_service=page_service,
-    )
-
-
-@legacy_router.post("/api/plugin/check-compat")
-async def dashboard_check_plugin_version_support(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _check_plugin_version_support_request(request, service)
-
-
-@legacy_router.get("/api/plugin/page/entry")
-async def dashboard_get_plugin_page_entry_config(
-    request: Request,
-    username: str = Depends(require_dashboard_user),
-    page_service: PluginPageService = Depends(get_page_service),
-):
-    return await _get_plugin_page_entry_config(
-        request=request,
-        page_service=page_service,
-        username=username,
-        plugin_id=request.query_params.get("name"),
-        view_name=request.query_params.get("page"),
-    )
-
-
-@legacy_router.post("/api/plugin/install")
-async def dashboard_install_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.install_plugin,
-        log_label="/api/plugin/install",
-    )
-
-
-@legacy_router.post("/api/plugin/install-upload")
-async def dashboard_install_plugin_upload(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _install_plugin_upload(
-        request,
-        service,
-        log_label="/api/plugin/install-upload",
-    )
-
-
-@legacy_router.post("/api/plugin/update")
-async def dashboard_update_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.update_plugin,
-        log_label="/api/plugin/update",
-    )
-
-
-@legacy_router.post("/api/plugin/update-all")
-async def dashboard_update_all_plugins(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.update_all_plugins,
-        log_label="/api/plugin/update-all",
-    )
-
-
-@legacy_router.post("/api/plugin/uninstall")
-async def dashboard_uninstall_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.uninstall_plugin,
-        log_label="/api/plugin/uninstall",
-    )
-
-
-@legacy_router.post("/api/plugin/uninstall-failed")
-async def dashboard_uninstall_failed_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.uninstall_failed_plugin,
-        log_label="/api/plugin/uninstall-failed",
-    )
-
-
-@legacy_router.get("/api/plugin/market_list")
-async def dashboard_list_plugin_market(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_service(
-        service.get_online_plugins_from_dashboard_query(
-            custom_registry=request.query_params.get("custom_registry"),
-            force_refresh=request.query_params.get("force_refresh", "false"),
-        ),
-        log_label="/api/plugin/market_list",
-    )
-
-
-@legacy_router.post("/api/plugin/off")
-async def dashboard_disable_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        lambda data: service.set_plugin_enabled(data, enabled=False),
-        log_label="/api/plugin/off",
-    )
-
-
-@legacy_router.post("/api/plugin/on")
-async def dashboard_enable_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        lambda data: service.set_plugin_enabled(data, enabled=True),
-        log_label="/api/plugin/on",
-    )
-
-
-@legacy_router.post("/api/plugin/reload-failed")
-async def dashboard_reload_failed_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.reload_failed_plugin,
-        log_label="/api/plugin/reload-failed",
-    )
-
-
-@legacy_router.post("/api/plugin/reload")
-async def dashboard_reload_plugin(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.reload_plugin,
-        log_label="/api/plugin/reload",
-    )
-
-
-@legacy_router.get("/api/plugin/readme")
-async def dashboard_get_plugin_readme(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_service(
-        lambda: service.get_plugin_readme(request.query_params.get("name")),
-        log_label="/api/plugin/readme",
-    )
-
-
-@legacy_router.get("/api/plugin/changelog")
-async def dashboard_get_plugin_changelog(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_service(
-        lambda: service.get_plugin_changelog(request.query_params.get("name")),
-        log_label="/api/plugin/changelog",
-    )
-
-
-@legacy_router.get("/api/plugin/source/get")
-async def dashboard_get_custom_source(
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_service(service.get_custom_sources)
-
-
-@legacy_router.post("/api/plugin/source/save")
-async def dashboard_save_custom_source(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_json(
-        request,
-        service.save_custom_sources,
-        log_label="/api/plugin/source/save",
-    )
-
-
-@legacy_router.get("/api/plugin/source/get-failed-plugins")
-async def dashboard_get_failed_plugins(
-    _username: str = Depends(require_dashboard_user),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_service(service.get_failed_plugins)
-
-
-@legacy_router.get("/api/plugin/page/bridge-sdk.js")
-async def dashboard_get_plugin_page_bridge_sdk(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    page_service: PluginPageService = Depends(get_page_service),
-):
-    return await _serve_plugin_page_bridge_sdk(
-        request=request,
-        page_service=page_service,
-    )
-
-
-@legacy_router.api_route("/api/plug/{plugin_path:path}", methods=["GET", "POST"])
-async def dashboard_plugin_extension_route(
-    plugin_path: str,
-    request: Request,
-    username: str = Depends(require_dashboard_user),
-):
-    return await _call_plugin_extension(plugin_path, request, username)

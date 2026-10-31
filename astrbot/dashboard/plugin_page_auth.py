@@ -1,4 +1,4 @@
-PLUGIN_PAGE_BRIDGE_PATH = "/api/plugin/page/bridge-sdk.js"
+PLUGIN_PAGE_BRIDGE_PATH = "/api/v1/plugins/page-bridge-sdk.js"
 PLUGIN_PAGE_TOKEN_TYPE = "plugin_page_asset"
 
 

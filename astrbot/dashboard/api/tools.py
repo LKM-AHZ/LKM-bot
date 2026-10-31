@@ -15,15 +15,9 @@ from astrbot.dashboard.schemas import (
 )
 from astrbot.dashboard.services.tools_service import ToolsService, ToolsServiceError
 
-from ._helpers import json_or_empty as _json_or_empty
-from .auth import AuthContext, ScopeDependency, require_dashboard_user, require_scope
+from .auth import AuthContext, ScopeDependency, require_scope
 
 router = APIRouter(tags=["Extension Components"])
-legacy_router = APIRouter(
-    prefix="/api",
-    tags=["Dashboard Extension Components"],
-    include_in_schema=False,
-)
 
 
 def get_service(request: Request) -> ToolsService:
@@ -311,108 +305,3 @@ async def sync_modelscope_mcp_servers(
 ):
     access_token = payload.access_token if payload is not None else ""
     return await _sync_modelscope_mcp_servers(access_token or "", service)
-
-
-@legacy_router.get("/tools/list")
-async def list_dashboard_tools(
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    return await _run(service.get_tool_list)
-
-
-@legacy_router.post("/tools/toggle-tool")
-async def toggle_dashboard_tool(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    tool_id = _required_text(body.get("name"), "name")
-    return await _toggle_tool(tool_id, bool(body.get("activate")), service)
-
-
-@legacy_router.post("/tools/permission")
-async def update_dashboard_tool_permission(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    tool_id = _required_text(body.get("name"), "name")
-    return await _run(
-        lambda: service.update_tool_permission(
-            {"name": tool_id, "permission": body.get("permission")}
-        ),
-        result_as_message=True,
-    )
-
-
-@legacy_router.get("/tools/mcp/servers")
-async def list_dashboard_mcp_servers(
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    return await _run(service.get_mcp_servers)
-
-
-@legacy_router.post("/tools/mcp/add")
-async def add_dashboard_mcp_server(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    return await _create_mcp_server(await _json_or_empty(request), service)
-
-
-@legacy_router.post("/tools/mcp/update")
-async def update_dashboard_mcp_server(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    return await _update_mcp_server(_server_name_from_body(body), body, service)
-
-
-@legacy_router.post("/tools/mcp/delete")
-async def delete_dashboard_mcp_server(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    return await _delete_mcp_server(_required_text(body.get("name"), "name"), service)
-
-
-@legacy_router.post("/tools/mcp/test")
-async def test_dashboard_mcp_connection(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    server_name = str(body.get("name") or "")
-    config = body.get("mcp_server_config") or body.get("config") or body
-    return await _run(
-        lambda: service.test_mcp_connection(
-            {
-                "name": server_name,
-                "mcp_server_config": config,
-            }
-        ),
-        message="🎉 MCP server is available!",
-    )
-
-
-@legacy_router.post("/tools/mcp/sync-provider")
-async def sync_dashboard_mcp_provider(
-    request: Request,
-    _username: str = Depends(require_dashboard_user),
-    service: ToolsService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    return await _run(
-        lambda: service.sync_provider(body),
-        result_as_message=True,
-    )

@@ -6,15 +6,9 @@ from astrbot.dashboard.responses import error, ok
 from astrbot.dashboard.schemas import BotConfigRequest, EnabledPatch
 from astrbot.dashboard.services.bot_config_service import BotConfigService
 
-from ._helpers import json_or_empty as _json_or_empty
 from .auth import AuthContext, ScopeDependency
 
 router = APIRouter(tags=["Bots"])
-legacy_router = APIRouter(
-    prefix="/api/config/platform",
-    tags=["Dashboard Bots"],
-    include_in_schema=False,
-)
 
 
 require_bot_scope = ScopeDependency("bot")
@@ -182,64 +176,3 @@ async def delete_bot(
 ):
     await service.delete_bot(bot_id)
     return ok(message="删除平台配置成功~")
-
-
-@legacy_router.get("/list")
-async def list_dashboard_alias_platforms(
-    _auth: AuthContext = Depends(require_bot_scope),
-    service: BotConfigService = Depends(get_service),
-):
-    return ok({"platforms": service.list_bots()["bots"]})
-
-
-@legacy_router.post("/new")
-async def create_dashboard_alias_platform(
-    payload: BotConfigRequest,
-    _auth: AuthContext = Depends(require_bot_scope),
-    service: BotConfigService = Depends(get_service),
-):
-    try:
-        await service.create_bot(payload.to_dashboard_config())
-        return ok(message="新增平台配置成功~")
-    except ValueError as exc:
-        return _alias_error(str(exc))
-
-
-@legacy_router.post("/update")
-async def update_dashboard_alias_platform(
-    request: Request,
-    _auth: AuthContext = Depends(require_bot_scope),
-    service: BotConfigService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    bot_id = body.get("id")
-    config = body.get("config")
-    if not bot_id or not isinstance(config, dict):
-        return _alias_error("参数错误")
-    try:
-        await service.update_bot(
-            str(bot_id),
-            BotConfigRequest(config=config).to_dashboard_config(
-                fallback_id=str(bot_id)
-            ),
-        )
-        return ok(message="更新平台配置成功~")
-    except ValueError as exc:
-        return _alias_error(str(exc))
-
-
-@legacy_router.post("/delete")
-async def delete_dashboard_alias_platform(
-    request: Request,
-    _auth: AuthContext = Depends(require_bot_scope),
-    service: BotConfigService = Depends(get_service),
-):
-    body = await _json_or_empty(request)
-    bot_id = body.get("id")
-    if not bot_id:
-        return _alias_error("缺少参数 id")
-    try:
-        await service.delete_bot(str(bot_id))
-        return ok(message="删除平台配置成功~")
-    except ValueError as exc:
-        return _alias_error(str(exc))

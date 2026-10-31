@@ -14,11 +14,6 @@ from astrbot.dashboard.services.log_service import LogService, LogServiceError
 from .auth import AuthContext, require_dashboard_user, require_scope
 
 router = APIRouter(tags=["Logs"])
-legacy_router = APIRouter(
-    prefix="/api",
-    tags=["Dashboard Logs"],
-    include_in_schema=False,
-)
 
 
 async def require_system_scope(request: Request) -> AuthContext:
@@ -167,40 +162,6 @@ async def get_trace_detail(
 async def update_trace_settings(
     payload: TraceSettingsRequest,
     _auth: AuthContext = Depends(require_system_scope),
-    service: LogService = Depends(get_service),
-):
-    return _update_trace_settings(payload, service)
-
-
-@legacy_router.get("/log-history")
-async def get_dashboard_log_history(
-    _username: str = Depends(require_dashboard_user),
-    service: LogService = Depends(get_service),
-):
-    return _get_log_history(service)
-
-
-@legacy_router.get("/live-log")
-async def get_dashboard_live_logs(
-    last_event_id: str | None = Header(default=None, alias="Last-Event-ID"),
-    _username: str = Depends(require_dashboard_user),
-    service: LogService = Depends(get_service),
-):
-    return _log_stream_response(last_event_id, service)
-
-
-@legacy_router.get("/trace/settings")
-async def get_dashboard_trace_settings(
-    _username: str = Depends(require_dashboard_user),
-    service: LogService = Depends(get_service),
-):
-    return _get_trace_settings(service)
-
-
-@legacy_router.post("/trace/settings")
-async def update_dashboard_trace_settings(
-    payload: TraceSettingsRequest,
-    _username: str = Depends(require_dashboard_user),
     service: LogService = Depends(get_service),
 ):
     return _update_trace_settings(payload, service)

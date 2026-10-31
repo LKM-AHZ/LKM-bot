@@ -22,7 +22,6 @@ from .auth import AuthContext, ScopeDependency
 from .multipart import UploadFileAdapter
 
 router = APIRouter(tags=["Files"])
-legacy_router = APIRouter(prefix="/api", include_in_schema=False)
 
 
 def get_service(request: Request) -> FileService:
@@ -192,11 +191,3 @@ async def delete_file(
     _auth: AuthContext = Depends(require_file_scope),
 ):
     return ok({"attachment_id": attachment_id})
-
-
-@legacy_router.get("/file/{file_token}")
-async def get_dashboard_token_file(
-    file_token: str,
-    service: FileService = Depends(get_service),
-):
-    return await _serve_token_file(file_token, service)

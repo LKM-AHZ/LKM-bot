@@ -58,13 +58,8 @@ _MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 # are bounded by the per-endpoint max_bytes checks at save time.
 _BODY_LIMIT_OVERRIDES: tuple[tuple[str, int], ...] = (
     ("/api/v1/backups/upload/chunk", CHUNK_SIZE * 2),
-    ("/api/backup/upload/chunk", CHUNK_SIZE * 2),
     ("/api/v1/files/upload/chunk", CHUNK_SIZE * 2),
     ("/api/v1/files", MAX_UPLOAD_FILE_SIZE_BYTES + _MULTIPART_OVERHEAD_BYTES),
-    (
-        "/api/chat/post_file",
-        MAX_UPLOAD_FILE_SIZE_BYTES + _MULTIPART_OVERHEAD_BYTES,
-    ),
     ("/api/v1/plugins/config-files", MAX_FILE_BYTES + _MULTIPART_OVERHEAD_BYTES),
     (
         "/api/v1/knowledge-bases/",
@@ -128,14 +123,18 @@ def _check_body_limit(
 
 _RATE_LIMITED_ENDPOINTS: frozenset = frozenset(
     {
-        "/api/config/astrbot/update",
-        "/api/auth/totp/setup",
         "/api/v1/auth/totp/setup",
-        "/api/auth/login",
         "/api/v1/auth/login",
         "/api/v1/auth/desktop-session",
     }
 )
+# Config saves can change protected dashboard settings, so they share the same
+# brute-force limiter as authentication attempts.
+_RATE_LIMITED_PREFIXES: tuple[str, ...] = (
+    "/api/v1/config-profiles/",
+    "/api/v1/system-config",
+)
+_RATE_LIMITED_METHODS: frozenset = frozenset({"POST", "PUT", "PATCH"})
 
 
 class _AuthRateLimiter:
@@ -330,27 +329,17 @@ class AstrBotDashboard:
         rate_limit_response = await self._apply_auth_rate_limit(current_request, path)
         if rate_limit_response is not None:
             return rate_limit_response
-        if path.startswith("/api/v1"):
+        # The plugin view bridge SDK is loaded by a sandboxed iframe that cannot
+        # send dashboard cookies, so it authenticates with a scoped asset token
+        # from the query string and must pass through the checks below even
+        # though it lives under the v1 prefix.
+        if path.startswith("/api/v1") and not PluginPageAuth.is_protected_path(path):
             return None
 
-        allowed_exact_endpoints = {
-            "/api/auth/login",
-            "/api/auth/logout",
-            "/api/auth/setup-status",
-            "/api/auth/setup",
-            "/api/stat/versions",
-        }
-        allowed_endpoint_prefixes = [
-            "/api/file",
-            "/api/v1/files/tokens",
-            "/api/platform/webhook",
-            "/api/stat/start-time",
-            "/api/backup/download",  # 备份下载使用 URL 参数传递 token
-        ]
-        if path in allowed_exact_endpoints or any(
-            path.startswith(prefix) for prefix in allowed_endpoint_prefixes
-        ):
-            return None
+        # Only the plugin view bridge SDK reaches this point under the v1
+        # prefix; every other v1 route authenticates through its own scope
+        # dependency. Removed legacy /api/* routes are no longer served, so no
+        # unauthenticated allowlist is needed here.
         is_plugin_page_path = PluginPageAuth.is_protected_path(path)
         dashboard_token = self._extract_dashboard_jwt(current_request)
         asset_token = (
@@ -426,9 +415,12 @@ class AstrBotDashboard:
         current_request: Request,
         path: str,
     ) -> JSONResponse | None:
-        if (
-            os.environ.get("ASTRBOT_TEST_MODE") != "true"
-            and path in _RATE_LIMITED_ENDPOINTS
+        is_config_write = (
+            current_request.method in _RATE_LIMITED_METHODS
+            and path.startswith(_RATE_LIMITED_PREFIXES)
+        )
+        if os.environ.get("ASTRBOT_TEST_MODE") != "true" and (
+            path in _RATE_LIMITED_ENDPOINTS or is_config_write
         ):
             rl_config = self.config.get("dashboard", {}).get("auth_rate_limit", {})
             rl_enabled = rl_config.get("enable", True)

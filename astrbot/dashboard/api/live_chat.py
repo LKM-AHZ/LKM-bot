@@ -5,11 +5,6 @@ from fastapi import APIRouter, WebSocket
 from astrbot.dashboard.services.live_chat_service import LiveChatService
 
 router = APIRouter(tags=["Live Chat"])
-legacy_router = APIRouter(
-    prefix="/api",
-    tags=["Dashboard Live Chat"],
-    include_in_schema=False,
-)
 
 
 def get_service(websocket: WebSocket) -> LiveChatService:
@@ -39,14 +34,4 @@ async def live_chat_ws(websocket: WebSocket) -> None:
 
 @router.websocket("/unified-chat/ws")
 async def unified_chat_ws(websocket: WebSocket) -> None:
-    await _run_live_chat_ws(websocket, force_ct=None)
-
-
-@legacy_router.websocket("/live_chat/ws")
-async def dashboard_live_chat_ws(websocket: WebSocket) -> None:
-    await _run_live_chat_ws(websocket, force_ct="live")
-
-
-@legacy_router.websocket("/unified_chat/ws")
-async def dashboard_unified_chat_ws(websocket: WebSocket) -> None:
     await _run_live_chat_ws(websocket, force_ct=None)

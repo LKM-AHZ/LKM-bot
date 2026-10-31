@@ -7,14 +7,9 @@ from astrbot.dashboard.responses import ApiError, ok
 from astrbot.dashboard.schemas import GhProxyTestRequest, StorageCleanupRequest
 from astrbot.dashboard.services.stat_service import StatService, StatServiceError
 
-from .auth import AuthContext, require_dashboard_user, require_scope
+from .auth import AuthContext, require_scope
 
 router = APIRouter(tags=["System Stats"])
-legacy_router = APIRouter(
-    prefix="/api/stat",
-    tags=["Dashboard System Stats"],
-    include_in_schema=False,
-)
 
 
 async def require_system_scope(request: Request) -> AuthContext:
@@ -151,109 +146,3 @@ async def restart_system(
     service: StatService = Depends(get_service),
 ):
     return await _run(service.restart_core())
-
-
-@legacy_router.get("/get")
-async def get_dashboard_stats(
-    offset_sec: int | None = Query(default=86400),
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.get_stat(_parse_int(offset_sec, 86400, "offset_sec")))
-
-
-@legacy_router.get("/provider-tokens")
-async def get_dashboard_provider_token_stats(
-    days: int | None = Query(default=1),
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.get_provider_token_stats(_parse_int(days, 1, "days")))
-
-
-@legacy_router.get("/version")
-async def get_dashboard_version(
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.get_version())
-
-
-@legacy_router.get("/versions")
-async def get_dashboard_public_versions(
-    request: Request,
-    service: StatService = Depends(get_service),
-):
-    return ok(
-        await service.get_public_versions(
-            getattr(request.app.state, "dashboard_static_folder", None)
-        )
-    )
-
-
-@legacy_router.get("/start-time")
-async def get_dashboard_start_time(
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.get_start_time)
-
-
-@legacy_router.post("/restart-core")
-async def restart_dashboard_core(
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.restart_core())
-
-
-@legacy_router.post("/test-ghproxy-connection")
-async def test_dashboard_ghproxy_connection(
-    payload: GhProxyTestRequest,
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.test_ghproxy_connection(payload.proxy_url))
-
-
-@legacy_router.get("/changelog")
-async def get_dashboard_changelog(
-    version: str | None = None,
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(lambda: service.get_changelog(version))
-
-
-@legacy_router.get("/changelog/list")
-async def list_dashboard_changelog_versions(
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.list_changelog_versions)
-
-
-@legacy_router.get("/first-notice")
-async def get_dashboard_first_notice(
-    locale: str | None = None,
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(lambda: service.get_first_notice(locale))
-
-
-@legacy_router.get("/storage")
-async def get_dashboard_storage_status(
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    return await _run(service.get_storage_status())
-
-
-@legacy_router.post("/storage/cleanup")
-async def cleanup_dashboard_storage(
-    payload: StorageCleanupRequest | None = None,
-    _username: str = Depends(require_dashboard_user),
-    service: StatService = Depends(get_service),
-):
-    target = payload.target if payload is not None else "all"
-    return await _run(service.cleanup_storage(target))

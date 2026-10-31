@@ -28,6 +28,19 @@ X-API-Key: abk_xxx
 
 本地 OpenAPI 描述文件地址为 `http://localhost:6185/api/v1/openapi.json`，交互式文档地址为 `http://localhost:6185/api/v1/docs`。
 
+## 从旧 `/api/*` 接口迁移
+
+旧版 Dashboard 的 `/api/*` 兼容路由已移除，全部替换为 `/api/v1/*`。受影响的外部地址如下：
+
+| 旧地址 | 新地址 |
+|---|---|
+| `/api/file/{token}`（媒体回调） | `/api/v1/files/tokens/{token}` |
+| `/api/platform/webhook/{uuid}` | `/api/v1/webhooks/platforms/{uuid}` |
+| `/api/plugin/page/bridge-sdk.js` | `/api/v1/plugins/page-bridge-sdk.js` |
+| `/api/plugin/get`、`/api/plugin/detail` 等 | `/api/v1/plugins`、`/api/v1/plugins/by-id` |
+
+插件 Web API 不再提供 Quart 兼容请求上下文，请改用 `from astrbot.api.web import request`。完整接口清单以 `/api/v1/openapi.json` 为准。
+
 ## Scope 权限说明
 
 创建 API Key 时可配置 `scopes`。每个 scope 的作用、继承关系及完整接口清单见 [API Scope 与接口对照](./openapi-scopes.md)。
