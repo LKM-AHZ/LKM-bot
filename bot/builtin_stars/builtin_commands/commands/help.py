@@ -1,5 +1,3 @@
-import aiohttp
-
 from bot.api.event import BotMessageEvent, MessageEventResult
 from bot.core import star
 from bot.core.config.default import VERSION
@@ -12,15 +10,13 @@ class HelpCommand:
         self.context = context
 
     async def _query_bot_notice(self):
-        try:
-            async with aiohttp.ClientSession(trust_env=True) as session:
-                async with session.get(
-                    "https://astrbot.app/notice.json",
-                    timeout=2,  # ty: ignore[invalid-argument-type]  # aiohttp 运行时允许 timeout=<数字>，桩件要求 ClientTimeout
-                ) as resp:
-                    return (await resp.json())["notice"]
-        except BaseException:
-            return ""
+        """Return the operator's notice text.
+
+        This used to fetch an announcement feed from the upstream project's site on every /help.
+        A self-hosted bot should not phone home for help text, so the notice is simply absent unless
+        an operator wires one in.
+        """
+        return ""
 
     async def _build_reserved_command_lines(self) -> list[str]:
         """

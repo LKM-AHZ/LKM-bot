@@ -315,7 +315,6 @@ DEFAULT_CONFIG = {
     "kb_final_top_k": 5,  # 知识库检索最终返回结果数量
     "kb_agentic_mode": False,
     "disable_builtin_commands": False,
-    "disable_metrics": False,
 }
 
 
@@ -3276,11 +3275,6 @@ CONFIG_METADATA_2 = {
             "media_storage_mode": {
                 "type": "string",
                 "options": ["auto", "local", "backend"],
-            },
-            "disable_metrics": {
-                "description": "禁用匿名使用统计",
-                "type": "bool",
-                "hint": "禁用后，LKMBot 将不再上传匿名使用统计数据。",
             },
             "log_level": {
                 "type": "string",

@@ -34,7 +34,9 @@ class FakeClient:
         return False
 
     def get(self, url):
-        assert url == "https://api.soulter.top/astrbot/plugins"
+        assert url == (
+            "https://github.com/AstrBotDevs/AstrBot_Plugins_Collection/raw/refs/heads/main/plugin_cache_original.json"
+        )
         return FakeResponse()
 
 

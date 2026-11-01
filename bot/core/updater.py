@@ -61,32 +61,13 @@ class BotUpdater(_RepoZipUpdater):
         """
         super().__init__(verify=verify)
         self._main_path = get_bot_path()
-        self._release_api = "https://api.soulter.top/releases"
-        self._repository_url = "https://github.com/Alma1314/LKM-bot"
-        self._core_package_base_url = (
-            "https://astrbot-registry.soulter.top/download/astrbot-core"
+        # GitHub's REST API is the release source: the payload shape (tag_name / published_at /
+        # body / zipball_url) is exactly what the old third-party proxy returned, so the rest of
+        # this module is unchanged.
+        self._release_api = (
+            "https://api.github.com/repos/Alma1314/LKM-bot/releases?per_page=100"
         )
-
-    def _build_core_package_url(self, version: str | None) -> str | None:
-        """Build the hosted core package URL for a release tag.
-
-        Args:
-            version: Release tag, such as ``v4.26.0``.
-
-        Returns:
-            Public package URL, or None when hosted package download is disabled.
-        """
-
-        if not version or not str(version).startswith("v"):
-            return None
-
-        base_url = os.environ.get(
-            "BOT_CORE_PACKAGE_BASE_URL",
-            self._core_package_base_url,
-        ).strip()
-        if not base_url:
-            return None
-        return f"{base_url.rstrip('/')}/{version}/source.zip"
+        self._repository_url = "https://github.com/Alma1314/LKM-bot"
 
     async def check_update(
         self,
@@ -307,7 +288,6 @@ class BotUpdater(_RepoZipUpdater):
                 "Error: You are running LKMBot via CLI, please use `pip` or `uv tool upgrade` to update LKMBot."
             )  # 避免版本管理混乱
 
-        target_version = None
         if latest:
             update_data = await self._fetch_release_info(self._release_api)
             if not update_data:
@@ -315,7 +295,6 @@ class BotUpdater(_RepoZipUpdater):
             latest_version = update_data[0]["tag_name"]
             if self._compare_version(VERSION, latest_version) >= 0:
                 raise Exception("LKMBot is already up to date.")
-            target_version = latest_version
             file_url = update_data[0]["zipball_url"]
         elif str(version).startswith("v"):
             if release_data is None:
@@ -326,7 +305,6 @@ class BotUpdater(_RepoZipUpdater):
                 )
             if release_data is None or release_data["tag_name"] != version:
                 raise Exception(f"No update package was found for version {version}.")
-            target_version = release_data["tag_name"]
             file_url = release_data["zipball_url"]
         else:
             if len(str(version)) != 40:
@@ -341,29 +319,6 @@ class BotUpdater(_RepoZipUpdater):
 
         zip_path = Path(path)
         ensure_dir(zip_path.parent)
-        hosted_package_url = self._build_core_package_url(target_version)
-        if hosted_package_url:
-            try:
-                logger.info(
-                    "Attempting to download the LKMBot Core update package from "
-                    f"hosted storage first: {hosted_package_url}"
-                )
-                await self._download_file(
-                    hosted_package_url,
-                    str(zip_path),
-                    progress_callback=progress_callback,
-                )
-                if not zipfile.is_zipfile(zip_path):
-                    raise RuntimeError(
-                        "Downloaded hosted package is not a valid ZIP file"
-                    )
-                return zip_path
-            except Exception as exc:
-                logger.warning(
-                    "Failed to download the LKMBot Core update package from hosted "
-                    f"storage: {exc}. Falling back to the current update source."
-                )
-
         await self._download_file(
             file_url,
             str(zip_path),

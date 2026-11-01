@@ -14,7 +14,9 @@ from bot.core.utils.t2i.template_manager import TemplateManager
 
 from . import RenderStrategy
 
-BOT_T2I_DEFAULT_ENDPOINT = "https://t2i.soulter.top/text2img"
+#: No built-in endpoint: rendering needs a user-configured service (``t2i_endpoint`` or the
+#: per-request ``endpoint`` argument). Upstream shipped its own hosted service here.
+BOT_T2I_DEFAULT_ENDPOINT = ""
 SHIKI_RUNTIME_SCRIPT_ID = "bot-t2i-shiki-runtime"
 SHIKI_RUNTIME_TEMPLATE_PATTERN = re.compile(r"\{\{\s*shiki_runtime\s*\|\s*safe\s*\}\}")
 JINJA_SYNTAX_PATTERN = re.compile(r"\{[{%#]")
@@ -103,36 +105,12 @@ class NetworkRenderStrategy(RenderStrategy):
         self.template_manager = TemplateManager()
 
     async def initialize(self) -> None:
-        if self.BASE_RENDER_URL == BOT_T2I_DEFAULT_ENDPOINT:
-            asyncio.create_task(self.get_official_endpoints())
+        # Nothing to prefetch: endpoints come from configuration only.
+        return
 
     async def get_template(self, name: str = "base") -> str:
         """通过名称获取文转图 HTML 模板"""
         return self.template_manager.get_template(name)
-
-    async def get_official_endpoints(self) -> None:
-        """获取官方的 t2i 端点列表。"""
-        try:
-            async with aiohttp.ClientSession(
-                trust_env=True,
-                connector=build_tls_connector(),
-            ) as session:
-                async with session.get(
-                    "https://api.soulter.top/astrbot/t2i-endpoints",
-                ) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        all_endpoints: list[dict] = data.get("data", [])
-                        self.endpoints = [
-                            ep.get("url")
-                            for ep in all_endpoints
-                            if ep.get("active") and ep.get("url")
-                        ]
-                        logger.info(
-                            f"Successfully got {len(self.endpoints)} official T2I endpoints.",
-                        )
-        except Exception as e:
-            logger.error(f"Failed to get official endpoints: {e}")
 
     def _clean_url(self, url: str):
         url = url.removesuffix("/")
@@ -148,6 +126,13 @@ class NetworkRenderStrategy(RenderStrategy):
         options: dict | None = None,
         endpoint: str | None = None,
     ) -> str:
+        # Rendering is an external service; without one configured there is nothing to call.
+        # Fail early with an actionable message instead of POSTing to an empty URL.
+        if not endpoint and not any(self.endpoints):
+            raise RuntimeError(
+                "未配置文转图服务：请在「配置 → 文转图」中填写 t2i_endpoint，"
+                "或关闭文转图功能。"
+            )
         """使用自定义文转图模板
 
         Args:

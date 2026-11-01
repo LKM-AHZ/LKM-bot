@@ -30,7 +30,7 @@ os.makedirs(get_bot_data_path(), exist_ok=True)
 DEMO_MODE = os.getenv("DEMO_MODE", "False").strip().lower() in ("true", "1", "t")
 
 bot_config = BotConfig()
-t2i_base_url = bot_config.get("t2i_endpoint", "https://t2i.soulter.top/text2img")
+t2i_base_url = bot_config.get("t2i_endpoint", "")
 html_renderer = HtmlRenderer(t2i_base_url)
 """**Deprecated**. For plugin developers, please use `self.context.html_renderer` instead."""
 logger = LogManager.GetLogger(log_name="bot")

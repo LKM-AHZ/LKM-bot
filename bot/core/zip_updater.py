@@ -11,6 +11,7 @@ import certifi
 import httpx
 
 from bot.core import logger
+from bot.core.config import VERSION
 from bot.core.repository import GitHubRepository
 from bot.core.utils.io import ensure_dir, on_error
 from bot.core.utils.version_comparator import VersionComparator
@@ -63,11 +64,24 @@ class _RepoZipUpdater:
         self._httpx_verify = certifi.where() if verify is None else verify
 
     def _create_httpx_client(self, timeout: float = 30.0) -> httpx.AsyncClient:
+        """Build the HTTP client used by update checks and downloads.
+
+        Args:
+            timeout: Request timeout in seconds.
+
+        Returns:
+            Configured async client. ``User-Agent`` is mandatory: the release list now comes from
+            GitHub's REST API, which rejects requests without one (403).
+        """
         return httpx.AsyncClient(
             follow_redirects=True,
             timeout=timeout,
             trust_env=True,
             verify=self._httpx_verify,
+            headers={
+                "User-Agent": f"LKMBot/{VERSION}",
+                "Accept": "application/vnd.github+json",
+            },
         )
 
     @staticmethod

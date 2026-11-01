@@ -1,4 +1,5 @@
 import asyncio
+import os
 import random
 from typing import Any, cast
 
@@ -135,8 +136,14 @@ class BoxliteBooter(ComputerBooter):
             f"Booting(Boxlite) for session: {session_id}, this may take a while..."
         )
         random_port = random.randint(20000, 30000)
+        # Image comes from the operator when set: shipping a hard-coded third-party image means
+        # every deployment pulls it blindly. ``BOT_BOXLITE_IMAGE`` keeps the old value working but
+        # lets an operator point at their own build.
+        image = (
+            os.environ.get("BOT_BOXLITE_IMAGE", "").strip() or "soulter/shipyard-ship"
+        )
         self.box = boxlite.SimpleBox(  # ty: ignore[unresolved-attribute]  # 可选依赖 boxlite 未安装，桩件无此成员
-            image="soulter/shipyard-ship",
+            image=image,
             memory_mib=512,
             cpus=1,
             ports=[

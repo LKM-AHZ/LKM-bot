@@ -161,7 +161,9 @@ def build_plug_list(plugins_dir: Path) -> list:
     online_plugins_dict: dict[str, dict[str, Any]] = {}
     try:
         with httpx.Client() as client:
-            resp = client.get("https://api.soulter.top/astrbot/plugins")
+            resp = client.get(
+                "https://github.com/AstrBotDevs/AstrBot_Plugins_Collection/raw/refs/heads/main/plugin_cache_original.json"
+            )
             resp.raise_for_status()
             data = resp.json()
             for plugin_id, plugin_info in data.items():

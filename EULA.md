@@ -79,13 +79,9 @@ LKMBot 团队**已尽合理努力在技术和策略层面设置安全与内容�
 
 ## 8. 统计信息与隐私说明
 
-LKMBot 可能会收集有限的匿名统计信息，用于了解系统使用情况、发现问题以及持续改进项目。
-
-所收集的统计信息仅包括与系统运行和功能使用相关的基础技术指标，例如功能使用频率、错误信息等。
-
 LKMBot **不会收集、上传或存储您的对话内容、消息正文、输入文本，或任何能够识别您个人身份的敏感信息**。
 
-您可以手动关闭此项功能，通过在系统环境变量中设置 `ASTRBOT_DISABLE_METRICS=1` 来禁用匿名统计信息收集。
+LKMBot 也**不会向项目方或任何第三方上报使用统计**。消息计数一类的运行数据仅写入您自己部署环境中的数据库文件，用于在管理面板展示本机统计，不会离开您的服务器。
 
 ## 9. 责任限制
 
@@ -202,13 +198,9 @@ In case of emergency (for example, if there is a risk of self-harm or harm to ot
 
 ## 8. Metrics and Privacy
 
-LKMBot may collect a limited amount of anonymous usage statistics to understand system usage, identify issues, and continuously improve the project.
-
-Collected metrics are limited to basic technical indicators related to system operation and feature usage, such as feature usage frequency and error information.
-
 LKMBot **does not collect, upload, or store your conversation content, message bodies, input text, or any personally identifiable or sensitive information**.
 
-You may manually disable this feature by setting the environment variable `ASTRBOT_DISABLE_METRICS=1` to turn off anonymous metrics collection.
+LKMBot also **does not report usage statistics to the project maintainers or any third party**. Operational counters such as message counts are written only to the database file in your own deployment and are used solely to render local statistics in the management panel; they never leave your server.
 
 ## 9. Limitation of Liability
 

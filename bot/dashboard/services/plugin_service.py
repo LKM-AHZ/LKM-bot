@@ -1080,10 +1080,12 @@ class PluginService:
             )
             urls = [custom_url]
         else:
+            # Default marketplace: the public plugin registry repo only. The upstream project's
+            # mirror endpoints (api.soulter.top) are not used by this fork, and the md5 shortcut
+            # they provided has no equivalent here — the cache then just refreshes on its TTL.
             cache_file = os.path.join(data_dir, "plugins.json")
-            md5_url = "https://api.soulter.top/astrbot/plugins-md5"
+            md5_url = None
             urls = [
-                "https://api.soulter.top/astrbot/plugins",
                 "https://github.com/AstrBotDevs/AstrBot_Plugins_Collection/raw/refs/heads/main/plugin_cache_original.json",
             ]
         return RegistrySource(urls=urls, cache_file=cache_file, md5_url=md5_url)
