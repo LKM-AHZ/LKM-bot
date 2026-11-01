@@ -125,22 +125,6 @@ bot password
 > LKMBot 为了安全起见，运行环境选择 `local` 时，默认仅允许 LKMBot 管理员使用电脑能力。
 > 运行环境可以选择 `sandbox`，此时所有用户都可以使用电脑能力（在一个隔离的沙箱中）。详情请看 [LKMBot 沙箱环境](/use/bot-agent-sandbox.md)
 
-### 通过 LKMBot 桌面客户端安装的 LKMBot，data 目录在哪？
-
-在家目录下的 `.bot` 目录下。
-
-- Windows: `C:\Users\你的用户名\.bot`
-- MacOS / Linux: `/Users/你的用户名/.bot` 或者 `/home/你的用户名/.bot`
-
-### 通过 LKMBot Launcher 安装的 LKMBot，data 目录在哪？
-
-如果是旧版本的 LKMBot Launcher（Powershell），data 目录就在 Launcher bat 脚本的同级目录下。
-
-如果是新版本的 LKMBot Launcher（可视化），data 目录在家目录下的 `.bot_launcher` 目录下。
-
-- Windows: `C:\Users\你的用户名\.bot_launcher`
-- MacOS / Linux: `/Users/你的用户名/.bot_launcher` 或者 `/home/你的用户名/.bot_launcher`
-
 ### 机器人在群聊无法聊天
 
 1. 群聊情况下，由于防止消息泛滥，不会对每条监听到的消息都回复，请尝试 @ 机器人或者使用唤醒词来聊天，比如默认的 `/`，输入 `/你好`。

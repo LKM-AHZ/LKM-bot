@@ -111,10 +111,19 @@ docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "${PWD}\data:/L
 
 如果一切顺利，你会看到 LKMBot 打印出的日志。
 
-如果没有报错，你会看到一条日志显示类似 `🌈 管理面板已启动，可访问` 并附带了几条链接。打开其中一个链接即可访问 LKMBot 管理面板。
+如果没有报错，你会看到 LKMBot 打印出的启动日志（含监听地址与首启面板初始密码）。
+
+> [!IMPORTANT]
+> **镜像只带后端 API，不含管理面板前端。** 面板源码在根仓库 `LKM-Website` 的 `bot-panel/`，
+> 由官网以 `/bot/` 子路径托管，所以 `docker run` 起来后 6185 上只有 API，没有可登录的面板页面。
+> 需要面板时二选一：
+>
+> 1. 按上文接入 LKM 全栈，面板由官网提供并走网关 `/bot/`；
+> 2. 自备一份构建好的面板静态文件（目录内需有 `index.html`）放到 `data/dist/`，或启动时追加
+>    `--webui-dir /path/to/dist`（例如 `docker run … lkmbot:latest --webui-dir /LKMBot/data/dist`）。
 
 > [!TIP]
-> 由于 Docker 隔离了网络环境，所以不能使用 `localhost` 访问管理面板。
+> 由于 Docker 隔离了网络环境，所以不能使用 `localhost` 访问容器内的接口。
 >
 > 首次登录请使用启动日志中打印的随机初始密码（用户名通常为 `lkmbot`）。登录后请立即修改密码。
 >

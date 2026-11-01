@@ -4,7 +4,7 @@ PPIO 派欧云是中国领先的独立分布式云计算服务商，您可以在
 
 ## 准备
 
-打开 [PPIO 派欧云官网](https://ppio.cn/user/register?invited_by=AIOONE)，并注册账户（通过此链接注册的账户将会获得 15 元人民币的代金券）。
+打开 [PPIO 派欧云官网](https://ppio.cn/)，并注册账户。
 
 进入 [模型 API 服务](https://ppio.cn/model-api/console)，找到你想接入的模型。你可以通过筛选器选择不同厂商或者免费的模型。
 

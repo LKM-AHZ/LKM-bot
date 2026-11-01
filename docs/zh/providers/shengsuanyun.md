@@ -1,10 +1,10 @@
 # 接入胜算云
 
-[胜算云](https://www.shengsuanyun.com/?from=CH_T70U2X9L) 提供兼容 OpenAI 等格式的统一模型接口，可通过一个 API Key 接入多种主流模型。
+[胜算云](https://www.shengsuanyun.com/) 提供兼容 OpenAI 等格式的统一模型接口，可通过一个 API Key 接入多种主流模型。
 
 ## 获取 API Key
 
-1. 前往 [胜算云](https://www.shengsuanyun.com/?from=CH_T70U2X9L) 注册并登录账号。
+1. 前往 [胜算云](https://www.shengsuanyun.com/) 注册并登录账号。
 2. 进入控制台，创建并复制 API Key。
 
 ## 在 LKMBot 中配置

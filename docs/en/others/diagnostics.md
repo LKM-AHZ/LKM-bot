@@ -74,7 +74,7 @@ When reading this file, focus on the top frames. Useful clues often include plug
 When filing an issue, include as much of the following as possible:
 
 - Approximate time of the incident and timezone.
-- LKMBot version, deployment method (Docker, manual deployment, desktop client, etc.), and operating system.
+- LKMBot version, deployment method (Docker, manual deployment, uv install, etc.), and operating system.
 - Trigger path: startup, normal chat, group chat, platform callback, scheduled task, MCP tool, plugin feature, etc.
 - Scope: all sessions, one platform, one group, one user, or one plugin.
 - Logs from `data/logs/bot.log` for 1 to 3 minutes around the incident.

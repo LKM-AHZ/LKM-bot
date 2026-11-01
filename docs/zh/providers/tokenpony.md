@@ -2,7 +2,7 @@
 
 ## 配置对话模型
 
-注册并登录小马算力 [TokenPony](https://www.tokenpony.cn/3YPyf) 。
+注册并登录小马算力 [TokenPony](https://www.tokenpony.cn/) 。
 
 在小马算力 [API Keys](https://www.tokenpony.cn/#/user/keys) 页面创建一个新的 API Key，留存备用。
 

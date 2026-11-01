@@ -109,14 +109,13 @@ uv tool install --force . --python 3.12
 | DeepSeek | LLM |
 | Ollama (本地部署) | LLM |
 | LM Studio (本地部署) | LLM |
-| [MiraRouter](https://mirarouter.com/) | LLM (API 网关, 支持所有模型) |
-| [胜算云](https://www.shengsuanyun.com/?from=CH_T70U2X9L) | LLM (API 网关, 支持所有模型) |
-| [AIHubMix](https://aihubmix.com/?aff=4bfH) | LLM (API 网关, 支持所有模型) |
-| [优云智算](https://www.compshare.cn/?ytag=GPU_YY-gh_astrbot&referral_code=FV7DcGowN4hB5UuXKgpE74) | LLM (API 网关, 支持所有模型) |
-| [302.AI](https://share.302.ai/rr1M3l) | LLM (API 网关, 支持所有模型)|
-| [小马算力](https://www.tokenpony.cn/3YPyf) | LLM (API 网关, 支持所有模型)|
-| [硅基流动](https://docs.siliconflow.cn/cn/usercases/use-siliconcloud-in-astrbot) | LLM (API 网关, 支持所有模型)  |
-| [PPIO 派欧云](https://ppio.com/user/register?invited_by=AIOONE) | LLM (API 网关, 支持所有模型) |
+| MiraRouter | LLM (API 网关, 支持所有模型) |
+| 胜算云 | LLM (API 网关, 支持所有模型) |
+| AIHubMix | LLM (API 网关, 支持所有模型) |
+| 302.AI | LLM (API 网关, 支持所有模型)|
+| 小马算力 | LLM (API 网关, 支持所有模型)|
+| 硅基流动 | LLM (API 网关, 支持所有模型)  |
+| PPIO 派欧云 | LLM (API 网关, 支持所有模型) |
 | ModelScope | LLM |
 | OneAPI | LLM |
 | Dify | LLMOps 平台 |

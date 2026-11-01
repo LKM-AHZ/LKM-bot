@@ -17,20 +17,4 @@ LLM_ERROR_MESSAGES = {
         "requestFailed": "LLM request failed: {detail}",
         "blockedProvider": "LLM request failed: Provider API base `{api_base}` was blocked for security reasons. Use another AI provider.",
     },
-    "ru-RU": {
-        "invalidSessionProviderType": "Модель чата (провайдер) для этой сессии имеет недопустимый тип: {provider_type}",
-        "noProvider": "Ошибка запроса к LLM: доступная модель чата (провайдер) не найдена. Сначала настройте и включите модель в WebUI.",
-        "providerNotFound": "Ошибка запроса к LLM: провайдер `{provider}` не найден. Проверьте настройки провайдера или выберите доступную модель.",
-        "invalidProviderType": "Ошибка запроса к LLM: выбран недопустимый тип провайдера ({provider_type}). Запрос пропущен.",
-        "requestFailed": "Ошибка запроса к LLM: {detail}",
-        "blockedProvider": "Ошибка запроса к LLM: базовый URL API провайдера `{api_base}` заблокирован по соображениям безопасности. Используйте другого провайдера ИИ.",
-    },
-    "ja-JP": {
-        "invalidSessionProviderType": "このセッションのチャットモデル（プロバイダー）の種類が無効です: {provider_type}",
-        "noProvider": "LLM リクエストに失敗しました：利用可能なチャットモデル（プロバイダー）が見つかりません。先に WebUI でモデルを設定し、有効にしてください。",
-        "providerNotFound": "LLM リクエストに失敗しました：プロバイダー `{provider}` が見つかりません。プロバイダー設定を確認するか、利用可能なモデルを選択してください。",
-        "invalidProviderType": "LLM リクエストに失敗しました：選択されたプロバイダーの種類（{provider_type}）が無効なため、このリクエストはスキップされました。",
-        "requestFailed": "LLM リクエストに失敗しました：{detail}",
-        "blockedProvider": "LLM リクエストに失敗しました：プロバイダーの API ベース URL `{api_base}` はセキュリティ上の理由でブロックされました。別の AI プロバイダーを使用してください。",
-    },
 }

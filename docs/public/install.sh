@@ -30,7 +30,7 @@ while [ "$#" -gt 0 ]; do
     --help|-h)
       cat <<'HELP'
 Usage: bash install.sh [options]
-  --language zh-CN|en-US|ja-JP
+  --language zh-CN|en-US
   --download-source china|official|custom
   --uv-download-base-url HTTPS-URL   Directory containing uv archives and .sha256 files
   --pypi-index-url HTTPS-URL         PyPI simple index for custom sources
@@ -79,20 +79,19 @@ if [ -z "$language" ]; then
   default_choice=1
   if [ "$can_prompt" -eq 1 ]; then
     printf '\n%s%s🌌 LKMBot Installer%s\n%s%s-----------------------%s\n' "$indent" "$CYAN" "$NC" "$indent" "$GRAY" "$NC" >&2
-    printf '\n%sSelect language / 请选择语言 / 言語を選択してください\n%s  1. English\n%s  2. 简体中文\n%s  3. 日本語\n' "$indent" "$indent" "$indent" "$indent" >&2
+    printf '\n%sSelect language / 请选择语言\n%s  1. English\n%s  2. 简体中文\n' "$indent" "$indent" "$indent" >&2
     while :; do
-      printf '%s1-3 [%s]: ' "$indent" "$default_choice" >&2
+      printf '%s1-2 [%s]: ' "$indent" "$default_choice" >&2
       IFS= read -r choice <&3 || exit 1
       case "${choice:-$default_choice}" in
         1) language='en-US'; break ;;
         2) language='zh-CN'; break ;;
-        3) language='ja-JP'; break ;;
       esac
     done
   fi
 fi
 case "$language" in
-  zh-CN|en-US|ja-JP) ;;
+  zh-CN|en-US) ;;
   *) err "Unsupported language: $language"; exit 2 ;;
 esac
 
@@ -160,36 +159,6 @@ message() {
     en-US:ReloadShell) format='Reload the environment for your shell:' ;;
     en-US:RunCommands) format='Then run these commands manually:' ;;
     en-US:Installed) format='LKMBot has been installed.' ;;
-    ja-JP:ChooseSource) format='ダウンロード元を選択してください' ;;
-    ja-JP:China) format='中国本土向け高速ダウンロードミラー' ;;
-    ja-JP:Official) format='公式ソース' ;;
-    ja-JP:Custom) format='カスタム' ;;
-    ja-JP:Choice) format='番号を入力してください。Enter で既定値を使用します' ;;
-    ja-JP:InvalidChoice) format='1、2、3 のいずれかを入力してください。' ;;
-    ja-JP:UvUrl) format='uv tar.gz のダウンロードディレクトリ URL（ファイル名を除く）' ;;
-    ja-JP:PypiUrl) format='PyPI simple インデックス URL' ;;
-    ja-JP:CustomRequired) format='カスタムソースには --uv-download-base-url と --pypi-index-url の両方が必要です。' ;;
-    ja-JP:InvalidUrl) format='ダウンロード元には有効な HTTPS URL を指定してください：%s' ;;
-    ja-JP:Source) format='ダウンロード元：%s' ;;
-    ja-JP:UvMirror) format='uv ダウンロードディレクトリ：%s' ;;
-    ja-JP:Pypi) format='PyPI インデックス：%s' ;;
-    ja-JP:PythonMirror) format='Python ダウンロードミラー：%s' ;;
-    ja-JP:PythonDefault) format='Python のダウンロードには既存の uv 設定を使用します。ミラーを使うには --python-install-mirror を指定してください（PyPI ミラーに Python 本体は含まれません）。' ;;
-    ja-JP:InstallingUv) format='uv が見つかりません。インストールしています…' ;;
-    ja-JP:TryingMirror) format='uv ミラーを試しています：%s' ;;
-    ja-JP:MirrorFailed) format='uv ミラーからのダウンロードに失敗しました：%s' ;;
-    ja-JP:UnsupportedPlatform) format='未対応のプラットフォームまたはアーキテクチャ：%s' ;;
-    ja-JP:InvalidChecksum) format='uv アーカイブの SHA256 検証に失敗しました。' ;;
-    ja-JP:MissingBinaries) format='uv アーカイブに uv または uvx がありません。' ;;
-    ja-JP:MissingTools) format='ダウンロードには curl または wget が必要です。アーカイブのインストールには tar と sha256sum または shasum も必要です。' ;;
-    ja-JP:PathHint) format='uv のインストール先：%s。新しいターミナルでも PATH に含まれていることを確認してください。' ;;
-    ja-JP:UvFailed) format='uv のインストールに失敗しました。https://docs.astral.sh/uv/getting-started/installation/ を参照してください。' ;;
-    ja-JP:InstallingLKMBot) format='Python 3.12 で LKMBot をインストールしています…' ;;
-    ja-JP:BotFailed) format='LKMBot のインストールに失敗しました（終了コード %s）。上記のダウンロードまたは依存関係のエラーを確認してください。' ;;
-    ja-JP:PythonFallback) format='Python ミラーに失敗したため、公式ソースで再試行しています…' ;;
-    ja-JP:ReloadShell) format='使用するシェルに合わせて環境を再読み込みしてください：' ;;
-    ja-JP:RunCommands) format='その後、以下のコマンドを手動で実行してください：' ;;
-    ja-JP:Installed) format='LKMBot のインストールが完了しました。' ;;
     *) printf 'Unknown message: %s\n' "$key" >&2; return 1 ;;
   esac
   printf "$format\n" "$@"

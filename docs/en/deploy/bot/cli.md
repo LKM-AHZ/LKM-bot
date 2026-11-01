@@ -81,7 +81,16 @@ python main.py
 
 If everything goes well, you will see logs printed by LKMBot.
 
-If there are no errors, you will see a log message similar to `🌈 Dashboard started, accessible at` with several links. Open one of the links to access the LKMBot dashboard. The link is `http://localhost:6185`.
+If there are no errors, you will see LKMBot's startup logs (listen address and the generated initial dashboard password).
+
+> [!IMPORTANT]
+> **This repository does not include the dashboard frontend.** The panel source lives in the
+> `LKM-Website` repo under `bot-panel/` and is served by the website at `/bot/`, so
+> `http://localhost:6185` exposes the API without a login page. Two options if you need the dashboard:
+>
+> 1. Deploy the full LKM stack; the website then serves the panel through the gateway at `/bot/`.
+> 2. Put a prebuilt panel build (must contain `index.html`) into `data/dist/`, or start with
+>    `python main.py --webui-dir /path/to/dist`.
 
 > [!TIP]
 > If you are deploying LKMBot on a server, you need to replace `localhost` with your server's IP address.

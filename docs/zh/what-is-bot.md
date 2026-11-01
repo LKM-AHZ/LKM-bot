@@ -19,8 +19,6 @@ LKMBot 是一个开源的一站式 Agentic 个人和群聊助手，可在 QQ、T
 
 ## 快速开始
 
-> 您也可以使用 [☁️ 雨云部署](/deploy/bot/rainyun) 来一键部署 LKMBot，无需自行配置。
-
 - 部署 LKMBot：阅读部署指南，快速在本地机器或云服务器上部署 LKMBot。
 - 连接 IM 平台：按照说明将 LKMBot 连接到您喜欢的 IM 平台，如 Discord、Telegram、Slack 等。
 - 配置 AI 模型：LKMBot 支持各种 AI 模型。请参阅 [连接模型服务](/providers/start)

@@ -33,7 +33,7 @@ if (-not $ast.ParamBlock) {
     throw 'install.ps1 must retain its top-level param block.'
 }
 if ($ast.Extent.Text -notmatch '\$bootstrapText = ConvertFrom-Json @''' -or
-    $ast.Extent.Text -notmatch '\$languages = @\(''en-US'', ''zh-CN'', ''ja-JP''\)' -or
+    $ast.Extent.Text -notmatch '\$languages = @\(''en-US'', ''zh-CN''\)' -or
     $ast.Extent.Text -notmatch '\$defaultLanguage = ''en-US''' -or
     $ast.Extent.Text -notmatch '\$Indent = ''  ''' -or
     $ast.Extent.Text -notmatch 'Write-Host "\$Indent\$Prefix    \$Message"' -or

@@ -198,7 +198,7 @@ class ShellInstallerTests(unittest.TestCase):
                         if not chunk:
                             break
                         output_bytes.extend(chunk)
-                        if pending and b"1-3 [1]:" in output_bytes:
+                        if pending and b"1-2 [1]:" in output_bytes:
                             os.write(terminal, pending)
                             pending = b""
                 else:
@@ -316,8 +316,8 @@ class ShellInstallerTests(unittest.TestCase):
         status, output = self.run_installer([], answers="\n\n", piped=True)
         self.assertEqual(status, 0, output)
         self.assertIn("\n  🌌 LKMBot Installer\n  -----------------------", output)
-        self.assertIn("    1. English\n    2. 简体中文\n    3. 日本語", output)
-        self.assertIn("  1-3 [1]:", output)
+        self.assertIn("    1. English\n    2. 简体中文", output)
+        self.assertIn("  1-2 [1]:", output)
         self.assertIn("    1. Mainland China accelerated download mirrors", output)
         self.assertIn(
             "  Enter a number, or press Enter to use the default [2]:", output
@@ -330,18 +330,10 @@ class ShellInstallerTests(unittest.TestCase):
         self.assertIn("  输入编号，按回车使用默认选项 [1]:", output)
         self.assert_install(CHINA_INDEX, [PYTHON_MIRROR])
 
-    def test_japanese_custom_menu(self):
-        status, output = self.run_installer(
-            [],
-            answers="3\n0\n3\nhttps://uv.example.com/releases\nhttps://pypi.example.com/simple/\n",
-            piped=True,
-        )
-        self.assertEqual(status, 0, output)
-        self.assertIn(
-            "  番号を入力してください。Enter で既定値を使用します [2]:", output
-        )
-        self.assertIn("  使用するシェルに合わせて環境を再読み込みしてください：", output)
-        self.assert_install("https://pypi.example.com/simple/", [""])
+    def test_japanese_language_is_rejected(self):
+        status, output = self.run_installer(["--language", "ja-JP"])
+        self.assertEqual(status, 2, output)
+        self.assertIn("Unsupported language: ja-JP", output)
 
     def test_official_archive_is_verified_without_installer_script(self):
         status, output = self.run_installer(["--non-interactive"], existing=False)

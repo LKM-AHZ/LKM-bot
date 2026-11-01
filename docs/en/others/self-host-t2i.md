@@ -9,9 +9,6 @@ https://t2i.rcfortress.site/text2img
 
 This interface can ensure normal response for most of the time. However, due to the deployment of servers in New York, the response speed may be slower in some areas.
 
-> [!TIP]
-> If you'd like to support us to help pay for server costs, please consider supporting us on [Afdian](https://afdian.com/a/astrbot_team).
-
 You can choose to self-host the text-to-image service to improve response speed.
 
 ```bash

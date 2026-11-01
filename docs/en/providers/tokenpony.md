@@ -2,7 +2,7 @@
 
 ## Configuring the Chat Model
 
-Register and log in to [TokenPony](https://www.tokenpony.cn/3YPyf).
+Register and log in to [TokenPony](https://www.tokenpony.cn/).
 
 Navigate to the TokenPony [API Keys](https://www.tokenpony.cn/#/user/keys) page and create a new API Key. Save it for later use.
 

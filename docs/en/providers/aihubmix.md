@@ -1,12 +1,12 @@
 # Connect AIHubMix
 
-[AIHubMix](https://aihubmix.com/?aff=4bfH) is a multi-model AI API gateway that provides unified access to OpenAI, Claude, Gemini, DeepSeek, Kimi and more through a single API key. Beyond LLM, it also supports speech, embedding, reranking and other capabilities.
+[AIHubMix](https://aihubmix.com/) is a multi-model AI API gateway that provides unified access to OpenAI, Claude, Gemini, DeepSeek, Kimi and more through a single API key. Beyond LLM, it also supports speech, embedding, reranking and other capabilities.
 
 Fully compatible with the OpenAI API format — just change the API Base and Key to get started. **Some models are completely free for development and testing.**
 
 ## Get an API Key
 
-1. Sign up at [AIHubMix](https://aihubmix.com/?aff=4bfH)
+1. Sign up at [AIHubMix](https://aihubmix.com/)
 2. Go to Console → API Keys to create a new key
 
 ![Get an API Key](https://github.com/user-attachments/assets/d717f21b-2805-4aff-ac90-f5c98f17cb79)

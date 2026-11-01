@@ -4,7 +4,7 @@ PPIO Cloud is a leading independent distributed cloud computing provider in Chin
 
 ## Preparation
 
-Open the [PPIO Cloud website](https://ppio.cn/user/register?invited_by=AIOONE) and register an account (accounts registered through this link will receive a ¥15 voucher).
+Open the [PPIO Cloud website](https://ppio.cn/) and register an account.
 
 Go to [Model API Service](https://ppio.cn/model-api/console) and find the model you want to use. You can filter by provider or select free models.
 

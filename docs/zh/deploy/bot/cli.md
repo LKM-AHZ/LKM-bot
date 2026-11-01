@@ -80,7 +80,16 @@ python main.py
 
 如果一切顺利，你会看到 LKMBot 打印出的日志。
 
-如果没有报错，你会看到一条日志显示类似 `🌈 管理面板已启动，可访问` 并附带了几条链接。打开其中一个链接即可访问 LKMBot 管理面板。链接是 `http://localhost:6185`。
+如果没有报错，你会看到 LKMBot 打印出的启动日志（含监听地址与首启面板初始密码）。
+
+> [!IMPORTANT]
+> **本仓库不含管理面板前端。** 面板源码在根仓库 `LKM-Website` 的 `bot-panel/`，由官网以
+> `/bot/` 子路径托管，所以 `http://localhost:6185` 上只有 API，没有可登录的面板页面。
+> 需要面板时二选一：
+>
+> 1. 接入 LKM 全栈，面板由官网提供并走网关 `/bot/`；
+> 2. 自备一份构建好的面板静态文件（目录内需有 `index.html`）放到 `data/dist/`，或用
+>    `python main.py --webui-dir /path/to/dist` 指定目录。
 
 > [!TIP]
 > 如果你正在服务器上部署 LKMBot，需要将 `localhost` 替换为你的服务器 IP 地址。

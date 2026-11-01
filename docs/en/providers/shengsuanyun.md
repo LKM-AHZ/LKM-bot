@@ -1,10 +1,10 @@
 # Connect ShengSuanYun
 
-[ShengSuanYun](https://www.shengsuanyun.com/?from=CH_T70U2X9L) provides a unified OpenAI-compatible API for accessing a range of popular AI models with one API key.
+[ShengSuanYun](https://www.shengsuanyun.com/) provides a unified OpenAI-compatible API for accessing a range of popular AI models with one API key.
 
 ## Get an API Key
 
-1. Sign up and log in at [ShengSuanYun](https://www.shengsuanyun.com/?from=CH_T70U2X9L).
+1. Sign up and log in at [ShengSuanYun](https://www.shengsuanyun.com/).
 2. Open the console, create an API key, and copy it.
 
 ## Configure LKMBot

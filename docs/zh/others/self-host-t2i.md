@@ -9,9 +9,6 @@ https://t2i.rcfortress.site/text2img
 
 此接口能够保障大部分时间正常响应。但是由于部署在国外的（纽约）服务器，因此响应速度可能会比较慢。
 
-> [!TIP]
-> 欢迎通过 [爱发电](https://afdian.com/a/astrbot_team) 支持我们，以帮助我们支付服务器费用。
-
 您可以选择自行部署文转图服务，以提升响应速度。
 
 ```bash

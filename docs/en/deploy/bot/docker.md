@@ -99,10 +99,19 @@ docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "${PWD}\data:/L
 
 If everything goes well, you will see logs printed by LKMBot.
 
-If there are no errors, you will see a log message similar to `🌈 Dashboard started, accessible at` with several links. Open one of the links to access the LKMBot dashboard.
+If there are no errors, you will see LKMBot's startup logs (listen address and the generated initial dashboard password).
+
+> [!IMPORTANT]
+> **The image ships the backend API only, not the dashboard frontend.** The panel source lives in the
+> `LKM-Website` repo under `bot-panel/` and is served by the website at `/bot/`, so after `docker run`
+> port 6185 exposes the API without a login page. Two options if you need the dashboard:
+>
+> 1. Deploy the full LKM stack as shown above; the website then serves the panel through the gateway at `/bot/`.
+> 2. Put a prebuilt panel build (must contain `index.html`) into `data/dist/`, or append
+>    `--webui-dir /path/to/dist` (for example `docker run … lkmbot:latest --webui-dir /LKMBot/data/dist`).
 
 > [!TIP]
-> Since Docker isolates the network environment, you cannot use `localhost` to access the dashboard.
+> Since Docker isolates the network environment, you cannot use `localhost` to reach the container's endpoints.
 >
 > New users must use the random password printed in the startup logs to log in for the first time. Use the username shown in the logs (usually `lkmbot`) and change the password after first login.
 >

@@ -4,7 +4,7 @@
 [CmdletBinding()]
 param(
     # Invoke-Expression validates omitted string parameters as empty values.
-    [ValidateSet('', 'zh-CN', 'en-US', 'ja-JP')]
+    [ValidateSet('', 'zh-CN', 'en-US')]
     [string]$Language,
     [ValidateSet('', 'china', 'official', 'custom')]
     [string]$DownloadSource,
@@ -24,22 +24,19 @@ $CanPrompt = -not $NonInteractive -and [Environment]::UserInteractive -and -not 
 $Indent = '  '
 
 # Keep the first-run experience predictable across machines. Users can still
-# choose Chinese or Japanese explicitly in the language menu.
+# choose Chinese or English explicitly in the language menu.
 # Use JSON Unicode escapes so Windows PowerShell 5.1 can read this file
 # with any system encoding, while downloaded UTF-8 scripts also work without a BOM.
 $bootstrapText = ConvertFrom-Json @'
 {
     "InstallerTitle": "\ud83c\udf0c LKMBot Installer",
-    "LanguagePrompt": "Select language / \u8bf7\u9009\u62e9\u8bed\u8a00 / \u8a00\u8a9e\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
+    "LanguagePrompt": "Select language / \u8bf7\u9009\u62e9\u8bed\u8a00",
     "Chinese": "\u7b80\u4f53\u4e2d\u6587",
     "English": "English",
-    "Japanese": "\u65e5\u672c\u8a9e",
     "NextStepsEnglish": "Next, run these commands:",
     "NextStepsChinese": "\u63a5\u4e0b\u6765\u53ef\u4ee5\u4f9d\u6b21\u6267\u884c\u4ee5\u4e0b\u6307\u4ee4\u6765\u521d\u59cb\u5316\u548c\u542f\u52a8 LKMBot\uff1a",
-    "NextStepsJapanese": "\u6b21\u306b\u3001\u4ee5\u4e0b\u3092\u9806\u756a\u306b\u5b9f\u884c\u3057\u3066\u304f\u3060\u3055\u3044\uff1a",
     "PythonFallbackEnglish": "Python mirror failed; retrying with the official source...",
-    "PythonFallbackChinese": "Python \u955c\u50cf\u4e0b\u8f7d\u5931\u8d25\uff0c\u6b63\u5728\u5207\u6362\u5230\u5b98\u65b9\u6e90\u91cd\u8bd5\u2026",
-    "PythonFallbackJapanese": "Python \u30df\u30e9\u30fc\u306b\u5931\u6557\u3057\u305f\u305f\u3081\u3001\u516c\u5f0f\u30bd\u30fc\u30b9\u3067\u518d\u8a66\u884c\u3057\u3066\u3044\u307e\u3059\u2026"
+    "PythonFallbackChinese": "Python \u955c\u50cf\u4e0b\u8f7d\u5931\u8d25\uff0c\u6b63\u5728\u5207\u6362\u5230\u5b98\u65b9\u6e90\u91cd\u8bd5\u2026"
 }
 '@
 
@@ -48,17 +45,16 @@ $defaultLanguage = 'en-US'
 if (-not $Language) {
     $Language = $defaultLanguage
     if ($CanPrompt) {
-        $languages = @('en-US', 'zh-CN', 'ja-JP')
+        $languages = @('en-US', 'zh-CN')
         $defaultChoice = [array]::IndexOf($languages, $Language) + 1
         Write-Host "`n$Indent$($bootstrapText.InstallerTitle)" -ForegroundColor Cyan
         Write-Host "$Indent-----------------------" -ForegroundColor DarkGray
         Write-Host "`n$Indent$($bootstrapText.LanguagePrompt)"
         Write-Host "$Indent  1. $($bootstrapText.English)"
         Write-Host "$Indent  2. $($bootstrapText.Chinese)"
-        Write-Host "$Indent  3. $($bootstrapText.Japanese)"
         do {
-            $choice = Read-Host "${Indent}1-3 [$defaultChoice]"
-        } until ($choice -eq '' -or $choice -in @('1', '2', '3'))
+            $choice = Read-Host "${Indent}1-2 [$defaultChoice]"
+        } until ($choice -eq '' -or $choice -in @('1', '2'))
         if ($choice) { $Language = $languages[[int]$choice - 1] }
     }
 }
@@ -126,37 +122,6 @@ $messages = ConvertFrom-Json @'
         "Installed": "LKMBot has been installed.",
         "ReloadShell": "Reload the environment for your shell:",
         "RunCommands": "Then run these commands manually:"
-    },
-    "ja-JP": {
-        "ChooseSource": "\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u5143\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044",
-        "China": "\u4e2d\u56fd\u672c\u571f\u5411\u3051\u9ad8\u901f\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30df\u30e9\u30fc",
-        "Official": "\u516c\u5f0f\u30bd\u30fc\u30b9",
-        "Custom": "\u30ab\u30b9\u30bf\u30e0",
-        "Choice": "\u756a\u53f7\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002Enter \u3067\u65e2\u5b9a\u5024\u3092\u4f7f\u7528\u3057\u307e\u3059",
-        "InvalidChoice": "1\u30012\u30013 \u306e\u3044\u305a\u308c\u304b\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
-        "UvUrl": "uv ZIP \u306e\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30c7\u30a3\u30ec\u30af\u30c8\u30ea URL\uff08\u30d5\u30a1\u30a4\u30eb\u540d\u3092\u9664\u304f\uff09",
-        "PypiUrl": "PyPI simple \u30a4\u30f3\u30c7\u30c3\u30af\u30b9 URL",
-        "CustomRequired": "\u30ab\u30b9\u30bf\u30e0\u30bd\u30fc\u30b9\u306b\u306f UvDownloadBaseUrl \u3068 PypiIndexUrl \u306e\u4e21\u65b9\u304c\u5fc5\u8981\u3067\u3059\u3002",
-        "InvalidUrl": "\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u5143\u306b\u306f\u6709\u52b9\u306a HTTPS URL \u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\uff1a{0}",
-        "WindowsOnly": "\u3053\u306e PowerShell \u30b9\u30af\u30ea\u30d7\u30c8\u306f Windows \u7528\u3067\u3059\u3002Linux/macOS \u3067\u306f install.sh \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
-        "Source": "\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u5143\uff1a{0}",
-        "UvMirror": "uv \u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30c7\u30a3\u30ec\u30af\u30c8\u30ea\uff1a{0}",
-        "Pypi": "PyPI \u30a4\u30f3\u30c7\u30c3\u30af\u30b9\uff1a{0}",
-        "PythonMirror": "Python \u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u30df\u30e9\u30fc\uff1a{0}",
-        "PythonDefault": "Python \u306e\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u306b\u306f\u65e2\u5b58\u306e uv \u8a2d\u5b9a\u3092\u4f7f\u7528\u3057\u307e\u3059\u3002\u30df\u30e9\u30fc\u3092\u4f7f\u3046\u306b\u306f -PythonInstallMirror \u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\uff08PyPI \u30df\u30e9\u30fc\u306b Python \u672c\u4f53\u306f\u542b\u307e\u308c\u307e\u305b\u3093\uff09\u3002",
-        "InstallingUv": "uv \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u3057\u3066\u3044\u307e\u3059\u2026",
-        "TryingMirror": "uv \u30df\u30e9\u30fc\u3092\u8a66\u3057\u3066\u3044\u307e\u3059\uff1a{0}",
-        "MirrorFailed": "uv \u30df\u30e9\u30fc\u304b\u3089\u306e\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u306b\u5931\u6557\u3057\u307e\u3057\u305f\uff1a{0}",
-        "OfficialFallback": "uv \u306e\u516c\u5f0f\u30a4\u30f3\u30b9\u30c8\u30fc\u30e9\u30fc\u3092\u8a66\u3057\u3066\u3044\u307e\u3059\u2026",
-        "UnsupportedArch": "\u672a\u5bfe\u5fdc\u306e Windows \u30a2\u30fc\u30ad\u30c6\u30af\u30c1\u30e3\uff1a{0}",
-        "InvalidChecksum": "uv \u30a2\u30fc\u30ab\u30a4\u30d6\u306e SHA256 \u691c\u8a3c\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002",
-        "MissingBinaries": "uv \u30a2\u30fc\u30ab\u30a4\u30d6\u306b uv.exe \u307e\u305f\u306f uvx.exe \u304c\u3042\u308a\u307e\u305b\u3093\u3002",
-        "UvFailed": "uv \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002https://docs.astral.sh/uv/getting-started/installation/ \u3092\u53c2\u7167\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
-        "InstallingLKMBot": "Python 3.12 \u3067 LKMBot \u3092\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u3057\u3066\u3044\u307e\u3059\u2026",
-        "BotFailed": "LKMBot \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u306b\u5931\u6557\u3057\u307e\u3057\u305f\uff08\u7d42\u4e86\u30b3\u30fc\u30c9 {0}\uff09\u3002\u4e0a\u8a18\u306e\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u307e\u305f\u306f\u4f9d\u5b58\u95a2\u4fc2\u306e\u30a8\u30e9\u30fc\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
-        "Installed": "LKMBot \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f\u3002",
-        "ReloadShell": "\u4f7f\u7528\u3059\u308b\u30b7\u30a7\u30eb\u306b\u5408\u308f\u305b\u3066\u74b0\u5883\u3092\u518d\u8aad\u307f\u8fbc\u307f\u3057\u3066\u304f\u3060\u3055\u3044\uff1a",
-        "RunCommands": "\u305d\u306e\u5f8c\u3001\u4ee5\u4e0b\u306e\u30b3\u30de\u30f3\u30c9\u3092\u624b\u52d5\u3067\u5b9f\u884c\u3057\u3066\u304f\u3060\u3055\u3044\uff1a"
     }
 }
 '@
@@ -174,7 +139,7 @@ if (-not $DownloadSource) {
             $choice = Read-Host "$Indent$($Text.Choice) [$defaultChoice]"
             if ($choice -eq '') { $choice = $defaultChoice }
             if ($choice -notin @('1', '2', '3')) { Write-Host "$Indent$($Text.InvalidChoice)" }
-        } until ($choice -in @('1', '2', '3'))
+        } until ($choice -in @('1', '2'))
         $DownloadSource = @('china', 'official', 'custom')[[int]$choice - 1]
     }
 }
@@ -453,7 +418,6 @@ try {
     if ($toolInstallExitCode -ne 0 -and $PythonInstallMirror) {
         $pythonFallback = switch ($Language) {
             'zh-CN' { $bootstrapText.PythonFallbackChinese }
-            'ja-JP' { $bootstrapText.PythonFallbackJapanese }
             default { $bootstrapText.PythonFallbackEnglish }
         }
         Warn $pythonFallback

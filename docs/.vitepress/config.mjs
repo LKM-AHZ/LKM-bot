@@ -44,24 +44,10 @@ export default defineConfig({
             collapsed: false,
             items: [
               { text: "脚本部署", link: "/bot/package" },
-              { text: "雨云一键云部署", link: "/bot/rainyun" },
-              { text: "桌面客户端部署", link: "/bot/desktop" },
-              { text: "启动器一键部署", link: "/bot/launcher" },
               { text: "Docker 部署", link: "/bot/docker" },
               { text: "Kubernetes 部署", link: "/bot/kubernetes" },
-              { text: "宝塔面板部署", link: "/bot/btpanel" },
-              { text: "1Panel 部署", link: "/bot/1panel" },
               { text: "源码部署", link: "/bot/cli" },
-              {
-                text: "其他部署方式",
-                link: "/bot/other-deployments",
-                collapsed: true,
-                items: [
-                  { text: "CasaOS 部署", link: "/bot/casaos" },
-                  { text: "优云智算 GPU 部署", link: "/bot/compshare" },
-                  { text: "社区提供的部署方式", link: "/bot/community-deployment" },
-                ],
-              },
+              { text: "系统包管理器部署", link: "/bot/sys-pm" },
               {
                 text: "支持我们",
                 link: "/when-deployed",
@@ -288,12 +274,6 @@ export default defineConfig({
         socialLinks: [
           { icon: "github", link: "https://github.com/Alma1314/LKM-bot" },
         ],
-        footer: {
-          message: 'Deployed on&nbsp' +
-            '<a href="https://www.rainyun.com/NjY3OTQ5_" class="deployment-link" style="display: inline-flex; align-items: center;">' +
-            '<img src="https://www.rainyun.com/img/logo.d193755d.png" width="50" alt="Rainyun Logo">' +
-            '</a>',
-        }
       }
     },
     en: {
@@ -321,23 +301,10 @@ export default defineConfig({
             collapsed: false,
             items: [
               { text: "Script Deployment", link: "/bot/package" },
-              { text: "Desktop Client", link: "/bot/desktop" },
-              { text: "One-click Launcher", link: "/bot/launcher" },
               { text: "Docker", link: "/bot/docker" },
               { text: "Kubernetes", link: "/bot/kubernetes" },
-              { text: "BT Panel", link: "/bot/btpanel" },
-              { text: "1Panel", link: "/bot/1panel" },
               { text: "Source Deployment", link: "/bot/cli" },
-              {
-                text: "Other Deployments",
-                link: "/bot/other-deployments",
-                collapsed: true,
-                items: [
-                  { text: "CasaOS", link: "/bot/casaos" },
-                  { text: "Compshare GPU", link: "/bot/compshare" },
-                  { text: "Community-provided Deployment", link: "/bot/community-deployment" },
-                ],
-              },
+              { text: "System Package Manager", link: "/bot/sys-pm" },
               {
                 text: "Support Us",
                 link: "/when-deployed",
@@ -561,12 +528,6 @@ export default defineConfig({
         socialLinks: [
           { icon: "github", link: "https://github.com/Alma1314/LKM-bot" },
         ],
-        footer: {
-          message: 'Deployed on&nbsp' +
-            '<a href="https://www.rainyun.com/NjY3OTQ5_" class="deployment-link" style="display: inline-flex; align-items: center;">' +
-            '<img src="https://www.rainyun.com/img/logo.d193755d.png" width="50" alt="Rainyun Logo">' +
-            '</a>',
-        }
       }
     },
   },

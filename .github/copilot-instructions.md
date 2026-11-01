@@ -59,8 +59,7 @@ Always reference these instructions first and fallback to search or bash command
 - Volume mount required: `./data:/LKMBot/data`
 
 ## Multi-language Support
-- Documentation in Chinese (README.md), English (README_en.md), Japanese (README_ja.md)
-- UI supports internationalization
+- Documentation and UI are maintained in Chinese (README.md) and English only
 - Default language is Chinese
 
 Remember: This is a production chatbot framework with real users. Always test thoroughly and ensure changes don't break existing functionality.

@@ -42,7 +42,7 @@ LKMBot 支持多知识库管理。在聊天时，您可以**自由指定知识�
 
 ### PPIO 派欧云
 
-1. 打开 [PPIO 派欧云官网](https://ppio.cn/user/register?invited_by=AIOONE)，并注册账户（通过此链接注册的账户将会获得 15 元人民币的代金券）。
+1. 打开 [PPIO 派欧云官网](https://ppio.cn/)，并注册账户。
 2. 进入 [模型广场](https://ppio.cn/model-api/console)，点击嵌入模型
 3. 点击 BAAI:BGE-M3 （截止至 2025-06-02，该模型在该平台免费）。
 4. 找到 API 接入指南，申请 Key。
