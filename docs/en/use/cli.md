@@ -1,4 +1,4 @@
-# AstrBot CLI {#cli-commands}
+# LKMBot CLI {#cli-commands}
 
 The LKMBot CLI initializes instances, starts LKMBot, updates common config values, and manages plugins.
 

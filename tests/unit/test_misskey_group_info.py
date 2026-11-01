@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.platform.sources.misskey.misskey_adapter import (
+from bot.core.platform.sources.misskey.misskey_adapter import (
     MisskeyPlatformAdapter,
 )
 

@@ -112,7 +112,7 @@ Corresponding `.astrbot-plugin/i18n/en-US.json`:
 `title` is used by the sidebar, the WebUI shell title, and the view component name on the plugin detail page. `description` is used by the view component description on the plugin detail page. Other fields are read by the page through the bridge:
 
 ```js
-const bridge = window.AstrBotPluginView;
+const bridge = window.BotPluginView;
 
 function render() {
   document.getElementById("save").textContent = bridge.t(

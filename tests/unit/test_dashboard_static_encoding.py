@@ -2,7 +2,7 @@
 
 import gzip
 
-from astrbot.dashboard.static_encoding import (
+from bot.dashboard.static_encoding import (
     accepts_gzip,
     gzip_static_body,
     is_compressible_media_type,

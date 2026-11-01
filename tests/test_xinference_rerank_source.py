@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from astrbot.core.provider.sources.xinference_rerank_source import (
+from bot.core.provider.sources.xinference_rerank_source import (
     XinferenceRerankProvider,
 )
 

@@ -6,15 +6,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-from astrbot.core.pipeline.bootstrap import ensure_builtin_stages_registered
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
+from bot.core.pipeline.bootstrap import ensure_builtin_stages_registered
+from bot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
     InternalAgentSubStage,
 )
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages.third_party import (
+from bot.core.pipeline.process_stage.method.agent_sub_stages.third_party import (
     ThirdPartyAgentSubStage,
 )
-from astrbot.core.pipeline.stage import Stage, registered_stages
-from astrbot.core.pipeline.stage_order import STAGES_ORDER
+from bot.core.pipeline.stage import Stage, registered_stages
+from bot.core.pipeline.stage_order import STAGES_ORDER
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -36,11 +36,11 @@ def test_smoke_critical_imports_in_fresh_interpreter() -> None:
     code = (
         "import importlib;"
         "mods=["
-        "'astrbot.core.core_lifecycle',"
-        "'astrbot.core.astr_main_agent',"
-        "'astrbot.core.pipeline.scheduler',"
-        "'astrbot.core.pipeline.process_stage.method.agent_sub_stages.internal',"
-        "'astrbot.core.pipeline.process_stage.method.agent_sub_stages.third_party'"
+        "'bot.core.core_lifecycle',"
+        "'bot.core.bot_main_agent',"
+        "'bot.core.pipeline.scheduler',"
+        "'bot.core.pipeline.process_stage.method.agent_sub_stages.internal',"
+        "'bot.core.pipeline.process_stage.method.agent_sub_stages.third_party'"
         "];"
         "[importlib.import_module(m) for m in mods]"
     )
@@ -61,7 +61,7 @@ def test_smoke_agent_sub_stages_are_stage_subclasses() -> None:
 
 
 def test_pipeline_package_exports_remain_compatible() -> None:
-    import astrbot.core.pipeline as pipeline
+    import bot.core.pipeline as pipeline
 
     assert pipeline.ProcessStage is not None
     assert pipeline.RespondStage is not None
@@ -111,7 +111,7 @@ def test_pipeline_import_is_stable_with_mocked_apscheduler() -> None:
         "sys.modules['apscheduler.triggers'] = mock_apscheduler.triggers;"
         "sys.modules['apscheduler.triggers.cron'] = mock_apscheduler.triggers.cron;"
         "sys.modules['apscheduler.triggers.date'] = mock_apscheduler.triggers.date;"
-        "import astrbot.core.pipeline as pipeline;"
+        "import bot.core.pipeline as pipeline;"
         "assert pipeline.ProcessStage is not None;"
         "assert pipeline.RespondStage is not None"
     )

@@ -90,8 +90,8 @@ $messages = ConvertFrom-Json @'
         "InvalidChecksum": "uv \u538b\u7f29\u5305 SHA256 \u6821\u9a8c\u5931\u8d25\u3002",
         "MissingBinaries": "uv \u538b\u7f29\u5305\u4e2d\u7f3a\u5c11 uv.exe \u6216 uvx.exe\u3002",
         "UvFailed": "uv \u5b89\u88c5\u5931\u8d25\u3002\u8bf7\u53c2\u8003 https://docs.astral.sh/uv/getting-started/installation/",
-        "InstallingAstrBot": "\u6b63\u5728\u4f7f\u7528 Python 3.12 \u5b89\u88c5 LKMBot\u2026",
-        "AstrBotFailed": "LKMBot \u5b89\u88c5\u5931\u8d25\uff08\u9000\u51fa\u7801 {0}\uff09\u3002\u8bf7\u68c0\u67e5\u4e0a\u65b9\u7684\u4e0b\u8f7d\u6216\u4f9d\u8d56\u9519\u8bef\u3002",
+        "InstallingLKMBot": "\u6b63\u5728\u4f7f\u7528 Python 3.12 \u5b89\u88c5 LKMBot\u2026",
+        "BotFailed": "LKMBot \u5b89\u88c5\u5931\u8d25\uff08\u9000\u51fa\u7801 {0}\uff09\u3002\u8bf7\u68c0\u67e5\u4e0a\u65b9\u7684\u4e0b\u8f7d\u6216\u4f9d\u8d56\u9519\u8bef\u3002",
         "Installed": "LKMBot \u5b89\u88c5\u5b8c\u6210\u3002",
         "ReloadShell": "\u8bf7\u6839\u636e\u4f60\u4f7f\u7528\u7684\u7ec8\u7aef\u91cd\u65b0\u52a0\u8f7d\u73af\u5883\uff1a",
         "RunCommands": "\u91cd\u65b0\u52a0\u8f7d\u540e\uff0c\u8bf7\u624b\u52a8\u8fd0\u884c\uff1a"
@@ -121,8 +121,8 @@ $messages = ConvertFrom-Json @'
         "InvalidChecksum": "uv archive SHA256 verification failed.",
         "MissingBinaries": "The uv archive is missing uv.exe or uvx.exe.",
         "UvFailed": "Failed to install uv. See https://docs.astral.sh/uv/getting-started/installation/",
-        "InstallingAstrBot": "Installing LKMBot with Python 3.12...",
-        "AstrBotFailed": "LKMBot installation failed (exit code {0}). Check the download or dependency errors above.",
+        "InstallingLKMBot": "Installing LKMBot with Python 3.12...",
+        "BotFailed": "LKMBot installation failed (exit code {0}). Check the download or dependency errors above.",
         "Installed": "LKMBot has been installed.",
         "ReloadShell": "Reload the environment for your shell:",
         "RunCommands": "Then run these commands manually:"
@@ -152,8 +152,8 @@ $messages = ConvertFrom-Json @'
         "InvalidChecksum": "uv \u30a2\u30fc\u30ab\u30a4\u30d6\u306e SHA256 \u691c\u8a3c\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002",
         "MissingBinaries": "uv \u30a2\u30fc\u30ab\u30a4\u30d6\u306b uv.exe \u307e\u305f\u306f uvx.exe \u304c\u3042\u308a\u307e\u305b\u3093\u3002",
         "UvFailed": "uv \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002https://docs.astral.sh/uv/getting-started/installation/ \u3092\u53c2\u7167\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
-        "InstallingAstrBot": "Python 3.12 \u3067 LKMBot \u3092\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u3057\u3066\u3044\u307e\u3059\u2026",
-        "AstrBotFailed": "LKMBot \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u306b\u5931\u6557\u3057\u307e\u3057\u305f\uff08\u7d42\u4e86\u30b3\u30fc\u30c9 {0}\uff09\u3002\u4e0a\u8a18\u306e\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u307e\u305f\u306f\u4f9d\u5b58\u95a2\u4fc2\u306e\u30a8\u30e9\u30fc\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
+        "InstallingLKMBot": "Python 3.12 \u3067 LKMBot \u3092\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u3057\u3066\u3044\u307e\u3059\u2026",
+        "BotFailed": "LKMBot \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u306b\u5931\u6557\u3057\u307e\u3057\u305f\uff08\u7d42\u4e86\u30b3\u30fc\u30c9 {0}\uff09\u3002\u4e0a\u8a18\u306e\u30c0\u30a6\u30f3\u30ed\u30fc\u30c9\u307e\u305f\u306f\u4f9d\u5b58\u95a2\u4fc2\u306e\u30a8\u30e9\u30fc\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
         "Installed": "LKMBot \u306e\u30a4\u30f3\u30b9\u30c8\u30fc\u30eb\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f\u3002",
         "ReloadShell": "\u4f7f\u7528\u3059\u308b\u30b7\u30a7\u30eb\u306b\u5408\u308f\u305b\u3066\u74b0\u5883\u3092\u518d\u8aad\u307f\u8fbc\u307f\u3057\u3066\u304f\u3060\u3055\u3044\uff1a",
         "RunCommands": "\u305d\u306e\u5f8c\u3001\u4ee5\u4e0b\u306e\u30b3\u30de\u30f3\u30c9\u3092\u624b\u52d5\u3067\u5b9f\u884c\u3057\u3066\u304f\u3060\u3055\u3044\uff1a"
@@ -446,7 +446,7 @@ if ($PythonInstallMirror) {
 $previousPythonMirror = $env:UV_PYTHON_INSTALL_MIRROR
 try {
     if ($PythonInstallMirror) { $env:UV_PYTHON_INSTALL_MIRROR = $PythonInstallMirror }
-    Info $Text.InstallingAstrBot
+    Info $Text.InstallingLKMBot
     $toolInstallExitCode = Invoke-UvToolInstall -ArgumentList @(
         'tool', 'install', '--python', '3.12', 'git+https://github.com/Alma1314/LKM-bot.git', '--default-index', $PypiIndexUrl
     )
@@ -463,7 +463,7 @@ try {
         )
     }
     if ($toolInstallExitCode -ne 0) {
-        Err ($Text.AstrBotFailed -f $toolInstallExitCode)
+        Err ($Text.BotFailed -f $toolInstallExitCode)
         exit $toolInstallExitCode
     }
     Ok $Text.Installed

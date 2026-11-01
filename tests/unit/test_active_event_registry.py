@@ -4,11 +4,11 @@ from unittest.mock import Mock
 
 import pytest
 
-from astrbot.core.pipeline.process_stage.follow_up import (
+from bot.core.pipeline.process_stage.follow_up import (
     register_active_runner,
     unregister_active_runner,
 )
-from astrbot.core.utils.active_event_registry import (
+from bot.core.utils.active_event_registry import (
     ActiveEventRegistry,
     active_event_registry,
 )

@@ -10,7 +10,7 @@ LKMBot 支持将文字渲染成图片。
 
 ```python
 @filter.command("image")  # 注册一个 /image 指令，接收 text 参数。
-async def on_aiocqhttp(self, event: AstrMessageEvent, text: str):
+async def on_aiocqhttp(self, event: BotMessageEvent, text: str):
     url = await self.text_to_image(text)  # text_to_image() 是 Star 类的一个方法。
     # path = await self.text_to_image(text, return_url = False) # 如果你想保存图片到本地
     yield event.image_result(url)
@@ -39,7 +39,7 @@ TMPL = """
 
 
 @filter.command("todo")
-async def custom_t2i_tmpl(self, event: AstrMessageEvent):
+async def custom_t2i_tmpl(self, event: BotMessageEvent):
     options = {}  # 可选择传入渲染选项。
     url = await self.html_render(
         TMPL, {"items": ["吃饭", "睡觉", "玩原神"]}, options=options

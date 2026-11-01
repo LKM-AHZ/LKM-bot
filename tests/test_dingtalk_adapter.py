@@ -5,28 +5,28 @@ import threading
 import dingtalk_stream
 import pytest
 
-from astrbot.api.message_components import (
+from bot.api.message_components import (
     ActionRow,
     At,
     Button,
     ButtonInteraction,
     Plain,
 )
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.button_interaction import (
+from bot.core.message.message_event_result import MessageChain
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.platform.sources.dingtalk import dingtalk_adapter
-from astrbot.core.platform.sources.dingtalk.dingtalk_adapter import (
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.platform.sources.dingtalk import dingtalk_adapter
+from bot.core.platform.sources.dingtalk.dingtalk_adapter import (
     DINGTALK_BUTTON_CARD_TEMPLATE_ID,
     DINGTALK_RECONNECT_INITIAL_DELAY,
     DINGTALK_RECONNECT_MAX_DELAY,
     DingtalkPlatformAdapter,
     _dingtalk_reconnect_delay,
 )
-from astrbot.core.platform.sources.dingtalk.dingtalk_event import (
+from bot.core.platform.sources.dingtalk.dingtalk_event import (
     DingtalkMessageEvent,
 )
 
@@ -463,7 +463,7 @@ async def test_dingtalk_buttons_fall_back_to_markdown_when_card_fails():
         (
             "sampleMarkdown",
             {
-                "title": "AstrBot",
+                "title": "LKMBot",
                 "text": "Choose\n[Approve]\n[Docs](https://example.com/docs)",
             },
         )

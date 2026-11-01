@@ -207,18 +207,18 @@ def update_pyproject_version(version: str) -> Path:
 
 
 def update_package_version(version: str) -> Path:
-    """Update the package version in astrbot/__init__.py.
+    """Update the package version in bot/__init__.py.
 
     Args:
         version: Release version to write.
 
     Returns:
-        Path to the modified astrbot/__init__.py file.
+        Path to the modified bot/__init__.py file.
 
     Raises:
         ReleaseError: The package version constant cannot be found or parsed.
     """
-    package_init_path = REPO_ROOT / "astrbot" / "__init__.py"
+    package_init_path = REPO_ROOT / "bot" / "__init__.py"
     lines = package_init_path.read_text(encoding="utf-8").splitlines(keepends=True)
 
     for index, line in enumerate(lines):
@@ -234,7 +234,7 @@ def update_package_version(version: str) -> Path:
         package_init_path.write_text("".join(lines), encoding="utf-8")
         return package_init_path
 
-    raise ReleaseError("Missing __version__ in astrbot/__init__.py")
+    raise ReleaseError("Missing __version__ in bot/__init__.py")
 
 
 def write_changelog(version: str, commits: list[str]) -> Path:
@@ -341,7 +341,7 @@ def commit_and_maybe_push(
         [
             "add",
             "pyproject.toml",
-            "astrbot/__init__.py",
+            "bot/__init__.py",
             str(changelog_path.relative_to(REPO_ROOT)),
         ]
     )
@@ -386,7 +386,7 @@ def print_next_steps(
     else:
         print("Next:")
         print(f"1. Review and polish {changelog_rel}")
-        print(f"2. git add pyproject.toml astrbot/__init__.py {changelog_rel}")
+        print(f"2. git add pyproject.toml bot/__init__.py {changelog_rel}")
         print(f'3. git commit -m "chore: bump version to {version}"')
         print(f"4. git push -u {args.remote} {branch}")
 

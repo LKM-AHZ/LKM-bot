@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "description": "Target REST contract for migrating LKMBot HTTP APIs to /api/v1. Dynamic LKMBot configuration payloads are intentionally modeled as open JSON objects because their schemas are provided at runtime by template endpoints. Developer API keys currently support these scopes only: bot, provider, persona, im, config, chat, data, file, plugin, mcp, skill, plus the sensitive config:edit_admin and chat:admin sub-scopes. The config scope also grants bot and provider access, but no parent scope grants a sensitive sub-scope. The system, kb and tool scopes below are only reachable with a dashboard login session and are deliberately not grantable to API keys.\n"
   },
-  "x-astrbot-scope-definitions": {
+  "x-bot-scope-definitions": {
     "bot": {
       "description": "Manage bot and platform configurations.",
       "description_zh": "管理机器人及平台配置。"
@@ -157,7 +157,7 @@
         ],
         "summary": "Get the system configuration schema",
         "operationId": "getSystemConfigSchema",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -173,7 +173,7 @@
         ],
         "summary": "Get the system configuration",
         "operationId": "getSystemConfig",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -187,8 +187,8 @@
         ],
         "summary": "Replace the system configuration",
         "operationId": "updateSystemConfig",
-        "x-astrbot-scope": "config",
-        "x-astrbot-sensitive-scopes": [
+        "x-bot-scope": "config",
+        "x-bot-sensitive-scopes": [
           "config:edit_admin"
         ],
         "requestBody": {
@@ -216,7 +216,7 @@
         ],
         "summary": "Get runtime-enriched system configuration metadata",
         "operationId": "getSystemConfigRuntime",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -232,7 +232,7 @@
         ],
         "summary": "Get the configuration profile schema",
         "operationId": "getConfigProfileSchema",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -248,7 +248,7 @@
         ],
         "summary": "List configuration profiles",
         "operationId": "listConfigProfiles",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -262,8 +262,8 @@
         ],
         "summary": "Create a configuration profile",
         "operationId": "createConfigProfile",
-        "x-astrbot-scope": "config",
-        "x-astrbot-sensitive-scopes": [
+        "x-bot-scope": "config",
+        "x-bot-sensitive-scopes": [
           "config:edit_admin"
         ],
         "requestBody": {
@@ -291,7 +291,7 @@
         ],
         "summary": "Get a configuration profile",
         "operationId": "getConfigProfile",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConfigId"
@@ -310,8 +310,8 @@
         ],
         "summary": "Replace a configuration profile",
         "operationId": "updateConfigProfileContent",
-        "x-astrbot-scope": "config",
-        "x-astrbot-sensitive-scopes": [
+        "x-bot-scope": "config",
+        "x-bot-sensitive-scopes": [
           "config:edit_admin"
         ],
         "parameters": [
@@ -342,7 +342,7 @@
         ],
         "summary": "Rename a configuration profile",
         "operationId": "renameConfigProfile",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConfigId"
@@ -371,7 +371,7 @@
         ],
         "summary": "Delete a configuration profile",
         "operationId": "deleteConfigProfile",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConfigId"
@@ -392,7 +392,7 @@
         ],
         "summary": "List UMO to configuration profile bindings",
         "operationId": "listConfigRoutes",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -406,7 +406,7 @@
         ],
         "summary": "Replace all UMO to configuration profile bindings",
         "operationId": "replaceConfigRoutes",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "requestBody": {
           "required": true,
           "content": {
@@ -432,7 +432,7 @@
         ],
         "summary": "Bind a UMO to a configuration profile",
         "operationId": "upsertConfigRoute",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/Umo"
@@ -461,7 +461,7 @@
         ],
         "summary": "Remove a UMO configuration profile binding",
         "operationId": "deleteConfigRoute",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/Umo"
@@ -482,7 +482,7 @@
         ],
         "summary": "List configurable bot types and their schemas",
         "operationId": "listBotTypes",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -498,7 +498,7 @@
         ],
         "summary": "Run a bot type registration flow action",
         "operationId": "registerBotType",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "name": "bot_type",
@@ -534,7 +534,7 @@
         ],
         "summary": "List created bots and their configurations",
         "operationId": "listBots",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "name": "enabled",
@@ -564,7 +564,7 @@
         ],
         "summary": "Create a bot from configuration",
         "operationId": "createBot",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "requestBody": {
           "required": true,
           "content": {
@@ -590,7 +590,7 @@
         ],
         "summary": "List runtime status for all bots",
         "operationId": "listBotStats",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -606,7 +606,7 @@
         ],
         "summary": "Get a bot configuration by query ID",
         "operationId": "getBotById",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "name": "bot_id",
@@ -630,7 +630,7 @@
         ],
         "summary": "Replace a bot configuration by body ID",
         "operationId": "updateBotById",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "requestBody": {
           "required": true,
           "content": {
@@ -667,7 +667,7 @@
         ],
         "summary": "Delete a bot by query ID",
         "operationId": "deleteBotById",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "name": "bot_id",
@@ -696,7 +696,7 @@
         ],
         "summary": "Enable or disable a bot by body ID",
         "operationId": "setBotEnabledById",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "requestBody": {
           "required": true,
           "content": {
@@ -735,7 +735,7 @@
         ],
         "summary": "Test a bot registration or connection by body ID",
         "operationId": "testBotById",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "requestBody": {
           "required": true,
           "content": {
@@ -770,7 +770,7 @@
         ],
         "summary": "Get a bot configuration",
         "operationId": "getBot",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "$ref": "#/components/parameters/BotId"
@@ -789,7 +789,7 @@
         ],
         "summary": "Replace a bot configuration",
         "operationId": "updateBot",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "$ref": "#/components/parameters/BotId"
@@ -818,7 +818,7 @@
         ],
         "summary": "Delete a bot",
         "operationId": "deleteBot",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "$ref": "#/components/parameters/BotId"
@@ -842,7 +842,7 @@
         ],
         "summary": "Enable or disable a bot",
         "operationId": "setBotEnabled",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "$ref": "#/components/parameters/BotId"
@@ -873,7 +873,7 @@
         ],
         "summary": "Test a bot registration or connection",
         "operationId": "testBot",
-        "x-astrbot-scope": "bot",
+        "x-bot-scope": "bot",
         "parameters": [
           {
             "$ref": "#/components/parameters/BotId"
@@ -894,7 +894,7 @@
         ],
         "summary": "Get the overall provider configuration schema",
         "operationId": "getProviderSchema",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -910,7 +910,7 @@
         ],
         "summary": "List provider sources",
         "operationId": "listProviderSources",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -924,7 +924,7 @@
         ],
         "summary": "Create a provider source",
         "operationId": "createProviderSource",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -950,7 +950,7 @@
         ],
         "summary": "Get a provider source by query ID",
         "operationId": "getProviderSourceById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "source_id",
@@ -974,7 +974,7 @@
         ],
         "summary": "Update a provider source by body ID",
         "operationId": "upsertProviderSourceById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1011,7 +1011,7 @@
         ],
         "summary": "Delete a provider source by query ID",
         "operationId": "deleteProviderSourceById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "source_id",
@@ -1037,7 +1037,7 @@
         ],
         "summary": "List models available from a provider source by query ID",
         "operationId": "listProviderSourceModelsById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "source_id",
@@ -1070,7 +1070,7 @@
         ],
         "summary": "List providers under a provider source by query ID",
         "operationId": "listProvidersBySourceId",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "source_id",
@@ -1101,7 +1101,7 @@
         ],
         "summary": "Create a provider under a provider source by body ID",
         "operationId": "createProviderInSourceById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1140,7 +1140,7 @@
         ],
         "summary": "Get a provider source",
         "operationId": "getProviderSource",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -1159,7 +1159,7 @@
         ],
         "summary": "Update a provider source or create it if missing",
         "operationId": "upsertProviderSource",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -1188,7 +1188,7 @@
         ],
         "summary": "Delete a provider source and providers that reference it",
         "operationId": "deleteProviderSource",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -1209,7 +1209,7 @@
         ],
         "summary": "List models available from a provider source",
         "operationId": "listProviderSourceModels",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -1237,7 +1237,7 @@
         ],
         "summary": "List providers under a provider source",
         "operationId": "listProvidersBySource",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -1263,7 +1263,7 @@
         ],
         "summary": "Create a provider under a provider source",
         "operationId": "createProviderInSource",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -1294,7 +1294,7 @@
         ],
         "summary": "List providers by capability or source",
         "operationId": "listProviders",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "capability",
@@ -1331,7 +1331,7 @@
         ],
         "summary": "Create a standalone provider",
         "operationId": "createProvider",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1357,7 +1357,7 @@
         ],
         "summary": "Get a provider configuration by query ID",
         "operationId": "getProviderById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "provider_id",
@@ -1389,7 +1389,7 @@
         ],
         "summary": "Replace a provider configuration by body ID",
         "operationId": "updateProviderById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1426,7 +1426,7 @@
         ],
         "summary": "Delete a provider by query ID",
         "operationId": "deleteProviderById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "name": "provider_id",
@@ -1452,7 +1452,7 @@
         ],
         "summary": "Enable or disable a provider by body ID",
         "operationId": "setProviderEnabledById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1491,7 +1491,7 @@
         ],
         "summary": "Test a provider by body ID",
         "operationId": "testProviderById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1526,7 +1526,7 @@
         ],
         "summary": "Probe embedding dimension for a provider by body ID",
         "operationId": "getProviderEmbeddingDimensionById",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "requestBody": {
           "required": true,
           "content": {
@@ -1564,7 +1564,7 @@
         ],
         "summary": "Get a provider configuration",
         "operationId": "getProvider",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/ProviderId"
@@ -1591,7 +1591,7 @@
         ],
         "summary": "Replace a provider configuration",
         "operationId": "updateProvider",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/ProviderId"
@@ -1620,7 +1620,7 @@
         ],
         "summary": "Delete a provider",
         "operationId": "deleteProvider",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/ProviderId"
@@ -1651,7 +1651,7 @@
         ],
         "summary": "Enable or disable a provider",
         "operationId": "setProviderEnabled",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/ProviderId"
@@ -1682,7 +1682,7 @@
         ],
         "summary": "Test a provider",
         "operationId": "testProvider",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/ProviderId"
@@ -1703,7 +1703,7 @@
         ],
         "summary": "Probe embedding dimension for a provider",
         "operationId": "getProviderEmbeddingDimension",
-        "x-astrbot-scope": "provider",
+        "x-bot-scope": "provider",
         "parameters": [
           {
             "$ref": "#/components/parameters/ProviderId"
@@ -1734,8 +1734,8 @@
         ],
         "summary": "Send a webchat message",
         "operationId": "sendChatMessage",
-        "x-astrbot-scope": "chat",
-        "x-astrbot-sensitive-scopes": [
+        "x-bot-scope": "chat",
+        "x-bot-sensitive-scopes": [
           "chat:admin"
         ],
         "requestBody": {
@@ -1765,8 +1765,8 @@
         "description": "Prefer an `X-API-Key` header (or `Authorization: ApiKey <key>`) when the client can set WebSocket handshake headers. The `api_key`/`key` query parameters exist for browsers that cannot; query strings are routinely recorded by access logs, proxies and Referer headers, so only use them with a short-lived key.\n\n**Required scope:** `chat`\n\n**Conditional sensitive scope:** `chat:admin`",
         "operationId": "openChatWebSocket",
         "x-websocket": true,
-        "x-astrbot-scope": "chat",
-        "x-astrbot-sensitive-scopes": [
+        "x-bot-scope": "chat",
+        "x-bot-sensitive-scopes": [
           "chat:admin"
         ],
         "parameters": [
@@ -1800,7 +1800,7 @@
         "summary": "List webchat sessions",
         "operationId": "listChatSessions",
         "description": "API-key requests return a paginated object and require username. Dashboard requests with page or page_size return the same paginated object (sessions, page, page_size, total), scoped to the authenticated user. Dashboard requests without pagination parameters retain the legacy array response, limited to 100 sessions. Paginated requests default to page 1 and page_size 20, with page_size clamped to 1–100.\n\n**Required scope:** `chat`",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/Page"
@@ -1830,7 +1830,7 @@
         ],
         "summary": "Create a webchat session",
         "operationId": "createChatSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "platform_id",
@@ -1856,7 +1856,7 @@
         ],
         "summary": "Delete multiple webchat sessions",
         "operationId": "batchDeleteChatSessions",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "requestBody": {
           "required": true,
           "content": {
@@ -1883,7 +1883,7 @@
         "summary": "Get a webchat session and its messages",
         "description": "Includes session metadata independently of the paginated session list.\n\n**Required scope:** `chat`",
         "operationId": "getChatSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -1920,7 +1920,7 @@
         ],
         "summary": "Update a webchat session",
         "operationId": "updateChatSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -1949,7 +1949,7 @@
         ],
         "summary": "Delete a webchat session",
         "operationId": "deleteChatSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -1970,7 +1970,7 @@
         ],
         "summary": "Stop active webchat work for a session",
         "operationId": "stopChatSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -1991,7 +1991,7 @@
         ],
         "summary": "Resume an active webchat run as an SSE stream",
         "operationId": "resumeChatRun",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "run_id",
@@ -2017,7 +2017,7 @@
         ],
         "summary": "Update the latest user message in a webchat session",
         "operationId": "updateChatMessage",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -2056,7 +2056,7 @@
         ],
         "summary": "Regenerate a bot message in a webchat session",
         "operationId": "regenerateChatMessage",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -2095,7 +2095,7 @@
         ],
         "summary": "List chat-selectable configuration profiles",
         "operationId": "listChatConfigs",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -2111,7 +2111,7 @@
         ],
         "summary": "Create or reuse a side thread from a webchat message",
         "operationId": "createChatThread",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "requestBody": {
           "required": true,
           "content": {
@@ -2137,7 +2137,7 @@
         ],
         "summary": "Get a webchat side thread",
         "operationId": "getChatThread",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "thread_id",
@@ -2161,7 +2161,7 @@
         ],
         "summary": "Delete a webchat side thread",
         "operationId": "deleteChatThread",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "thread_id",
@@ -2187,7 +2187,7 @@
         ],
         "summary": "Send a message inside a webchat side thread",
         "operationId": "sendChatThreadMessage",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "thread_id",
@@ -2223,7 +2223,7 @@
         ],
         "summary": "List ChatUI projects",
         "operationId": "listChatProjects",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -2237,7 +2237,7 @@
         ],
         "summary": "Create a ChatUI project",
         "operationId": "createChatProject",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "requestBody": {
           "required": true,
           "content": {
@@ -2263,7 +2263,7 @@
         ],
         "summary": "Get a ChatUI project",
         "operationId": "getChatProject",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2287,7 +2287,7 @@
         ],
         "summary": "Update a ChatUI project",
         "operationId": "updateChatProject",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2321,7 +2321,7 @@
         ],
         "summary": "Delete a ChatUI project",
         "operationId": "deleteChatProject",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2347,7 +2347,7 @@
         ],
         "summary": "List sessions in a ChatUI project",
         "operationId": "listChatProjectSessions",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2373,7 +2373,7 @@
         ],
         "summary": "List files in a ChatUI project workspace directory",
         "operationId": "listChatProjectWorkspaceFiles",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2417,7 +2417,7 @@
         ],
         "summary": "Read a file in a ChatUI project workspace",
         "operationId": "getChatProjectWorkspaceFile",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2460,7 +2460,7 @@
         ],
         "summary": "Download a file from a ChatUI project workspace",
         "operationId": "downloadChatProjectWorkspaceFile",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2511,7 +2511,7 @@
         ],
         "summary": "Add a session to a ChatUI project",
         "operationId": "addChatProjectSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "name": "project_id",
@@ -2540,7 +2540,7 @@
         ],
         "summary": "Remove a session from its ChatUI project",
         "operationId": "removeChatProjectSession",
-        "x-astrbot-scope": "chat",
+        "x-bot-scope": "chat",
         "parameters": [
           {
             "$ref": "#/components/parameters/SessionId"
@@ -2561,7 +2561,7 @@
         ],
         "summary": "Send a message to a UMO",
         "operationId": "sendImMessage",
-        "x-astrbot-scope": "im",
+        "x-bot-scope": "im",
         "requestBody": {
           "required": true,
           "content": {
@@ -2587,7 +2587,7 @@
         ],
         "summary": "List active IM bot IDs",
         "operationId": "listImBots",
-        "x-astrbot-scope": "im",
+        "x-bot-scope": "im",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -2603,7 +2603,7 @@
         ],
         "summary": "Upload a file",
         "operationId": "uploadFile",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2629,7 +2629,7 @@
         ],
         "summary": "Initialize chunked file upload",
         "operationId": "initFileUpload",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2655,7 +2655,7 @@
         ],
         "summary": "Upload a file chunk",
         "operationId": "uploadFileChunk",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2681,7 +2681,7 @@
         ],
         "summary": "Complete chunked file upload",
         "operationId": "completeFileUpload",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2707,7 +2707,7 @@
         ],
         "summary": "Abort chunked file upload",
         "operationId": "abortFileUpload",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2733,7 +2733,7 @@
         ],
         "summary": "Query chunked file upload status",
         "operationId": "statusFileUpload",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2759,7 +2759,7 @@
         ],
         "summary": "Upload a file",
         "operationId": "uploadOpenApiFile",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "requestBody": {
           "required": true,
           "content": {
@@ -2783,7 +2783,7 @@
         ],
         "summary": "Download an uploaded file by attachment ID",
         "operationId": "downloadOpenApiFile",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "parameters": [
           {
             "$ref": "#/components/parameters/AttachmentIdQuery"
@@ -2812,7 +2812,7 @@
         ],
         "summary": "Get an uploaded file by stored filename",
         "operationId": "getFileByName",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "parameters": [
           {
             "name": "filename",
@@ -2846,7 +2846,7 @@
         ],
         "summary": "Get attachment metadata",
         "operationId": "getAttachment",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "parameters": [
           {
             "$ref": "#/components/parameters/AttachmentId"
@@ -2865,7 +2865,7 @@
         ],
         "summary": "Delete an attachment",
         "operationId": "deleteAttachment",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "parameters": [
           {
             "$ref": "#/components/parameters/AttachmentId"
@@ -2886,7 +2886,7 @@
         ],
         "summary": "Download attachment content",
         "operationId": "downloadAttachment",
-        "x-astrbot-scope": "file",
+        "x-bot-scope": "file",
         "parameters": [
           {
             "$ref": "#/components/parameters/AttachmentId"
@@ -2915,7 +2915,7 @@
         ],
         "summary": "List installed plugins",
         "operationId": "listPlugins",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "include_reserved",
@@ -2948,7 +2948,7 @@
         ],
         "summary": "Get plugin details by query ID",
         "operationId": "getPluginById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -2972,7 +2972,7 @@
         ],
         "summary": "Uninstall a plugin by query ID",
         "operationId": "uninstallPluginById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3017,7 +3017,7 @@
         ],
         "summary": "Get plugin configuration by query ID",
         "operationId": "getPluginConfigById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3041,7 +3041,7 @@
         ],
         "summary": "Save plugin configuration by body ID",
         "operationId": "updatePluginConfigById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3080,7 +3080,7 @@
         ],
         "summary": "Get plugin configuration schema by query ID",
         "operationId": "getPluginConfigSchemaById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3106,7 +3106,7 @@
         ],
         "summary": "List uploaded files for a plugin file configuration item by query ID",
         "operationId": "listPluginConfigFilesById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3138,7 +3138,7 @@
         ],
         "summary": "Upload files for a plugin file configuration item by query ID",
         "operationId": "uploadPluginConfigFilesById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3181,7 +3181,7 @@
         ],
         "summary": "Delete a plugin file configuration upload by query ID",
         "operationId": "deletePluginConfigFileById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3217,7 +3217,7 @@
         ],
         "summary": "Get plugin README content by query ID",
         "operationId": "getPluginReadmeById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3243,7 +3243,7 @@
         ],
         "summary": "Get plugin CHANGELOG content by query ID",
         "operationId": "getPluginChangelogById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -3269,7 +3269,7 @@
         ],
         "summary": "Reload a plugin by body ID",
         "operationId": "reloadPluginById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3304,7 +3304,7 @@
         ],
         "summary": "Enable or disable a plugin by body ID",
         "operationId": "setPluginEnabledById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3343,7 +3343,7 @@
         ],
         "summary": "Get plugin details",
         "operationId": "getPlugin",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3362,7 +3362,7 @@
         ],
         "summary": "Uninstall a plugin",
         "operationId": "uninstallPlugin",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3402,7 +3402,7 @@
         ],
         "summary": "Get plugin configuration",
         "operationId": "getPluginConfig",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3421,7 +3421,7 @@
         ],
         "summary": "Save plugin configuration",
         "operationId": "updatePluginConfig",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3453,7 +3453,7 @@
         "summary": "Set plugin log level",
         "description": "Set the log level of a plugin. Pass null to follow the global log level.\n\n**Required scope:** `plugin`",
         "operationId": "updatePluginLogLevel",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3501,7 +3501,7 @@
         ],
         "summary": "Get plugin configuration schema",
         "operationId": "getPluginConfigSchema",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3522,7 +3522,7 @@
         ],
         "summary": "List uploaded files for a plugin file configuration item",
         "operationId": "listPluginConfigFiles",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3550,7 +3550,7 @@
         ],
         "summary": "Upload files for a plugin file configuration item",
         "operationId": "uploadPluginConfigFiles",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3591,7 +3591,7 @@
         ],
         "summary": "Delete a plugin file configuration upload",
         "operationId": "deletePluginConfigFile",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3622,7 +3622,7 @@
         ],
         "summary": "Get plugin README content",
         "operationId": "getPluginReadme",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3643,7 +3643,7 @@
         ],
         "summary": "Get plugin CHANGELOG content",
         "operationId": "getPluginChangelog",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3664,7 +3664,7 @@
         ],
         "summary": "Reload a plugin",
         "operationId": "reloadPlugin",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3685,7 +3685,7 @@
         ],
         "summary": "Bind an installed plugin to a marketplace source",
         "operationId": "bindPluginSource",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3716,7 +3716,7 @@
         ],
         "summary": "Enable or disable a plugin",
         "operationId": "setPluginEnabled",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3747,7 +3747,7 @@
         ],
         "summary": "Update or reinstall a plugin",
         "operationId": "updatePlugin",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3778,7 +3778,7 @@
         ],
         "summary": "Update multiple plugins",
         "operationId": "updatePlugins",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3804,7 +3804,7 @@
         ],
         "summary": "Check whether a plugin version constraint is supported",
         "operationId": "checkPluginVersionSupport",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3830,7 +3830,7 @@
         ],
         "summary": "Validate a plugin repository before installation",
         "operationId": "validatePluginRepo",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3856,7 +3856,7 @@
         ],
         "summary": "List failed plugins and errors",
         "operationId": "listFailedPlugins",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -3872,7 +3872,7 @@
         ],
         "summary": "Uninstall a failed plugin",
         "operationId": "uninstallFailedPlugin",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3912,7 +3912,7 @@
         ],
         "summary": "Reload a failed plugin",
         "operationId": "reloadFailedPlugin",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -3933,7 +3933,7 @@
         ],
         "summary": "Install a plugin from GitHub",
         "operationId": "installPluginFromGithub",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3959,7 +3959,7 @@
         ],
         "summary": "Install a plugin with a shallow Git clone",
         "operationId": "installPluginFromGit",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -3985,7 +3985,7 @@
         ],
         "summary": "Install a plugin from a downloadable ZIP URL",
         "operationId": "installPluginFromUrl",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -4011,7 +4011,7 @@
         ],
         "summary": "Install a plugin from an uploaded ZIP file",
         "operationId": "installPluginFromUpload",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -4037,7 +4037,7 @@
         ],
         "summary": "List plugin marketplace entries",
         "operationId": "listPluginMarket",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/Page"
@@ -4102,7 +4102,7 @@
         ],
         "summary": "List plugin marketplace categories",
         "operationId": "listPluginMarketCategories",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -4118,7 +4118,7 @@
         ],
         "summary": "List plugin sources",
         "operationId": "listPluginSources",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -4132,7 +4132,7 @@
         ],
         "summary": "Add a plugin source",
         "operationId": "createPluginSource",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -4156,7 +4156,7 @@
         ],
         "summary": "Replace plugin sources",
         "operationId": "replacePluginSources",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "requestBody": {
           "required": true,
           "content": {
@@ -4193,7 +4193,7 @@
         ],
         "summary": "Delete a plugin source",
         "operationId": "deletePluginSource",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/SourceId"
@@ -4214,7 +4214,7 @@
         ],
         "summary": "Delete a plugin source by query ID",
         "operationId": "deletePluginSourceById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "source_id",
@@ -4240,7 +4240,7 @@
         ],
         "summary": "List plugin views by query ID",
         "operationId": "listPluginViewsById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -4266,7 +4266,7 @@
         ],
         "summary": "Get plugin view entry HTML by query ID",
         "operationId": "getPluginViewById",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_id",
@@ -4300,7 +4300,7 @@
         ],
         "summary": "List plugin views",
         "operationId": "listPluginViews",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -4321,7 +4321,7 @@
         ],
         "summary": "Get plugin view entry HTML",
         "operationId": "getPluginView",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "$ref": "#/components/parameters/PluginId"
@@ -4350,7 +4350,7 @@
         ],
         "summary": "Proxy a plugin extension GET route",
         "operationId": "getPluginExtensionRoute",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_path",
@@ -4375,7 +4375,7 @@
         ],
         "summary": "Proxy a plugin extension POST route",
         "operationId": "postPluginExtensionRoute",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_path",
@@ -4416,7 +4416,7 @@
         ],
         "summary": "Proxy a plugin extension PUT route",
         "operationId": "putPluginExtensionRoute",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_path",
@@ -4450,7 +4450,7 @@
         ],
         "summary": "Proxy a plugin extension PATCH route",
         "operationId": "patchPluginExtensionRoute",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_path",
@@ -4484,7 +4484,7 @@
         ],
         "summary": "Proxy a plugin extension DELETE route",
         "operationId": "deletePluginExtensionRoute",
-        "x-astrbot-scope": "plugin",
+        "x-bot-scope": "plugin",
         "parameters": [
           {
             "name": "plugin_path",
@@ -4510,7 +4510,7 @@
         ],
         "summary": "List MCP servers",
         "operationId": "listMcpServers",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -4524,7 +4524,7 @@
         ],
         "summary": "Add an MCP server",
         "operationId": "createMcpServer",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "requestBody": {
           "required": true,
           "content": {
@@ -4550,7 +4550,7 @@
         ],
         "summary": "Update an MCP server by body name",
         "operationId": "updateMcpServerByName",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "requestBody": {
           "required": true,
           "content": {
@@ -4589,7 +4589,7 @@
         ],
         "summary": "Delete an MCP server by query name",
         "operationId": "deleteMcpServerByName",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "parameters": [
           {
             "name": "server_name",
@@ -4615,7 +4615,7 @@
         ],
         "summary": "Enable or disable an MCP server by body name",
         "operationId": "setMcpServerEnabledByName",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "requestBody": {
           "required": true,
           "content": {
@@ -4654,7 +4654,7 @@
         ],
         "summary": "Test an MCP server connection by body name",
         "operationId": "testMcpServerByName",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "requestBody": {
           "required": true,
           "content": {
@@ -4695,7 +4695,7 @@
         ],
         "summary": "Update an MCP server",
         "operationId": "updateMcpServer",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "parameters": [
           {
             "$ref": "#/components/parameters/ServerName"
@@ -4724,7 +4724,7 @@
         ],
         "summary": "Delete an MCP server",
         "operationId": "deleteMcpServer",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "parameters": [
           {
             "$ref": "#/components/parameters/ServerName"
@@ -4745,7 +4745,7 @@
         ],
         "summary": "Enable or disable an MCP server",
         "operationId": "setMcpServerEnabled",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "parameters": [
           {
             "$ref": "#/components/parameters/ServerName"
@@ -4776,7 +4776,7 @@
         ],
         "summary": "Test an MCP server connection",
         "operationId": "testMcpServer",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "parameters": [
           {
             "$ref": "#/components/parameters/ServerName"
@@ -4814,7 +4814,7 @@
         ],
         "summary": "Sync MCP servers from ModelScope",
         "operationId": "syncModelScopeMcpServers",
-        "x-astrbot-scope": "mcp",
+        "x-bot-scope": "mcp",
         "requestBody": {
           "required": false,
           "content": {
@@ -4840,7 +4840,7 @@
         ],
         "summary": "List skills",
         "operationId": "listSkills",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "enabled",
@@ -4870,7 +4870,7 @@
         ],
         "summary": "Upload or import a skill archive",
         "operationId": "uploadSkill",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -4896,7 +4896,7 @@
         ],
         "summary": "Upload multiple skill archives",
         "operationId": "uploadSkillsBatch",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -4934,7 +4934,7 @@
         ],
         "summary": "Update skill metadata or enabled state by body name",
         "operationId": "updateSkillByName",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -4973,7 +4973,7 @@
         ],
         "summary": "Delete a skill by query name",
         "operationId": "deleteSkillByName",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "skill_name",
@@ -4999,7 +4999,7 @@
         ],
         "summary": "Download a skill archive by query name",
         "operationId": "downloadSkillByName",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "skill_name",
@@ -5033,7 +5033,7 @@
         ],
         "summary": "List files in a skill by query name",
         "operationId": "listSkillFilesByName",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "skill_name",
@@ -5066,7 +5066,7 @@
         ],
         "summary": "Get skill file content by query name and path",
         "operationId": "getSkillFileByName",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "skill_name",
@@ -5098,7 +5098,7 @@
         ],
         "summary": "Update skill file content by body name and path",
         "operationId": "updateSkillFileByName",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5141,7 +5141,7 @@
         ],
         "summary": "Update skill metadata or enabled state",
         "operationId": "updateSkill",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "$ref": "#/components/parameters/SkillName"
@@ -5170,7 +5170,7 @@
         ],
         "summary": "Delete a skill",
         "operationId": "deleteSkill",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "$ref": "#/components/parameters/SkillName"
@@ -5191,7 +5191,7 @@
         ],
         "summary": "Download a skill archive",
         "operationId": "downloadSkill",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "$ref": "#/components/parameters/SkillName"
@@ -5220,7 +5220,7 @@
         ],
         "summary": "List files in a skill",
         "operationId": "listSkillFiles",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "$ref": "#/components/parameters/SkillName"
@@ -5248,7 +5248,7 @@
         ],
         "summary": "Get skill file content",
         "operationId": "getSkillFile",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "$ref": "#/components/parameters/SkillName"
@@ -5270,7 +5270,7 @@
         ],
         "summary": "Update skill file content",
         "operationId": "updateSkillFile",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "$ref": "#/components/parameters/SkillName"
@@ -5304,7 +5304,7 @@
         ],
         "summary": "List Shipyard Neo skill candidates",
         "operationId": "listNeoSkillCandidates",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "skill_key",
@@ -5336,7 +5336,7 @@
         ],
         "summary": "List Shipyard Neo skill releases",
         "operationId": "listNeoSkillReleases",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "skill_key",
@@ -5368,7 +5368,7 @@
         ],
         "summary": "Get a Shipyard Neo skill payload",
         "operationId": "getNeoSkillPayload",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "parameters": [
           {
             "name": "payload_ref",
@@ -5394,7 +5394,7 @@
         ],
         "summary": "Evaluate a Shipyard Neo skill candidate",
         "operationId": "evaluateNeoSkillCandidate",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5420,7 +5420,7 @@
         ],
         "summary": "Promote a Shipyard Neo skill candidate",
         "operationId": "promoteNeoSkillCandidate",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5446,7 +5446,7 @@
         ],
         "summary": "Roll back a Shipyard Neo skill release",
         "operationId": "rollbackNeoSkillRelease",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5472,7 +5472,7 @@
         ],
         "summary": "Sync a Shipyard Neo skill release",
         "operationId": "syncNeoSkillRelease",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5498,7 +5498,7 @@
         ],
         "summary": "Delete a Shipyard Neo skill candidate",
         "operationId": "deleteNeoSkillCandidate",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5524,7 +5524,7 @@
         ],
         "summary": "Delete a Shipyard Neo skill release",
         "operationId": "deleteNeoSkillRelease",
-        "x-astrbot-scope": "skill",
+        "x-bot-scope": "skill",
         "requestBody": {
           "required": true,
           "content": {
@@ -5550,7 +5550,7 @@
         ],
         "summary": "Get persona folder tree",
         "operationId": "getPersonaTree",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -5566,7 +5566,7 @@
         ],
         "summary": "List personas",
         "operationId": "listPersonas",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "name": "folder_id",
@@ -5589,7 +5589,7 @@
         ],
         "summary": "Create a persona",
         "operationId": "createPersona",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "requestBody": {
           "required": true,
           "content": {
@@ -5615,7 +5615,7 @@
         ],
         "summary": "Get a persona by query ID",
         "operationId": "getPersonaById",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "name": "persona_id",
@@ -5639,7 +5639,7 @@
         ],
         "summary": "Update a persona by body ID",
         "operationId": "updatePersonaById",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "requestBody": {
           "required": true,
           "content": {
@@ -5672,7 +5672,7 @@
         ],
         "summary": "Delete a persona by query ID",
         "operationId": "deletePersonaById",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "name": "persona_id",
@@ -5698,7 +5698,7 @@
         ],
         "summary": "Get a persona",
         "operationId": "getPersona",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "$ref": "#/components/parameters/PersonaId"
@@ -5717,7 +5717,7 @@
         ],
         "summary": "Update a persona",
         "operationId": "updatePersona",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "$ref": "#/components/parameters/PersonaId"
@@ -5746,7 +5746,7 @@
         ],
         "summary": "Delete a persona",
         "operationId": "deletePersona",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "$ref": "#/components/parameters/PersonaId"
@@ -5767,7 +5767,7 @@
         ],
         "summary": "List persona folders",
         "operationId": "listPersonaFolders",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "name": "parent_id",
@@ -5790,7 +5790,7 @@
         ],
         "summary": "Create a persona folder",
         "operationId": "createPersonaFolder",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "requestBody": {
           "required": true,
           "content": {
@@ -5816,7 +5816,7 @@
         ],
         "summary": "Update a persona folder",
         "operationId": "updatePersonaFolder",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "$ref": "#/components/parameters/FolderId"
@@ -5845,7 +5845,7 @@
         ],
         "summary": "Delete a persona folder",
         "operationId": "deletePersonaFolder",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "parameters": [
           {
             "$ref": "#/components/parameters/FolderId"
@@ -5866,7 +5866,7 @@
         ],
         "summary": "Move a persona or folder",
         "operationId": "movePersonaItem",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "requestBody": {
           "required": true,
           "content": {
@@ -5892,7 +5892,7 @@
         ],
         "summary": "Reorder personas or folders",
         "operationId": "reorderPersonaItems",
-        "x-astrbot-scope": "persona",
+        "x-bot-scope": "persona",
         "requestBody": {
           "required": true,
           "content": {
@@ -5918,7 +5918,7 @@
         ],
         "summary": "List active UMOs and session status",
         "operationId": "listSessions",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/Page"
@@ -5968,7 +5968,7 @@
         ],
         "summary": "List active and known UMOs",
         "operationId": "listActiveUmos",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "name": "platform_id",
@@ -5995,7 +5995,7 @@
         "summary": "Search known senders with source session names",
         "description": "Search recorded senders, deduplicate by platform instance and sender ID, then paginate in descending update order. Returns senders, page and has_more in the data object. Historical messages are not backfilled.\n\n**Required scope:** `data`",
         "operationId": "listSessionSenders",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/Page"
@@ -6045,7 +6045,7 @@
         ],
         "summary": "List session rules",
         "operationId": "listSessionRules",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/Page"
@@ -6074,7 +6074,7 @@
         ],
         "summary": "Update or create a session rule",
         "operationId": "upsertSessionRule",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6100,7 +6100,7 @@
         ],
         "summary": "Delete one or more session rules",
         "operationId": "deleteSessionRules",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6126,7 +6126,7 @@
         ],
         "summary": "Batch update session provider selection",
         "operationId": "batchUpdateSessionProvider",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6152,7 +6152,7 @@
         ],
         "summary": "Batch update session service settings",
         "operationId": "batchUpdateSessionService",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6178,7 +6178,7 @@
         ],
         "summary": "List session groups",
         "operationId": "listSessionGroups",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -6192,7 +6192,7 @@
         ],
         "summary": "Create a session group",
         "operationId": "createSessionGroup",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6218,7 +6218,7 @@
         ],
         "summary": "Update a session group",
         "operationId": "updateSessionGroup",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/GroupId"
@@ -6247,7 +6247,7 @@
         ],
         "summary": "Delete a session group",
         "operationId": "deleteSessionGroup",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/GroupId"
@@ -6268,7 +6268,7 @@
         ],
         "summary": "List conversation history data",
         "operationId": "listConversations",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/Page"
@@ -6403,7 +6403,7 @@
         ],
         "summary": "List available conversation filters",
         "operationId": "getConversationFilterOptions",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -6419,7 +6419,7 @@
         ],
         "summary": "Delete multiple conversations",
         "operationId": "batchDeleteConversations",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6445,7 +6445,7 @@
         ],
         "summary": "Get conversation details and messages",
         "operationId": "getConversation",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConversationId"
@@ -6472,7 +6472,7 @@
         ],
         "summary": "Update conversation metadata",
         "operationId": "updateConversation",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConversationId"
@@ -6509,7 +6509,7 @@
         ],
         "summary": "Delete a conversation",
         "operationId": "deleteConversation",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConversationId"
@@ -6538,7 +6538,7 @@
         ],
         "summary": "Replace conversation message history",
         "operationId": "replaceConversationMessages",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "parameters": [
           {
             "$ref": "#/components/parameters/ConversationId"
@@ -6577,7 +6577,7 @@
         ],
         "summary": "Export conversations",
         "operationId": "exportConversations",
-        "x-astrbot-scope": "data",
+        "x-bot-scope": "data",
         "requestBody": {
           "required": true,
           "content": {
@@ -6603,7 +6603,7 @@
         ],
         "summary": "List text-to-image templates",
         "operationId": "listT2iTemplates",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -6617,7 +6617,7 @@
         ],
         "summary": "Create a text-to-image template",
         "operationId": "createT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "requestBody": {
           "required": true,
           "content": {
@@ -6643,7 +6643,7 @@
         ],
         "summary": "Get active text-to-image template",
         "operationId": "getActiveT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -6657,7 +6657,7 @@
         ],
         "summary": "Set active text-to-image template",
         "operationId": "setActiveT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "requestBody": {
           "required": true,
           "content": {
@@ -6683,7 +6683,7 @@
         ],
         "summary": "Reset the default text-to-image template",
         "operationId": "resetDefaultT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -6699,7 +6699,7 @@
         ],
         "summary": "Get a text-to-image template",
         "operationId": "getT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/Name"
@@ -6718,7 +6718,7 @@
         ],
         "summary": "Update a text-to-image template",
         "operationId": "updateT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/Name"
@@ -6747,7 +6747,7 @@
         ],
         "summary": "Delete a text-to-image template",
         "operationId": "deleteT2iTemplate",
-        "x-astrbot-scope": "config",
+        "x-bot-scope": "config",
         "parameters": [
           {
             "$ref": "#/components/parameters/Name"

@@ -19,7 +19,7 @@ outline: deep
 2. 点击右上角的 `Use this template`
 3. 然后点击 `Create new repository`。
 4. 在 `Repository name` 处填写您的插件名。插件名格式:
-   - 推荐以 `astrbot_plugin_` 开头；
+   - 推荐以 `bot_plugin_` 开头；
    - 不能包含空格；
    - 保持全部字母小写；
    - 尽量简短。

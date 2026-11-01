@@ -1,8 +1,8 @@
 import pytest
 
-import astrbot.core.provider.sources.bailian_rerank_source as bailian_rerank_module
-from astrbot.core.config.default import CONFIG_METADATA_2
-from astrbot.core.provider.sources.bailian_rerank_source import (
+import bot.core.provider.sources.bailian_rerank_source as bailian_rerank_module
+from bot.core.config.default import CONFIG_METADATA_2
+from bot.core.provider.sources.bailian_rerank_source import (
     BailianRerankProvider,
 )
 

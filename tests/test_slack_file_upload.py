@@ -5,14 +5,14 @@ from unittest.mock import AsyncMock
 import pytest
 from slack_sdk.web.internal_utils import _to_v2_file_upload_item
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import File, Plain
-from astrbot.core.platform import MessageType
-from astrbot.core.platform.astr_message_event import MessageSession
-from astrbot.core.platform.platform import Platform
-from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
-from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
-from astrbot.core.utils import media_utils
+from bot.api.event import MessageChain
+from bot.api.message_components import File, Plain
+from bot.core.platform import MessageType
+from bot.core.platform.bot_message_event import MessageSession
+from bot.core.platform.platform import Platform
+from bot.core.platform.sources.slack.slack_adapter import SlackAdapter
+from bot.core.platform.sources.slack.slack_event import SlackMessageEvent
+from bot.core.utils import media_utils
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def download(monkeypatch, tmp_path):
         target.write_bytes(b"# README\n")
         paths.append(target)
 
-    monkeypatch.setattr(media_utils, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(media_utils, "get_bot_temp_path", lambda: str(tmp_path))
     mock = AsyncMock(side_effect=fake_download)
     monkeypatch.setattr(media_utils, "download_file", mock)
     return mock, paths

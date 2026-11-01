@@ -1,6 +1,6 @@
 import pytest
 
-from astrbot.core.utils import io
+from bot.core.utils import io
 
 
 class _FakeContent:

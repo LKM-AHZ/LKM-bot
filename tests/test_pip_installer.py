@@ -7,12 +7,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.utils import core_constraints as core_constraints_module
-from astrbot.core.utils import pip_installer as pip_installer_module
-from astrbot.core.utils import requirements_utils
-from astrbot.core.utils.pip_installer import PipInstaller
+from bot.core.utils import core_constraints as core_constraints_module
+from bot.core.utils import pip_installer as pip_installer_module
+from bot.core.utils import requirements_utils
+from bot.core.utils.pip_installer import PipInstaller
 
-WINDOWS_RUNTIME_ROOT = ntpath.join(r"C:\astrbot-test", "backend", "python")
+WINDOWS_RUNTIME_ROOT = ntpath.join(r"C:\bot-test", "backend", "python")
 WINDOWS_RUNTIME_EXECUTABLE = ntpath.join(WINDOWS_RUNTIME_ROOT, "python.exe")
 WINDOWS_PACKAGED_RUNTIME_EXECUTABLE = f"\\\\?\\{WINDOWS_RUNTIME_EXECUTABLE}"
 WINDOWS_RUNTIME_INCLUDE_DIR = ntpath.join(WINDOWS_RUNTIME_ROOT, "include")
@@ -55,9 +55,9 @@ def _configure_run_pip_in_process_capture(
         return 0
 
     if packaged_runtime:
-        monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+        monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     else:
-        monkeypatch.delenv("ASTRBOT_DESKTOP_CLIENT", raising=False)
+        monkeypatch.delenv("BOT_DESKTOP_CLIENT", raising=False)
 
     if include_value is _ENV_MISSING:
         monkeypatch.delenv("INCLUDE", raising=False)
@@ -80,7 +80,7 @@ def _configure_run_pip_in_process_capture(
         )
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
     return observed_env
@@ -96,7 +96,7 @@ def configure_run_pip_in_process_capture(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_install_targets_site_packages_for_desktop_client(monkeypatch, tmp_path):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -106,15 +106,15 @@ async def test_install_targets_site_packages_for_desktop_client(monkeypatch, tmp
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._prepend_sys_path",
+        "bot.core.utils.pip_installer._prepend_sys_path",
         lambda path: prepend_sys_path_calls.append(path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
+        "bot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
         lambda path, requirements: ensure_preferred_calls.append((path, requirements)),
     )
 
@@ -134,7 +134,7 @@ async def test_install_targets_site_packages_for_desktop_client(monkeypatch, tmp
 async def test_install_keeps_target_upgrade_enabled_by_default_for_desktop_client(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -142,7 +142,7 @@ async def test_install_keeps_target_upgrade_enabled_by_default_for_desktop_clien
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
 
@@ -160,7 +160,7 @@ async def test_install_keeps_target_upgrade_enabled_by_default_for_desktop_clien
 async def test_install_skips_target_upgrade_when_disabled_for_desktop_client(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -168,7 +168,7 @@ async def test_install_skips_target_upgrade_when_disabled_for_desktop_client(
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
 
@@ -204,11 +204,11 @@ async def test_run_pip_in_process_streams_output_lines(monkeypatch):
             loop.call_soon_threadsafe(first_line_seen.set)
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.logger.info",
+        "bot.core.utils.pip_installer.logger.info",
         record_log,
     )
 
@@ -242,11 +242,11 @@ async def test_run_pip_in_process_preserves_shared_stream_order(monkeypatch):
         return 0
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.logger.info",
+        "bot.core.utils.pip_installer.logger.info",
         lambda line, *args: logged_lines.append(line % args if args else line),
     )
 
@@ -269,11 +269,11 @@ async def test_run_pip_in_process_preserves_blank_lines(monkeypatch):
         return 0
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.logger.info",
+        "bot.core.utils.pip_installer.logger.info",
         lambda line, *args: logged_lines.append(line % args if args else line),
     )
 
@@ -300,11 +300,11 @@ async def test_run_pip_in_process_preserves_trailing_blank_line_on_flush(monkeyp
         return 0
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.logger.info",
+        "bot.core.utils.pip_installer.logger.info",
         lambda line, *args: logged_lines.append(line % args if args else line),
     )
 
@@ -330,11 +330,11 @@ async def test_run_pip_in_process_normalizes_crlf_without_extra_blank_lines(
         return 0
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.logger.info",
+        "bot.core.utils.pip_installer.logger.info",
         lambda line, *args: logged_lines.append(line % args if args else line),
     )
 
@@ -376,7 +376,7 @@ async def test_run_pip_in_process_normalizes_crlf_without_extra_blank_lines(
             r"\\server\share\include",
         ),
         (
-            "C:/astrbot-test/backend/python/libs",
+            "C:/bot-test/backend/python/libs",
             WINDOWS_RUNTIME_LIBS_DIR,
         ),
     ],
@@ -410,7 +410,7 @@ def test_build_packaged_windows_runtime_build_env_uses_base_env_snapshot(
     process_include = ntpath.join(r"C:\process-toolchain", "include")
     process_lib = ntpath.join(r"C:\process-toolchain", "lib")
 
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.setenv("INCLUDE", process_include)
     monkeypatch.setenv("LIB", process_lib)
     monkeypatch.setattr(pip_installer_module.sys, "platform", "win32")
@@ -444,7 +444,7 @@ def test_build_packaged_windows_runtime_build_env_matches_snapshot_keys_case_ins
     snapshot_include = ntpath.join(r"C:\snapshot-toolchain", "include")
     snapshot_lib = ntpath.join(r"C:\snapshot-toolchain", "lib")
 
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.setattr(pip_installer_module.sys, "platform", "win32")
     monkeypatch.setattr(
         pip_installer_module.sys,
@@ -663,7 +663,7 @@ async def test_run_pip_in_process_classifies_nonstandard_conflict_output(monkeyp
     def fake_pip_main(args):
         del args
         print(
-            "Cannot install demo-package and astrbot-core because these package "
+            "Cannot install demo-package and bot-core because these package "
             "versions have conflicting dependencies."
         )
         print("The conflict is caused by:")
@@ -672,7 +672,7 @@ async def test_run_pip_in_process_classifies_nonstandard_conflict_output(monkeyp
         return 1
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
 
@@ -732,7 +732,7 @@ async def test_run_pip_in_process_bounds_retained_conflict_lines(monkeypatch):
         for index in range(10):
             print(f"noise-{index}")
         print(
-            "Cannot install demo-package and astrbot-core because these package "
+            "Cannot install demo-package and bot-core because these package "
             "versions have conflicting dependencies."
         )
         print("The conflict is caused by:")
@@ -741,10 +741,10 @@ async def test_run_pip_in_process_bounds_retained_conflict_lines(monkeypatch):
         return 1
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._get_pip_main",
+        "bot.core.utils.pip_installer._get_pip_main",
         lambda: fake_pip_main,
     )
-    monkeypatch.setattr("astrbot.core.utils.pip_installer._MAX_PIP_OUTPUT_LINES", 4)
+    monkeypatch.setattr("bot.core.utils.pip_installer._MAX_PIP_OUTPUT_LINES", 4)
 
     installer = PipInstaller("")
     with pytest.raises(pip_installer_module.DependencyConflictError) as exc_info:
@@ -930,7 +930,7 @@ def test_get_core_constraints_caches_fallback_resolution(monkeypatch):
 
         def read_text(self, name):
             if name == "top_level.txt":
-                return "astrbot\n"
+                return "bot\n"
             return ""
 
     fake_distribution = FakeFallbackDistribution()
@@ -995,7 +995,7 @@ def test_get_core_constraints_skips_distributions_with_unreadable_top_level(
 
         def read_text(self, name):
             if name == "top_level.txt":
-                return "astrbot\n"
+                return "bot\n"
             return ""
 
     broken_distribution = BrokenDistribution()
@@ -1053,7 +1053,7 @@ def test_core_constraints_file_propagates_inner_conflict_without_fake_warning(
         lambda core_dist_name: ("aiohttp==3.13.3",),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.core_constraints.logger.warning",
+        "bot.core.utils.core_constraints.logger.warning",
         lambda line, *args: warning_logs.append(line % args if args else line),
     )
 
@@ -1073,7 +1073,7 @@ def test_core_constraints_file_propagates_inner_conflict_without_fake_warning(
 async def test_install_adds_desktop_core_lock_constraints_for_packaged_runtime(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     lock_path = tmp_path / "runtime-core-lock.json"
@@ -1092,7 +1092,7 @@ async def test_install_adds_desktop_core_lock_constraints_for_packaged_runtime(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CORE_LOCK_PATH", str(lock_path))
+    monkeypatch.setenv("BOT_DESKTOP_CORE_LOCK_PATH", str(lock_path))
 
     site_packages_path = tmp_path / "site-packages"
     captured_constraints = []
@@ -1105,11 +1105,11 @@ async def test_install_adds_desktop_core_lock_constraints_for_packaged_runtime(
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", capture_pip_args)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
+        "bot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
         lambda path, requirements: None,
     )
 
@@ -1123,7 +1123,7 @@ async def test_install_adds_desktop_core_lock_constraints_for_packaged_runtime(
 def test_ensure_plugin_dependencies_preferred_skips_desktop_core_lock_modules(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     lock_path = tmp_path / "runtime-core-lock.json"
     lock_path.write_text(
         json.dumps(
@@ -1140,7 +1140,7 @@ def test_ensure_plugin_dependencies_preferred_skips_desktop_core_lock_modules(
         ),
         encoding="utf-8",
     )
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CORE_LOCK_PATH", str(lock_path))
+    monkeypatch.setenv("BOT_DESKTOP_CORE_LOCK_PATH", str(lock_path))
 
     preferred_calls = []
 
@@ -1268,7 +1268,7 @@ async def test_install_splits_three_bare_packages(monkeypatch):
 async def test_install_tracks_multiline_packages_for_desktop_client(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -1277,15 +1277,15 @@ async def test_install_tracks_multiline_packages_for_desktop_client(
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._prepend_sys_path",
+        "bot.core.utils.pip_installer._prepend_sys_path",
         lambda path: None,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
+        "bot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
         lambda path, requirements: ensure_preferred_calls.append((path, requirements)),
     )
 
@@ -1383,7 +1383,7 @@ async def test_install_keeps_single_requirement_with_version_range_intact(monkey
 async def test_install_tracks_only_real_requirement_names_for_spaced_single_requirement(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -1392,15 +1392,15 @@ async def test_install_tracks_only_real_requirement_names_for_spaced_single_requ
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._prepend_sys_path",
+        "bot.core.utils.pip_installer._prepend_sys_path",
         lambda path: None,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
+        "bot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
         lambda path, requirements: ensure_preferred_calls.append((path, requirements)),
     )
 
@@ -1413,7 +1413,7 @@ async def test_install_tracks_only_real_requirement_names_for_spaced_single_requ
 def test_prefer_installed_dependencies_prefers_modules_for_requirements_in_desktop_runtime(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -1425,15 +1425,15 @@ def test_prefer_installed_dependencies_prefers_modules_for_requirements_in_deskt
     preferred_calls = []
 
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._prepend_sys_path",
+        "bot.core.utils.pip_installer._prepend_sys_path",
         lambda path: prepend_calls.append(path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
+        "bot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
         lambda path, requirements: preferred_calls.append((path, requirements)),
     )
 
@@ -1529,7 +1529,7 @@ async def test_install_splits_single_line_option_with_url(monkeypatch):
 async def test_install_tracks_requirement_name_for_single_line_option_input(
     monkeypatch, tmp_path
 ):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_CLIENT", "1")
+    monkeypatch.setenv("BOT_DESKTOP_CLIENT", "1")
     monkeypatch.delattr("sys.frozen", raising=False)
 
     site_packages_path = tmp_path / "site-packages"
@@ -1538,15 +1538,15 @@ async def test_install_tracks_requirement_name_for_single_line_option_input(
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.get_astrbot_site_packages_path",
+        "bot.core.utils.pip_installer.get_bot_site_packages_path",
         lambda: str(site_packages_path),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._prepend_sys_path",
+        "bot.core.utils.pip_installer._prepend_sys_path",
         lambda path: None,
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
+        "bot.core.utils.pip_installer._ensure_plugin_dependencies_preferred",
         lambda path, requirements: ensure_preferred_calls.append((path, requirements)),
     )
 
@@ -1824,7 +1824,7 @@ async def test_install_logs_redacted_pip_argv_when_credentials_present(monkeypat
 
     monkeypatch.setattr(PipInstaller, "_run_pip_in_process", run_pip)
     monkeypatch.setattr(
-        "astrbot.core.utils.pip_installer.logger.info",
+        "bot.core.utils.pip_installer.logger.info",
         lambda line, *args: logged_lines.append(line % args if args else line),
     )
 

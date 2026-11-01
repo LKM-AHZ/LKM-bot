@@ -4,37 +4,37 @@ import pytest
 import pytest_asyncio
 from aiohttp import web
 
-from astrbot import __version__
-from astrbot.core.provider.headers import DEFAULT_USER_AGENT, build_provider_headers
-from astrbot.core.provider.sources.anthropic_source import ProviderAnthropic
-from astrbot.core.provider.sources.bailian_rerank_source import BailianRerankProvider
-from astrbot.core.provider.sources.dashscope_embedding_source import (
+from bot import __version__
+from bot.core.provider.headers import DEFAULT_USER_AGENT, build_provider_headers
+from bot.core.provider.sources.anthropic_source import ProviderAnthropic
+from bot.core.provider.sources.bailian_rerank_source import BailianRerankProvider
+from bot.core.provider.sources.dashscope_embedding_source import (
     DashScopeEmbeddingProvider,
 )
-from astrbot.core.provider.sources.gemini_embedding_source import (
+from bot.core.provider.sources.gemini_embedding_source import (
     GeminiEmbeddingProvider,
 )
-from astrbot.core.provider.sources.gemini_source import ProviderGoogleGenAI
-from astrbot.core.provider.sources.gemini_tts_source import ProviderGeminiTTSAPI
-from astrbot.core.provider.sources.kimi_code_source import ProviderKimiCode
-from astrbot.core.provider.sources.nvidia_embedding_source import (
+from bot.core.provider.sources.gemini_source import ProviderGoogleGenAI
+from bot.core.provider.sources.gemini_tts_source import ProviderGeminiTTSAPI
+from bot.core.provider.sources.kimi_code_source import ProviderKimiCode
+from bot.core.provider.sources.nvidia_embedding_source import (
     NvidiaEmbeddingProvider,
 )
-from astrbot.core.provider.sources.nvidia_rerank_source import NvidiaRerankProvider
-from astrbot.core.provider.sources.ollama_embedding_source import (
+from bot.core.provider.sources.nvidia_rerank_source import NvidiaRerankProvider
+from bot.core.provider.sources.ollama_embedding_source import (
     OllamaEmbeddingProvider,
 )
-from astrbot.core.provider.sources.openai_embedding_source import (
+from bot.core.provider.sources.openai_embedding_source import (
     OpenAIEmbeddingProvider,
 )
-from astrbot.core.provider.sources.openai_responses_source import (
+from bot.core.provider.sources.openai_responses_source import (
     ProviderOpenAIResponses,
 )
-from astrbot.core.provider.sources.openai_source import ProviderOpenAIOfficial
-from astrbot.core.provider.sources.openai_tts_api_source import ProviderOpenAITTSAPI
-from astrbot.core.provider.sources.tei_rerank_source import TEIRerankProvider
-from astrbot.core.provider.sources.vllm_rerank_source import VLLMRerankProvider
-from astrbot.core.provider.sources.whisper_api_source import ProviderOpenAIWhisperAPI
+from bot.core.provider.sources.openai_source import ProviderOpenAIOfficial
+from bot.core.provider.sources.openai_tts_api_source import ProviderOpenAITTSAPI
+from bot.core.provider.sources.tei_rerank_source import TEIRerankProvider
+from bot.core.provider.sources.vllm_rerank_source import VLLMRerankProvider
+from bot.core.provider.sources.whisper_api_source import ProviderOpenAIWhisperAPI
 
 
 @pytest.mark.parametrize(
@@ -42,7 +42,7 @@ from astrbot.core.provider.sources.whisper_api_source import ProviderOpenAIWhisp
 )
 def test_provider_headers_default_to_current_version(custom_headers):
     assert build_provider_headers(custom_headers) == {
-        "User-Agent": f"astrbot/{__version__}"
+        "User-Agent": f"bot/{__version__}"
     }
 
 
@@ -195,7 +195,7 @@ async def test_edge_tts_synthesis_preserves_sdk_user_agent(
     monkeypatch, unused_tcp_port
 ):
     edge_tts = pytest.importorskip("edge_tts")
-    from astrbot.core.provider.sources import edge_tts_source  # noqa: F401
+    from bot.core.provider.sources import edge_tts_source  # noqa: F401
 
     requests = []
 

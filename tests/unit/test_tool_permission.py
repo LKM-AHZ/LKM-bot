@@ -4,13 +4,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core import sp
-from astrbot.core.agent.tool import FunctionTool
-from astrbot.core.provider.func_tool_manager import (
+from bot.core import sp
+from bot.core.agent.tool import FunctionTool
+from bot.core.provider.func_tool_manager import (
     FunctionToolManager,
     _PermissionGuardedTool,
 )
-from astrbot.dashboard.services.tools_service import ToolsService, ToolsServiceError
+from bot.dashboard.services.tools_service import ToolsService, ToolsServiceError
 
 # ── helpers ──────────────────────────────────────────────────────────
 
@@ -31,12 +31,12 @@ def _make_context(role: str = "member", sender_id: str = "user_123"):
         def get_config(self, umo: str | None = None):
             return {}
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     return FakeWrapper()
 
@@ -67,9 +67,9 @@ def _make_tools_service(
     """
     service = ToolsService.__new__(ToolsService)
     service.core_lifecycle = MagicMock()
-    service.core_lifecycle.astrbot_config_mgr = MagicMock()
-    service.core_lifecycle.astrbot_config_mgr.get_conf_list.return_value = []
-    service.core_lifecycle.astrbot_config_mgr.confs = {}
+    service.core_lifecycle.bot_config_mgr = MagicMock()
+    service.core_lifecycle.bot_config_mgr.get_conf_list.return_value = []
+    service.core_lifecycle.bot_config_mgr.confs = {}
     service.tool_mgr = tool_mgr or FunctionToolManager()
     return service
 
@@ -298,7 +298,7 @@ async def test_guarded_tool_handles_async_generator_handler():
 
 
 def test_get_full_tool_set_excludes_builtin_tools():
-    """Builtin tools are added separately by astr_main_agent.py, not through
+    """Builtin tools are added separately by bot_main_agent.py, not through
     get_full_tool_set()."""
     mgr = FunctionToolManager()
     tool_set = mgr.get_full_tool_set()
@@ -306,7 +306,7 @@ def test_get_full_tool_set_excludes_builtin_tools():
     names = {t.name for t in tool_set.tools}
     # Builtin tools are injected individually by the agent builder —
     # they must NOT appear in the generic tool set.
-    assert "astrbot_execute_shell" not in names
+    assert "bot_execute_shell" not in names
 
 
 def test_get_full_tool_set_wraps_non_builtin():
@@ -349,7 +349,7 @@ class TestGetToolListPermission:
         service = _make_tools_service()
         tools = await service.get_tool_list()
 
-        target = next(t for t in tools if t["name"] == "astrbot_execute_shell")
+        target = next(t for t in tools if t["name"] == "bot_execute_shell")
         assert "permission" not in target
         assert "permission_configured" not in target
         assert target["readonly"] is True
@@ -408,7 +408,7 @@ class TestUpdateToolPermission:
 
         with pytest.raises(ToolsServiceError, match="Builtin"):
             await service.update_tool_permission(
-                {"name": "astrbot_execute_shell", "permission": "admin"}
+                {"name": "bot_execute_shell", "permission": "admin"}
             )
 
     @pytest.mark.asyncio

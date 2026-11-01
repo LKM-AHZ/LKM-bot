@@ -9,31 +9,31 @@ import botpy.message
 import pytest
 from botpy import ConnectionSession
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import At, Image, Plain, Reply
-from astrbot.core.platform import Group
-from astrbot.core.message.message_event_result import (
+from bot.api.event import MessageChain
+from bot.api.message_components import At, Image, Plain, Reply
+from bot.core.platform import Group
+from bot.core.message.message_event_result import (
     MessageEventResult,
     ResultContentType,
 )
-from astrbot.core.pipeline.respond.stage import RespondStage
-from astrbot.core.pipeline.result_decorate.stage import ResultDecorateStage
-from astrbot.core.platform.message_session import MessageSession
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.sources.qqofficial import qqofficial_group_info
-from astrbot.core.platform.sources.qqofficial.qqofficial_group_info import get_qq_group
-from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import (
+from bot.core.pipeline.respond.stage import RespondStage
+from bot.core.pipeline.result_decorate.stage import ResultDecorateStage
+from bot.core.platform.message_session import MessageSession
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.sources.qqofficial import qqofficial_group_info
+from bot.core.platform.sources.qqofficial.qqofficial_group_info import get_qq_group
+from bot.core.platform.sources.qqofficial.qqofficial_message_event import (
     QQOfficialMessageEvent,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
+from bot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
     PatchedMessage,
     QQOfficialPlatformAdapter,
     _ensure_group_message_create_parser,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
+from bot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
     botClient as QQOfficialBotClient,
 )
-from astrbot.core.platform.sources.qqofficial_webhook.qo_webhook_adapter import (
+from bot.core.platform.sources.qqofficial_webhook.qo_webhook_adapter import (
     QQOfficialWebhookPlatformAdapter,
 )
 
@@ -512,7 +512,7 @@ async def test_group_info_cache_is_bounded_and_timeout_preserves_messages(monkey
     bot = SimpleNamespace(api=SimpleNamespace(_http=SimpleNamespace(request=request)))
     for group_id in ("1", "2", "1", "3"):
         await get_qq_group(bot, Group(group_id=group_id))
-    assert list(bot._astrbot_group_info_cache) == ["1", "3"]
+    assert list(bot._bot_group_info_cache) == ["1", "3"]
     assert request.await_count == 3
 
     monkeypatch.setattr(qqofficial_group_info, "GROUP_INFO_REQUEST_TIMEOUT", 0.01)
@@ -699,7 +699,7 @@ async def test_media_upload_propagates_qq_api_error(monkeypatch):
         bot=SimpleNamespace(api=SimpleNamespace(_http=SimpleNamespace(request=request)))
     )
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.qqofficial.qqofficial_message_event._qqofficial_retry",
+        "bot.core.platform.sources.qqofficial.qqofficial_message_event._qqofficial_retry",
         lambda *args, **kwargs: lambda func: func,
     )
 
@@ -799,7 +799,7 @@ async def test_result_decorate_segments_qqofficial_ws_plain_result():
                     get_using_tts_provider_async=AsyncMock(return_value=None)
                 )
             ),
-            astrbot_config={
+            bot_config={
                 "provider_tts_settings": {
                     "enable": False,
                     "use_file_service": False,

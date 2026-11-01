@@ -10,7 +10,7 @@ Covers:
 6. Dimension validation failures never write to DocumentStorage
 
 These tests use lazy imports and a ProviderManager stub to avoid circular
-import issues in the astrbot core module chain (same pattern as
+import issues in the bot core module chain (same pattern as
 test_kb_manager_resilience.py).
 """
 
@@ -22,29 +22,29 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from astrbot.core.db.vec_db.faiss_impl.vec_db import FaissVecDB
-from astrbot.core.exceptions import KnowledgeBaseUploadError
-from astrbot.core.knowledge_base.models import KnowledgeBase
+from bot.core.db.vec_db.faiss_impl.vec_db import FaissVecDB
+from bot.core.exceptions import KnowledgeBaseUploadError
+from bot.core.knowledge_base.models import KnowledgeBase
 
 
 @pytest.fixture
 def stub_provider_manager_module():
     """Stub provider manager module to avoid circular imports in unit tests."""
-    original_module = sys.modules.get("astrbot.core.provider.manager")
-    stub_module = types.ModuleType("astrbot.core.provider.manager")
+    original_module = sys.modules.get("bot.core.provider.manager")
+    stub_module = types.ModuleType("bot.core.provider.manager")
 
     class ProviderManager: ...
 
     setattr(stub_module, "ProviderManager", ProviderManager)
-    sys.modules["astrbot.core.provider.manager"] = stub_module
+    sys.modules["bot.core.provider.manager"] = stub_module
 
     # Drop already-imported modules that transitively need ProviderManager so
     # they re-import against the stub.
     to_drop = [
         name
         for name in list(sys.modules)
-        if name.startswith("astrbot.core.knowledge_base.kb_helper")
-        or name.startswith("astrbot.core.knowledge_base.kb_mgr")
+        if name.startswith("bot.core.knowledge_base.kb_helper")
+        or name.startswith("bot.core.knowledge_base.kb_mgr")
     ]
     for name in to_drop:
         sys.modules.pop(name, None)
@@ -53,9 +53,9 @@ def stub_provider_manager_module():
         yield
     finally:
         if original_module is not None:
-            sys.modules["astrbot.core.provider.manager"] = original_module
+            sys.modules["bot.core.provider.manager"] = original_module
         else:
-            sys.modules.pop("astrbot.core.provider.manager", None)
+            sys.modules.pop("bot.core.provider.manager", None)
 
 
 def _make_vec_db() -> FaissVecDB:
@@ -68,7 +68,7 @@ def _make_vec_db() -> FaissVecDB:
 
 
 def _import_kb_helper():
-    from astrbot.core.knowledge_base.kb_helper import KBHelper
+    from bot.core.knowledge_base.kb_helper import KBHelper
 
     return KBHelper
 
@@ -329,7 +329,7 @@ async def test_upload_document_cleans_up_on_storage_failure(
 
     with (
         patch(
-            "astrbot.core.knowledge_base.kb_helper.select_parser",
+            "bot.core.knowledge_base.kb_helper.select_parser",
             new=AsyncMock(
                 return_value=MagicMock(parse=AsyncMock(return_value=parse_result)),
             ),
@@ -395,7 +395,7 @@ async def test_upload_document_preserves_markdown_heading_paths(
 
     with (
         patch(
-            "astrbot.core.knowledge_base.kb_helper.select_parser",
+            "bot.core.knowledge_base.kb_helper.select_parser",
             new=AsyncMock(
                 return_value=MagicMock(parse=AsyncMock(return_value=parse_result)),
             ),

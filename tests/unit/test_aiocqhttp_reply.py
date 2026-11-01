@@ -14,12 +14,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import astrbot.core.message.components as Comp
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.pipeline.respond.stage import (
+import bot.core.message.components as Comp
+from bot.core.message.message_event_result import MessageChain
+from bot.core.pipeline.respond.stage import (
     RespondStage,  # noqa: F401 — 预加载避免循环导入
 )
-from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
+from bot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 

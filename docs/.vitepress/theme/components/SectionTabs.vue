@@ -10,8 +10,8 @@ const isEnglish = computed(() => route.path.startsWith('/en/'))
 const zhTabs = [
   {
     text: '简介和部署',
-    link: '/what-is-astrbot',
-    matchers: ['/what-is-astrbot', '/community', '/faq', '/deploy/', '/others/', '/ospp/']
+    link: '/what-is-bot',
+    matchers: ['/what-is-bot', '/community', '/faq', '/deploy/', '/others/', '/ospp/']
   },
   { text: '接入消息平台', link: '/platform/start', matchers: ['/platform/'] },
   { text: '接入 AI', link: '/providers/start', matchers: ['/providers/'] },
@@ -22,8 +22,8 @@ const zhTabs = [
 const enTabs = [
   {
     text: 'Intro & Deploy',
-    link: '/en/what-is-astrbot',
-    matchers: ['/en/what-is-astrbot', '/en/community', '/en/faq', '/en/deploy/', '/en/others/', '/en/ospp/']
+    link: '/en/what-is-bot',
+    matchers: ['/en/what-is-bot', '/en/community', '/en/faq', '/en/deploy/', '/en/others/', '/en/ospp/']
   },
   { text: 'Messaging Platforms', link: '/en/platform/start', matchers: ['/en/platform/'] },
   { text: 'AI Integration', link: '/en/providers/start', matchers: ['/en/providers/'] },

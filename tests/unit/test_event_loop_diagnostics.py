@@ -3,7 +3,7 @@ import threading
 
 import pytest
 
-from astrbot.core.utils import event_loop_diagnostics as diagnostics
+from bot.core.utils import event_loop_diagnostics as diagnostics
 
 
 def test_load_event_loop_diagnostic_settings_defaults():

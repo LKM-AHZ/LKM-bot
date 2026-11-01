@@ -7,16 +7,16 @@ from lark_oapi.event.callback.model.p2_card_action_trigger import (
     P2CardActionTriggerResponse,
 )
 
-from astrbot.api.message_components import (
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
     Plain,
 )
-from astrbot.core.platform import MessageType
-from astrbot.core.platform.button_interaction import decode_button_callback
-from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
-from astrbot.core.platform.sources.lark.lark_event import LarkMessageEvent
+from bot.core.platform import MessageType
+from bot.core.platform.button_interaction import decode_button_callback
+from bot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
+from bot.core.platform.sources.lark.lark_event import LarkMessageEvent
 
 
 def test_lark_button_card_maps_callback_and_url_actions():
@@ -51,11 +51,11 @@ def test_lark_button_card_maps_callback_and_url_actions():
     callback_button = columns[0]["elements"][0]
     callback_value = callback_button["behaviors"][0]["value"]
     assert callback_button["type"] == "primary"
-    assert decode_button_callback(callback_value["astrbot_callback"]) == (
+    assert decode_button_callback(callback_value["bot_callback"]) == (
         "approve",
         {"request_id": 42},
     )
-    assert callback_value["astrbot_message_type"] == MessageType.GROUP_MESSAGE.value
+    assert callback_value["bot_message_type"] == MessageType.GROUP_MESSAGE.value
 
     url_button = columns[1]["elements"][0]
     assert url_button["behaviors"] == [
@@ -71,7 +71,7 @@ async def test_lark_card_callback_becomes_button_interaction():
     adapter = object.__new__(LarkPlatformAdapter)
     adapter.event_id_timestamps = {}
     adapter.bot_open_id = "ou_bot"
-    adapter.bot_name = "AstrBot"
+    adapter.bot_name = "LKMBot"
     adapter.handle_msg = AsyncMock()
     card = LarkMessageEvent._build_button_card(
         [

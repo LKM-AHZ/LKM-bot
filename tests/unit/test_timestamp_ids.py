@@ -1,7 +1,7 @@
 from datetime import datetime
 from types import SimpleNamespace
 
-from astrbot.core.utils import datetime_utils
+from bot.core.utils import datetime_utils
 
 
 def test_generate_timestamp_id_uses_compact_local_time(monkeypatch):

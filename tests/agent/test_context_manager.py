@@ -10,17 +10,17 @@ import pytest
 # Add parent directory to path to avoid circular import issues
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from astrbot.core.agent.context.config import ContextConfig
-from astrbot.core.agent.context.manager import ContextManager
-from astrbot.core.agent.message import (
+from bot.core.agent.context.config import ContextConfig
+from bot.core.agent.context.manager import ContextManager
+from bot.core.agent.message import (
     AudioURLPart,
     ImageURLPart,
     Message,
     TextPart,
     ToolCall,
 )
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.core.provider.sources.request_retry import retry_provider_request
+from bot.core.provider.entities import LLMResponse
+from bot.core.provider.sources.request_retry import retry_provider_request
 
 
 class MockProvider:
@@ -126,7 +126,7 @@ class TestContextManager:
         )
         manager = ContextManager(config)
 
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         assert isinstance(manager.compressor, LLMSummaryCompressor)
 
@@ -135,13 +135,13 @@ class TestContextManager:
         config = ContextConfig(truncate_turns=3)
         manager = ContextManager(config)
 
-        from astrbot.core.agent.context.compressor import TruncateByTurnsCompressor
+        from bot.core.agent.context.compressor import TruncateByTurnsCompressor
 
         assert isinstance(manager.compressor, TruncateByTurnsCompressor)
 
     @pytest.mark.asyncio
     async def test_llm_compressor_keeps_history_when_summary_is_empty(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         provider.text_chat = AsyncMock(
@@ -150,7 +150,7 @@ class TestContextManager:
         compressor = LLMSummaryCompressor(provider=provider, keep_recent_ratio=0.15)  # type: ignore[arg-type]
         messages = self.create_messages(6)
 
-        with patch("astrbot.core.agent.context.compressor.logger") as mock_logger:
+        with patch("bot.core.agent.context.compressor.logger") as mock_logger:
             result = await compressor(messages)
 
         assert result == messages
@@ -160,7 +160,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_handles_textpart_content(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         compressor = LLMSummaryCompressor(provider=provider, keep_recent_ratio=0.01)  # type: ignore[arg-type]
@@ -200,7 +200,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_preserves_system_and_pads_before_instruction(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         instruction = "Summarize the old context."
@@ -233,7 +233,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_summarizes_single_long_round(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         compressor = LLMSummaryCompressor(
@@ -276,7 +276,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_preserves_active_user_request(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         compressor = LLMSummaryCompressor(
@@ -302,7 +302,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_does_not_summarize_only_active_user_request(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         compressor = LLMSummaryCompressor(
@@ -319,7 +319,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_summarizes_system_plus_single_completed_round(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         compressor = LLMSummaryCompressor(
@@ -346,7 +346,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_sanitizes_context_for_text_only_provider(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         provider.provider_config["modalities"] = ["text"]
@@ -396,7 +396,7 @@ class TestContextManager:
 
     @pytest.mark.asyncio
     async def test_llm_compressor_keeps_recent_by_token_ratio(self):
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = MockProvider()
         compressor = LLMSummaryCompressor(
@@ -686,7 +686,7 @@ class TestContextManager:
     @pytest.mark.asyncio
     async def test_llm_summary_is_requested_once(self):
         """A failed summary falls back to truncation instead of being retried."""
-        from astrbot.core.agent.context.compressor import LLMSummaryCompressor
+        from bot.core.agent.context.compressor import LLMSummaryCompressor
 
         provider = RateLimitedProvider()
         compressor = LLMSummaryCompressor(provider=provider, keep_recent_ratio=0.15)  # type: ignore[arg-type]
@@ -768,7 +768,7 @@ class TestContextManager:
         mock_compressor.should_compress = MagicMock(return_value=True)
         manager.compressor = mock_compressor
 
-        with patch("astrbot.core.agent.context.manager.logger") as mock_logger:
+        with patch("bot.core.agent.context.manager.logger") as mock_logger:
             result = await manager.process(messages)
 
             # Logger error method should be called
@@ -1078,7 +1078,7 @@ class TestContextManager:
 
     def test_split_rounds_ensures_user_start(self):
         """Test split_into_rounds preserves user-assistant round boundaries."""
-        from astrbot.core.agent.context.round_utils import split_into_rounds
+        from bot.core.agent.context.round_utils import split_into_rounds
 
         # First round may begin with system messages; subsequent rounds must start with user
         messages = [
@@ -1101,7 +1101,7 @@ class TestContextManager:
 
     def test_split_rounds_single_round(self):
         """A single user-assistant pair is one round."""
-        from astrbot.core.agent.context.round_utils import split_into_rounds
+        from bot.core.agent.context.round_utils import split_into_rounds
 
         messages = [
             {"role": "user", "content": "hello"},
@@ -1113,7 +1113,7 @@ class TestContextManager:
 
     def test_split_rounds_multi_tool(self):
         """Tool calls/results within a round are kept together."""
-        from astrbot.core.agent.context.round_utils import split_into_rounds
+        from bot.core.agent.context.round_utils import split_into_rounds
 
         messages = [
             {"role": "user", "content": "search"},
@@ -1129,14 +1129,14 @@ class TestContextManager:
 
     def test_split_rounds_empty(self):
         """Empty list returns no rounds."""
-        from astrbot.core.agent.context.round_utils import split_into_rounds
+        from bot.core.agent.context.round_utils import split_into_rounds
 
         rounds = split_into_rounds([])
         assert len(rounds) == 0
 
     def test_split_rounds_accepts_message_objects(self):
         """Message objects can be split without converting them to dictionaries."""
-        from astrbot.core.agent.context.round_utils import split_into_rounds
+        from bot.core.agent.context.round_utils import split_into_rounds
 
         messages = [
             Message(role="system", content="System prompt"),

@@ -17,7 +17,7 @@ LKMBot has supported this Agent Skills format since v4.13.0. It is not limited t
 
 LKMBot first provides Skill names, descriptions, and file paths to the Agent. The Agent reads detailed content as needed rather than loading every file at the start. **Uploading a Skill does not install its software dependencies or grant permissions.** Configure any required Python packages, APIs, or tools separately.
 
-## Upload Your First Skill {#uploading-skills-to-astrbot}
+## Upload Your First Skill {#uploading-skills-to-bot}
 
 1. Prepare a `.zip` Skill package from a trusted source.
 2. Open `Extensions → Skills` in WebUI and click the **+** button at the bottom right. The former standalone Skills entry is now in the Extensions workspace.
@@ -68,7 +68,7 @@ description: Use when the user wants to turn scattered work notes into a weekly 
 
 Save it as `weekly-report/SKILL.md`, archive it as `weekly-report.zip`, and upload it. For a fuller format reference, see the [Agent Skills specification](https://agentskills.io/specification) and [Claude Skills documentation](https://code.claude.com/docs/en/skills).
 
-## Configure the Runtime and Persona {#using-skills-in-astrbot}
+## Configure the Runtime and Persona {#using-skills-in-bot}
 
 ### Give the Agent Access to Skill Files
 
@@ -78,7 +78,7 @@ Open `Config → AI → Capabilities → Agent Computer Use`, choose a runtime, 
 - **Sandbox:** the Agent reads files and runs scripts in a separate environment. Configure the sandbox connection first. LKMBot attempts to synchronize local and plugin Skills to active sandboxes.
 - **None:** a Skill inventory may still reach the model, but Computer Use file and execution tools are unavailable. Reading the full instructions is not guaranteed, and Skill scripts cannot run. Configure Local or Sandbox for practical Skill use.
 
-See [Agent Sandbox](/en/use/astrbot-agent-sandbox) for file scopes, code execution, networking, and deployment. Skills do not bypass these restrictions or automatically grant regular members permission to execute code.
+See [Agent Sandbox](/en/use/bot-agent-sandbox) for file scopes, code execution, networking, and deployment. Skills do not bypass these restrictions or automatically grant regular members permission to execute code.
 
 ### Select Skills for the Current Persona
 
@@ -122,7 +122,7 @@ A persona's explicit Skill list filters local, plugin, and sandbox Skills, **but
 
 When the runtime is Sandbox and the driver is `shipyard_neo`, the page also offers a **Local Skills / Neo Skills** switch. Neo Skills shows candidates and release records, with evaluation, `Canary` / `Stable` promotion, synchronization, and deactivation/rollback actions.
 
-This manages reusable Skill versions accumulated in Neo. It is not required for uploading ordinary ZIP packages. Start with local upload and execution; see [Third-Party Sandbox Environments](/en/use/astrbot-agent-sandbox#third-party-sandbox-environment) for Neo connection settings.
+This manages reusable Skill versions accumulated in Neo. It is not required for uploading ordinary ZIP packages. Start with local upload and execution; see [Third-Party Sandbox Environments](/en/use/bot-agent-sandbox#third-party-sandbox-environment) for Neo connection settings.
 
 ## Troubleshooting
 

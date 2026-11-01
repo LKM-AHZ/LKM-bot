@@ -1,8 +1,8 @@
 import pyotp
 import pytest
 
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.utils.totp import (
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.utils.totp import (
     consume_totp_code,
     generate_recovery_code,
     is_totp_enabled,

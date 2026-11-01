@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from astrbot.core.message.components import BaseMessageComponent
+from bot.core.message.components import BaseMessageComponent
 
 
 class NoopAwaitable:
@@ -297,7 +297,7 @@ def create_mock_message_component(
     Returns:
         BaseMessageComponent: 消息组件实例
     """
-    from astrbot.core.message import components as Comp
+    from bot.core.message import components as Comp
 
     component_map = {
         "plain": Comp.Plain,
@@ -333,7 +333,7 @@ def create_mock_llm_response(
     Returns:
         LLMResponse: 模拟的 LLM 响应
     """
-    from astrbot.core.provider.entities import LLMResponse, TokenUsage
+    from bot.core.provider.entities import LLMResponse, TokenUsage
 
     return LLMResponse(
         role=role,
@@ -381,7 +381,7 @@ class MockPluginConfig:
 
 # 默认的插件主代码模板
 DEFAULT_PLUGIN_MAIN_TEMPLATE = '''
-from astrbot.core import star
+from bot.core import star
 
 class Main(star.Star):
     """测试插件主类。"""

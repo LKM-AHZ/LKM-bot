@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.dashboard.services.open_api_service import (
+from bot.dashboard.services.open_api_service import (
     OpenApiService,
     OpenApiServiceError,
     OpenApiWebSocketChatBridge,
@@ -13,7 +13,7 @@ def _service() -> OpenApiService:
     core_lifecycle = SimpleNamespace(
         platform_manager=SimpleNamespace(platform_insts=[]),
         platform_message_history_manager=None,
-        astrbot_config_mgr=SimpleNamespace(
+        bot_config_mgr=SimpleNamespace(
             confs={"default": {"admins_id": ["admin-user"]}}
         ),
     )

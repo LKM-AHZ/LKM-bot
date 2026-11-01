@@ -6,10 +6,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.cron.events import CronMessageEvent
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.message_session import MessageSession
-from astrbot.core.star.context import Context
+from bot.core.cron.events import CronMessageEvent
+from bot.core.message.message_event_result import MessageChain
+from bot.core.platform.message_session import MessageSession
+from bot.core.star.context import Context
 
 
 @pytest.fixture
@@ -24,7 +24,7 @@ def cron_event(monkeypatch):
     """
     send = AsyncMock(return_value=True)
     metric = AsyncMock()
-    monkeypatch.setattr("astrbot.core.platform.astr_message_event.Metric.upload", metric)
+    monkeypatch.setattr("bot.core.platform.bot_message_event.Metric.upload", metric)
     event = CronMessageEvent(
         context=SimpleNamespace(send_message=send),
         session=MessageSession.from_str("test:FriendMessage:session-1"),

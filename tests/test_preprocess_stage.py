@@ -4,11 +4,11 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.message.components import Image, Plain, Reply
-from astrbot.core.pipeline.preprocess_stage import stage as preprocess_stage
-from astrbot.core.pipeline.preprocess_stage.stage import PreProcessStage
-from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from astrbot.core.utils import media_utils
+from bot.core.message.components import Image, Plain, Reply
+from bot.core.pipeline.preprocess_stage import stage as preprocess_stage
+from bot.core.pipeline.preprocess_stage.stage import PreProcessStage
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.utils import media_utils
 
 
 class FakeEvent:
@@ -25,8 +25,8 @@ class FakeEvent:
     def get_messages(self):
         return self.message_obj.message
 
-    track_temporary_local_file = AstrMessageEvent.track_temporary_local_file
-    untrack_temporary_local_file = AstrMessageEvent.untrack_temporary_local_file
+    track_temporary_local_file = BotMessageEvent.track_temporary_local_file
+    untrack_temporary_local_file = BotMessageEvent.untrack_temporary_local_file
 
 
 @pytest.mark.asyncio
@@ -36,10 +36,10 @@ async def test_preprocess_preserves_image_formats_without_tracking_temp_files(
     from PIL import Image as PILImage
 
     temp_dir = tmp_path / "temp"
-    monkeypatch.setattr(media_utils, "get_astrbot_temp_path", lambda: str(temp_dir))
+    monkeypatch.setattr(media_utils, "get_bot_temp_path", lambda: str(temp_dir))
     monkeypatch.setattr(
         preprocess_stage,
-        "get_astrbot_temp_path",
+        "get_bot_temp_path",
         lambda: str(temp_dir),
     )
     main_image_buffer = BytesIO()
@@ -116,9 +116,9 @@ async def test_preprocess_image_cleanup_preserves_usable_file(
 
     from PIL import Image as PILImage
 
-    monkeypatch.setattr(media_utils, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(media_utils, "get_bot_temp_path", lambda: str(tmp_path))
     monkeypatch.setattr(
-        preprocess_stage, "get_astrbot_temp_path", lambda: str(tmp_path)
+        preprocess_stage, "get_bot_temp_path", lambda: str(tmp_path)
     )
     source_path = tmp_path / f"source.{source_kind}"
     if source_kind == "invalid":
@@ -143,7 +143,7 @@ async def test_preprocess_image_cleanup_preserves_usable_file(
     assert source_path.read_bytes() == original
 
     # Exercise event cleanup to verify that the usable image survives.
-    AstrMessageEvent.cleanup_temporary_local_files(
+    BotMessageEvent.cleanup_temporary_local_files(
         SimpleNamespace(_temporary_local_files=event.temporary_local_files)
     )
     assert source_path.read_bytes() == original
@@ -155,9 +155,9 @@ async def test_preprocess_image_cleanup_preserves_usable_file(
 async def test_preprocess_image_cleanup_removes_invalid_materialized_file(
     tmp_path, monkeypatch, quoted
 ):
-    monkeypatch.setattr(media_utils, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(media_utils, "get_bot_temp_path", lambda: str(tmp_path))
     monkeypatch.setattr(
-        preprocess_stage, "get_astrbot_temp_path", lambda: str(tmp_path)
+        preprocess_stage, "get_bot_temp_path", lambda: str(tmp_path)
     )
     reference = "data:image/png;base64," + base64.b64encode(b"not an image").decode()
     image = Image(file=reference)
@@ -173,7 +173,7 @@ async def test_preprocess_image_cleanup_removes_invalid_materialized_file(
     assert materialized
     assert image.file == reference
     assert len(event.temporary_local_files) == 1
-    AstrMessageEvent.cleanup_temporary_local_files(
+    BotMessageEvent.cleanup_temporary_local_files(
         SimpleNamespace(_temporary_local_files=event.temporary_local_files)
     )
     assert not [path for path in materialized if path.exists()]

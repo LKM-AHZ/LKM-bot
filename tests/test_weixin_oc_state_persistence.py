@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from astrbot.core.platform.sources.weixin_oc import weixin_oc_adapter
-from astrbot.core.platform.sources.weixin_oc.weixin_oc_adapter import WeixinOCAdapter
+from bot.core.platform.sources.weixin_oc import weixin_oc_adapter
+from bot.core.platform.sources.weixin_oc.weixin_oc_adapter import WeixinOCAdapter
 
 
 class _Config(dict):
@@ -31,7 +31,7 @@ async def test_save_account_state_uses_async_config_persistence(monkeypatch):
         calls=calls,
     )
 
-    monkeypatch.setattr(weixin_oc_adapter, "astrbot_config", config)
+    monkeypatch.setattr(weixin_oc_adapter, "bot_config", config)
 
     adapter = object.__new__(WeixinOCAdapter)
     adapter.config = {"id": "weixin-test", "type": "weixin_oc"}
@@ -72,7 +72,7 @@ async def test_save_account_state_keeps_dirty_flag_for_new_context_token(monkeyp
             ]
         }
     )
-    monkeypatch.setattr(weixin_oc_adapter, "astrbot_config", config)
+    monkeypatch.setattr(weixin_oc_adapter, "bot_config", config)
 
     adapter = object.__new__(WeixinOCAdapter)
     adapter.config = {"id": "weixin-test", "type": "weixin_oc"}
@@ -127,7 +127,7 @@ async def test_save_account_state_keeps_dirty_flag_after_context_token_aba(
             ]
         }
     )
-    monkeypatch.setattr(weixin_oc_adapter, "astrbot_config", config)
+    monkeypatch.setattr(weixin_oc_adapter, "bot_config", config)
 
     adapter = object.__new__(WeixinOCAdapter)
     adapter.config = {"id": "weixin-test", "type": "weixin_oc"}

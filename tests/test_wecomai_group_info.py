@@ -1,13 +1,13 @@
 import pytest
 
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_adapter import (
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.platform.sources.wecom_ai_bot.wecomai_adapter import (
     WecomAIBotAdapter,
 )
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_event import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_event import (
     WecomAIBotMessageEvent,
 )
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_queue_mgr import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_queue_mgr import (
     WecomAIQueueMgr,
 )
 

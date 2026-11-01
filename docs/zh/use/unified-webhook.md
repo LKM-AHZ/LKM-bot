@@ -15,7 +15,7 @@
 ## 如何使用统一 Webhook 模式
 
 1. 拥有一个域名（如 example.com）和公网 IP 服务器
-2. 配置 DNS 解析（如 astrbot.example.com）
+2. 配置 DNS 解析（如 bot.example.com）
 3. 配置反向代理，将域名的 80 或 443 端口请求转发到 LKMBot 的 WebUI 端口（默认为 6185）
 4. 前往 LKMBot `设置 → 常规 → 基础运行`，将 `对外可达的回调接口地址` 填写为配置的 URL 地址。（如 https://astrbot.example.com），点击保存，等待重启。
 

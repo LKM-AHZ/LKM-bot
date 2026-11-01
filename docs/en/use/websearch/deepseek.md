@@ -10,9 +10,9 @@ This page covers DeepSeek Search API setup and usage. See [Web Search](../websea
 2. Open the [API Keys page](https://platform.deepseek.com/api_keys), create a key, and copy it.
 3. Check your account balance and service availability. Search and Fetch are billed per request; see the [official documentation](https://api-docs.deepseek.com/guides/search) for current prices and billing rules.
 
-## Configure AstrBot
+## Configure LKMBot
 
-Your conversation must use AstrBot Built-in AI, and both the chat model and its API must support tool calling. The server or container running AstrBot must be able to reach `https://api.deepseek.com`.
+Your conversation must use LKMBot Built-in AI, and both the chat model and its API must support tool calling. The server or container running LKMBot must be able to reach `https://api.deepseek.com`.
 
 1. Open `Config` in the sidebar and select the profile your conversation actually uses.
 2. Open `AI → Capabilities → Web Search` and turn on `Enable Web Search`.
@@ -24,7 +24,7 @@ These settings apply only to the selected profile. Search is configured independ
 
 ## Supported capabilities
 
-| Capability | Content returned by AstrBot |
+| Capability | Content returned by LKMBot |
 | --- | --- |
 | Web search (Search) | Titles, source URLs, and summaries; 10 results requested by default, with a supported range of 1–50. Available page content is included when requested by the model |
 | Page extraction (Fetch) | The URL, title, and Markdown content of a specific page, including links supplied by the user or found through search |
@@ -38,7 +38,7 @@ After saving, send the bot or ChatUI an explicit request. The model decides whet
 ### Web search
 
 ```text
-Search for AstrBot's latest release before answering. Give the version, summarize the main changes, and include source links.
+Search for LKMBot's latest release before answering. Give the version, summarize the main changes, and include source links.
 ```
 
 ### Narrow the search
@@ -46,13 +46,13 @@ Search for AstrBot's latest release before answering. Give the version, summariz
 Search supports site, language, date, and exclusion operators. Describe these requirements in your message:
 
 ```text
-Search GitHub for AstrBot release information published since the start of 2026. Return up to 5 results and include source links.
+Search GitHub for LKMBot release information published since the start of 2026. Return up to 5 results and include source links.
 ```
 
 You can also supply an explicit search expression:
 
 ```text
-Use DeepSeek Search API to search for: AstrBot site:github.com lang:zh,en after:2026-01-01
+Use DeepSeek Search API to search for: LKMBot site:github.com lang:zh,en after:2026-01-01
 ```
 
 You can combine `site:`, `-site:`, `lang:`, `after:`, `before:`, exact phrases in double quotes, and excluded terms (`-keyword`). Dates accept `YYYY` or `YYYY-MM-DD`. The complete search expression, including operators, must not exceed 128 characters.
@@ -75,7 +75,7 @@ Enter the `DeepSeek API Key` separately under `AI → Capabilities → Web Searc
 
 `402` indicates insufficient account balance, and `429` indicates a rate limit. Search and Fetch have separate account limits. Multiple keys under the same account do not increase those limits, and Fetch also has a per-domain limit. See the [official rate limits](https://api-docs.deepseek.com/guides/search#rate-limits) for current values.
 
-Multiple keys rotate between requests. AstrBot does not immediately retry a failed request with another key; reduce the request rate before trying again after a rate limit error.
+Multiple keys rotate between requests. LKMBot does not immediately retry a failed request with another key; reduce the request rate before trying again after a rate limit error.
 
 ### Search works, but page extraction fails
 

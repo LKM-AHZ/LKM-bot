@@ -2,19 +2,19 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     ActionRow,
     Button,
     Plain,
 )
-from astrbot.core.platform import AstrBotMessage, MessageMember, MessageType
-from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from astrbot.core.platform.message_session import MessageSession
-from astrbot.core.platform.platform import Platform
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.platform.sources.weixin_oc.weixin_oc_adapter import WeixinOCAdapter
-from astrbot.core.platform.sources.weixin_official_account.weixin_offacc_event import (
+from bot.core.platform import BotMessage, MessageMember, MessageType
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.platform.message_session import MessageSession
+from bot.core.platform.platform import Platform
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.platform.sources.weixin_oc.weixin_oc_adapter import WeixinOCAdapter
+from bot.core.platform.sources.weixin_official_account.weixin_offacc_event import (
     WeixinOfficialAccountPlatformEvent,
 )
 
@@ -39,7 +39,7 @@ def _button_row(*, fallback_text: str | None = None) -> ActionRow:
 
 @pytest.mark.asyncio
 async def test_weixin_official_account_buttons_fall_back_to_text(monkeypatch):
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE
     message.sender = MessageMember("user", "User")
     message.message = []
@@ -58,7 +58,7 @@ async def test_weixin_official_account_buttons_fall_back_to_text(monkeypatch):
         client=object(),
         message_out=output,
     )
-    monkeypatch.setattr(AstrMessageEvent, "send", AsyncMock())
+    monkeypatch.setattr(BotMessageEvent, "send", AsyncMock())
 
     await event.send(
         MessageChain([Plain("正文"), _button_row(fallback_text="请回复 yes 确认")])

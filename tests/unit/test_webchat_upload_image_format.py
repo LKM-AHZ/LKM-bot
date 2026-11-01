@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image as PILImage
 
-from astrbot.dashboard.services.chat_service import (
+from bot.dashboard.services.chat_service import (
     WEBCHAT_IMAGE_MIME_TYPES,
     ChatService,
 )
@@ -63,7 +63,7 @@ async def test_resolve_webchat_file_uses_image_extension_mime_type(
     expected_mime_type,
 ):
     monkeypatch.setattr(
-        "astrbot.dashboard.services.chat_service.get_astrbot_data_path",
+        "bot.dashboard.services.chat_service.get_bot_data_path",
         lambda: str(tmp_path),
     )
     service = ChatService(

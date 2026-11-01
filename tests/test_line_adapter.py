@@ -3,18 +3,18 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.message_components import (
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
 )
-from astrbot.core.platform.button_interaction import (
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.sources.line.line_adapter import LinePlatformAdapter
-from astrbot.core.platform.sources.line.line_api import LineAPIClient
-from astrbot.core.platform.sources.line.line_event import LineMessageEvent
+from bot.core.platform.sources.line.line_adapter import LinePlatformAdapter
+from bot.core.platform.sources.line.line_api import LineAPIClient
+from bot.core.platform.sources.line.line_event import LineMessageEvent
 from tests.fixtures.helpers import make_platform_config
 
 

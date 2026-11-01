@@ -1,7 +1,7 @@
 # 插件可视化视图
 
 
-插件可视化视图允许插件在 LKMBot WebUI 中提供自己的页面。页面文件放在插件目录的 `views/` 下（兼容 `pages/`），由 Dashboard 以受限 iframe 的方式加载；页面里的脚本通过 `window.AstrBotPluginView` bridge（别名 `window.AstrBotPluginPage`）和 Dashboard 通信，再由 Dashboard 转发到插件注册的后端 Web API。
+插件可视化视图允许插件在 LKMBot WebUI 中提供自己的页面。页面文件放在插件目录的 `views/` 下（兼容 `pages/`），由 Dashboard 以受限 iframe 的方式加载；页面里的脚本通过 `window.BotPluginView` bridge（别名 `window.BotPluginPage`）和 Dashboard 通信，再由 Dashboard 转发到插件注册的后端 Web API。
 
 如果只是让用户填写少量配置项，优先使用 [`_conf_schema.json`](./plugin-config.md)。可视化视图更适合复杂表单、运行状态面板、日志查看、文件上传下载、SSE 实时流、图表和其他需要自定义交互的场景。
 
@@ -10,7 +10,7 @@
 `views/` 下的每个一级子目录是一个独立视图。LKMBot 只扫描 `views/<view_name>/index.html`，没有 `index.html` 的目录会被忽略。
 
 ```text
-astrbot_plugin_view_demo/
+bot_plugin_view_demo/
 ├─ main.py
 └─ views/
    ├─ bridge-demo/
@@ -30,22 +30,22 @@ astrbot_plugin_view_demo/
 ## 开发流程
 
 1. 在插件目录下创建 `views/<view_name>/index.html`。
-2. 在视图中通过 `window.AstrBotPluginView` bridge 调用后端能力。
+2. 在视图中通过 `window.BotPluginView` bridge 调用后端能力。
 3. 在 `main.py` 中使用 `context.register_web_api()` 注册插件后端 API。
-4. 后端 handler 使用 `astrbot.api.web` 读取请求并返回响应。
+4. 后端 handler 使用 `bot.api.web` 读取请求并返回响应。
 5. 新增或删除视图目录后重载插件；修改静态资源通常刷新视图即可。
 
 ## 最小完整示例
 
 ### 后端
 
-插件后端推荐使用 `astrbot.api.web`，不要把 FastAPI、Starlette 或 Quart 的原始请求对象作为插件公共 API 暴露给自己的业务代码。
+插件后端推荐使用 `bot.api.web`，不要把 FastAPI、Starlette 或 Quart 的原始请求对象作为插件公共 API 暴露给自己的业务代码。
 
 ```python
-from astrbot.core.star import Context, Star
-from astrbot.api.web import error_response, json_response, request
+from bot.core.star import Context, Star
+from bot.api.web import error_response, json_response, request
 
-PLUGIN_NAME = "astrbot_plugin_view_demo"
+PLUGIN_NAME = "bot_plugin_view_demo"
 
 
 class MyPlugin(Star):
@@ -104,7 +104,7 @@ class MyPlugin(Star):
 `views/bridge-demo/app.js`
 
 ```js
-const bridge = window.AstrBotPluginView;
+const bridge = window.BotPluginView;
 const output = document.getElementById("output");
 
 const context = await bridge.ready();
@@ -116,7 +116,7 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/v1/plugins/page-bridge-sdk.js`。如果内联脚本必须同步访问 `window.AstrBotPluginView`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
+不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/v1/plugins/page-bridge-sdk.js`。如果内联脚本必须同步访问 `window.BotPluginView`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
 
 ```html
 <script src="/api/v1/plugins/page-bridge-sdk.js"></script>
@@ -166,7 +166,7 @@ async def get_item(self, item_id: str):
 推荐导入：
 
 ```python
-from astrbot.api.web import request
+from bot.api.web import request
 ```
 
 `request` 是当前请求的上下文代理，只能在插件 Web API handler 执行期间访问。常用字段和方法：
@@ -207,8 +207,8 @@ enabled = bool(payload.get("enabled"))
 ```python
 from pathlib import Path
 
-from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
-from astrbot.api.web import PluginUploadFile, error_response, json_response, request
+from bot.core.utils.bot_path import get_bot_plugin_data_path
+from bot.api.web import PluginUploadFile, error_response, json_response, request
 
 
 async def import_file(self):
@@ -219,7 +219,7 @@ async def import_file(self):
         return error_response("missing file")
 
     target_dir = (
-        Path(get_astrbot_plugin_data_path())
+        Path(get_bot_plugin_data_path())
         / (request.plugin_name or "unknown_plugin")
         / "imports"
     )
@@ -239,10 +239,10 @@ async def import_file(self):
 
 ### 响应对象
 
-推荐从 `astrbot.api.web` 导入响应 helper：
+推荐从 `bot.api.web` 导入响应 helper：
 
 ```python
-from astrbot.api.web import (
+from bot.api.web import (
     error_response,
     file_response,
     json_response,
@@ -277,7 +277,7 @@ SSE 响应：
 ```python
 import json
 
-from astrbot.api.web import stream_response
+from bot.api.web import stream_response
 
 
 async def stream_events(self):
@@ -288,24 +288,24 @@ async def stream_events(self):
     return stream_response(events())
 ```
 
-直接返回 `dict`、`list`、`(body, status_code)` 或底层 Response 对象仍然可用；文档和新插件推荐优先使用 `astrbot.api.web` helper，让插件代码和 Dashboard 内部框架解耦。
+直接返回 `dict`、`list`、`(body, status_code)` 或底层 Response 对象仍然可用；文档和新插件推荐优先使用 `bot.api.web` helper，让插件代码和 Dashboard 内部框架解耦。
 
 ### 请求对象
 
 通过 `context.register_web_api()` 注册的 handler 运行在 Dashboard 原生请求上下文中：
 
 ```python
-from astrbot.api.web import json_response, request
+from bot.api.web import json_response, request
 ```
 
-旧版 Quart 兼容请求上下文已移除，`from quart import request` 不再可用。仍在使用 Quart 写法的插件需要改为 `astrbot.api.web`。
+旧版 Quart 兼容请求上下文已移除，`from quart import request` 不再可用。仍在使用 Quart 写法的插件需要改为 `bot.api.web`。
 
 ## Bridge API
 
-视图 iframe 不能直接访问 Dashboard cookies、LocalStorage 或父页面 DOM。页面脚本必须通过 `window.AstrBotPluginView` bridge 调用后端和读取上下文。
+视图 iframe 不能直接访问 Dashboard cookies、LocalStorage 或父页面 DOM。页面脚本必须通过 `window.BotPluginView` bridge 调用后端和读取上下文。
 
 ```js
-const bridge = window.AstrBotPluginView;
+const bridge = window.BotPluginView;
 ```
 
 ### 上下文
@@ -320,7 +320,7 @@ const context = await bridge.ready();
 
 ```json
 {
-  "pluginName": "astrbot_plugin_view_demo",
+  "pluginName": "bot_plugin_view_demo",
   "displayName": "Plugin View Demo",
   "pageName": "bridge-demo",
   "pageTitle": "Bridge Demo",
@@ -445,7 +445,7 @@ const result = await bridge.upload("files/import", file);
 后端读取：
 
 ```python
-from astrbot.api.web import PluginUploadFile, error_response, json_response, request
+from bot.api.web import PluginUploadFile, error_response, json_response, request
 
 
 async def import_file(self):
@@ -539,7 +539,7 @@ window.addEventListener("beforeunload", () => {
 例如 `bridge-demo` 视图的中文元数据位于：
 
 ```text
-astrbot_plugin_view_demo/
+bot_plugin_view_demo/
 ├─ views/
 │  └─ bridge-demo/
 │     └─ index.html

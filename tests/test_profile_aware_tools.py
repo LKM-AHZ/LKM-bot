@@ -16,7 +16,7 @@ class TestShipyardNeoBooterCapabilities:
     """Test capabilities property on ShipyardNeoBooter."""
 
     def _make_booter(self, sandbox_caps: list[str] | None = None):
-        from astrbot.core.computer.booters.shipyard_neo import ShipyardNeoBooter
+        from bot.core.computer.booters.shipyard_neo import ShipyardNeoBooter
 
         booter = ShipyardNeoBooter(
             endpoint_url="http://localhost:8114",
@@ -70,7 +70,7 @@ def _make_req():
 def _import_apply_sandbox_tools():
     """Import _apply_sandbox_tools, skipping if circular-import fails."""
     try:
-        from astrbot.core.astr_main_agent import _apply_sandbox_tools
+        from bot.core.bot_main_agent import _apply_sandbox_tools
 
         return _apply_sandbox_tools
     except ImportError:
@@ -92,13 +92,13 @@ class TestApplySandboxToolsConditional:
         config = _make_config("shipyard_neo")
         req = _make_req()
 
-        with patch("astrbot.core.computer.computer_client.session_booter", {}):
+        with patch("bot.core.computer.computer_client.session_booter", {}):
             fn(config, req, "session-1")
 
         names = self._tool_names(req)
-        assert "astrbot_execute_browser" in names
-        assert "astrbot_execute_browser_batch" in names
-        assert "astrbot_run_browser_skill" in names
+        assert "bot_execute_browser" in names
+        assert "bot_execute_browser_batch" in names
+        assert "bot_run_browser_skill" in names
 
     def test_with_browser_capability(self):
         """Booted session with browser capability → browser tools registered."""
@@ -110,13 +110,13 @@ class TestApplySandboxToolsConditional:
         )
 
         with patch(
-            "astrbot.core.computer.computer_client.session_booter",
+            "bot.core.computer.computer_client.session_booter",
             {"session-1": fake_booter},
         ):
             fn(config, req, "session-1")
 
         names = self._tool_names(req)
-        assert "astrbot_execute_browser" in names
+        assert "bot_execute_browser" in names
 
     def test_without_browser_capability(self):
         """Booted session WITHOUT browser capability → browser tools NOT registered."""
@@ -126,17 +126,17 @@ class TestApplySandboxToolsConditional:
         fake_booter = SimpleNamespace(capabilities=["python", "shell", "filesystem"])
 
         with patch(
-            "astrbot.core.computer.computer_client.session_booter",
+            "bot.core.computer.computer_client.session_booter",
             {"session-1": fake_booter},
         ):
             fn(config, req, "session-1")
 
         names = self._tool_names(req)
-        assert "astrbot_execute_browser" not in names
-        assert "astrbot_execute_browser_batch" not in names
-        assert "astrbot_run_browser_skill" not in names
+        assert "bot_execute_browser" not in names
+        assert "bot_execute_browser_batch" not in names
+        assert "bot_run_browser_skill" not in names
         # Skill tools should still be registered
-        assert "astrbot_get_execution_history" in names
+        assert "bot_get_execution_history" in names
 
     def test_skill_tools_always_registered(self):
         """Skill lifecycle tools are registered regardless of capabilities."""
@@ -146,14 +146,14 @@ class TestApplySandboxToolsConditional:
         fake_booter = SimpleNamespace(capabilities=["python"])
 
         with patch(
-            "astrbot.core.computer.computer_client.session_booter",
+            "bot.core.computer.computer_client.session_booter",
             {"session-1": fake_booter},
         ):
             fn(config, req, "session-1")
 
         names = self._tool_names(req)
-        assert "astrbot_create_skill_candidate" in names
-        assert "astrbot_promote_skill_candidate" in names
+        assert "bot_create_skill_candidate" in names
+        assert "bot_promote_skill_candidate" in names
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -165,7 +165,7 @@ class TestResolveProfile:
     """Test smart profile selection logic."""
 
     def _make_booter(self, profile: str = ""):
-        from astrbot.core.computer.booters.shipyard_neo import ShipyardNeoBooter
+        from bot.core.computer.booters.shipyard_neo import ShipyardNeoBooter
 
         return ShipyardNeoBooter(
             endpoint_url="http://localhost:8114",
@@ -278,13 +278,13 @@ class TestBaseComputerBooter:
     """Verify base class defaults."""
 
     def test_capabilities_default_none(self):
-        from astrbot.core.computer.booters.base import ComputerBooter
+        from bot.core.computer.booters.base import ComputerBooter
 
         booter = ComputerBooter()
         assert booter.capabilities is None
 
     def test_browser_default_none(self):
-        from astrbot.core.computer.booters.base import ComputerBooter
+        from bot.core.computer.booters.base import ComputerBooter
 
         booter = ComputerBooter()
         assert booter.browser is None

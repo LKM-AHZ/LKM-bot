@@ -4,10 +4,10 @@ from io import BytesIO
 import pytest
 from PIL import Image as PILImage
 
-from astrbot.core.agent.runners.deerflow.deerflow_agent_runner import (
+from bot.core.agent.runners.deerflow.deerflow_agent_runner import (
     DeerFlowAgentRunner,
 )
-from astrbot.core.agent.runners.deerflow.deerflow_content_mapper import (
+from bot.core.agent.runners.deerflow.deerflow_content_mapper import (
     build_user_content_resolved,
 )
 
@@ -56,7 +56,7 @@ async def test_build_user_content_resolved_supports_base64_scheme(
     tmp_path, monkeypatch
 ):
     monkeypatch.setattr(
-        "astrbot.core.utils.media_utils.get_astrbot_temp_path",
+        "bot.core.utils.media_utils.get_bot_temp_path",
         lambda: str(tmp_path),
     )
     image_base64 = _png_base64()
@@ -79,7 +79,7 @@ async def test_build_user_content_resolved_supports_base64_scheme(
 @pytest.mark.asyncio
 async def test_build_payload_resolved_supports_local_image_path(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "astrbot.core.utils.media_utils.get_astrbot_temp_path",
+        "bot.core.utils.media_utils.get_bot_temp_path",
         lambda: str(tmp_path),
     )
     image_path = tmp_path / "image.png"

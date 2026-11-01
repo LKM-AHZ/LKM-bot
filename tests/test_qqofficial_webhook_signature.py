@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-from astrbot.core.platform.sources.qqofficial_webhook.qo_webhook_server import (
+from bot.core.platform.sources.qqofficial_webhook.qo_webhook_server import (
     _SIGNATURE_HEADER,
     _SIGNATURE_TIMESTAMP_HEADER,
     QQOfficialWebhook,

@@ -4,20 +4,20 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
     File,
 )
-from astrbot.core.pipeline.waking_check.stage import WakingCheckStage
-from astrbot.core.platform.button_interaction import (
+from bot.core.pipeline.waking_check.stage import WakingCheckStage
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.sources.webchat import webchat_event
-from astrbot.core.platform.sources.webchat.message_parts_helper import (
+from bot.core.platform.sources.webchat import webchat_event
+from bot.core.platform.sources.webchat.message_parts_helper import (
     build_webchat_message_parts,
     create_attachment_part_from_existing_file,
     message_chain_to_storage_message_parts,
@@ -27,7 +27,7 @@ from astrbot.core.platform.sources.webchat.message_parts_helper import (
 
 @pytest.mark.asyncio
 async def test_webchat_expired_click_produces_bilingual_reply(monkeypatch):
-    from astrbot.core.platform import button_interaction
+    from bot.core.platform import button_interaction
 
     clock = [100.0]
     monkeypatch.setattr(button_interaction.time, "time", lambda: clock[0])

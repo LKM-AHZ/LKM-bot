@@ -4,19 +4,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import astrbot.api.message_components as Comp
-from astrbot.api.event import MessageChain
-from astrbot.core.platform import Group
-from astrbot.core.pipeline.preprocess_stage import stage as preprocess_stage
-from astrbot.core.platform.button_interaction import (
+import bot.api.message_components as Comp
+from bot.api.event import MessageChain
+from bot.core.platform import Group
+from bot.core.pipeline.preprocess_stage import stage as preprocess_stage
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.sources.mattermost.client import MattermostClient
-from astrbot.core.platform.sources.mattermost.mattermost_adapter import (
+from bot.core.platform.sources.mattermost.client import MattermostClient
+from bot.core.platform.sources.mattermost.mattermost_adapter import (
     MattermostPlatformAdapter,
 )
-from astrbot.core.utils import media_utils
+from bot.core.utils import media_utils
 from tests.fixtures.helpers import make_platform_config
 
 
@@ -95,11 +95,11 @@ async def test_mattermost_parse_post_attachments_maps_media_types(tmp_path):
 
     with (
         patch(
-            "astrbot.core.platform.sources.mattermost.client.get_astrbot_temp_path",
+            "bot.core.platform.sources.mattermost.client.get_bot_temp_path",
             MagicMock(return_value=str(tmp_path)),
         ),
         patch(
-            "astrbot.core.platform.sources.mattermost.client.MediaResolver",
+            "bot.core.platform.sources.mattermost.client.MediaResolver",
             FakeMediaResolver,
         ),
     ):
@@ -162,7 +162,7 @@ async def test_mattermost_send_message_chain_maps_portable_buttons():
     payload = client.create_post.await_args.kwargs
     callback_token = payload["props"]["attachments"][0]["actions"][0]["integration"][
         "context"
-    ]["astrbot_callback"]
+    ]["bot_callback"]
     assert payload["props"] == {
         "attachments": [
             {
@@ -170,14 +170,14 @@ async def test_mattermost_send_message_chain_maps_portable_buttons():
                 "text": "Review actions\n[Details](https://example.com/42)",
                 "actions": [
                     {
-                        "id": "astrbot1b0",
+                        "id": "bot1b0",
                         "type": "button",
                         "name": "Approve",
                         "style": "success",
                         "integration": {
                             "url": callback_url,
                             "context": {
-                                "astrbot_callback": callback_token,
+                                "bot_callback": callback_token,
                             },
                         },
                     }
@@ -239,7 +239,7 @@ async def test_mattermost_webhook_acknowledges_then_dispatches_button():
                 "user_name": "alice",
                 "channel_id": "channel-1",
                 "post_id": "post-1",
-                "context": {"astrbot_callback": callback_token},
+                "context": {"bot_callback": callback_token},
             }
 
     response = await adapter.webhook_callback(FakeRequest())
@@ -267,9 +267,9 @@ async def test_mattermost_attachments_follow_preprocessing_cleanup_rules(
 
     from PIL import Image as PILImage
 
-    monkeypatch.setattr(media_utils, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(media_utils, "get_bot_temp_path", lambda: str(tmp_path))
     monkeypatch.setattr(
-        preprocess_stage, "get_astrbot_temp_path", lambda: str(tmp_path)
+        preprocess_stage, "get_bot_temp_path", lambda: str(tmp_path)
     )
     image_path = tmp_path / f"image.{image_kind}"
     if image_kind == "invalid":

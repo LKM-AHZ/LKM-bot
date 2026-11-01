@@ -6,18 +6,18 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.config.default import DEFAULT_CONFIG
-from astrbot.core.message.components import Plain
-from astrbot.core.pipeline.process_stage import stage as processing
-from astrbot.core.pipeline.scheduler import PipelineScheduler
-from astrbot.core.pipeline.waking_check import stage as waking
-from astrbot.core.pipeline.whitelist_check.stage import WhitelistCheckStage
-from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.star.session_plugin_manager import SessionPluginManager
-from astrbot.core.utils.session_waiter import (
+from bot.core.config.default import DEFAULT_CONFIG
+from bot.core.message.components import Plain
+from bot.core.pipeline.process_stage import stage as processing
+from bot.core.pipeline.scheduler import PipelineScheduler
+from bot.core.pipeline.waking_check import stage as waking
+from bot.core.pipeline.whitelist_check.stage import WhitelistCheckStage
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.star.session_plugin_manager import SessionPluginManager
+from bot.core.utils.session_waiter import (
     USER_SESSIONS,
     DefaultSessionFilter,
     SessionFilter,
@@ -55,13 +55,13 @@ async def test_session_waiter_pipeline(monkeypatch, private, state):
         id_whitelist=["another-session"],
     )
     context = SimpleNamespace(
-        astrbot_config=config, astrbot_config_id="test", db_helper=None
+        bot_config=config, bot_config_id="test", db_helper=None
     )
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE if private else MessageType.GROUP_MESSAGE
     message.sender = MessageMember(user_id="user", nickname="User")
     message.message = [Plain("/next" if state == "ordinary" else "next")]
-    event = AstrMessageEvent(
+    event = BotMessageEvent(
         message.message[0].text,
         message,
         PlatformMetadata(id="test", name="test", description="Test"),

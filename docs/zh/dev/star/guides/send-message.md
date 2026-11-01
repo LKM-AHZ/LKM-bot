@@ -6,7 +6,7 @@
 
 ```python
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     yield event.plain_result("Hello!")
     yield event.plain_result("你好！")
 
@@ -23,11 +23,11 @@ async def helloworld(self, event: AstrMessageEvent):
 如果是一些定时任务或者不想立即发送消息，可以使用 `event.unified_msg_origin` 得到一个字符串并将其存储，然后在想发送消息的时候使用 `self.context.send_message(unified_msg_origin, chains)` 来发送消息。
 
 ```python
-from astrbot.api.event import MessageChain
+from bot.api.event import MessageChain
 
 
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     umo = event.unified_msg_origin
     message_chain = MessageChain().message("Hello!").file_image("path/to/image.jpg")
     await self.context.send_message(event.unified_msg_origin, message_chain)
@@ -44,11 +44,11 @@ async def helloworld(self, event: AstrMessageEvent):
 LKMBot 支持发送富媒体消息，比如图片、语音、视频等。使用 `MessageChain` 来构建消息。
 
 ```python
-import astrbot.api.message_components as Comp
+import bot.api.message_components as Comp
 
 
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     chain = [
         Comp.At(qq=event.get_sender_id()),  # At 消息发送者
         Comp.Plain("来看这个图："),
@@ -104,12 +104,12 @@ Comp.Video.fromURL(url="https://example.com/video.mp4")
 Satori 的按钮支持取决于所连接的平台和客户端。Mattermost 的回调按钮需要配置可由 Mattermost 服务访问的回调地址。对于使用文字回退的平台，建议设置 `fallback_text`，说明可用的文字指令。
 
 ```python
-from astrbot.api.event import AstrMessageEvent, filter
-import astrbot.api.message_components as Comp
+from bot.api.event import BotMessageEvent, filter
+import bot.api.message_components as Comp
 
 
 @filter.command("buttons")
-async def buttons(self, event: AstrMessageEvent):
+async def buttons(self, event: BotMessageEvent):
     yield event.chain_result([
         Comp.Plain("请选择操作："),
         Comp.ActionRow(
@@ -133,7 +133,7 @@ async def buttons(self, event: AstrMessageEvent):
 
 
 @filter.button_action("my_plugin:confirm")
-async def confirm(self, event: AstrMessageEvent):
+async def confirm(self, event: BotMessageEvent):
     interaction = event.get_button_interaction()
     if interaction is None:
         return
@@ -149,12 +149,12 @@ async def confirm(self, event: AstrMessageEvent):
 ## 发送视频消息
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
-    from astrbot.api.message_components import Video
+async def test(self, event: BotMessageEvent):
+    from bot.api.message_components import Video
 
     # fromFileSystem 需要用户的协议端和机器人端处于一个系统中。
     video = Video.fromFileSystem(path="test.mp4")
@@ -172,12 +172,12 @@ async def test(self, event: AstrMessageEvent):
 可以按照如下方式发送群合并转发消息。
 
 ```py
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
-    from astrbot.api.message_components import Node, Plain, Image
+async def test(self, event: BotMessageEvent):
+    from bot.api.message_components import Node, Plain, Image
 
     node = Node(
         uin=905617992,

@@ -14,38 +14,38 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from PIL import Image as PILImage
 
-from astrbot.core import astr_main_agent as main
-from astrbot.core.agent.message import (
+from bot.core import bot_main_agent as main
+from bot.core.agent.message import (
     ImageURLPart,
     TextPart,
     dump_messages_with_checkpoints,
 )
-from astrbot.core.config.default import DEFAULT_CONFIG
-from astrbot.core.message.components import Image, Plain, Reply
-from astrbot.core.pipeline.preprocess_stage import stage as preprocess
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages import (
+from bot.core.config.default import DEFAULT_CONFIG
+from bot.core.message.components import Image, Plain, Reply
+from bot.core.pipeline.preprocess_stage import stage as preprocess
+from bot.core.pipeline.process_stage.method.agent_sub_stages import (
     internal,
 )
-from astrbot.core.pipeline.process_stage.stage import ProcessStage
-from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.provider.entities import LLMResponse, ProviderRequest
-from astrbot.core.provider.provider import Provider
-from astrbot.core.star.star_handler import EventType
-from astrbot.core.utils import image_input
-from astrbot.core.utils import media_utils as media
+from bot.core.pipeline.process_stage.stage import ProcessStage
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.provider.entities import LLMResponse, ProviderRequest
+from bot.core.provider.provider import Provider
+from bot.core.star.star_handler import EventType
+from bot.core.utils import image_input
+from bot.core.utils import media_utils as media
 
 
 def make_event(parts=None, text="hello", session="images"):
-    message = AstrBotMessage()
+    message = BotMessage()
     message.message = parts or [Plain(text=text)]
     message.message_str = text
     message.type = MessageType.FRIEND_MESSAGE
     message.sender = MessageMember(user_id="user", nickname="User")
     message.self_id = "bot"
-    event = AstrMessageEvent(
+    event = BotMessageEvent(
         text,
         message,
         PlatformMetadata(name="test", id="test", description="test"),
@@ -86,7 +86,7 @@ def source_image(tmp_path, fmt="GIF"):
 def harness(tmp_path, monkeypatch):
     work = tmp_path / "work"
     for module in (media, image_input, preprocess):
-        monkeypatch.setattr(module, "get_astrbot_temp_path", lambda: str(work))
+        monkeypatch.setattr(module, "get_bot_temp_path", lambda: str(work))
     config = copy.deepcopy(DEFAULT_CONFIG)
     config["provider_settings"].update(
         {
@@ -133,7 +133,7 @@ def harness(tmp_path, monkeypatch):
     context.get_using_provider_async = AsyncMock(return_value=provider)
     context.get_provider_by_id.return_value = provider
     ctx = SimpleNamespace(
-        astrbot_config=config, plugin_manager=SimpleNamespace(context=context)
+        bot_config=config, plugin_manager=SimpleNamespace(context=context)
     )
     captured = []
     hooks = []
@@ -147,7 +147,7 @@ def harness(tmp_path, monkeypatch):
     monkeypatch.setattr(internal, "_record_internal_agent_stats", AsyncMock())
     monkeypatch.setattr(internal.Metric, "upload", AsyncMock())
     monkeypatch.setattr(main, "retrieve_knowledge_base", AsyncMock(return_value=None))
-    from astrbot.core.pipeline.process_stage.method.agent_request import (
+    from bot.core.pipeline.process_stage.method.agent_request import (
         SessionServiceManager,
     )
 
@@ -362,7 +362,7 @@ async def test_profile_reload_and_concurrent_requests(harness, tmp_path):
     other_config = copy.deepcopy(harness.config)
     other_config["provider_settings"]["image_compress_options"]["max_size"] = 60
     other_ctx = SimpleNamespace(
-        astrbot_config=other_config, plugin_manager=harness.ctx.plugin_manager
+        bot_config=other_config, plugin_manager=harness.ctx.plugin_manager
     )
     other_stage = ProcessStage()
     await other_stage.initialize(other_ctx)
@@ -477,7 +477,7 @@ async def test_plugin_request_extra_metadata_hook_and_history(
         base64.b64decode(p["image_url"]["url"].split(",", 1)[1]).startswith(b"\xff\xd8")
         for p in images
     )
-    from astrbot.core.provider.sources.anthropic_source import ProviderAnthropic
+    from bot.core.provider.sources.anthropic_source import ProviderAnthropic
 
     anthropic = object.__new__(ProviderAnthropic)
     _, payload = anthropic._prepare_payload([saved[-1]])
@@ -763,7 +763,7 @@ async def test_oversized_images_explain_omission_and_keep_original_path(
         part["text"]
         for part in payload
         if part["type"] == "text"
-        and "astrbot_file_read_tool if available" in part["text"]
+        and "bot_file_read_tool if available" in part["text"]
     ]
     assert len(advice) == 1
     assert "resend a smaller image" in advice[0]
@@ -873,8 +873,8 @@ async def test_non_image_and_disabled_ai_do_not_prepare(harness, tmp_path, monke
 
 
 def test_image_preparation_stays_outside_agent_runner_and_providers():
-    root = Path(__file__).parents[1] / "astrbot" / "core"
-    paths = [root / "astr_main_agent.py", root / "astr_agent_tool_exec.py"]
+    root = Path(__file__).parents[1] / "bot" / "core"
+    paths = [root / "bot_main_agent.py", root / "bot_agent_tool_exec.py"]
     paths += list((root / "agent").rglob("*.py")) + list(
         (root / "provider").rglob("*.py")
     )
@@ -885,7 +885,7 @@ def test_image_preparation_stays_outside_agent_runner_and_providers():
             and "resolve_image_ref_to_images" not in source
         )
         assert "image_settings" not in source
-    from astrbot.core.tools.computer_tools.cua import CuaMouseClickTool
+    from bot.core.tools.computer_tools.cua import CuaMouseClickTool
 
     assert (
         "coordinate_space" not in inspect.signature(CuaMouseClickTool.call).parameters
@@ -999,7 +999,7 @@ async def test_two_plugin_requests_on_one_event_are_prepared_independently(
 async def test_third_party_route_retains_original_images(
     harness, tmp_path, monkeypatch
 ):
-    from astrbot.core.pipeline.process_stage.method.agent_sub_stages.third_party import (
+    from bot.core.pipeline.process_stage.method.agent_sub_stages.third_party import (
         ThirdPartyAgentSubStage,
     )
 
@@ -1399,7 +1399,7 @@ async def test_captioned_quote_has_status_without_visual_index(
 
 @pytest.mark.asyncio
 async def test_temporary_skipped_image_does_not_persist_its_path(harness, tmp_path):
-    from astrbot.core.agent.message import Message
+    from bot.core.agent.message import Message
 
     source = tmp_path / "private.png"
     PILImage.new("RGB", (4, 4)).save(source)

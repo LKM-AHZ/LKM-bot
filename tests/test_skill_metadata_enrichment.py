@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.skills.skill_manager import (
+from bot.core.skills.skill_manager import (
     SkillInfo,
     SkillManager,
     _parse_frontmatter_description,
@@ -108,12 +108,12 @@ def test_build_skills_prompt_absolute_path_in_example():
         SkillInfo(
             name="foo",
             description="do foo",
-            path="/home/pan/AstrBot/skills/foo/SKILL.md",
+            path="/home/pan/LKMBot/skills/foo/SKILL.md",
             active=True,
         ),
     ]
     prompt = build_skills_prompt(skills)
-    assert "cat /home/pan/AstrBot/skills/foo/SKILL.md" in prompt
+    assert "cat /home/pan/LKMBot/skills/foo/SKILL.md" in prompt
 
 
 def test_build_skills_prompt_keeps_placeholder_example_literal():
@@ -131,23 +131,23 @@ def test_build_skills_prompt_keeps_placeholder_example_literal():
 
 
 def test_build_skills_prompt_preserves_windows_absolute_path_in_example(monkeypatch):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "nt")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "nt")
     skills = [
         SkillInfo(
             name="foo",
             description="do foo",
-            path="C:/AstrBot/data/skills/foo/SKILL.md",
+            path="C:/LKMBot/data/skills/foo/SKILL.md",
             active=True,
         ),
     ]
     prompt = build_skills_prompt(skills)
-    assert 'type "C:/AstrBot/data/skills/foo/SKILL.md"' in prompt
+    assert 'type "C:/LKMBot/data/skills/foo/SKILL.md"' in prompt
 
 
 def test_build_skills_prompt_uses_windows_friendly_command_for_windows_paths(
     monkeypatch,
 ):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "nt")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "nt")
     skills = [
         SkillInfo(
             name="foo",
@@ -162,21 +162,21 @@ def test_build_skills_prompt_uses_windows_friendly_command_for_windows_paths(
 
 
 def test_build_skills_prompt_quotes_windows_paths_with_spaces(monkeypatch):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "nt")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "nt")
     skills = [
         SkillInfo(
             name="foo",
             description="do foo",
-            path="C:/AstrBot/My Skills/foo/SKILL.md",
+            path="C:/LKMBot/My Skills/foo/SKILL.md",
             active=True,
         ),
     ]
     prompt = build_skills_prompt(skills)
-    assert 'type "C:/AstrBot/My Skills/foo/SKILL.md"' in prompt
+    assert 'type "C:/LKMBot/My Skills/foo/SKILL.md"' in prompt
 
 
 def test_build_skills_prompt_normalizes_windows_backslashes_in_example(monkeypatch):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "nt")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "nt")
     skills = [
         SkillInfo(
             name="foo",
@@ -190,7 +190,7 @@ def test_build_skills_prompt_normalizes_windows_backslashes_in_example(monkeypat
 
 
 def test_build_skills_prompt_uses_windows_command_for_unc_paths(monkeypatch):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "nt")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "nt")
     skills = [
         SkillInfo(
             name="foo",
@@ -204,7 +204,7 @@ def test_build_skills_prompt_uses_windows_command_for_unc_paths(monkeypatch):
 
 
 def test_build_skills_prompt_keeps_posix_double_slash_paths_on_non_windows(monkeypatch):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "posix")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "posix")
     skills = [
         SkillInfo(
             name="foo",
@@ -221,7 +221,7 @@ def test_build_skills_prompt_keeps_posix_double_slash_paths_on_non_windows(monke
 def test_build_skills_prompt_normalizes_windows_backslashes_on_non_windows_host(
     monkeypatch,
 ):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "posix")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "posix")
     skills = [
         SkillInfo(
             name="foo",
@@ -238,20 +238,20 @@ def test_build_skills_prompt_normalizes_windows_backslashes_on_non_windows_host(
 def test_build_skills_prompt_preserves_drive_colon_while_sanitizing_unsafe_chars(
     monkeypatch,
 ):
-    monkeypatch.setattr("astrbot.core.skills.skill_manager.os.name", "nt")
+    monkeypatch.setattr("bot.core.skills.skill_manager.os.name", "nt")
     skills = [
         SkillInfo(
             name="foo",
             description="do foo",
-            path="C:/AstrBot/data/skills/fo`o/SKILL.md",
+            path="C:/LKMBot/data/skills/fo`o/SKILL.md",
             active=True,
         ),
     ]
     prompt = build_skills_prompt(skills)
-    assert 'type "C:/AstrBot/data/skills/foo/SKILL.md"' in prompt
+    assert 'type "C:/LKMBot/data/skills/foo/SKILL.md"' in prompt
 
     example_fragment = prompt.split("(e.g. `", 1)[1].split("`).", 1)[0]
-    assert example_fragment == 'type "C:/AstrBot/data/skills/foo/SKILL.md"'
+    assert example_fragment == 'type "C:/LKMBot/data/skills/foo/SKILL.md"'
 
 
 def test_build_skills_prompt_strips_non_drive_colons_from_example_path():
@@ -431,11 +431,11 @@ def test_list_skills_parses_description_from_local(monkeypatch, tmp_path: Path):
     plugins_root.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "bot.core.skills.skill_manager.get_bot_data_path",
         lambda: str(data_dir),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_temp_path",
+        "bot.core.skills.skill_manager.get_bot_temp_path",
         lambda: str(temp_dir),
     )
 
@@ -570,8 +570,8 @@ def test_list_workspace_skills_rejects_symlinked_root_outside_workspace(
 
 
 def test_list_skills_includes_plugin_provided_skills(monkeypatch, tmp_path: Path):
-    import astrbot.core.star.star as star_module
-    from astrbot.core.star.star import StarMetadata
+    import bot.core.star.star as star_module
+    from bot.core.star.star import StarMetadata
 
     data_dir = tmp_path / "data"
     skills_root = tmp_path / "skills"
@@ -580,7 +580,7 @@ def test_list_skills_includes_plugin_provided_skills(monkeypatch, tmp_path: Path
     skills_root.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "bot.core.skills.skill_manager.get_bot_data_path",
         lambda: str(data_dir),
     )
     monkeypatch.setattr(
@@ -589,13 +589,13 @@ def test_list_skills_includes_plugin_provided_skills(monkeypatch, tmp_path: Path
         [
             StarMetadata(
                 name="demo",
-                root_dir_name="astrbot_plugin_demo",
+                root_dir_name="bot_plugin_demo",
                 activated=True,
             )
         ],
     )
 
-    plugin_skill_dir = plugins_root / "astrbot_plugin_demo" / "skills" / "demo-skill"
+    plugin_skill_dir = plugins_root / "bot_plugin_demo" / "skills" / "demo-skill"
     plugin_skill_dir.mkdir(parents=True)
     plugin_skill_dir.joinpath("SKILL.md").write_text(
         "---\nname: demo-skill\ndescription: Plugin bundled skill.\n---\n# Demo\n",
@@ -610,18 +610,18 @@ def test_list_skills_includes_plugin_provided_skills(monkeypatch, tmp_path: Path
     assert skill.name == "demo-skill"
     assert skill.description == "Plugin bundled skill."
     assert skill.source_type == "plugin"
-    assert skill.source_label == "astrbot_plugin_demo"
-    assert skill.plugin_name == "astrbot_plugin_demo"
+    assert skill.source_label == "bot_plugin_demo"
+    assert skill.plugin_name == "bot_plugin_demo"
     assert skill.readonly is True
-    assert skill.path.endswith("plugins/astrbot_plugin_demo/skills/demo-skill/SKILL.md")
+    assert skill.path.endswith("plugins/bot_plugin_demo/skills/demo-skill/SKILL.md")
 
 
 def test_list_skills_includes_builtin_plugin_skill_as_preset(
     monkeypatch,
     tmp_path: Path,
 ):
-    import astrbot.core.star.star as star_module
-    from astrbot.core.star.star import StarMetadata
+    import bot.core.star.star as star_module
+    from bot.core.star.star import StarMetadata
 
     data_dir = tmp_path / "data"
     skills_root = tmp_path / "skills"
@@ -632,11 +632,11 @@ def test_list_skills_includes_builtin_plugin_skill_as_preset(
     plugins_root.mkdir()
 
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "bot.core.skills.skill_manager.get_bot_data_path",
         lambda: str(data_dir),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_builtin_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_builtin_plugin_path",
         lambda: str(builtin_plugins_root),
     )
     monkeypatch.setattr(
@@ -644,15 +644,15 @@ def test_list_skills_includes_builtin_plugin_skill_as_preset(
         "star_registry",
         [
             StarMetadata(
-                name="astrbot",
-                root_dir_name="astrbot",
+                name="bot",
+                root_dir_name="bot",
                 reserved=True,
                 activated=True,
             )
         ],
     )
 
-    skill_dir = builtin_plugins_root / "astrbot" / "skills" / "skill-creator"
+    skill_dir = builtin_plugins_root / "bot" / "skills" / "skill-creator"
     skill_dir.mkdir(parents=True)
     skill_dir.joinpath("SKILL.md").write_text(
         "---\n"
@@ -672,7 +672,7 @@ def test_list_skills_includes_builtin_plugin_skill_as_preset(
     assert skill.active is True
     assert skill.preset is True
     assert skill.source_type == "plugin"
-    assert skill.plugin_name == "astrbot"
+    assert skill.plugin_name == "bot"
     assert skill.readonly is True
     assert [item.name for item in mgr.list_skills(active_only=True)] == [
         "skill-creator"
@@ -694,11 +694,11 @@ def test_list_skills_includes_inactive_plugin_provided_skills_for_inventory(
     skills_root.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "bot.core.skills.skill_manager.get_bot_data_path",
         lambda: str(data_dir),
     )
 
-    plugin_skill_dir = plugins_root / "astrbot_plugin_demo" / "skills" / "demo-skill"
+    plugin_skill_dir = plugins_root / "bot_plugin_demo" / "skills" / "demo-skill"
     plugin_skill_dir.mkdir(parents=True)
     plugin_skill_dir.joinpath("SKILL.md").write_text(
         "---\nname: demo-skill\ndescription: Plugin bundled skill.\n---\n# Demo\n",
@@ -723,11 +723,11 @@ def test_list_skills_description_from_sandbox_cache(monkeypatch, tmp_path: Path)
     plugins_root.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "bot.core.skills.skill_manager.get_bot_data_path",
         lambda: str(data_dir),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_temp_path",
+        "bot.core.skills.skill_manager.get_bot_temp_path",
         lambda: str(temp_dir),
     )
 
@@ -738,7 +738,7 @@ def test_list_skills_description_from_sandbox_cache(monkeypatch, tmp_path: Path)
                 "name": "web-scrape",
                 "description": "Scrape web pages and extract structured data. "
                 "Use when user needs to extract content from URLs.",
-                "path": "/home/pan/AstrBot/skills/web-scrape/SKILL.md",
+                "path": "/home/pan/LKMBot/skills/web-scrape/SKILL.md",
             }
         ]
     )
@@ -748,4 +748,4 @@ def test_list_skills_description_from_sandbox_cache(monkeypatch, tmp_path: Path)
     s = skills[0]
     assert "Scrape web pages" in s.description
     # Path should be the absolute path from cache
-    assert "/home/pan/AstrBot/skills/web-scrape/SKILL.md" in s.path
+    assert "/home/pan/LKMBot/skills/web-scrape/SKILL.md" in s.path

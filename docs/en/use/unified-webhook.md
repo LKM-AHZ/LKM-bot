@@ -15,7 +15,7 @@ Platform adapters that support Unified Webhook Mode include:
 ## How to Use Unified Webhook Mode
 
 1. Have a domain (e.g., example.com) and a server with a public IP
-2. Configure DNS resolution (e.g., astrbot.example.com)
+2. Configure DNS resolution (e.g., bot.example.com)
 3. Configure reverse proxy to forward requests from port 80 or 443 of your domain to LKMBot's WebUI port (default is 6185)
 4. Go to LKMBot's `Settings → General → Runtime Basics` and set the `Externally Reachable Callback URL` to your configured URL (e.g., https://astrbot.example.com). Click save and wait for restart.
 

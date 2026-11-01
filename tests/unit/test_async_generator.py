@@ -6,7 +6,7 @@ from contextvars import ContextVar
 import anyio
 import pytest
 
-from astrbot.core.utils.async_generator import iterate_in_task
+from bot.core.utils.async_generator import iterate_in_task
 
 
 @pytest.mark.asyncio
@@ -305,7 +305,7 @@ async def test_cancel_with_queued_value_and_cleanup_error(monkeypatch):
             await super().put(item)
 
     monkeypatch.setattr(
-        "astrbot.core.utils.async_generator.asyncio.Queue", CancelAfterPut
+        "bot.core.utils.async_generator.asyncio.Queue", CancelAfterPut
     )
 
     async def source():

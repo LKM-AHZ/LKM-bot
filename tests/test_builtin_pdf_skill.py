@@ -8,9 +8,9 @@ from pypdf import PdfReader
 
 PDF_SKILL_DIR = (
     Path(__file__).resolve().parents[1]
-    / "astrbot"
+    / "bot"
     / "builtin_stars"
-    / "astrbot"
+    / "bot"
     / "skills"
     / "pdf"
 )

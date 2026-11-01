@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_long_connection import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_long_connection import (
     WecomAIBotLongConnectionClient,
 )
 

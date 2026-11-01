@@ -6,8 +6,8 @@ from typing import cast
 
 import pytest
 
-from astrbot.core.computer import computer_client
-from astrbot.core.computer.booters.base import ComputerBooter
+from bot.core.computer import computer_client
+from bot.core.computer.booters.base import ComputerBooter
 
 
 def _extract_embedded_python(command: str) -> str:
@@ -54,7 +54,7 @@ def _isolate_builtin_plugin_skills(monkeypatch, tmp_path: Path) -> None:
     builtin_plugins_root = tmp_path / "builtin_plugins"
     builtin_plugins_root.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_builtin_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_builtin_plugin_path",
         lambda: str(builtin_plugins_root),
     )
 
@@ -75,19 +75,19 @@ def test_sync_skills_keeps_builtin_skills_when_local_is_empty(
         captured["skills"] = skills
 
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+        "bot.core.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_plugin_path",
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_temp_path",
+        "bot.core.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
+        "bot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
         _fake_set_cache,
     )
 
@@ -124,15 +124,15 @@ def test_sync_skills_uses_managed_strategy_instead_of_wiping_all(
         captured["skills"] = skills
 
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+        "bot.core.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_temp_path",
+        "bot.core.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
+        "bot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
         _fake_set_cache,
     )
 
@@ -159,15 +159,15 @@ def test_sync_skills_includes_plugin_provided_skills(
     monkeypatch,
     tmp_path: Path,
 ):
-    import astrbot.core.star.star as star_module
-    from astrbot.core.star.star import StarMetadata
+    import bot.core.star.star as star_module
+    from bot.core.star.star import StarMetadata
 
     skills_root = tmp_path / "skills"
     plugins_root = tmp_path / "plugins"
     temp_root = tmp_path / "temp"
     skills_root.mkdir(parents=True, exist_ok=True)
     temp_root.mkdir(parents=True, exist_ok=True)
-    plugin_skill_dir = plugins_root / "astrbot_plugin_demo" / "skills" / "demo-skill"
+    plugin_skill_dir = plugins_root / "bot_plugin_demo" / "skills" / "demo-skill"
     plugin_skill_dir.mkdir(parents=True)
     plugin_skill_dir.joinpath("SKILL.md").write_text("# demo", encoding="utf-8")
 
@@ -177,19 +177,19 @@ def test_sync_skills_includes_plugin_provided_skills(
         captured["skills"] = skills
 
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+        "bot.core.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_plugin_path",
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_temp_path",
+        "bot.core.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
+        "bot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
         _fake_set_cache,
     )
     monkeypatch.setattr(
@@ -198,7 +198,7 @@ def test_sync_skills_includes_plugin_provided_skills(
         [
             StarMetadata(
                 name="demo",
-                root_dir_name="astrbot_plugin_demo",
+                root_dir_name="bot_plugin_demo",
                 activated=True,
             )
         ],
@@ -224,28 +224,28 @@ def test_sync_skills_skips_inactive_plugin_provided_skills(
     monkeypatch,
     tmp_path: Path,
 ):
-    import astrbot.core.star.star as star_module
-    from astrbot.core.star.star import StarMetadata
+    import bot.core.star.star as star_module
+    from bot.core.star.star import StarMetadata
 
     skills_root = tmp_path / "skills"
     plugins_root = tmp_path / "plugins"
     temp_root = tmp_path / "temp"
     skills_root.mkdir(parents=True, exist_ok=True)
     temp_root.mkdir(parents=True, exist_ok=True)
-    plugin_skill_dir = plugins_root / "astrbot_plugin_demo" / "skills" / "demo-skill"
+    plugin_skill_dir = plugins_root / "bot_plugin_demo" / "skills" / "demo-skill"
     plugin_skill_dir.mkdir(parents=True)
     plugin_skill_dir.joinpath("SKILL.md").write_text("# demo", encoding="utf-8")
 
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+        "bot.core.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_plugin_path",
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.computer.computer_client.get_astrbot_temp_path",
+        "bot.core.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
@@ -254,7 +254,7 @@ def test_sync_skills_skips_inactive_plugin_provided_skills(
         [
             StarMetadata(
                 name="demo",
-                root_dir_name="astrbot_plugin_demo",
+                root_dir_name="bot_plugin_demo",
                 activated=False,
             )
         ],

@@ -3,9 +3,9 @@
 The `main.py` file in the plugin template is a minimal plugin instance.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent, MessageEventResult
-from astrbot.core.star import Context, Star
-from astrbot.api import logger  # Use the logger interface provided by LKMBot
+from bot.api.event import filter, BotMessageEvent, MessageEventResult
+from bot.core.star import Context, Star
+from bot.api import logger  # Use the logger interface provided by LKMBot
 
 
 class MyPlugin(Star):
@@ -14,7 +14,7 @@ class MyPlugin(Star):
 
     # Decorator to register a command. The command name is "helloworld". Once registered, sending `/helloworld` will trigger this command and respond with `Hello, {user_name}!`
     @filter.command("helloworld")
-    async def helloworld(self, event: AstrMessageEvent):
+    async def helloworld(self, event: BotMessageEvent):
         """This is a hello world command"""  # This is the handler's description, which will be parsed to help users understand the plugin's functionality. Highly recommended to provide.
         user_name = event.get_sender_name()
         message_str = event.message_str  # Get the plain text content of the message
@@ -30,8 +30,8 @@ Explanation:
 - Plugins must inherit from the `Star` class.
 - The `Context` class is used for plugin interaction with LKMBot Core, allowing you to call various APIs provided by LKMBot Core.
 - Specific handler functions are defined within the plugin class, such as the `helloworld` function here.
-- `AstrMessageEvent` is LKMBot's message event object, which stores information about the message sender, message content, etc.
-- `AstrBotMessage` is LKMBot's message object, which stores the specific content of messages delivered by the messaging platform. It can be accessed via `event.message_obj`.
+- `BotMessageEvent` is LKMBot's message event object, which stores information about the message sender, message content, etc.
+- `BotMessage` is LKMBot's message object, which stores the specific content of messages delivered by the messaging platform. It can be accessed via `event.message_obj`.
 
 > [!TIP]
 >

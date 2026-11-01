@@ -2,28 +2,28 @@
 
 Event listeners can receive message content delivered by the platform and implement features such as commands, command groups, and event listening.
 
-Event listener decorators are located in `astrbot.api.event.filter` and must be imported first. Please make sure to import it, otherwise it will conflict with Python's built-in `filter` higher-order function.
+Event listener decorators are located in `bot.api.event.filter` and must be imported first. Please make sure to import it, otherwise it will conflict with Python's built-in `filter` higher-order function.
 
 ```py
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 ```
 
 ## Messages and Events
 
-LKMBot receives messages delivered by messaging platforms and encapsulates them as `AstrMessageEvent` objects, which are then passed to plugins for processing.
+LKMBot receives messages delivered by messaging platforms and encapsulates them as `BotMessageEvent` objects, which are then passed to plugins for processing.
 
 ![message-event](https://files.astrbot.app/docs/en/dev/star/guides/message-event.svg)
 
 ### Message Events
 
-`AstrMessageEvent` is LKMBot's message event object, which stores information about the message sender, message content, etc.
+`BotMessageEvent` is LKMBot's message event object, which stores information about the message sender, message content, etc.
 
 ### Message Object
 
-`AstrBotMessage` is LKMBot's message object, which stores the specific content of messages delivered by the messaging platform. The `AstrMessageEvent` object contains a `message_obj` attribute to retrieve this message object.
+`BotMessage` is LKMBot's message object, which stores the specific content of messages delivered by the messaging platform. The `BotMessageEvent` object contains a `message_obj` attribute to retrieve this message object.
 
 ```py{11}
-class AstrBotMessage:
+class BotMessage:
     """LKMBot's message object"""
 
     type: MessageType  # Message type
@@ -73,16 +73,16 @@ In LKMBot, message chains are represented as lists of type `List[BaseMessageComp
 ![message-event-simple-command](https://files.astrbot.app/docs/en/dev/star/guides/message-event-simple-command.svg)
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.star import Context, Star
+from bot.api.event import filter, BotMessageEvent
+from bot.core.star import Context, Star
 
 
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
 
-    @filter.command("helloworld")  # from astrbot.api.event.filter import command
-    async def helloworld(self, event: AstrMessageEvent):
+    @filter.command("helloworld")  # from bot.api.event.filter import command
+    async def helloworld(self, event: BotMessageEvent):
         """This is a hello world command"""
         user_name = event.get_sender_name()
         message_str = event.message_str  # Get the plain text content of the message
@@ -100,7 +100,7 @@ LKMBot will automatically parse command parameters for you.
 
 ```python
 @filter.command("add")
-async def add(self, event: AstrMessageEvent, a: int, b: int):
+async def add(self, event: BotMessageEvent, a: int, b: int):
     # /add 1 2 -> Result is: 3
     yield event.plain_result(f"Wow! The answer is {a + b}!")
 ```
@@ -116,13 +116,13 @@ def math():
 
 
 @math.command("add")
-async def add(self, event: AstrMessageEvent, a: int, b: int):
+async def add(self, event: BotMessageEvent, a: int, b: int):
     # /math add 1 2 -> Result is: 3
     yield event.plain_result(f"Result is: {a + b}")
 
 
 @math.command("sub")
-async def sub(self, event: AstrMessageEvent, a: int, b: int):
+async def sub(self, event: BotMessageEvent, a: int, b: int):
     # /math sub 1 2 -> Result is: -1
     yield event.plain_result(f"Result is: {a - b}")
 ```
@@ -160,17 +160,17 @@ def calc():
 
 
 @calc.command("add")
-async def add(self, event: AstrMessageEvent, a: int, b: int):
+async def add(self, event: BotMessageEvent, a: int, b: int):
     yield event.plain_result(f"Result is: {a + b}")
 
 
 @calc.command("sub")
-async def sub(self, event: AstrMessageEvent, a: int, b: int):
+async def sub(self, event: BotMessageEvent, a: int, b: int):
     yield event.plain_result(f"Result is: {a - b}")
 
 
 @calc.command("help")
-async def calc_help(self, event: AstrMessageEvent):
+async def calc_help(self, event: BotMessageEvent):
     # /math calc help
     yield event.plain_result("This is a calculator plugin with add and sub commands.")
 ```
@@ -183,7 +183,7 @@ You can add different aliases for commands or command groups:
 
 ```python
 @filter.command("help", alias={"帮助", "helpme"})
-async def help(self, event: AstrMessageEvent):
+async def help(self, event: BotMessageEvent):
     yield event.plain_result("This is a calculator plugin with add and sub commands.")
 ```
 
@@ -195,7 +195,7 @@ This will receive all events.
 
 ```python
 @filter.event_message_type(filter.EventMessageType.ALL)
-async def on_all_message(self, event: AstrMessageEvent):
+async def on_all_message(self, event: BotMessageEvent):
     yield event.plain_result("Received a message.")
 ```
 
@@ -203,7 +203,7 @@ async def on_all_message(self, event: AstrMessageEvent):
 
 ```python
 @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
-async def on_private_message(self, event: AstrMessageEvent):
+async def on_private_message(self, event: BotMessageEvent):
     message_str = event.message_str  # Get the plain text content of the message
     yield event.plain_result("Received a private message.")
 ```
@@ -216,7 +216,7 @@ async def on_private_message(self, event: AstrMessageEvent):
 @filter.platform_adapter_type(
     filter.PlatformAdapterType.AIOCQHTTP | filter.PlatformAdapterType.QQOFFICIAL
 )
-async def on_aiocqhttp(self, event: AstrMessageEvent):
+async def on_aiocqhttp(self, event: BotMessageEvent):
     """Only receive messages from AIOCQHTTP and QQOFFICIAL"""
     yield event.plain_result("Received a message")
 ```
@@ -228,7 +228,7 @@ In the current version, `PlatformAdapterType` supports the following values: `AI
 ```python
 @filter.permission_type(filter.PermissionType.ADMIN)
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
+async def test(self, event: BotMessageEvent):
     pass
 ```
 
@@ -241,7 +241,7 @@ Multiple filters can be used simultaneously by adding multiple decorators to a f
 ```python
 @filter.command("helloworld")
 @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     yield event.plain_result("Hello!")
 ```
 
@@ -255,11 +255,11 @@ async def helloworld(self, event: AstrMessageEvent):
 > Available after v3.4.34
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
-@filter.on_astrbot_loaded()
-async def on_astrbot_loaded(self):
+@filter.on_bot_loaded()
+async def on_bot_loaded(self):
     print("LKMBot initialization complete")
 ```
 
@@ -270,11 +270,11 @@ This hook is triggered when LKMBot is preparing to call the LLM but has not yet 
 It is suitable for sending feedback such as "Waiting for request..." to the user, or for obtaining the LLM request outside the lock without waiting for it to be released.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.on_waiting_llm_request()
-async def on_waiting_llm(self, event: AstrMessageEvent):
+async def on_waiting_llm(self, event: BotMessageEvent):
     await event.send(event.plain_result("🤔 Waiting for request..."))
 ```
 
@@ -289,13 +289,13 @@ You can obtain the `ProviderRequest` object and modify it.
 The ProviderRequest object contains all information about the LLM request, including the request text, system prompt, etc.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.provider.entities import ProviderRequest
+from bot.api.event import filter, BotMessageEvent
+from bot.core.provider.entities import ProviderRequest
 
 
 @filter.on_llm_request()
 async def my_custom_hook_1(
-    self, event: AstrMessageEvent, req: ProviderRequest
+    self, event: BotMessageEvent, req: ProviderRequest
 ):  # Note there are three parameters
     print(req)  # Print the request text
     req.system_prompt += "Custom system_prompt"  # If there is another suitable approach, avoid using this to append prompts that change every round. It can break prompt caching and greatly increase cost (7 - 20x).
@@ -309,10 +309,10 @@ async def my_custom_hook_1(
 > For small or medium-sized dynamic prompts that change every round, prefer appending them through `req.extra_user_content_parts`. These parts are added after the current user input as extra user-message content, which is more suitable for dynamic context such as "current time", "character affinity", or "relevant memory snippets":
 >
 > ```python
-> from astrbot.core.agent.message import TextPart
+> from bot.core.agent.message import TextPart
 >
 > @filter.on_llm_request()
-> async def add_dynamic_prompt(self, event: AstrMessageEvent, req: ProviderRequest):
+> async def add_dynamic_prompt(self, event: BotMessageEvent, req: ProviderRequest):
 >     req.extra_user_content_parts.append(
 >         TextPart(
 >             text=(
@@ -345,13 +345,13 @@ After the LLM request completes, the `on_llm_response` hook is triggered.
 You can obtain the `ProviderResponse` object and modify it.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.provider.entities import LLMResponse
+from bot.api.event import filter, BotMessageEvent
+from bot.core.provider.entities import LLMResponse
 
 
 @filter.on_llm_response()
 async def on_llm_resp(
-    self, event: AstrMessageEvent, resp: LLMResponse
+    self, event: BotMessageEvent, resp: LLMResponse
 ):  # Note there are three parameters
     print(resp)
 ```
@@ -365,14 +365,14 @@ async def on_llm_resp(
 When the Agent starts running, the `on_agent_begin` hook is triggered.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.astr_agent_context import AstrAgentContext
+from bot.api.event import filter, BotMessageEvent
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.bot_agent_context import BotAgentContext
 
 
 @filter.on_agent_begin()
 async def on_agent_begin(
-    self, event: AstrMessageEvent, run_context: ContextWrapper[AstrAgentContext]
+    self, event: BotMessageEvent, run_context: ContextWrapper[BotAgentContext]
 ):  # Note there are three parameters
     print("Agent started")
 ```
@@ -388,14 +388,14 @@ When the Agent is about to call an LLM tool, the `on_using_llm_tool` hook is tri
 You can obtain the `FunctionTool` object and tool call arguments.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.agent.tool import FunctionTool
+from bot.api.event import filter, BotMessageEvent
+from bot.core.agent.tool import FunctionTool
 
 
 @filter.on_using_llm_tool()
 async def on_using_llm_tool(
     self,
-    event: AstrMessageEvent,
+    event: BotMessageEvent,
     tool: FunctionTool,
     tool_args: dict | None,
 ):
@@ -415,14 +415,14 @@ You can obtain the `FunctionTool` object, tool call arguments, and tool call res
 ```python
 from mcp.types import CallToolResult
 
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.agent.tool import FunctionTool
+from bot.api.event import filter, BotMessageEvent
+from bot.core.agent.tool import FunctionTool
 
 
 @filter.on_llm_tool_respond()
 async def on_llm_tool_respond(
     self,
-    event: AstrMessageEvent,
+    event: BotMessageEvent,
     tool: FunctionTool,
     tool_args: dict | None,
     tool_result: CallToolResult | None,
@@ -439,17 +439,17 @@ async def on_llm_tool_respond(
 After the Agent finishes running, the `on_agent_done` hook is triggered. This hook is triggered after `on_llm_response`.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.astr_agent_context import AstrAgentContext
+from bot.api.event import filter, BotMessageEvent
+from bot.core.provider.entities import LLMResponse
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.bot_agent_context import BotAgentContext
 
 
 @filter.on_agent_done()
 async def on_agent_done(
     self,
-    event: AstrMessageEvent,
-    run_context: ContextWrapper[AstrAgentContext],
+    event: BotMessageEvent,
+    run_context: ContextWrapper[BotAgentContext],
     resp: LLMResponse,
 ):  # Note there are four parameters
     print(resp)
@@ -464,12 +464,12 @@ Before sending a message, the `on_decorating_result` hook is triggered.
 You can implement some message decoration here, such as converting to voice, converting to image, adding prefixes, etc.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-import astrbot.api.message_components as Comp
+from bot.api.event import filter, BotMessageEvent
+import bot.api.message_components as Comp
 
 
 @filter.on_decorating_result()
-async def on_decorating_result(self, event: AstrMessageEvent):
+async def on_decorating_result(self, event: BotMessageEvent):
     result = event.get_result()
     chain = result.chain
     print(chain)  # Print the message chain
@@ -485,11 +485,11 @@ async def on_decorating_result(self, event: AstrMessageEvent):
 After a message is sent to the messaging platform, the `after_message_sent` hook is triggered.
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.after_message_sent()
-async def after_message_sent(self, event: AstrMessageEvent):
+async def after_message_sent(self, event: BotMessageEvent):
     pass
 ```
 
@@ -501,7 +501,7 @@ Commands, event listeners, and event hooks can have priority set to execute befo
 
 ```python
 @filter.command("helloworld", priority=1)
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     yield event.plain_result("Hello!")
 ```
 
@@ -509,7 +509,7 @@ async def helloworld(self, event: AstrMessageEvent):
 
 ```python{6}
 @filter.command("check_ok")
-async def check_ok(self, event: AstrMessageEvent):
+async def check_ok(self, event: BotMessageEvent):
     ok = self.check()  # Your own logic
     if not ok:
         yield event.plain_result("Check failed")

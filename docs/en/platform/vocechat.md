@@ -1,7 +1,7 @@
 # Connect to VoceChat
 
 > [!TIP]
-> LKMBot does not include this adapter by default. Install [astrbot_plugin_vocechat](https://github.com/HikariFroya/astrbot_plugin_vocechat), developed by [HikariFroya](https://github.com/HikariFroya).
+> LKMBot does not include this adapter by default. Install [bot_plugin_vocechat](https://github.com/HikariFroya/astrbot_plugin_vocechat), developed by [HikariFroya](https://github.com/HikariFroya).
 
 > [!WARNING]
 > This adapter is community-maintained and not officially maintained by LKMBot.
@@ -12,9 +12,9 @@ VoceChat is an open-source instant messaging platform with simple multi-platform
 
 See deployment methods on the [VoceChat official website](https://voce.chat/en-US).
 
-## Install `astrbot_plugin_vocechat`
+## Install `bot_plugin_vocechat`
 
-In LKMBot WebUI, open `Extensions → Plugins → LKMBot Plugin Market`, search for `astrbot_plugin_vocechat` and install it.
+In LKMBot WebUI, open `Extensions → Plugins → LKMBot Plugin Market`, search for `bot_plugin_vocechat` and install it.
 
 After installation, go to `Platforms` -> `Add Adapter` -> `VoceChat`.
 If VoceChat is missing, restart LKMBot or verify plugin installation.

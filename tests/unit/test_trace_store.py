@@ -16,15 +16,15 @@ import pytest
 from opentelemetry.sdk.trace import Span, TracerProvider
 from opentelemetry.trace import format_span_id, get_current_span, get_tracer_provider
 
-from astrbot.core.log import LogBroker, LogManager
-from astrbot.core.utils import trace as trace_module
-from astrbot.core.utils.storage_cleaner import StorageCleaner
-from astrbot.core.utils.telemetry import (
+from bot.core.log import LogBroker, LogManager
+from bot.core.utils import trace as trace_module
+from bot.core.utils.storage_cleaner import StorageCleaner
+from bot.core.utils.telemetry import (
     MAX_ATTRIBUTE_BYTES,
     bounded_attributes,
 )
-from astrbot.core.utils.trace import TraceSpan, trace_execution
-from astrbot.core.utils.trace_store import MAX_FRAME_BYTES, TraceStore
+from bot.core.utils.trace import TraceSpan, trace_execution
+from bot.core.utils.trace_store import MAX_FRAME_BYTES, TraceStore
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def capture(monkeypatch):
             frames.append(json.loads(json.dumps(payload)))
             return True
 
-    monkeypatch.setitem(trace_module.astrbot_config, "trace_enable", True)
+    monkeypatch.setitem(trace_module.bot_config, "trace_enable", True)
     monkeypatch.setattr(trace_module, "get_trace_store", lambda *_: CaptureStore())
     monkeypatch.setattr(trace_module, "_get_log_broker", lambda: None)
     return frames
@@ -79,14 +79,14 @@ def test_standard_ids_parents_and_immutable_snapshots(capture):
         frame["span"]["span_id"]: frame["span"] for frame in capture if "span" in frame
     }
     assert len(spans) == 4
-    assert spans[trace.span_id]["attributes"]["astrbot.kind"] == "message"
-    assert spans[handler_id]["attributes"]["astrbot.kind"] == "plugin_handler"
-    assert spans[agent_id]["attributes"]["astrbot.kind"] == "agent"
-    assert any(span["attributes"]["astrbot.kind"] == "tool" for span in spans.values())
+    assert spans[trace.span_id]["attributes"]["bot.kind"] == "message"
+    assert spans[handler_id]["attributes"]["bot.kind"] == "plugin_handler"
+    assert spans[agent_id]["attributes"]["bot.kind"] == "agent"
+    assert any(span["attributes"]["bot.kind"] == "tool" for span in spans.values())
     for frame in capture:
         for model in (frame.get("span", {}), frame.get("event", {})):
             assert (
-                not {"astrbot.action", "astrbot.end_action", "astrbot.duration_ms"}
+                not {"bot.action", "bot.end_action", "bot.duration_ms"}
                 & model.get("attributes", {}).keys()
             )
     assert spans[handler_id]["parent_span_id"] == trace.span_id
@@ -226,12 +226,12 @@ def test_internal_transitions_and_timing_are_not_persisted(capture):
         for frame in reversed(capture)
         if frame.get("span", {}).get("span_id") == handler_id
     )
-    assert handler["attributes"]["astrbot.kind"] == "plugin_handler"
-    assert handler["attributes"]["astrbot.handler_type"] == "AdapterMessageEvent"
+    assert handler["attributes"]["bot.kind"] == "plugin_handler"
+    assert handler["attributes"]["bot.handler_type"] == "AdapterMessageEvent"
     assert handler["end_time_unix_nano"]
     for frame in capture:
         assert (
-            not {"astrbot.action", "astrbot.end_action", "astrbot.duration_ms"}
+            not {"bot.action", "bot.end_action", "bot.duration_ms"}
             & frame.get("span", {}).get("attributes", {}).keys()
         )
 
@@ -240,7 +240,7 @@ def test_internal_transitions_and_timing_are_not_persisted(capture):
 async def test_logs_correlate_and_detached_contexts_expire(capture):
     trace = TraceSpan("message")
     broker = LogBroker()
-    log = logging.Logger("astrbot.trace_test")
+    log = logging.Logger("bot.trace_test")
     LogManager.set_queue_handler(log, broker)
     release = asyncio.Event()
 
@@ -305,7 +305,7 @@ def test_pause_preserves_completion(capture, monkeypatch):
     with trace_execution(trace):
         trace.record("event_received")
         trace.record("handler_start", handler_full_name="test.handler")
-        monkeypatch.setitem(trace_module.astrbot_config, "trace_enable", False)
+        monkeypatch.setitem(trace_module.bot_config, "trace_enable", False)
         trace.record("agent_start")
         trace.record("handler_end", handler_full_name="test.handler", status="success")
     count = len(capture)
@@ -319,12 +319,12 @@ def test_pause_preserves_completion(capture, monkeypatch):
 def test_limits_preserve_completion(capture):
     attrs = bounded_attributes(
         {
-            "astrbot.body": "字" * 50000,
-            "astrbot.object": {"nested": ["x" * 50000] * 100},
+            "bot.body": "字" * 50000,
+            "bot.object": {"nested": ["x" * 50000] * 100},
         }
     )
     assert len(json.dumps(attrs, ensure_ascii=False).encode()) <= MAX_ATTRIBUTE_BYTES
-    assert attrs["astrbot.truncated"] is True
+    assert attrs["bot.truncated"] is True
     assert all(isinstance(value, (str, bool, int, float)) for value in attrs.values())
     trace = TraceSpan("message")
     with trace.context():
@@ -452,7 +452,7 @@ def test_long_prompt_is_preserved_in_spans_events_and_database(
     with trace.context():
         trace.record("event_received")
         trace.record("agent_start", system_prompt=prompt)
-        trace.record("astr_agent_prepare", system_prompt=prompt)
+        trace.record("bot_agent_prepare", system_prompt=prompt)
         trace.record("agent_end", status="success")
         trace.record("pipeline_end", status="success")
     assert capture[-1]["trace"]["truncated"] is False
@@ -461,8 +461,8 @@ def test_long_prompt_is_preserved_in_spans_events_and_database(
     assert persisted.flush()
     detail = persisted.get_trace(trace.trace_id)
     agent = next(span for span in detail["spans"] if span["parent_span_id"])
-    assert agent["attributes"]["astrbot.system_prompt"] == prompt
-    assert agent["events"][0]["attributes"]["astrbot.system_prompt"] == prompt
+    assert agent["attributes"]["bot.system_prompt"] == prompt
+    assert agent["events"][0]["attributes"]["bot.system_prompt"] == prompt
     assert detail["trace"]["truncated"] is False
 
 
@@ -587,7 +587,7 @@ def test_capacity_prunes_complete_traces_with_cascade(persisted, capture):
         frame = json.loads(json.dumps(capture[-1]))
         frame["trace"]["trace_id"] = frame["span"]["trace_id"] = f"{index:032x}"
         frame["trace"]["root_span_id"] = frame["span"]["span_id"] = f"{index:016x}"
-        frame["trace"]["attributes"]["astrbot.payload"] = "x" * 340000
+        frame["trace"]["attributes"]["bot.payload"] = "x" * 340000
         assert persisted.append(frame)
         if index % 16 == 0:
             assert persisted.flush()
@@ -661,7 +661,7 @@ def test_foreign_database_is_not_modified(tmp_path):
 def test_log_cleanup_protects_databases(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    for name in ("traces.db", "traces.db-wal", "traces.db-shm", "astrbot.log"):
+    for name in ("traces.db", "traces.db-wal", "traces.db-shm", "bot.log"):
         (logs / name).write_bytes(b"keep")
     with sqlite3.connect(logs / "old-custom-name") as connection:
         connection.execute("CREATE TABLE important(value TEXT)")
@@ -674,7 +674,7 @@ def test_log_cleanup_protects_databases(tmp_path):
     cleaner.cleanup("logs")
     for name in ("traces.db", "traces.db-wal", "traces.db-shm"):
         assert (logs / name).read_bytes() == b"keep"
-    assert not (logs / "astrbot.log").exists()
+    assert not (logs / "bot.log").exists()
     assert (logs / "old-custom-name").exists()
     assert (logs / "old-custom-name-wal").exists()
 
@@ -686,7 +686,7 @@ def test_trace_usage_and_cleanup_preserve_running_traces(
     tmp_path, capture, monkeypatch, relative_path
 ):
     """Count all sidecars and clear history without removing active files."""
-    from astrbot.core.utils import trace_store as storage_module
+    from bot.core.utils import trace_store as storage_module
 
     path = tmp_path / relative_path
     store = TraceStore(path, {})
@@ -703,7 +703,7 @@ def test_trace_usage_and_cleanup_preserve_running_traces(
                 frame, owner=running if frame["trace"]["trace_id"] == running.trace_id else finished
             )
         assert store.flush()
-        log = tmp_path / "logs" / "astrbot.log"
+        log = tmp_path / "logs" / "bot.log"
         log.parent.mkdir(parents=True, exist_ok=True)
         log.write_bytes(b"x" * 128)
         cleaner = StorageCleaner(

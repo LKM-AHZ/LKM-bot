@@ -2,9 +2,9 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.utils import core_constraints as core_constraints_module
-from astrbot.core.utils import requirements_utils
-from astrbot.core.utils.core_constraints import CoreConstraintsProvider
+from bot.core.utils import core_constraints as core_constraints_module
+from bot.core.utils import requirements_utils
+from bot.core.utils.core_constraints import CoreConstraintsProvider
 
 
 def test_requirements_utils_parse_package_install_input_collects_specs_and_names():
@@ -30,7 +30,7 @@ def test_core_constraints_provider_writes_constraints_file_from_fallback_distrib
 
         def read_text(self, name):
             if name == "top_level.txt":
-                return "astrbot\n"
+                return "bot\n"
             return ""
 
     fake_distribution = FakeFallbackDistribution()
@@ -80,7 +80,7 @@ def test_resolve_core_dist_name_skips_distribution_without_name(monkeypatch):
 
         def read_text(self, name):
             if name == "top_level.txt":
-                return "astrbot\n"
+                return "bot\n"
             return ""
 
     class NamedDistribution:
@@ -88,7 +88,7 @@ def test_resolve_core_dist_name_skips_distribution_without_name(monkeypatch):
 
         def read_text(self, name):
             if name == "top_level.txt":
-                return "astrbot\n"
+                return "bot\n"
             return ""
 
     monkeypatch.setattr(
@@ -338,7 +338,7 @@ def test_build_missing_requirements_install_lines_logs_why_option_lines_fall_bac
     debug_logs = []
 
     monkeypatch.setattr(
-        "astrbot.core.utils.requirements_utils.logger.debug",
+        "bot.core.utils.requirements_utils.logger.debug",
         lambda line, *args: debug_logs.append(line % args if args else line),
     )
 
@@ -363,7 +363,7 @@ def test_find_missing_requirements_logs_path_and_reason_on_precheck_fallback(
     info_logs = []
 
     monkeypatch.setattr(
-        "astrbot.core.utils.requirements_utils.logger.info",
+        "bot.core.utils.requirements_utils.logger.info",
         lambda line, *args: info_logs.append(line % args if args else line),
     )
 
@@ -428,7 +428,7 @@ def test_get_core_constraints_logs_resolution_step_context(monkeypatch):
         lambda core_dist_name: (_ for _ in ()).throw(RuntimeError("boom")),
     )
     monkeypatch.setattr(
-        "astrbot.core.utils.core_constraints.logger.warning",
+        "bot.core.utils.core_constraints.logger.warning",
         lambda line, *args: warning_logs.append(line % args if args else line),
     )
 

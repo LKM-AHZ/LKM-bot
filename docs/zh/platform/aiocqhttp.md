@@ -71,16 +71,16 @@ LKMBot 支持接入所有适配了 OneBotv11 反向 Websockets（LKMBot 做服�
 
 ## 通过 Docker Compose 部署
 
-1. 下载或复制 [astrbot.yml](https://github.com/NapNeko/NapCat-Docker/blob/main/compose/astrbot.yml) 内容
-2. 将刚刚下载的文件重命名为 `astrbot.yml`
-3. 编辑 `astrbot.yml`，将 `# - "6199:6199"` 修改为 `- "6199:6199"`，移除开头的 `#`
-4. 在 `astrbot.yml` 文件所在目录执行:
+1. 下载或复制 [bot.yml](https://github.com/NapNeko/NapCat-Docker/blob/main/compose/astrbot.yml) 内容
+2. 将刚刚下载的文件重命名为 `bot.yml`
+3. 编辑 `bot.yml`，将 `# - "6199:6199"` 修改为 `- "6199:6199"`，移除开头的 `#`
+4. 在 `bot.yml` 文件所在目录执行:
 
 ```bash
-NAPCAT_UID=$(id -u) NAPCAT_GID=$(id -g) docker compose -f ./astrbot.yml up -d
+NAPCAT_UID=$(id -u) NAPCAT_GID=$(id -g) docker compose -f ./bot.yml up -d
 ```
 
 部署完毕之后，可以去 Napcat 的 WebUI（默认端口 6099）中新增 OneBot 连接实例：点击`网络配置->新建->WebSockets客户端`，在新弹出的窗口中：勾选`启用`，
-URL 填写 `ws://宿主机IP:端口/ws`。如 `ws://127.0.0.1:6199/ws`。如果采用上面的 Docker Compose 部署，可以填写 `ws://astrbot:6199/ws`（参考本文档的 Docker 脚本）。心跳间隔和重连间隔可以改为 `1000`(1 秒)。点击保存，然后前往 LKMBot WebUI 的 `数据与日志` -> `日志` 检查是否连接成功，出现 `aiocqhttp(OneBot v11) 适配器已连接` 日志即代表成功。
+URL 填写 `ws://宿主机IP:端口/ws`。如 `ws://127.0.0.1:6199/ws`。如果采用上面的 Docker Compose 部署，可以填写 `ws://bot:6199/ws`（参考本文档的 Docker 脚本）。心跳间隔和重连间隔可以改为 `1000`(1 秒)。点击保存，然后前往 LKMBot WebUI 的 `数据与日志` -> `日志` 检查是否连接成功，出现 `aiocqhttp(OneBot v11) 适配器已连接` 日志即代表成功。
 
 如果您对部署、网络配置不了解，请千万不要在公网暴露 Napcat 的端口。

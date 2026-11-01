@@ -6,7 +6,7 @@ outline: deep
 
 # API Scope–Endpoint Reference
 
-This page is generated from `openspec/openapi-v1.yaml`. Each endpoint's base permission comes from `x-astrbot-scope`; sensitive operations also list the sub-scope that must be granted explicitly.
+This page is generated from `openspec/openapi-v1.yaml`. Each endpoint's base permission comes from `x-bot-scope`; sensitive operations also list the sub-scope that must be granted explicitly.
 
 ## `bot`
 

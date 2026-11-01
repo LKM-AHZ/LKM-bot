@@ -2,7 +2,7 @@
 
 import re
 
-from astrbot.dashboard.services.chat_service import sanitize_upload_filename
+from bot.dashboard.services.chat_service import sanitize_upload_filename
 
 
 def test_sanitize_upload_filename_strips_posix_traversal():

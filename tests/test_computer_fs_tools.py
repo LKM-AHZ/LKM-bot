@@ -14,11 +14,11 @@ import pytest
 from mcp.types import CallToolResult, ImageContent
 from PIL import Image
 
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.computer import file_read_utils, local_file_security
-from astrbot.core.computer.booters.local import LocalBooter
-from astrbot.core.tools.computer_tools import fs as fs_tools
-from astrbot.core.tools.computer_tools import util as computer_util
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.computer import file_read_utils, local_file_security
+from bot.core.computer.booters.local import LocalBooter
+from bot.core.tools.computer_tools import fs as fs_tools
+from bot.core.tools.computer_tools import util as computer_util
 
 
 def _make_context(
@@ -43,8 +43,8 @@ def _make_context(
         unified_msg_origin=umo,
         get_sender_id=lambda: "user-1",
     )
-    astr_ctx = SimpleNamespace(context=config_holder, event=event)
-    return ContextWrapper(context=astr_ctx)
+    bot_ctx = SimpleNamespace(context=config_holder, event=event)
+    return ContextWrapper(context=bot_ctx)
 
 
 def _make_sandbox_context(
@@ -65,8 +65,8 @@ def _make_sandbox_context(
         unified_msg_origin=umo,
         send=AsyncMock(),
     )
-    astr_ctx = SimpleNamespace(context=config_holder, event=event)
-    return ContextWrapper(context=astr_ctx)
+    bot_ctx = SimpleNamespace(context=config_holder, event=event)
+    return ContextWrapper(context=bot_ctx)
 
 
 @pytest.mark.asyncio
@@ -79,7 +79,7 @@ async def test_sandbox_file_download_handles_windows_remote_filename(
 
     monkeypatch.setattr(
         fs_tools,
-        "get_astrbot_temp_path",
+        "get_bot_temp_path",
         lambda: str(temp_root),
     )
 
@@ -118,7 +118,7 @@ async def test_sandbox_file_download_strips_trailing_remote_slash(
 
     monkeypatch.setattr(
         fs_tools,
-        "get_astrbot_temp_path",
+        "get_bot_temp_path",
         lambda: str(temp_root),
     )
 
@@ -161,32 +161,32 @@ def _setup_local_fs_tools(
 
     monkeypatch.setattr(
         computer_util,
-        "get_astrbot_workspaces_path",
+        "get_bot_workspaces_path",
         lambda: str(workspaces_root),
     )
     monkeypatch.setattr(
         fs_tools,
-        "get_astrbot_skills_path",
+        "get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
         fs_tools,
-        "get_astrbot_plugin_path",
+        "get_bot_plugin_path",
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
         fs_tools,
-        "get_astrbot_builtin_plugin_path",
+        "get_bot_builtin_plugin_path",
         lambda: str(builtin_plugins_root),
     )
     monkeypatch.setattr(
         fs_tools,
-        "get_astrbot_temp_path",
+        "get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
         file_read_utils,
-        "get_astrbot_temp_path",
+        "get_bot_temp_path",
         lambda: str(temp_root),
     )
 
@@ -314,7 +314,7 @@ async def test_restricted_local_member_can_read_plugin_provided_skill(
     plugin_skill = (
         tmp_path
         / "plugins"
-        / "astrbot_plugin_demo"
+        / "bot_plugin_demo"
         / "skills"
         / "demo-skill"
         / "SKILL.md"
@@ -339,7 +339,7 @@ async def test_restricted_local_member_can_read_builtin_plugin_skill(
     builtin_skill = (
         tmp_path
         / "builtin_plugins"
-        / "astrbot"
+        / "bot"
         / "skills"
         / "skill-creator"
         / "SKILL.md"
@@ -364,7 +364,7 @@ async def test_restricted_local_member_can_read_plugin_skill_inventory_even_if_p
     plugin_skill = (
         tmp_path
         / "plugins"
-        / "astrbot_plugin_demo"
+        / "bot_plugin_demo"
         / "skills"
         / "demo-skill"
         / "SKILL.md"
@@ -453,7 +453,7 @@ async def test_restricted_local_member_cannot_write_plugin_provided_skill(
     plugin_skill = (
         tmp_path
         / "plugins"
-        / "astrbot_plugin_demo"
+        / "bot_plugin_demo"
         / "skills"
         / "demo-skill"
         / "SKILL.md"
@@ -1102,7 +1102,7 @@ async def test_file_read_tool_rejects_directory_with_clear_message(
 
     assert "is a directory, not a file" in result
     assert "my-directory" in result
-    assert "'astrbot_execute_shell'" in result
+    assert "'bot_execute_shell'" in result
 
 
 @pytest.mark.asyncio

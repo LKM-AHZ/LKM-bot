@@ -4,9 +4,9 @@ import time
 import pytest
 
 # Importing the core lifecycle first resolves the import cycle between
-# astrbot.core.provider.manager and astrbot.core.knowledge_base.
-import astrbot.core.core_lifecycle  # noqa: F401
-from astrbot.core.knowledge_base.kb_helper import RateLimiter
+# bot.core.provider.manager and bot.core.knowledge_base.
+import bot.core.core_lifecycle  # noqa: F401
+from bot.core.knowledge_base.kb_helper import RateLimiter
 
 
 @pytest.mark.asyncio

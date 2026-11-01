@@ -21,8 +21,8 @@ Follow-up input is routed by the core pipeline, rather than the built-in plugin'
 Import:
 
 ```py
-import astrbot.api.message_components as Comp
-from astrbot.core.utils.session_waiter import (
+import bot.api.message_components as Comp
+from bot.core.utils.session_waiter import (
     session_waiter,
     SessionController,
 )
@@ -31,11 +31,11 @@ from astrbot.core.utils.session_waiter import (
 Code within the handler can be written as follows:
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.command("idiom-chain")
-async def handle_empty_mention(self, event: AstrMessageEvent):
+async def handle_empty_mention(self, event: BotMessageEvent):
     """Idiom chain game implementation"""
     try:
         yield event.plain_result("Please send an idiom~")
@@ -45,7 +45,7 @@ async def handle_empty_mention(self, event: AstrMessageEvent):
             timeout=60, record_history_chains=False
         )  # Register a session controller with a 60-second timeout, without recording message history
         async def empty_mention_waiter(
-            controller: SessionController, event: AstrMessageEvent
+            controller: SessionController, event: BotMessageEvent
         ):
             idiom = (
                 event.message_str
@@ -69,7 +69,7 @@ async def handle_empty_mention(self, event: AstrMessageEvent):
             message_result = event.make_result()
             message_result.chain = [
                 Comp.Plain("Foresight")
-            ]  # import astrbot.api.message_components as Comp
+            ]  # import bot.api.message_components as Comp
             await event.send(message_result)  # Send a reply, cannot use yield
 
             controller.keep(
@@ -112,8 +112,8 @@ Used by developers to control whether a session should end, and to retrieve mess
 By default, the LKMBot session controller uses `sender_id` (the sender's ID) as the identifier for distinguishing different sessions. If you want to treat an entire group as one session, you need to customize the session ID filter.
 
 ```py
-import astrbot.api.message_components as Comp
-from astrbot.core.utils.session_waiter import (
+import bot.api.message_components as Comp
+from bot.core.utils.session_waiter import (
     session_waiter,
     SessionFilter,
     SessionController,
@@ -123,7 +123,7 @@ from astrbot.core.utils.session_waiter import (
 # Using the handler from above
 # ...
 class CustomFilter(SessionFilter):
-    def filter(self, event: AstrMessageEvent) -> str:
+    def filter(self, event: BotMessageEvent) -> str:
         return (
             event.get_group_id() if event.get_group_id() else event.unified_msg_origin
         )

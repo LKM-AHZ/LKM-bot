@@ -6,13 +6,13 @@ from types import SimpleNamespace
 import anyio
 import pytest
 
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.agent.runners.tool_loop_agent_runner import (
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.agent.runners.tool_loop_agent_runner import (
     ToolLoopAgentRunner,
     _ToolExecutionInterrupted,
 )
-from astrbot.core.agent.tool import FunctionTool
-from astrbot.core.astr_agent_tool_exec import FunctionToolExecutor, call_local_llm_tool
+from bot.core.agent.tool import FunctionTool
+from bot.core.bot_agent_tool_exec import FunctionToolExecutor, call_local_llm_tool
 
 
 @pytest.mark.asyncio

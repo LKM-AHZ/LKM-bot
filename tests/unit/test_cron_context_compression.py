@@ -8,16 +8,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from astrbot.core.agent.tool import FunctionTool
-from astrbot.core.astr_agent_tool_exec import FunctionToolExecutor
-from astrbot.core.astr_main_agent import MainAgentBuildConfig
-from astrbot.core.config.agent_runner import resolve_context_compression_config
-from astrbot.core.config.default import DEFAULT_CONFIG
-from astrbot.core.cron.manager import CronJobManager
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
+from bot.core.agent.tool import FunctionTool
+from bot.core.bot_agent_tool_exec import FunctionToolExecutor
+from bot.core.bot_main_agent import MainAgentBuildConfig
+from bot.core.config.agent_runner import resolve_context_compression_config
+from bot.core.config.default import DEFAULT_CONFIG
+from bot.core.cron.manager import CronJobManager
+from bot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
     InternalAgentSubStage,
 )
-from astrbot.core.provider.entities import LLMResponse
+from bot.core.provider.entities import LLMResponse
 
 
 def test_explicit_build_settings_and_per_request_overrides_are_preserved():
@@ -113,7 +113,7 @@ async def test_wakeup_uses_same_compression_settings_as_chat(
     stage = InternalAgentSubStage()
     await stage.initialize(
         SimpleNamespace(
-            astrbot_config=conf,
+            bot_config=conf,
             plugin_manager=SimpleNamespace(context=ctx),
         )
     )
@@ -140,15 +140,15 @@ async def test_wakeup_uses_same_compression_settings_as_chat(
     ctx.get_config.reset_mock()
     with (
         patch(
-            "astrbot.core.astr_main_agent._get_session_conv",
+            "bot.core.bot_main_agent._get_session_conv",
             AsyncMock(return_value=conv),
         ),
         patch(
-            "astrbot.core.astr_main_agent.build_main_agent",
+            "bot.core.bot_main_agent.build_main_agent",
             AsyncMock(return_value=SimpleNamespace(agent_runner=runner)),
         ) as build,
-        patch("astrbot.core.cron.manager.persist_agent_history", AsyncMock()),
-        patch("astrbot.core.astr_agent_tool_exec.persist_agent_history", AsyncMock()),
+        patch("bot.core.cron.manager.persist_agent_history", AsyncMock()),
+        patch("bot.core.bot_agent_tool_exec.persist_agent_history", AsyncMock()),
     ):
         if entrypoint == "cron":
             await manager._woke_main_agent(

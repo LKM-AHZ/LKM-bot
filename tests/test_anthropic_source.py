@@ -6,9 +6,9 @@ from anthropic import BadRequestError
 from anthropic import _base_client as anthropic_base_client
 from anthropic.types import Message, MessageDeltaUsage, TextBlock, Usage
 
-from astrbot.core.agent.tool import FunctionTool, ToolSet
-from astrbot.core.provider.entities import TokenUsage
-from astrbot.core.provider.sources.anthropic_source import ProviderAnthropic
+from bot.core.agent.tool import FunctionTool, ToolSet
+from bot.core.provider.entities import TokenUsage
+from bot.core.provider.sources.anthropic_source import ProviderAnthropic
 
 # The SDK bundles its own httpx (``httpx`` before 1.0.0, ``httpx2`` after).
 sdk_httpx = getattr(

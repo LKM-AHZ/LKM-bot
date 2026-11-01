@@ -2,7 +2,7 @@ from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
 
-from astrbot.cli.utils.plugin import PluginStatus, build_plug_list, download_repository
+from bot.cli.utils.plugin import PluginStatus, build_plug_list, download_repository
 
 
 class FakeResponse:
@@ -66,7 +66,7 @@ def test_download_repository_uses_head_without_metadata_lookup(
             requested_urls.append(url)
             return ArchiveResponse()
 
-    monkeypatch.setattr("astrbot.cli.utils.plugin.httpx.Client", ArchiveClient)
+    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", ArchiveClient)
 
     target_path = tmp_path / "plugin"
     download_repository("https://github.com/example/plugin", target_path)
@@ -95,7 +95,7 @@ def test_build_plug_list_merges_local_and_remote_plugins(monkeypatch, tmp_path):
     write_metadata(tmp_path / "unpublished-plugin", "unpublished-plugin", "1.0.0")
     tmp_path.joinpath("ignored-file").write_text("not a plugin", encoding="utf-8")
 
-    monkeypatch.setattr("astrbot.cli.utils.plugin.httpx.Client", FakeClient)
+    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
 
     plugins = build_plug_list(tmp_path)
     plugins_by_name = {plugin["name"]: plugin for plugin in plugins}
@@ -112,7 +112,7 @@ def test_build_plug_list_treats_file_plugin_path_as_empty_local_set(
     plugins_file = tmp_path / "plugins"
     plugins_file.write_text("not a directory", encoding="utf-8")
 
-    monkeypatch.setattr("astrbot.cli.utils.plugin.httpx.Client", FakeClient)
+    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
 
     plugins = build_plug_list(plugins_file)
 
@@ -121,7 +121,7 @@ def test_build_plug_list_treats_file_plugin_path_as_empty_local_set(
 
 
 def test_build_plug_list_local_version_equal_or_newer(monkeypatch, tmp_path):
-    monkeypatch.setattr("astrbot.cli.utils.plugin.httpx.Client", FakeClient)
+    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
 
     # 1. test if local version == remote version
     dir_equal = tmp_path / "dir_equal"
@@ -143,7 +143,7 @@ def test_build_plug_list_local_version_equal_or_newer(monkeypatch, tmp_path):
 def test_build_plug_list_non_existent_path(monkeypatch, tmp_path):
     non_existent_dir = tmp_path / "completely_non_existent_path"
 
-    monkeypatch.setattr("astrbot.cli.utils.plugin.httpx.Client", FakeClient)
+    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
 
     plugins = build_plug_list(non_existent_dir)
 

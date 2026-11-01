@@ -50,7 +50,7 @@ jobs:
 
       - name: Clone LKMBot wiki
         env:
-          WIKI_TOKEN: ${{ secrets.ASTRBOT_WIKI_TOKEN }}
+          WIKI_TOKEN: ${{ secrets.BOT_WIKI_TOKEN }}
         run: |
           test -n "$WIKI_TOKEN"
           # 不再把 token 拼进 clone URL：那会写进 wiki/.git/config 的 remote.origin.url、
@@ -74,7 +74,7 @@ jobs:
             echo "No wiki changes to push"
             exit 0
           fi
-          # 原先是 "docs: sync wiki from AstrBot-1/docs"（别的仓库名，复制粘贴残留），
+          # 原先是 "docs: sync wiki from LKMBot-1/docs"（别的仓库名，复制粘贴残留），
           # 用实际仓库名以免 wiki 历史里来源对不上
           git commit -m "docs: sync wiki from ${{ github.repository }}"
           git push

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.utils.t2i import template_manager
+from bot.core.utils.t2i import template_manager
 
 LEGACY_TEMPLATE = "<html>\n<body>legacy default</body>\n</html>\n"
 CURRENT_TEMPLATE = "<html>\n<body>current default</body>\n</html>\n"
@@ -15,7 +15,7 @@ def test_default_template_preserves_soft_breaks_and_fits_display_math() -> None:
     """Verify the default template keeps Markdown and wide-math layout safe."""
     template_path = (
         Path(__file__).parents[1]
-        / "astrbot/core/utils/t2i/template/base.html"
+        / "bot/core/utils/t2i/template/base.html"
     )
     template = template_path.read_text(encoding="utf-8")
 
@@ -61,8 +61,8 @@ def test_initialize_user_templates_migrates_only_unmodified_defaults(
         user_content: Existing user template content, or None when it is missing.
         expected_content: Template content expected after manager initialization.
     """
-    builtin_root = tmp_path / "astrbot-root"
-    builtin_dir = builtin_root / "astrbot/core/utils/t2i/template"
+    builtin_root = tmp_path / "bot-root"
+    builtin_dir = builtin_root / "bot/core/utils/t2i/template"
     builtin_dir.mkdir(parents=True)
     (builtin_dir / "base.html").write_text(CURRENT_TEMPLATE, encoding="utf-8")
 
@@ -82,12 +82,12 @@ def test_initialize_user_templates_migrates_only_unmodified_defaults(
     )
     monkeypatch.setattr(
         template_manager,
-        "get_astrbot_path",
+        "get_bot_path",
         lambda: str(builtin_root),
     )
     monkeypatch.setattr(
         template_manager,
-        "get_astrbot_data_path",
+        "get_bot_data_path",
         lambda: str(data_root),
     )
 

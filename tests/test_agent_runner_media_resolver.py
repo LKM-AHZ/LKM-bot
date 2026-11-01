@@ -4,8 +4,8 @@ from io import BytesIO
 import pytest
 from PIL import Image as PILImage
 
-from astrbot.core.agent.runners.coze.coze_agent_runner import CozeAgentRunner
-from astrbot.core.agent.runners.dify.dify_agent_runner import DifyAgentRunner
+from bot.core.agent.runners.coze.coze_agent_runner import CozeAgentRunner
+from bot.core.agent.runners.dify.dify_agent_runner import DifyAgentRunner
 
 
 def _png_data_url() -> tuple[str, bytes]:

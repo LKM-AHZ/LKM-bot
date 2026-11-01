@@ -5,7 +5,7 @@ import os
 import sys
 from pathlib import Path
 
-DASHBOARD_RESET_PASSWORD_ENV = "ASTRBOT_RESET_DASHBOARD_PASSWORD"
+DASHBOARD_RESET_PASSWORD_ENV = "BOT_RESET_DASHBOARD_PASSWORD"
 
 
 def _apply_startup_env_flags(argv: list[str]) -> None:
@@ -25,27 +25,27 @@ def _apply_startup_env_flags(argv: list[str]) -> None:
         os.environ[DASHBOARD_RESET_PASSWORD_ENV] = "1"
 
 
-# Importing runtime_bootstrap pulls in astrbot.core, whose AstrBotConfig
-# constructor consumes ASTRBOT_RESET_DASHBOARD_PASSWORD. Flags must be applied
-# first so astrbot.core never observes a stale environment.
+# Importing runtime_bootstrap pulls in bot.core, whose BotConfig
+# constructor consumes BOT_RESET_DASHBOARD_PASSWORD. Flags must be applied
+# first so bot.core never observes a stale environment.
 _apply_startup_env_flags(sys.argv[1:])
 
 import runtime_bootstrap  # noqa: E402
 
 runtime_bootstrap.initialize_runtime_bootstrap()
 
-from astrbot.core import LogBroker, LogManager, db_helper, logger  # noqa: E402
-from astrbot.core.dashboard_assets import resolve_dashboard_dist  # noqa: E402
-from astrbot.core.initial_loader import InitialLoader  # noqa: E402
-from astrbot.core.utils.astrbot_path import (  # noqa: E402
-    get_astrbot_config_path,
-    get_astrbot_knowledge_base_path,
-    get_astrbot_plugin_path,
-    get_astrbot_root,
-    get_astrbot_site_packages_path,
-    get_astrbot_temp_path,
+from bot.core import LogBroker, LogManager, db_helper, logger  # noqa: E402
+from bot.core.dashboard_assets import resolve_dashboard_dist  # noqa: E402
+from bot.core.initial_loader import InitialLoader  # noqa: E402
+from bot.core.utils.bot_path import (  # noqa: E402
+    get_bot_config_path,
+    get_bot_knowledge_base_path,
+    get_bot_plugin_path,
+    get_bot_root,
+    get_bot_site_packages_path,
+    get_bot_temp_path,
 )
-from astrbot.core.utils.runtime_env import is_packaged_desktop_runtime  # noqa: E402
+from bot.core.utils.runtime_env import is_packaged_desktop_runtime  # noqa: E402
 
 # 将父目录添加到 sys.path
 sys.path.append(Path(__file__).parent.as_posix())
@@ -60,18 +60,18 @@ def check_env() -> None:
         # 会把「干净退出」变成 NameError；顺带以非零码退出，调用方能感知失败。
         sys.exit(1)
 
-    astrbot_root = get_astrbot_root()
-    if astrbot_root not in sys.path:
-        sys.path.insert(0, astrbot_root)
+    bot_root = get_bot_root()
+    if bot_root not in sys.path:
+        sys.path.insert(0, bot_root)
 
-    site_packages_path = get_astrbot_site_packages_path()
+    site_packages_path = get_bot_site_packages_path()
     if not is_packaged_desktop_runtime() and site_packages_path not in sys.path:
         sys.path.append(site_packages_path)
 
-    os.makedirs(get_astrbot_config_path(), exist_ok=True)
-    os.makedirs(get_astrbot_plugin_path(), exist_ok=True)
-    os.makedirs(get_astrbot_temp_path(), exist_ok=True)
-    os.makedirs(get_astrbot_knowledge_base_path(), exist_ok=True)
+    os.makedirs(get_bot_config_path(), exist_ok=True)
+    os.makedirs(get_bot_plugin_path(), exist_ok=True)
+    os.makedirs(get_bot_temp_path(), exist_ok=True)
+    os.makedirs(get_bot_knowledge_base_path(), exist_ok=True)
     os.makedirs(site_packages_path, exist_ok=True)
 
     # 针对问题 #181 的临时解决方案

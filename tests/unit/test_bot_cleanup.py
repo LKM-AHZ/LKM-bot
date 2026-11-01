@@ -8,9 +8,9 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from sqlmodel import select
 
-from astrbot.core.conversation_mgr import ConversationManager
-from astrbot.core.cron.manager import CronJobManager
-from astrbot.core.db.po import (
+from bot.core.conversation_mgr import ConversationManager
+from bot.core.cron.manager import CronJobManager
+from bot.core.db.po import (
     ConversationV2,
     CronJob,
     PlatformMessageHistory,
@@ -19,14 +19,14 @@ from astrbot.core.db.po import (
     UmoAlias,
     UmoSender,
 )
-from astrbot.core.umop_config_router import UmopConfigRouter
-from astrbot.core.utils.shared_preferences import SharedPreferences
-from astrbot.dashboard.services import (
+from bot.core.umop_config_router import UmopConfigRouter
+from bot.core.utils.shared_preferences import SharedPreferences
+from bot.dashboard.services import (
     bot_cleanup_service,
     bot_config_service,
     config_service,
 )
-from astrbot.dashboard.services.bot_cleanup_service import delete_bot_data
+from bot.dashboard.services.bot_cleanup_service import delete_bot_data
 
 
 @pytest.mark.asyncio
@@ -62,7 +62,7 @@ async def test_cleanup_is_selective_and_matches_exact_platform(
         cron_manager=CronJobManager(temp_db),
         conversation_manager=ConversationManager(temp_db),
         umop_config_router=UmopConfigRouter(preferences),
-        astrbot_config={},
+        bot_config={},
     )
     try:
         records = []
@@ -201,7 +201,7 @@ async def test_delete_bot_keeps_config_on_cleanup_failure(monkeypatch):
     bot = {"id": "bot", "enable": True}
     bus = SimpleNamespace(stopped_platforms={"bot"}, stop_platform=AsyncMock())
     core = SimpleNamespace(
-        astrbot_config={"platform": [bot]},
+        bot_config={"platform": [bot]},
         event_bus=bus,
         platform_manager=SimpleNamespace(
             terminate_platform=AsyncMock(), load_platform=AsyncMock()
@@ -217,14 +217,14 @@ async def test_delete_bot_keeps_config_on_cleanup_failure(monkeypatch):
     core.platform_manager.terminate_platform.assert_not_awaited()
     with pytest.raises(RuntimeError, match="storage unavailable"):
         await service.delete_bot("bot", cleanup=["traces"])
-    assert core.astrbot_config["platform"] == [bot]
+    assert core.bot_config["platform"] == [bot]
     assert not bus.stopped_platforms
     save.assert_not_called()
     core.platform_manager.load_platform.assert_awaited_once_with(bot)
 
     cleanup.side_effect = None
     await service.delete_bot("bot")
-    assert core.astrbot_config["platform"] == []
+    assert core.bot_config["platform"] == []
     assert cleanup.await_count == 1
     save.assert_called_once()
 

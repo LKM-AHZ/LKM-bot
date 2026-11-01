@@ -9,13 +9,13 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
-from astrbot.core.utils import media_utils as media
-from astrbot.core.utils.io import DownloadFileHTTPError
+from bot.core.utils import media_utils as media
+from bot.core.utils.io import DownloadFileHTTPError
 
 
 @pytest.fixture(autouse=True)
 def isolated_temp(tmp_path, monkeypatch):
-    monkeypatch.setattr(media, "get_astrbot_temp_path", lambda: str(tmp_path / "temp"))
+    monkeypatch.setattr(media, "get_bot_temp_path", lambda: str(tmp_path / "temp"))
 
 
 async def _prepare_image_path(*args, **kwargs):
@@ -378,7 +378,7 @@ async def test_fatal_image_failures_propagate(tmp_path, monkeypatch, error):
 async def test_real_download_status_failure_is_skipped_without_secret_logs(
     tmp_path, monkeypatch, caplog, status
 ):
-    from astrbot.core.utils.io import _raise_for_download_status
+    from bot.core.utils.io import _raise_for_download_status
 
     async def download(url, target):
         _raise_for_download_status(SimpleNamespace(status=status), url)

@@ -2,7 +2,7 @@ import ssl
 
 import pytest
 
-from astrbot.core.utils import network_utils
+from bot.core.utils import network_utils
 
 
 def test_create_proxy_client_reuses_shared_ssl_context(

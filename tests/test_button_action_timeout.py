@@ -4,37 +4,37 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     ActionRow,
     Button,
 )
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.core.platform import (
+    BotMessage,
     MessageMember,
     MessageType,
     PlatformMetadata,
 )
-from astrbot.core.platform import button_interaction
-from astrbot.core.platform.sources.dingtalk import dingtalk_adapter
-from astrbot.core.platform.sources.discord.components import action_rows_to_discord_view
-from astrbot.core.platform.sources.kook.kook_event import KookEvent
-from astrbot.core.platform.sources.lark.lark_event import LarkMessageEvent
-from astrbot.core.platform.sources.line.line_event import LineMessageEvent
-from astrbot.core.platform.sources.mattermost.client import MattermostClient
-from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import (
+from bot.core.platform import button_interaction
+from bot.core.platform.sources.dingtalk import dingtalk_adapter
+from bot.core.platform.sources.discord.components import action_rows_to_discord_view
+from bot.core.platform.sources.kook.kook_event import KookEvent
+from bot.core.platform.sources.lark.lark_event import LarkMessageEvent
+from bot.core.platform.sources.line.line_event import LineMessageEvent
+from bot.core.platform.sources.mattermost.client import MattermostClient
+from bot.core.platform.sources.qqofficial.qqofficial_message_event import (
     QQOfficialMessageEvent,
 )
-from astrbot.core.platform.sources.satori.satori_event import SatoriPlatformEvent
-from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
-from astrbot.core.platform.sources.telegram.tg_event import TelegramPlatformEvent
-from astrbot.core.platform.sources.webchat import webchat_event
-from astrbot.core.platform.sources.webchat.message_parts_helper import (
+from bot.core.platform.sources.satori.satori_event import SatoriPlatformEvent
+from bot.core.platform.sources.slack.slack_event import SlackMessageEvent
+from bot.core.platform.sources.telegram.tg_event import TelegramPlatformEvent
+from bot.core.platform.sources.webchat import webchat_event
+from bot.core.platform.sources.webchat.message_parts_helper import (
     message_chain_to_storage_message_parts,
 )
-from astrbot.core.platform.sources.wecom.wecom_event import WecomPlatformEvent
-from astrbot.core.platform.sources.wecom.wecom_kf_message import WeChatKFMessage
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_buttons import (
+from bot.core.platform.sources.wecom.wecom_event import WecomPlatformEvent
+from bot.core.platform.sources.wecom.wecom_kf_message import WeChatKFMessage
+from bot.core.platform.sources.wecom_ai_bot.wecomai_buttons import (
     build_wecom_button_card,
 )
 
@@ -108,7 +108,7 @@ async def test_platform_callback_honors_row_deadline(
         card = LarkMessageEvent._build_button_card([row])
         token = card["body"]["elements"][0]["columns"][0]["elements"][0]["behaviors"][
             0
-        ]["value"]["astrbot_callback"]
+        ]["value"]["bot_callback"]
     elif platform == "line":
         message = await LineMessageEvent._component_to_message_object(row)
         token = message["template"]["actions"][0]["data"]
@@ -122,7 +122,7 @@ async def test_platform_callback_honors_row_deadline(
             action_callback_url="https://bot.example.com/callback",
         )
         attachment = client._build_action_row_attachment(row, 0)
-        token = attachment["actions"][0]["integration"]["context"]["astrbot_callback"]
+        token = attachment["actions"][0]["integration"]["context"]["bot_callback"]
     elif platform == "kook":
         event = object.__new__(KookEvent)
         result = await event._wrap_message(0, row)
@@ -135,7 +135,7 @@ async def test_platform_callback_honors_row_deadline(
             markup = await SatoriPlatformEvent._convert_component_to_satori_static(row)
         token = markup.split('id="', 1)[1].split('"', 1)[0]
     elif platform in {"wecom", "wecom_kf"}:
-        message = AstrBotMessage()
+        message = BotMessage()
         message.type = MessageType.FRIEND_MESSAGE
         message.self_id = "100001"
         message.session_id = "alice"

@@ -6,7 +6,7 @@ Passive messages refer to the bot responding to messages reactively.
 
 ```python
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     yield event.plain_result("Hello!")
     yield event.plain_result("你好！")
 
@@ -23,11 +23,11 @@ Active messages refer to the bot proactively pushing messages. Some platforms ma
 For scheduled tasks or when you don't want to send messages immediately, you can use `event.unified_msg_origin` to get a string and store it, then use `self.context.send_message(unified_msg_origin, chains)` to send messages when needed.
 
 ```python
-from astrbot.api.event import MessageChain
+from bot.api.event import MessageChain
 
 
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     umo = event.unified_msg_origin
     message_chain = MessageChain().message("Hello!").file_image("path/to/image.jpg")
     await self.context.send_message(event.unified_msg_origin, message_chain)
@@ -44,11 +44,11 @@ With this feature, you can store the `unified_msg_origin` and send messages when
 LKMBot supports sending rich media messages such as images, audio, videos, etc. Use `MessageChain` to construct messages.
 
 ```python
-import astrbot.api.message_components as Comp
+import bot.api.message_components as Comp
 
 
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     chain = [
         Comp.At(qq=event.get_sender_id()),  # Mention the message sender
         Comp.Plain("Check out this image:"),
@@ -106,12 +106,12 @@ Current platform support:
 Satori button support depends on the connected platform and client. Mattermost callback buttons require a callback URL reachable by the Mattermost server. For platforms using text fallbacks, set `fallback_text` to explain the available text commands.
 
 ```python
-from astrbot.api.event import AstrMessageEvent, filter
-import astrbot.api.message_components as Comp
+from bot.api.event import BotMessageEvent, filter
+import bot.api.message_components as Comp
 
 
 @filter.command("buttons")
-async def buttons(self, event: AstrMessageEvent):
+async def buttons(self, event: BotMessageEvent):
     yield event.chain_result([
         Comp.Plain("Choose an action:"),
         Comp.ActionRow(
@@ -135,7 +135,7 @@ async def buttons(self, event: AstrMessageEvent):
 
 
 @filter.button_action("my_plugin:confirm")
-async def confirm(self, event: AstrMessageEvent):
+async def confirm(self, event: BotMessageEvent):
     interaction = event.get_button_interaction()
     if interaction is None:
         return
@@ -151,12 +151,12 @@ async def confirm(self, event: AstrMessageEvent):
 ## Sending Video Messages
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
-    from astrbot.api.message_components import Video
+async def test(self, event: BotMessageEvent):
+    from bot.api.message_components import Video
 
     # fromFileSystem requires the user's protocol client and bot to be on the same system.
     video = Video.fromFileSystem(path="test.mp4")
@@ -174,12 +174,12 @@ async def test(self, event: AstrMessageEvent):
 You can send group forward messages as follows.
 
 ```py
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
-    from astrbot.api.message_components import Node, Plain, Image
+async def test(self, event: BotMessageEvent):
+    from bot.api.message_components import Node, Plain, Image
 
     node = Node(
         uin=905617992,

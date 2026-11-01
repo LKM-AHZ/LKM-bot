@@ -22,9 +22,9 @@ Please refer to [Matrix Server](https://matrix.org/ecosystem/servers/) to view a
 
 \*: Will be persisted locally. The plugin will clean up according to configuration. Files will be uploaded before sending; uploads exceeding the server's size limit will fail.
 
-## Installing the astrbot_plugin_matrix_adapter Plugin
+## Installing the bot_plugin_matrix_adapter Plugin
 
-Go to `Extensions → Plugins → LKMBot Plugin Market` in the LKMBot WebUI, search for `astrbot_plugin_matrix_adapter`, and click Install.
+Go to `Extensions → Plugins → LKMBot Plugin Market` in the LKMBot WebUI, search for `bot_plugin_matrix_adapter`, and click Install.
 
 After installation, navigate to `Platforms` → `Add Adapter` → select Matrix (if the option is missing, try restarting LKMBot or check the plugin installation status).
 

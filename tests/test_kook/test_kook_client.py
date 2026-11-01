@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.message.components import (
+from bot.core.message.components import (
     At,
     AtAll,
     BaseMessageComponent,
@@ -16,10 +16,10 @@ from astrbot.core.message.components import (
     Plain,
     Record,
 )
-from astrbot.core.platform.button_interaction import encode_button_callback
-from astrbot.core.platform.sources.kook.kook_client import KookClient
-from astrbot.core.platform.sources.kook.kook_config import KookConfig
-from astrbot.core.platform.sources.kook.kook_types import (
+from bot.core.platform.button_interaction import encode_button_callback
+from bot.core.platform.sources.kook.kook_client import KookClient
+from bot.core.platform.sources.kook.kook_config import KookConfig
+from bot.core.platform.sources.kook.kook_types import (
     KookMessageEventData,
     KookWebsocketEvent,
 )
@@ -105,7 +105,7 @@ async def test_kook_upload_asset_resolves_base64_scheme(monkeypatch):
             return FakeResponse()
 
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.kook.kook_client.aiohttp.FormData",
+        "bot.core.platform.sources.kook.kook_client.aiohttp.FormData",
         FakeFormData,
     )
 
@@ -187,18 +187,18 @@ async def test_kook_event_warp_message(
 ):
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.kook.kook_adapter.KookClient", mock_kook_client
+        "bot.core.platform.sources.kook.kook_adapter.KookClient", mock_kook_client
     )
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.kook.kook_adapter.KookRolesRecord",
+        "bot.core.platform.sources.kook.kook_adapter.KookRolesRecord",
         mock_kook_roles_record,
     )
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.kook.kook_adapter.MediaResolver",
+        "bot.core.platform.sources.kook.kook_adapter.MediaResolver",
         FakeMediaResolver,
     )
 
-    from astrbot.core.platform.sources.kook.kook_adapter import KookPlatformAdapter
+    from bot.core.platform.sources.kook.kook_adapter import KookPlatformAdapter
 
     adapter = KookPlatformAdapter({}, {}, asyncio.Queue())
 
@@ -209,19 +209,19 @@ async def test_kook_event_warp_message(
     )
     assert isinstance(event.data, KookMessageEventData)
 
-    astrbotMessage = await adapter.convert_message(event.data)
-    assert astrbotMessage.self_id == TEST_BOT_ID
-    assert astrbotMessage.sender.user_id == raw_event["d"]["author_id"]
+    botMessage = await adapter.convert_message(event.data)
+    assert botMessage.self_id == TEST_BOT_ID
+    assert botMessage.sender.user_id == raw_event["d"]["author_id"]
     assert (
-        astrbotMessage.sender.nickname == raw_event["d"]["extra"]["author"]["username"]
+        botMessage.sender.nickname == raw_event["d"]["extra"]["author"]["username"]
     )
-    assert astrbotMessage.raw_message == raw_event["d"]
-    assert astrbotMessage.message_id == raw_event["d"]["msg_id"]
-    assert astrbotMessage.message == expected_message_components
+    assert botMessage.raw_message == raw_event["d"]
+    assert botMessage.message_id == raw_event["d"]["msg_id"]
+    assert botMessage.message == expected_message_components
     if event.data.channel_type.value == "GROUP":
-        assert astrbotMessage.group.group_name == event.data.extra.channel_name
+        assert botMessage.group.group_name == event.data.extra.channel_name
     if isinstance(expected_message_str, str):
-        assert astrbotMessage.message_str == expected_message_str
+        assert botMessage.message_str == expected_message_str
     else:
         assert get_json_field(raw_event, expected_message_str)
 
@@ -229,15 +229,15 @@ async def test_kook_event_warp_message(
 @pytest.mark.asyncio
 async def test_kook_button_click_enters_event_pipeline(monkeypatch):
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.kook.kook_adapter.KookClient",
+        "bot.core.platform.sources.kook.kook_adapter.KookClient",
         mock_kook_client,
     )
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.kook.kook_adapter.KookRolesRecord",
+        "bot.core.platform.sources.kook.kook_adapter.KookRolesRecord",
         mock_kook_roles_record,
     )
 
-    from astrbot.core.platform.sources.kook.kook_adapter import KookPlatformAdapter
+    from bot.core.platform.sources.kook.kook_adapter import KookPlatformAdapter
 
     event_queue = asyncio.Queue()
     adapter = KookPlatformAdapter({}, {}, event_queue)

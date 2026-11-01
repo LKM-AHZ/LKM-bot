@@ -1,5 +1,5 @@
-import astrbot.api.message_components as Comp
-from astrbot.core.platform.sources.misskey.misskey_utils import serialize_message_chain
+import bot.api.message_components as Comp
+from bot.core.platform.sources.misskey.misskey_utils import serialize_message_chain
 
 
 def test_misskey_serializes_url_buttons_as_mfm_links():

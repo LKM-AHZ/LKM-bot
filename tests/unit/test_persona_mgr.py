@@ -2,13 +2,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-import astrbot.api  # noqa: F401  # import first to avoid a circular import
-from astrbot.core import persona_mgr as pm
-from astrbot.core.db.po import Persona
+import bot.api  # noqa: F401  # import first to avoid a circular import
+from bot.core import persona_mgr as pm
+from bot.core.db.po import Persona
 
 
 def make_acm(persona_id: str = "default") -> MagicMock:
-    """Build a mocked AstrBotConfigManager with the given default persona."""
+    """Build a mocked BotConfigManager with the given default persona."""
     conf = {
         "agent_runner": {
             "runner_type": "local",

@@ -5,9 +5,9 @@ import zipfile
 
 import pytest
 
-from astrbot.core.knowledge_base.parsers.epub_parser import EpubParser
-from astrbot.core.knowledge_base.parsers.markitdown_parser import MarkitdownParser
-from astrbot.core.knowledge_base.parsers.util import select_parser
+from bot.core.knowledge_base.parsers.epub_parser import EpubParser
+from bot.core.knowledge_base.parsers.markitdown_parser import MarkitdownParser
+from bot.core.knowledge_base.parsers.util import select_parser
 
 
 def _make_epub_bytes() -> bytes:

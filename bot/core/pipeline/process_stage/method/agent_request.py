@@ -1,0 +1,80 @@
+from collections.abc import AsyncGenerator
+
+from bot.core import logger
+from bot.core.config.agent_runner import normalize_agent_runner
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.star.session_llm_manager import SessionServiceManager
+
+from ...context import PipelineContext
+from ..stage import Stage
+from .agent_sub_stages.internal import InternalAgentSubStage
+from .agent_sub_stages.third_party import ThirdPartyAgentSubStage
+
+
+class AgentRequestSubStage(Stage):
+    async def initialize(self, ctx: PipelineContext) -> None:
+        self.ctx = ctx
+        self.config = ctx.bot_config
+
+        self.bot_wake_prefixs: list[str] = self.config["wake_prefix"]
+        self.prov_wake_prefix: str = self.config["provider_settings"]["wake_prefix"]
+        for bwp in self.bot_wake_prefixs:
+            if self.prov_wake_prefix.startswith(bwp):
+                logger.info(
+                    f"The additional LLM wake prefix {self.prov_wake_prefix} starts "
+                    f"with the bot wake prefix {bwp}; the duplicate prefix was "
+                    "removed automatically.",
+                )
+                self.prov_wake_prefix = self.prov_wake_prefix[len(bwp) :]
+
+        agent_runner = normalize_agent_runner(self.config.get("agent_runner"))
+        self.config["agent_runner"] = agent_runner
+        agent_runner_type = agent_runner["runner_type"]
+        if agent_runner_type == "local":
+            self.agent_sub_stage = InternalAgentSubStage()
+        else:
+            self.agent_sub_stage = ThirdPartyAgentSubStage()
+        await self.agent_sub_stage.initialize(ctx)
+
+    async def process(self, event: BotMessageEvent) -> AsyncGenerator[None, None]:  # ty: ignore[invalid-method-override]  # 基类声明为协程、子类用 yield 实现为异步生成器（同一层级两种调用形态），ty 的 LSP 检查无法表达该联合契约
+        if not self.ctx.bot_config["provider_settings"]["enable"]:
+            logger.debug(
+                "This pipeline does not enable AI capability, skip processing."
+            )
+            return
+
+        if not await SessionServiceManager.should_process_llm_request(event):
+            logger.debug(
+                f"The session {event.unified_msg_origin} has disabled AI capability, skipping processing."
+            )
+            return
+
+        agent_config = self.config.get("agent_runner", {})
+        event.trace.record(
+            "agent_start",
+            kind="agent",
+            status="running",
+            runner_type=agent_config.get("runner_type", "local"),
+            provider_wake_prefix=self.prov_wake_prefix,
+        )
+        try:
+            async for resp in self.agent_sub_stage.process(
+                event, self.prov_wake_prefix
+            ):
+                yield resp
+        except BaseException as exc:
+            event.trace.record(
+                "agent_end",
+                kind="agent",
+                status="error",
+                error=str(exc),
+                runner_type=agent_config.get("runner_type", "local"),
+            )
+            raise
+        else:
+            event.trace.record(
+                "agent_end",
+                kind="agent",
+                status="success",
+                runner_type=agent_config.get("runner_type", "local"),
+            )

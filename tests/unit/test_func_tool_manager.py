@@ -6,17 +6,17 @@ from unittest.mock import ANY, AsyncMock
 
 import pytest
 
-from astrbot.core import sp
-from astrbot.core.computer.booters.local import LocalShellComponent
-from astrbot.core.provider import func_tool_manager as ftm
-from astrbot.core.provider.func_tool_manager import FunctionToolManager
-from astrbot.core.tools.computer_tools.shell import (
+from bot.core import sp
+from bot.core.computer.booters.local import LocalShellComponent
+from bot.core.provider import func_tool_manager as ftm
+from bot.core.provider.func_tool_manager import FunctionToolManager
+from bot.core.tools.computer_tools.shell import (
     ExecuteShellTool,
     LocalExecuteShellTool,
     ShellSessionTool,
 )
-from astrbot.core.tools.message_tools import SendMessageToUserTool
-from astrbot.core.tools.web_search_tools import (
+from bot.core.tools.message_tools import SendMessageToUserTool
+from bot.core.tools.web_search_tools import (
     DeepSeekFetchWebPageTool,
     DeepSeekWebSearchTool,
     FirecrawlExtractWebPageTool,
@@ -87,16 +87,16 @@ def test_computer_tools_are_registered_as_builtin_tools():
 
     tool = manager.get_builtin_tool(ExecuteShellTool)
 
-    assert tool.name == "astrbot_execute_shell"
+    assert tool.name == "bot_execute_shell"
     assert tool.parameters["properties"]["background"]["default"] is False
-    assert manager.is_builtin_tool("astrbot_execute_shell") is True
-    assert manager.is_builtin_tool("astrbot_shell_session") is True
+    assert manager.is_builtin_tool("bot_execute_shell") is True
+    assert manager.is_builtin_tool("bot_shell_session") is True
 
 
 def test_local_execute_shell_schema_replaces_background_with_yield():
     tool = LocalExecuteShellTool()
 
-    assert tool.name == "astrbot_execute_shell"
+    assert tool.name == "bot_execute_shell"
     assert "background" not in tool.parameters["properties"]
     assert tool.parameters["properties"]["yield_time_ms"]["default"] == 10_000
     assert "background" not in inspect.signature(tool.call).parameters
@@ -121,7 +121,7 @@ async def test_local_execute_shell_manages_running_and_closed_results(
     tmp_path,
     allow_network,
 ):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     shell = LocalShellComponent()
     shell.exec_managed = AsyncMock(
@@ -159,12 +159,12 @@ async def test_local_execute_shell_manages_running_and_closed_results(
         def get_sender_id():
             return "admin-user"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return booter
@@ -240,7 +240,7 @@ async def test_local_shell_tools_fail_closed_without_sender_identity(
     monkeypatch,
     tmp_path,
 ):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     shell = LocalShellComponent()
     shell.exec_managed = AsyncMock()
@@ -264,12 +264,12 @@ async def test_local_shell_tools_fail_closed_without_sender_identity(
         def get_sender_id():
             return ""
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return booter
@@ -302,8 +302,8 @@ async def test_local_member_shell_uses_sandbox_backend(
     monkeypatch,
     tmp_path,
 ):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
-    from astrbot.core.tools.computer_tools import util as computer_util
+    from bot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import util as computer_util
 
     shell = LocalShellComponent()
     shell.exec_managed = AsyncMock(
@@ -339,7 +339,7 @@ async def test_local_member_shell_uses_sandbox_backend(
         (),
         {
             "context": type(
-                "FakeAstrContext", (), {"context": FakeConfig(), "event": FakeEvent()}
+                "FakeBotContext", (), {"context": FakeConfig(), "event": FakeEvent()}
             )()
         },
     )()
@@ -384,7 +384,7 @@ async def test_local_member_shell_uses_sandbox_backend(
 
 @pytest.mark.asyncio
 async def test_local_member_shell_is_denied_without_supported_sandbox(monkeypatch):
-    from astrbot.core.tools.computer_tools import util as computer_util
+    from bot.core.tools.computer_tools import util as computer_util
 
     class FakeConfig:
         def get_config(self, umo):
@@ -409,7 +409,7 @@ async def test_local_member_shell_is_denied_without_supported_sandbox(monkeypatc
         (),
         {
             "context": type(
-                "FakeAstrContext", (), {"context": FakeConfig(), "event": FakeEvent()}
+                "FakeBotContext", (), {"context": FakeConfig(), "event": FakeEvent()}
             )()
         },
     )()
@@ -432,7 +432,7 @@ async def test_local_member_shell_is_denied_without_supported_sandbox(monkeypatc
 @pytest.mark.asyncio
 @pytest.mark.skipif(os.name == "nt", reason="Restricted execution needs POSIX.")
 async def test_shell_session_tool_lists_sessions_for_current_owner(monkeypatch):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     shell = LocalShellComponent()
     shell.list_sessions = AsyncMock(
@@ -457,12 +457,12 @@ async def test_shell_session_tool_lists_sessions_for_current_owner(monkeypatch):
         def get_sender_id():
             return "admin-user"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     monkeypatch.setattr(shell_tools, "get_local_booter", lambda: booter)
 
@@ -495,7 +495,7 @@ async def test_shell_session_tool_passes_member_identity_to_session_actions(
     component_action,
     yield_time_ms,
 ):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     shell = LocalShellComponent()
     operation = AsyncMock(return_value={"session_id": "sh_test", "status": "running"})
@@ -531,12 +531,12 @@ async def test_shell_session_tool_passes_member_identity_to_session_actions(
         def get_sender_id():
             return "member-user"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     monkeypatch.setattr(shell_tools, "get_local_booter", lambda: booter)
 
@@ -591,7 +591,7 @@ async def test_shell_session_tool_passes_member_identity_to_session_actions(
 
 @pytest.mark.asyncio
 async def test_execute_shell_defaults_to_foreground(monkeypatch):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     calls = []
 
@@ -613,12 +613,12 @@ async def test_execute_shell_defaults_to_foreground(monkeypatch):
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return FakeBooter()
@@ -635,7 +635,7 @@ async def test_execute_shell_defaults_to_foreground(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_execute_shell_uses_fresh_default_env_per_call(monkeypatch):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     calls = []
 
@@ -658,12 +658,12 @@ async def test_execute_shell_uses_fresh_default_env_per_call(monkeypatch):
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return FakeBooter()
@@ -681,7 +681,7 @@ async def test_execute_shell_uses_fresh_default_env_per_call(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_execute_shell_copies_user_env_before_execution(monkeypatch):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     calls = []
 
@@ -704,12 +704,12 @@ async def test_execute_shell_copies_user_env_before_execution(monkeypatch):
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return FakeBooter()
@@ -727,7 +727,7 @@ async def test_execute_shell_copies_user_env_before_execution(monkeypatch):
 async def test_execute_shell_avoids_double_background_for_detached_commands(
     monkeypatch,
 ):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     calls = []
 
@@ -749,19 +749,19 @@ async def test_execute_shell_avoids_double_background_for_detached_commands(
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return FakeBooter()
 
     monkeypatch.setattr(shell_tools, "get_booter", fake_get_booter)
 
-    command = "nohup firefox >/tmp/astrbot-firefox.log 2>&1 &"
+    command = "nohup firefox >/tmp/bot-firefox.log 2>&1 &"
     result = await ExecuteShellTool().call(
         FakeWrapper(), command=command, background=True
     )
@@ -772,7 +772,7 @@ async def test_execute_shell_avoids_double_background_for_detached_commands(
 
 @pytest.mark.asyncio
 async def test_execute_shell_recognizes_commented_background_command(monkeypatch):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     calls = []
 
@@ -794,12 +794,12 @@ async def test_execute_shell_recognizes_commented_background_command(monkeypatch
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return FakeBooter()
@@ -823,19 +823,19 @@ async def test_execute_shell_recognizes_commented_background_command(monkeypatch
         ("echo foo#bar &", True),
         ("echo 'unterminated", False),
         ("firefox & # already detached", True),
-        ("nohup firefox >/tmp/astrbot-firefox.log 2>&1 &", True),
+        ("nohup firefox >/tmp/bot-firefox.log 2>&1 &", True),
         ("firefox", False),
     ],
 )
 def test_is_self_detached_command_handles_quotes_and_comments(command, expected):
-    from astrbot.core.tools.computer_tools.shell import _is_self_detached_command
+    from bot.core.tools.computer_tools.shell import _is_self_detached_command
 
     assert _is_self_detached_command(command) is expected
 
 
 @pytest.mark.asyncio
 async def test_execute_shell_reports_blank_exception_type(monkeypatch):
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.tools.computer_tools import shell as shell_tools
 
     class BlankError(Exception):
         def __str__(self):
@@ -858,12 +858,12 @@ async def test_execute_shell_reports_blank_exception_type(monkeypatch):
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeAstrContext:
+    class FakeBotContext:
         context = FakeConfig()
         event = FakeEvent()
 
     class FakeWrapper:
-        context = FakeAstrContext()
+        context = FakeBotContext()
 
     async def fake_get_booter(context, session_id):
         return FakeBooter()

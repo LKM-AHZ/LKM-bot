@@ -8,7 +8,7 @@ import aiohttp
 import discord
 import pytest
 
-from astrbot.api.message_components import (
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
@@ -19,24 +19,24 @@ from astrbot.api.message_components import (
     Reply,
     Video,
 )
-from astrbot.core.platform import Group, MessageType
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.button_interaction import (
+from bot.core.platform import Group, MessageType
+from bot.core.message.message_event_result import MessageChain
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.sources.discord import (
+from bot.core.platform.sources.discord import (
     client as discord_client,
 )
-from astrbot.core.platform.sources.discord import (
+from bot.core.platform.sources.discord import (
     discord_platform_adapter,
     discord_platform_event,
 )
-from astrbot.core.platform.sources.discord.client import DiscordBotClient
-from astrbot.core.platform.sources.discord.discord_platform_adapter import (
+from bot.core.platform.sources.discord.client import DiscordBotClient
+from bot.core.platform.sources.discord.discord_platform_adapter import (
     DiscordPlatformAdapter,
 )
-from astrbot.core.platform.sources.discord.discord_platform_event import (
+from bot.core.platform.sources.discord.discord_platform_event import (
     DiscordPlatformEvent,
 )
 
@@ -78,8 +78,8 @@ async def test_discord_reply_body_reaches_model_request(source):
     Args:
         source: Where the referenced Discord message is available.
     """
-    from astrbot.core.astr_main_agent import _process_quote_message
-    from astrbot.core.provider.entities import ProviderRequest
+    from bot.core.bot_main_agent import _process_quote_message
+    from bot.core.provider.entities import ProviderRequest
 
     adapter = DiscordPlatformAdapter.__new__(DiscordPlatformAdapter)
     adapter.bot_self_id = "1"
@@ -239,7 +239,7 @@ async def test_discord_sends_video_attachment(
     event = DiscordPlatformEvent.__new__(DiscordPlatformEvent)
     event.interaction_followup_webhook = None
     event._get_channel = AsyncMock(return_value=channel)
-    monkeypatch.setattr(discord_platform_event.AstrMessageEvent, "send", AsyncMock())
+    monkeypatch.setattr(discord_platform_event.BotMessageEvent, "send", AsyncMock())
     chain = [Plain("Video test"), component] if with_text else [component]
 
     await event.send(MessageChain(chain=chain))
@@ -693,7 +693,7 @@ async def test_discord_converts_component_interaction_to_common_event():
 
 @pytest.mark.asyncio
 async def test_discord_expired_callback_does_not_fall_back_to_legacy_id(monkeypatch):
-    from astrbot.core.platform import button_interaction
+    from bot.core.platform import button_interaction
 
     clock = [100.0]
     monkeypatch.setattr(button_interaction.time, "time", lambda: clock[0])

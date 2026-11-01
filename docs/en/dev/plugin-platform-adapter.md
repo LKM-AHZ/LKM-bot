@@ -52,22 +52,22 @@ Now create `fake_platform_adapter.py`:
 ```py
 import asyncio
 
-from astrbot.core.platform import (
+from bot.core.platform import (
     Platform,
-    AstrBotMessage,
+    BotMessage,
     MessageMember,
     PlatformMetadata,
     MessageType,
 )
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     Plain,
     Image,
     Record,
 )  # Message chain components, import as needed
-from astrbot.core.platform.message_session import MessageSession
-from astrbot.core.platform.register import register_platform_adapter
-from astrbot import logger
+from bot.core.platform.message_session import MessageSession
+from bot.core.platform.register import register_platform_adapter
+from bot import logger
 from .client import FakeClient
 from .fake_platform_event import FakePlatformEvent
 
@@ -105,7 +105,7 @@ class FakePlatformAdapter(Platform):
         # FakeClient is defined by us — this is just an example. This is its callback function.
         async def on_received(data):
             logger.info(data)
-            abm = await self.convert_message(data=data)  # Convert to AstrBotMessage
+            abm = await self.convert_message(data=data)  # Convert to BotMessage
             await self.handle_msg(abm)
 
         # Initialize FakeClient
@@ -115,11 +115,11 @@ class FakePlatformAdapter(Platform):
             self.client.start_polling()
         )  # Continuously listens for messages; this is a blocking call.
 
-    async def convert_message(self, data: dict) -> AstrBotMessage:
-        # Convert the platform message to AstrBotMessage.
+    async def convert_message(self, data: dict) -> BotMessage:
+        # Convert the platform message to BotMessage.
         # The degree of adaptation is reflected here. Different platforms have different message
         # structures; convert accordingly.
-        abm = AstrBotMessage()
+        abm = BotMessage()
         abm.type = (
             MessageType.GROUP_MESSAGE
         )  # Also friend_message for private chats. Analyze per platform. Important!
@@ -138,7 +138,7 @@ class FakePlatformAdapter(Platform):
 
         return abm
 
-    async def handle_msg(self, message: AstrBotMessage):
+    async def handle_msg(self, message: BotMessage):
         # Handle the message
         message_event = FakePlatformEvent(
             message_str=message.message_str,
@@ -156,17 +156,17 @@ class FakePlatformAdapter(Platform):
 `fake_platform_event.py`:
 
 ```py
-from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core.platform import AstrBotMessage, PlatformMetadata
-from astrbot.api.message_components import Plain, Image
+from bot.api.event import BotMessageEvent, MessageChain
+from bot.core.platform import BotMessage, PlatformMetadata
+from bot.api.message_components import Plain, Image
 from .client import FakeClient
 
 
-class FakePlatformEvent(AstrMessageEvent):
+class FakePlatformEvent(BotMessageEvent):
     def __init__(
         self,
         message_str: str,
-        message_obj: AstrBotMessage,
+        message_obj: BotMessage,
         platform_meta: PlatformMetadata,
         session_id: str,
         client: FakeClient,
@@ -205,7 +205,7 @@ Platform adapters do not need to reimplement media parsing for every platform. C
 If you already have a local file, prefer the component factory methods. They generate standard `file:` URIs:
 
 ```py
-from astrbot.api.message_components import Image, Record, Video
+from bot.api.message_components import Image, Record, Video
 
 abm.message.append(Image.fromFileSystem("/tmp/image.png"))
 abm.message.append(Record.fromFileSystem("/tmp/audio.wav"))
@@ -250,7 +250,7 @@ message_event.track_temporary_local_file(temp_media_path)
 Finally, in `main.py`, simply import the `fake_platform_adapter` module during initialization. The decorator will handle registration automatically.
 
 ```py
-from astrbot.core.star import Context, Star
+from bot.core.star import Context, Star
 
 
 class MyPlugin(Star):

@@ -19,10 +19,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 # 注：gcc/build-essential/python3-dev/libffi-dev/libssl-dev 与 git 是刻意留给**运行期**的——
-# 插件依赖由进程内 pip 安装（astrbot/core/utils/pip_installer.py），sdist-only 的包要就地编译、
+# 插件依赖由进程内 pip 安装（bot/core/utils/pip_installer.py），sdist-only 的包要就地编译、
 # git+https 依赖要 git 可执行文件。若要 purge 瘦身或多阶段构建，先确认放弃「运行期装插件」这条路径。
 
-# Node 运行时（MCP 服务经 npx 拉起，见 astrbot/core/agent/mcp_client.py）。
+# Node 运行时（MCP 服务经 npx 拉起，见 bot/core/agent/mcp_client.py）。
 # 不再 `curl https://deb.nodesource.com/setup_lts.x | bash -`：那是把「当前最新 LTS」的
 # 未固定远端脚本以 root 执行，构建不可复现。改为固定 node_22.x 仓库，
 # 并用其 GPG key 校验包签名。
@@ -53,7 +53,7 @@ RUN python -m pip install uv==0.12.12 \
     && uv pip install -r requirements.txt --no-cache-dir --system \
     && uv pip install "pilk==0.2.4" --no-cache-dir --system \
     && uv pip install -e . --no-deps --system \
-    && touch /LKMBot/.astrbot
+    && touch /LKMBot/.bot
 
 EXPOSE 6185
 

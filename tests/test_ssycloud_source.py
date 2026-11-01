@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.config.default import CONFIG_METADATA_2
-from astrbot.core.provider.sources.ssycloud_source import ProviderSSYCloud
+from bot.core.config.default import CONFIG_METADATA_2
+from bot.core.provider.sources.ssycloud_source import ProviderSSYCloud
 
 
 def _make_provider(overrides: dict | None = None) -> ProviderSSYCloud:

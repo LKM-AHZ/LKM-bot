@@ -47,7 +47,7 @@ LKMBot 管理面板具有管理插件、查看日志、可视化配置、查看�
 
 ## 登录
 
-新用户首次登录时，LKMBot 会生成一个随机初始密码并写入启动日志。请先在启动日志中查找并使用该密码登录（用户名通常为 `astrbot`），登录后请立即修改密码。
+新用户首次登录时，LKMBot 会生成一个随机初始密码并写入启动日志。请先在启动日志中查找并使用该密码登录（用户名通常为 `bot`），登录后请立即修改密码。
 
 ## 双因素认证
 
@@ -131,7 +131,7 @@ ChatUI 支持以下常用能力：
 
 - `常规`：时区、外部回调地址、日志和缓存。
 - `外观`：主题颜色。
-- `网络`：HTTP 代理、Python 依赖源和 GitHub 加速地址。Docker 下的代理填法见 [Docker 部署](/deploy/astrbot/docker.md)。
+- `网络`：HTTP 代理、Python 依赖源和 GitHub 加速地址。Docker 下的代理填法见 [Docker 部署](/deploy/bot/docker.md)。
 - `安全`：WebUI HTTPS、登录限速和 TOTP。
 - `维护`：备份、恢复、诊断包导出和重启。
 - `OpenAPI`：开发者访问密钥。
@@ -178,7 +178,7 @@ ChatUI 支持以下常用能力：
 
 导出弹窗提供 `近 1 小时`、`近 12 小时`、`近 1 天`、`近 3 天` 和 `自定义`，默认选择 `近 1 天`。快捷范围按点击下载时的当前时间计算；选择 `自定义` 后可按浏览器本地时间填写开始和结束时间。仅导出范围内的磁盘日志、缓存日志和 Trace；磁盘日志中的无时间戳续行跟随上一条记录，无法关联到带时间戳记录的内容会排除。磁盘日志未注明时区时按服务端本地时间解析。Trace 按开始时间筛选并保留完整链路，范围内仍最多导出最近 50 条、合计 16 MiB。配置、插件状态和运行环境为导出时的当前快照，所选范围记录在 `manifest.json` 中。
 
-诊断包中的内存日志位于 `logs/astrbot.in-memory.log`，内存 Trace 位于 `traces/history.in-memory.jsonl`，持久化 Trace 历史位于 `traces/history.jsonl`。`environment.json` 的 `webui_version` 记录当前提供服务的 WebUI 资源版本，无法读取时为 `null`。
+诊断包中的内存日志位于 `logs/bot.in-memory.log`，内存 Trace 位于 `traces/history.in-memory.jsonl`，持久化 Trace 历史位于 `traces/history.jsonl`。`environment.json` 的 `webui_version` 记录当前提供服务的 WebUI 资源版本，无法读取时为 `null`。
 
 点击搜索框左侧的“过滤器”，在日志容器左侧按日志级别、来源（系统/插件）、具体插件、机器人平台筛选，也可排除用户对话日志；这些条件可与“搜索日志”叠加使用。插件下拉框只列出当前日志中出现过的插件，而不是全部已安装插件，因此从未输出日志的已安装插件不会显示。插件优先显示 display name，菜单副标题显示插件 ID；“系统”对应原先的 Core 来源。
 
@@ -198,7 +198,7 @@ ChatUI 支持以下常用能力：
 
 UMO 前新增“类型”列：蓝色 Agent 表示 Agent 调用，绿色“指令”表示指令处理器调用；群聊/私聊使用中性标签独立显示。同一追踪可同时显示这些标签；普通监听器和事件钩子不算作指令。消息类型优先读取追踪摘要，旧记录从 UMO 推导，无法确定时不显示群聊/私聊标签。旧记录的指令标记按当前页数据推导，无需逐条打开详情。
 
-新 Span 使用 `astrbot.kind` 表示调用类型，起止时间和状态表示执行结果；不再存储 `astrbot.action`、`astrbot.end_action` 或 `astrbot.duration_ms`。耗时由纳秒起止时间计算，`astrbot.handler_type` 保留。旧追踪仍可读取，历史数据库记录不会自动重写。
+新 Span 使用 `bot.kind` 表示调用类型，起止时间和状态表示执行结果；不再存储 `bot.action`、`bot.end_action` 或 `bot.duration_ms`。耗时由纳秒起止时间计算，`bot.handler_type` 保留。旧追踪仍可读取，历史数据库记录不会自动重写。
 
 长消息标题默认显示 2 行，收到消息和发送响应的正文默认显示 4 行；超出时可点击“展开全文 / 收起”。这仅折叠界面展示，不截断已记录内容。
 

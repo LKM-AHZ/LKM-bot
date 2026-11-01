@@ -1,8 +1,8 @@
 import httpx
 import pytest
 
-import astrbot.core.provider.sources.request_retry as request_retry
-from astrbot.core.provider.sources.request_retry import retry_provider_request
+import bot.core.provider.sources.request_retry as request_retry
+from bot.core.provider.sources.request_retry import retry_provider_request
 
 
 @pytest.mark.asyncio

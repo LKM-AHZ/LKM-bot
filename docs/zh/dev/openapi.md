@@ -39,7 +39,7 @@ X-API-Key: abk_xxx
 | `/api/plugin/page/bridge-sdk.js` | `/api/v1/plugins/page-bridge-sdk.js` |
 | `/api/plugin/get`、`/api/plugin/detail` 等 | `/api/v1/plugins`、`/api/v1/plugins/by-id` |
 
-插件 Web API 不再提供 Quart 兼容请求上下文，请改用 `from astrbot.api.web import request`。完整接口清单以 `/api/v1/openapi.json` 为准。
+插件 Web API 不再提供 Quart 兼容请求上下文，请改用 `from bot.api.web import request`。完整接口清单以 `/api/v1/openapi.json` 为准。
 
 ## Scope 权限说明
 

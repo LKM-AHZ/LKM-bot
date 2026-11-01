@@ -124,8 +124,8 @@ message() {
     zh-CN:MissingTools) format='需要 curl 或 wget 下载文件；安装压缩包还需要 tar 和 sha256sum 或 shasum。' ;;
     zh-CN:PathHint) format='uv 安装目录：%s。请确保新终端的 PATH 中包含此目录。' ;;
     zh-CN:UvFailed) format='uv 安装失败。请参考 https://docs.astral.sh/uv/getting-started/installation/' ;;
-    zh-CN:InstallingAstrBot) format='正在使用 Python 3.12 安装 LKMBot…' ;;
-    zh-CN:AstrBotFailed) format='LKMBot 安装失败（退出码 %s）。请检查上方的下载或依赖错误。' ;;
+    zh-CN:InstallingLKMBot) format='正在使用 Python 3.12 安装 LKMBot…' ;;
+    zh-CN:BotFailed) format='LKMBot 安装失败（退出码 %s）。请检查上方的下载或依赖错误。' ;;
     zh-CN:PythonFallback) format='Python 镜像下载失败，正在切换到官方源重试…' ;;
     zh-CN:ReloadShell) format='请根据你使用的终端重新加载环境：' ;;
     zh-CN:RunCommands) format='重新加载后，请手动运行：' ;;
@@ -154,8 +154,8 @@ message() {
     en-US:MissingTools) format='curl or wget is required to download files; archive installation also requires tar and sha256sum or shasum.' ;;
     en-US:PathHint) format='uv installation directory: %s. Ensure it is on PATH in new terminals.' ;;
     en-US:UvFailed) format='Failed to install uv. See https://docs.astral.sh/uv/getting-started/installation/' ;;
-    en-US:InstallingAstrBot) format='Installing LKMBot with Python 3.12...' ;;
-    en-US:AstrBotFailed) format='LKMBot installation failed (exit code %s). Check the download or dependency errors above.' ;;
+    en-US:InstallingLKMBot) format='Installing LKMBot with Python 3.12...' ;;
+    en-US:BotFailed) format='LKMBot installation failed (exit code %s). Check the download or dependency errors above.' ;;
     en-US:PythonFallback) format='Python mirror failed; retrying with the official source...' ;;
     en-US:ReloadShell) format='Reload the environment for your shell:' ;;
     en-US:RunCommands) format='Then run these commands manually:' ;;
@@ -184,8 +184,8 @@ message() {
     ja-JP:MissingTools) format='ダウンロードには curl または wget が必要です。アーカイブのインストールには tar と sha256sum または shasum も必要です。' ;;
     ja-JP:PathHint) format='uv のインストール先：%s。新しいターミナルでも PATH に含まれていることを確認してください。' ;;
     ja-JP:UvFailed) format='uv のインストールに失敗しました。https://docs.astral.sh/uv/getting-started/installation/ を参照してください。' ;;
-    ja-JP:InstallingAstrBot) format='Python 3.12 で LKMBot をインストールしています…' ;;
-    ja-JP:AstrBotFailed) format='LKMBot のインストールに失敗しました（終了コード %s）。上記のダウンロードまたは依存関係のエラーを確認してください。' ;;
+    ja-JP:InstallingLKMBot) format='Python 3.12 で LKMBot をインストールしています…' ;;
+    ja-JP:BotFailed) format='LKMBot のインストールに失敗しました（終了コード %s）。上記のダウンロードまたは依存関係のエラーを確認してください。' ;;
     ja-JP:PythonFallback) format='Python ミラーに失敗したため、公式ソースで再試行しています…' ;;
     ja-JP:ReloadShell) format='使用するシェルに合わせて環境を再読み込みしてください：' ;;
     ja-JP:RunCommands) format='その後、以下のコマンドを手動で実行してください：' ;;
@@ -293,7 +293,7 @@ trap 'if [ -n "$install_temp_dir" ]; then rm -rf -- "$install_temp_dir"; fi' EXI
 
 install_uv() {
   info "$(message InstallingUv)"
-  install_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/astrbot-install.XXXXXX")"
+  install_temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/bot-install.XXXXXX")"
   local platform machine target='' base_url artifact archive expected_hash actual_hash install_dir
   platform="$(uname -s)"
   machine="$(uname -m)"
@@ -416,7 +416,7 @@ if [ -n "$python_install_mirror" ]; then
 else
   info "$(message PythonDefault)"
 fi
-info "$(message InstallingAstrBot)"
+info "$(message InstallingLKMBot)"
 # Use a valid working directory even if the caller's directory has been removed.
 # The subshell scopes Python mirror settings to this installation only.
 tool_install_exit_code=0
@@ -435,7 +435,7 @@ if [ "$tool_install_exit_code" -ne 0 ] && [ -n "$python_install_mirror" ]; then
   ) || tool_install_exit_code=$?
 fi
 if [ "$tool_install_exit_code" -ne 0 ]; then
-  err "$(message AstrBotFailed "$tool_install_exit_code")"
+  err "$(message BotFailed "$tool_install_exit_code")"
   exit "$tool_install_exit_code"
 fi
 ok "$(message Installed)"

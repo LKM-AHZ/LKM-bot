@@ -3,11 +3,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from astrbot.core.pipeline.waking_check.stage import (
+from bot.core.pipeline.waking_check.stage import (
     WakingCheckStage,
     star_handlers_registry,
 )
-from astrbot.core.star.session_plugin_manager import SessionPluginManager
+from bot.core.star.session_plugin_manager import SessionPluginManager
 
 
 @pytest.mark.asyncio
@@ -27,7 +27,7 @@ async def test_waking_check_enforces_api_key_admin_authorization(
     """Only explicitly authorized API requests may assume a configured admin ID."""
     stage = WakingCheckStage()
     stage.ctx = SimpleNamespace(
-        astrbot_config={
+        bot_config={
             "admins_id": ["admin-user"],
             "wake_prefix": [],
             "plugin_set": ["*"],

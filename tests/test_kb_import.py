@@ -4,21 +4,21 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from astrbot.core import LogBroker
-from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.exceptions import KnowledgeBaseUploadError
-from astrbot.core.knowledge_base.kb_helper import KBHelper
-from astrbot.core.knowledge_base.models import KBDocument
-from astrbot.core.utils.auth_password import (
+from bot.core import LogBroker
+from bot.core.core_lifecycle import BotCoreLifecycle
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.exceptions import KnowledgeBaseUploadError
+from bot.core.knowledge_base.kb_helper import KBHelper
+from bot.core.knowledge_base.models import KBDocument
+from bot.core.utils.auth_password import (
     hash_dashboard_password,
     hash_md5_dashboard_password,
 )
-from astrbot.dashboard.asgi_runtime import FastAPIAppAdapter
-from astrbot.dashboard.server import AstrBotDashboard
-from astrbot.dashboard.services.knowledge_base_service import KnowledgeBaseService
+from bot.dashboard.asgi_runtime import FastAPIAppAdapter
+from bot.dashboard.server import BotDashboard
+from bot.dashboard.services.knowledge_base_service import KnowledgeBaseService
 
-_TEST_DASHBOARD_PASSWORD = "AstrbotTest123"
+_TEST_DASHBOARD_PASSWORD = "BotTest123"
 
 
 @pytest_asyncio.fixture(scope="module")
@@ -27,7 +27,7 @@ async def core_lifecycle_td(tmp_path_factory):
     tmp_db_path = tmp_path_factory.mktemp("data") / "test_data_kb.db"
     db = SQLiteDatabase(str(tmp_db_path))
     log_broker = LogBroker()
-    core_lifecycle = AstrBotCoreLifecycle(log_broker, db)
+    core_lifecycle = BotCoreLifecycle(log_broker, db)
     await core_lifecycle.initialize()
 
     # Mock kb_manager and kb_helper
@@ -53,16 +53,16 @@ async def core_lifecycle_td(tmp_path_factory):
     # kb_manager.get_kb.return_value = kb_helper # Removed this line as it's handled above
     core_lifecycle.kb_manager = kb_manager
     generated_password = getattr(
-        core_lifecycle.astrbot_config,
+        core_lifecycle.bot_config,
         "_generated_dashboard_password",
         None,
     )
     dashboard_password = generated_password or _TEST_DASHBOARD_PASSWORD
     if not generated_password:
-        core_lifecycle.astrbot_config["dashboard"]["pbkdf2_password"] = (
+        core_lifecycle.bot_config["dashboard"]["pbkdf2_password"] = (
             hash_dashboard_password(dashboard_password)
         )
-        core_lifecycle.astrbot_config["dashboard"]["password"] = (
+        core_lifecycle.bot_config["dashboard"]["password"] = (
             hash_md5_dashboard_password(dashboard_password)
         )
     object.__setattr__(
@@ -83,33 +83,33 @@ async def core_lifecycle_td(tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def app(core_lifecycle_td: AstrBotCoreLifecycle):
+def app(core_lifecycle_td: BotCoreLifecycle):
     """Creates a FastAPIAppAdapter app instance for testing."""
     shutdown_event = asyncio.Event()
-    server = AstrBotDashboard(core_lifecycle_td, core_lifecycle_td.db, shutdown_event)
+    server = BotDashboard(core_lifecycle_td, core_lifecycle_td.db, shutdown_event)
     return server.app
 
 
-def _resolve_dashboard_password(core_lifecycle_td: AstrBotCoreLifecycle) -> str:
+def _resolve_dashboard_password(core_lifecycle_td: BotCoreLifecycle) -> str:
     generated_password = getattr(core_lifecycle_td, "_dashboard_plain_password", None)
     if generated_password:
         return generated_password
-    password = core_lifecycle_td.astrbot_config["dashboard"]["pbkdf2_password"]
+    password = core_lifecycle_td.bot_config["dashboard"]["pbkdf2_password"]
     if isinstance(password, str) and password.startswith("pbkdf2_sha256$"):
-        return "astrbot"
+        return "bot"
     return password
 
 
 @pytest_asyncio.fixture(scope="module")
 async def authenticated_header(
-    app: FastAPIAppAdapter, core_lifecycle_td: AstrBotCoreLifecycle
+    app: FastAPIAppAdapter, core_lifecycle_td: BotCoreLifecycle
 ):
     """Handles login and returns an authenticated header."""
     test_client = app.test_client()
     response = await test_client.post(
         "/api/v1/auth/login",
         json={
-            "username": core_lifecycle_td.astrbot_config["dashboard"]["username"],
+            "username": core_lifecycle_td.bot_config["dashboard"]["username"],
             "password": _resolve_dashboard_password(core_lifecycle_td),
         },
     )
@@ -123,7 +123,7 @@ async def authenticated_header(
 async def test_import_documents(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
 ):
     """Tests the import documents functionality."""
     test_client = app.test_client()
@@ -191,7 +191,7 @@ async def test_import_documents(
 
 @pytest.mark.asyncio
 async def test_import_documents_returns_friendly_failure_message(
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
 ):
     kb_helper = await core_lifecycle_td.kb_manager.get_kb("test_kb_id")
     kb_helper.upload_document.reset_mock()

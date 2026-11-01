@@ -1,4 +1,4 @@
-from astrbot.core.config.default import CONFIG_METADATA_2
+from bot.core.config.default import CONFIG_METADATA_2
 
 
 def _platform_template(name: str) -> dict:

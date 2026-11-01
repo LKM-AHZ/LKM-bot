@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 import pytest
 from sqlmodel import select
 
-from astrbot.core.db.po import UmoSender
-from astrbot.dashboard.services.session_management_service import (
+from bot.core.db.po import UmoSender
+from bot.dashboard.services.session_management_service import (
     SessionManagementService,
 )
 

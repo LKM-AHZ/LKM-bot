@@ -5,13 +5,13 @@ import httpx
 import pytest
 from fastapi import FastAPI
 
-from astrbot.core.db.po import ChatUIProject, PlatformSession, SessionProjectRelation
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.platform_message_history_mgr import PlatformMessageHistoryManager
-from astrbot.dashboard.api import open_api
-from astrbot.dashboard.api.auth import AuthContext
-from astrbot.dashboard.services.chat_service import ChatService, ChatServiceError
-from astrbot.dashboard.services.open_api_service import OpenApiService
+from bot.core.db.po import ChatUIProject, PlatformSession, SessionProjectRelation
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.platform_message_history_mgr import PlatformMessageHistoryManager
+from bot.dashboard.api import open_api
+from bot.dashboard.api.auth import AuthContext
+from bot.dashboard.services.chat_service import ChatService, ChatServiceError
+from bot.dashboard.services.open_api_service import OpenApiService
 
 
 @pytest.mark.asyncio

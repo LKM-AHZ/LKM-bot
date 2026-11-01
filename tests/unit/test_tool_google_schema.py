@@ -9,15 +9,15 @@ from typing import Generic, TypeVar
 from google.genai import types as genai_types
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-TOOL_MODULE_PATH = REPO_ROOT / "astrbot/core/agent/tool.py"
+TOOL_MODULE_PATH = REPO_ROOT / "bot/core/agent/tool.py"
 
 
 def load_tool_module():
     package_names = [
-        "astrbot",
-        "astrbot.core",
-        "astrbot.core.agent",
-        "astrbot.core.message",
+        "bot",
+        "bot.core",
+        "bot.core.agent",
+        "bot.core.message",
     ]
     for name in package_names:
         if name not in sys.modules:
@@ -26,12 +26,12 @@ def load_tool_module():
             sys.modules[name] = module
 
     message_result_module = types.ModuleType(
-        "astrbot.core.message.message_event_result"
+        "bot.core.message.message_event_result"
     )
     message_result_module.MessageEventResult = type("MessageEventResult", (), {})
     sys.modules[message_result_module.__name__] = message_result_module
 
-    run_context_module = types.ModuleType("astrbot.core.agent.run_context")
+    run_context_module = types.ModuleType("bot.core.agent.run_context")
     run_context_module.TContext = TypeVar("TContext")
 
     class ContextWrapper(Generic[run_context_module.TContext]):
@@ -41,7 +41,7 @@ def load_tool_module():
     sys.modules[run_context_module.__name__] = run_context_module
 
     spec = importlib.util.spec_from_file_location(
-        "astrbot.core.agent.tool", TOOL_MODULE_PATH
+        "bot.core.agent.tool", TOOL_MODULE_PATH
     )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)

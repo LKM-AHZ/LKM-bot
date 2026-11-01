@@ -4,16 +4,16 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.computer import process_sandbox
-from astrbot.core.computer.booters import local
-from astrbot.core.config import default as config_defaults
-from astrbot.core.tools.computer_tools import fs, python, shell, util
-from astrbot.core.tools.computer_tools.shipyard_neo.browser import BrowserExecTool
-from astrbot.core.tools.computer_tools.shipyard_neo.neo_skills import (
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.computer import process_sandbox
+from bot.core.computer.booters import local
+from bot.core.config import default as config_defaults
+from bot.core.tools.computer_tools import fs, python, shell, util
+from bot.core.tools.computer_tools.shipyard_neo.browser import BrowserExecTool
+from bot.core.tools.computer_tools.shipyard_neo.neo_skills import (
     GetExecutionHistoryTool,
 )
-from astrbot.core.tools.computer_tools.util import (
+from bot.core.tools.computer_tools.util import (
     check_local_execution_permission,
     get_local_permission_policy,
 )
@@ -54,8 +54,8 @@ def _make_run_context(require_admin: bool, role: str = "member") -> ContextWrapp
         unified_msg_origin="qq_official:friend:user-1",
         get_sender_id=lambda: "user-1",
     )
-    astr_ctx = SimpleNamespace(context=config_holder, event=event)
-    return ContextWrapper(context=astr_ctx)
+    bot_ctx = SimpleNamespace(context=config_holder, event=event)
+    return ContextWrapper(context=bot_ctx)
 
 
 def _make_local_run_context(role: str, policy: dict) -> ContextWrapper:
@@ -537,7 +537,7 @@ async def test_browser_tool_allows_non_admin_when_admin_requirement_disabled(
         return SimpleNamespace(browser=_FakeBrowser())
 
     monkeypatch.setattr(
-        "astrbot.core.tools.computer_tools.shipyard_neo.browser.get_booter",
+        "bot.core.tools.computer_tools.shipyard_neo.browser.get_booter",
         _fake_get_booter,
     )
 
@@ -560,7 +560,7 @@ async def test_neo_skill_tool_allows_non_admin_when_admin_requirement_disabled(
         )
 
     monkeypatch.setattr(
-        "astrbot.core.tools.computer_tools.shipyard_neo.neo_skills.get_booter",
+        "bot.core.tools.computer_tools.shipyard_neo.neo_skills.get_booter",
         _fake_get_booter,
     )
 

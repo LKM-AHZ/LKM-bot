@@ -11,7 +11,7 @@ You can publish your plugin by visiting the [LKMBot Plugin Publish Page](https:/
 Here is a complete plugin metadata example (`metadata.yaml`) that the system will automatically parse:
 
 ```yaml
-name: astrbot_plugin_example                 # Plugin identifier, English, unique
+name: bot_plugin_example                 # Plugin identifier, English, unique
 display_name: Plugin Display Name            # Plugin display name
 # short_desc: A one-line summary of your plugin # (Optional) Short description for compact UI
 desc: Detailed description of your plugin's features, usage, etc.  # Detailed plugin description

@@ -7,14 +7,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.db.po import PlatformMessageHistory
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.platform_message_history_mgr import PlatformMessageHistoryManager
-from astrbot.dashboard.api.auth import AuthContext
-from astrbot.dashboard.api.chat import (
+from bot.core.db.po import PlatformMessageHistory
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.platform_message_history_mgr import PlatformMessageHistoryManager
+from bot.dashboard.api.auth import AuthContext
+from bot.dashboard.api.chat import (
     get_chat_session,
 )
-from astrbot.dashboard.services.chat_service import (
+from bot.dashboard.services.chat_service import (
     ChatService,
     ChatServiceError,
 )

@@ -12,7 +12,7 @@ For more details, see [Usage · Agent Runner](/en/use/agent-runner).
 
 ## Quick Links
 
-- [Built-in Agent Runner](/en/providers/agent-runners/astrbot-agent-runner)
+- [Built-in Agent Runner](/en/providers/agent-runners/bot-agent-runner)
 - [Dify](/en/providers/agent-runners/dify)
 - [Coze](/en/providers/agent-runners/coze)
 - [Alibaba Bailian](/en/providers/agent-runners/dashscope)

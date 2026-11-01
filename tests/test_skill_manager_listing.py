@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.skills.skill_manager import SkillManager
+from bot.core.skills.skill_manager import SkillManager
 
 
 def _write_skill(root: Path, name: str, description: str) -> None:
@@ -25,11 +25,11 @@ def _isolate_plugin_skills(monkeypatch, tmp_path: Path) -> None:
     plugins_root.mkdir()
     builtin_plugins_root.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_plugin_path",
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_builtin_plugin_path",
+        "bot.core.skills.skill_manager.get_bot_builtin_plugin_path",
         lambda: str(builtin_plugins_root),
     )
 
@@ -40,11 +40,11 @@ def _isolate_data_paths(monkeypatch, tmp_path: Path) -> None:
     data_dir.mkdir(parents=True, exist_ok=True)
     temp_dir.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_data_path",
+        "bot.core.skills.skill_manager.get_bot_data_path",
         lambda: str(data_dir),
     )
     monkeypatch.setattr(
-        "astrbot.core.skills.skill_manager.get_astrbot_temp_path",
+        "bot.core.skills.skill_manager.get_bot_temp_path",
         lambda: str(temp_dir),
     )
 

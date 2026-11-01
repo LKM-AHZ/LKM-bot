@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.tools.cron_tools import FutureTaskTool
+from bot.core.platform.message_type import MessageType
+from bot.core.tools.cron_tools import FutureTaskTool
 
 
 def _context(
@@ -214,7 +214,7 @@ async def test_future_task_delete_rejects_same_umo_different_sender():
 
     assert result == (
         "error: cron job job-1 was created by another member of this group chat, "
-        "so you cannot delete it. Only the member who created it or an AstrBot "
+        "so you cannot delete it. Only the member who created it or an LKMBot "
         "admin can delete it; tell the user to ask that member."
     )
     cron_mgr.delete_job.assert_not_awaited()
@@ -222,7 +222,7 @@ async def test_future_task_delete_rejects_same_umo_different_sender():
 
 @pytest.mark.asyncio
 async def test_future_task_admin_can_delete_other_members_group_job():
-    """AstrBot admins should be able to delete another member's task in the group."""
+    """LKMBot admins should be able to delete another member's task in the group."""
     tool = FutureTaskTool()
     existing_job = _job("job-1", sender_id="user-2")
     cron_mgr = SimpleNamespace(
@@ -327,7 +327,7 @@ async def test_future_task_list_group_members_see_tasks_with_creator(is_admin):
     """All group members can see this group's tasks and their creators.
 
     Args:
-        is_admin: Whether the caller is an AstrBot administrator.
+        is_admin: Whether the caller is an LKMBot administrator.
     """
     tool = FutureTaskTool()
     admin_job = _job("admin-job", sender_id="admin-user")
@@ -359,7 +359,7 @@ async def test_future_task_list_private_chat_filters_by_umo_and_sender(is_admin)
     """Private chats retain both session and sender isolation.
 
     Args:
-        is_admin: Whether the caller is an AstrBot administrator.
+        is_admin: Whether the caller is an LKMBot administrator.
     """
     tool = FutureTaskTool()
     own_job = _job("own-job", umo="test:private:shared", sender_id="user-1")

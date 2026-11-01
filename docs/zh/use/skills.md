@@ -17,7 +17,7 @@ LKMBot 从 v4.13.0 起支持这种 Agent Skills 形式。它并不限于 Claude 
 
 Skills 会先向 Agent 提供名称、描述和文件路径，详细内容按任务需要读取，不会一开始就把每个技能的全部文件塞进对话。**上传 Skill 不会自动安装它需要的软件，也不会增加权限。** 如果技能要求 Python 库、外部 API 或某个工具，需要另外配置。
 
-## 上传第一个 Skill {#上传-skills-到-astrbot}
+## 上传第一个 Skill {#上传-skills-到-bot}
 
 1. 准备一个可信来源的 `.zip` 技能包。
 2. 在 WebUI 打开 `插件 → 技能`，点击右下角 **+**（上传技能）。旧版独立技能页面的入口已移到插件工作区。
@@ -68,7 +68,7 @@ description: 当用户需要把零散工作记录整理成周报时使用，按�
 
 将它保存为 `weekly-report/SKILL.md`，压缩为 `weekly-report.zip` 即可上传。更完整的格式可参考 [Agent Skills 规范](https://agentskills.io/specification)和 [Claude Skills 文档](https://code.claude.com/docs/zh-CN/skills)。
 
-## 配置运行环境和人格 {#在-astrbot-使用-skills}
+## 配置运行环境和人格 {#在-bot-使用-skills}
 
 ### 先让 Agent 能读取技能
 
@@ -78,7 +78,7 @@ description: 当用户需要把零散工作记录整理成周报时使用，按�
 - **第三方沙箱环境（sandbox）**：Agent 在独立环境中读取技能、运行脚本。先配置好沙箱连接，LKMBot 会尝试把本地及插件 Skills 同步到活动沙箱。
 - **无（none）**：技能清单仍可能提供给模型，但没有电脑能力的文件/执行工具，不能保证它能读取完整说明，更不能运行技能脚本。需要实际使用技能时，建议配置前两种环境。
 
-具体的文件范围、执行权限、联网条件和部署方法见[Agent 沙盒环境](/use/astrbot-agent-sandbox)。Skills 不会绕过这些限制，也不会因为上传而自动授予普通成员代码执行权限。
+具体的文件范围、执行权限、联网条件和部署方法见[Agent 沙盒环境](/use/bot-agent-sandbox)。Skills 不会绕过这些限制，也不会因为上传而自动授予普通成员代码执行权限。
 
 ### 再选择当前人格可用的技能
 
@@ -122,7 +122,7 @@ LKMBot 会从以下位置发现 Skills。前几种可在技能管理页面中查
 
 运行环境为第三方沙箱、驱动器为 `shipyard_neo` 时，页面还提供**本地技能 / Neo 技能**切换。Neo 技能页面用于查看技能候选和发布记录，包括通过/拒绝评估、发布到 `Canary` 或 `Stable`、同步以及停用/回滚等操作。
 
-这用于管理在 Neo 中积累的可复用技能版本，不是上传普通 ZIP 的必经步骤。初次使用可以先完成本地技能上传和执行；Neo 的连接配置见[第三方沙箱环境](/use/astrbot-agent-sandbox#third-party-sandbox-environment)。
+这用于管理在 Neo 中积累的可复用技能版本，不是上传普通 ZIP 的必经步骤。初次使用可以先完成本地技能上传和执行；Neo 的连接配置见[第三方沙箱环境](/use/bot-agent-sandbox#third-party-sandbox-environment)。
 
 ## 常见问题
 

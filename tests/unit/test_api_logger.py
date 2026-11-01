@@ -1,4 +1,4 @@
-"""Tests for the plugin-aware logger exposed by ``astrbot.api``."""
+"""Tests for the plugin-aware logger exposed by ``bot.api``."""
 
 import asyncio
 import json
@@ -8,16 +8,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-import astrbot.api as api
-from astrbot.core.log import LogBroker, LogManager, LogQueueHandler, log_context
-from astrbot.core.star import Star
-from astrbot.core.star.star import StarMetadata, star_map
+import bot.api as api
+from bot.core.log import LogBroker, LogManager, LogQueueHandler, log_context
+from bot.core.star import Star
+from bot.core.star.star import StarMetadata, star_map
 
 
 def test_queue_log_contains_structured_source_and_platform_fields() -> None:
     """Ensure queue entries expose fields used by Dashboard log filters."""
     broker = LogBroker()
-    plugin_logger = logging.Logger("astrbot.plugin.weather")
+    plugin_logger = logging.Logger("bot.plugin.weather")
     LogManager.set_queue_handler(plugin_logger, broker)
 
     with log_context("qq-bot-1", "aiocqhttp"):
@@ -35,7 +35,7 @@ def test_queue_log_contains_structured_source_and_platform_fields() -> None:
 async def test_detached_task_does_not_keep_expired_log_context() -> None:
     """Ensure a detached task cannot retain an event's expired platform."""
     broker = LogBroker()
-    core_logger = logging.Logger("astrbot.context_test")
+    core_logger = logging.Logger("bot.context_test")
     LogManager.set_queue_handler(core_logger, broker)
     release_task = asyncio.Event()
 
@@ -61,7 +61,7 @@ async def test_detached_task_does_not_keep_expired_log_context() -> None:
 async def test_concurrent_log_contexts_do_not_mix_platforms() -> None:
     """Ensure concurrent message tasks retain their own platform metadata."""
     broker = LogBroker()
-    core_logger = logging.Logger("astrbot.concurrent_context_test")
+    core_logger = logging.Logger("bot.concurrent_context_test")
     LogManager.set_queue_handler(core_logger, broker)
 
     async def emit_for_platform(platform_id: str, platform_type: str) -> None:
@@ -115,8 +115,8 @@ def test_plugin_logger_cache_refreshes_after_plugin_rename(
         )
         new_logger = api._resolve_caller_logger(caller_module)
 
-        assert old_logger.name == "astrbot.plugin.old_name"
-        assert new_logger.name == "astrbot.plugin.new_name"
+        assert old_logger.name == "bot.plugin.old_name"
+        assert new_logger.name == "bot.plugin.new_name"
     finally:
         api._logger_cache.pop(caller_module, None)
 
@@ -130,7 +130,7 @@ def test_global_level_sync_updates_plugin_loggers(
         monkeypatch: Pytest fixture used to isolate LogManager class state.
     """
     plugin_name = "mock_level_sync"
-    plugin_logger = logging.getLogger(f"astrbot.plugin.{plugin_name}")
+    plugin_logger = logging.getLogger(f"bot.plugin.{plugin_name}")
     previous_level = plugin_logger.level
     global_logger = logging.Logger("global_level_sync")
     monkeypatch.setattr(LogManager, "_plugin_logger_names", {plugin_name})
@@ -186,7 +186,7 @@ def test_legacy_plugin_without_super_uses_dedicated_logger(
         plugin = namespace["LegacyPlugin"](object())
 
         assert plugin.logger_state() == (
-            "astrbot.plugin.legacy_logger",
+            "bot.plugin.legacy_logger",
             logging.WARNING,
             False,
             True,
@@ -206,13 +206,13 @@ def test_queue_handler_only_scans_plugins_for_global_logger(
     """
     broker = LogBroker()
     existing_name = "queue_handler_existing"
-    existing_logger = logging.getLogger(f"astrbot.plugin.{existing_name}")
+    existing_logger = logging.getLogger(f"bot.plugin.{existing_name}")
     previous_handlers = existing_logger.handlers.copy()
     previous_filters = existing_logger.filters.copy()
     existing_logger.handlers.clear()
     existing_logger.filters.clear()
-    plugin_logger = logging.Logger("astrbot.plugin.queue_handler_new")
-    global_logger = logging.Logger("astrbot")
+    plugin_logger = logging.Logger("bot.plugin.queue_handler_new")
+    global_logger = logging.Logger("bot")
     monkeypatch.setattr(LogManager, "_plugin_logger_names", {existing_name})
     monkeypatch.setattr(LogManager, "_log_broker", None)
 

@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core import sp
-from astrbot.core.db.po import ConversationV2, UmoAlias, UmoSender
-from astrbot.dashboard.services.session_management_service import (
+from bot.core import sp
+from bot.core.db.po import ConversationV2, UmoAlias, UmoSender
+from bot.dashboard.services.session_management_service import (
     SessionManagementService,
 )
 

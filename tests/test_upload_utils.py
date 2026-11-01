@@ -2,7 +2,7 @@
 
 import pytest
 
-from astrbot.core.utils.upload import (
+from bot.core.utils.upload import (
     COPY_BLOCK_SIZE,
     UploadTooLargeError,
     save_upload_stream,

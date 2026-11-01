@@ -10,7 +10,7 @@
 ```py
 class Main(star.Star):
     @filter.command("hello")
-    async def hello(self, event: AstrMessageEvent):
+    async def hello(self, event: BotMessageEvent):
         """Aloha!"""
         await self.put_kv_data("greeted", True)
         greeted = await self.get_kv_data("greeted", False)
@@ -26,9 +26,9 @@ class Main(star.Star):
 
 ```py
 from pathlib import Path
-from astrbot.core.utils.astrbot_path import get_astrbot_data_path
+from bot.core.utils.bot_path import get_bot_data_path
 
 plugin_data_path = (
-    Path(get_astrbot_data_path()) / "plugin_data" / self.name
+    Path(get_bot_data_path()) / "plugin_data" / self.name
 )  # self.name 为插件名称，在 v4.9.2 及以上版本可用，低于此版本请自行指定插件名称
 ```

@@ -1,7 +1,7 @@
 # Docker-based Code Interpreter
 
 > [!WARNING]
-> Deprecated, please refer to the latest [Agent Sandbox Environment](/en/use/astrbot-agent-sandbox.md) documentation. This feature will be unavailable after v4.12.0.
+> Deprecated, please refer to the latest [Agent Sandbox Environment](/en/use/bot-agent-sandbox.md) documentation. This feature will be unavailable after v4.12.0.
 
 Starting from version `v3.4.2`, LKMBot supports a code interpreter to enhance LLM capabilities and enable various automated operations.
 
@@ -37,7 +37,7 @@ sudo -E python3 main.py
 
 ## Usage
 
-This feature uses the `soulter/astrbot-code-interpreter-sandbox` image. You can view detailed information about the image on [Docker Hub](https://hub.docker.com/r/soulter/astrbot-code-interpreter-sandbox).
+This feature uses the `soulter/bot-code-interpreter-sandbox` image. You can view detailed information about the image on [Docker Hub](https://hub.docker.com/r/soulter/astrbot-code-interpreter-sandbox).
 
 The image includes commonly used Python libraries:
 

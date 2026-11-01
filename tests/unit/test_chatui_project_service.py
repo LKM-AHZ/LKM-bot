@@ -7,15 +7,15 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.workspace import (
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.workspace import (
     default_workspace_root,
     resolve_project_workspace_root,
     resolve_workspace_root_for_umo,
 )
-from astrbot.dashboard.api import chat_projects
-from astrbot.dashboard.api.auth import AuthContext
-from astrbot.dashboard.services.chatui_project_service import (
+from bot.dashboard.api import chat_projects
+from bot.dashboard.api.auth import AuthContext
+from bot.dashboard.services.chatui_project_service import (
     ChatUIProjectService,
     ChatUIProjectServiceError,
 )
@@ -26,7 +26,7 @@ def test_custom_workspace_accepts_existing_directory(tmp_path, monkeypatch):
     workspace = tmp_path / "workspace"
     workspace.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(tmp_path),
     )
 
@@ -44,7 +44,7 @@ def test_custom_workspace_accepts_existing_directory(tmp_path, monkeypatch):
 def test_custom_workspace_rejects_missing_path(tmp_path, monkeypatch):
     """Custom workspace paths should reject missing directories."""
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(tmp_path),
     )
 
@@ -60,7 +60,7 @@ def test_custom_workspace_rejects_missing_path(tmp_path, monkeypatch):
 def test_custom_workspace_rejects_file_path(tmp_path, monkeypatch):
     """Custom workspace paths should reject regular files."""
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(tmp_path),
     )
     file_path = tmp_path / "workspace.txt"
@@ -75,12 +75,12 @@ def test_custom_workspace_rejects_file_path(tmp_path, monkeypatch):
         )
 
 
-def test_custom_workspace_relative_path_uses_astrbot_workspaces(tmp_path, monkeypatch):
+def test_custom_workspace_relative_path_uses_bot_workspaces(tmp_path, monkeypatch):
     """Relative custom workspace paths should resolve under LKMBot workspaces."""
     relative_workspace = tmp_path / "relative-workspace"
     relative_workspace.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(tmp_path),
     )
 
@@ -102,7 +102,7 @@ def test_custom_workspace_rejects_relative_path_traversal(tmp_path, monkeypatch)
     outside_workspace.mkdir()
     workspaces_root.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(workspaces_root),
     )
 
@@ -118,7 +118,7 @@ def test_custom_workspace_rejects_relative_path_traversal(tmp_path, monkeypatch)
 def test_custom_workspace_rejects_workspaces_root(tmp_path, monkeypatch):
     """Custom workspace paths must not expose the entire workspaces root."""
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(tmp_path),
     )
 
@@ -140,7 +140,7 @@ def test_custom_workspace_accepts_absolute_path_outside_workspaces(
     outside_workspace.mkdir()
     workspaces_root.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(workspaces_root),
     )
 
@@ -273,7 +273,7 @@ def test_dashboard_project_resolves_absolute_custom_workspace(tmp_path, monkeypa
     workspaces_root.mkdir()
     custom_root.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(workspaces_root),
     )
     project = SimpleNamespace(
@@ -301,11 +301,11 @@ def test_api_key_project_runtime_rejects_root_outside_workspaces(
     workspaces_root.mkdir()
     external_root.mkdir()
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(workspaces_root),
     )
     monkeypatch.setattr(
-        "astrbot.core.workspace.project_workspace_root",
+        "bot.core.workspace.project_workspace_root",
         lambda _project_id: external_root,
     )
     project = SimpleNamespace(
@@ -334,7 +334,7 @@ async def test_api_key_custom_workspace_cannot_expose_external_files(
     external_root.mkdir()
     (external_root / "secret.txt").write_text("secret", encoding="utf-8")
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path",
+        "bot.core.workspace.get_bot_workspaces_path",
         lambda: str(workspaces_root),
     )
     project = SimpleNamespace(
@@ -396,7 +396,7 @@ def workspace_service(tmp_path, monkeypatch):
     )
     db = SimpleNamespace(get_chatui_project_by_id=AsyncMock(return_value=project))
     monkeypatch.setattr(
-        "astrbot.dashboard.services.chatui_project_service.resolve_project_workspace_root",
+        "bot.dashboard.services.chatui_project_service.resolve_project_workspace_root",
         lambda _project, *, fallback_umo: tmp_path,
     )
     return ChatUIProjectService(db)
@@ -414,7 +414,7 @@ async def session_workspace_service(tmp_path, monkeypatch):
         Project service and the project whose session files are being browsed.
     """
     monkeypatch.setattr(
-        "astrbot.core.workspace.get_astrbot_workspaces_path", lambda: str(tmp_path)
+        "bot.core.workspace.get_bot_workspaces_path", lambda: str(tmp_path)
     )
     db = SQLiteDatabase(str(tmp_path / "sessions.db"))
     try:

@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from astrbot.core import sp
-from astrbot.core.config.default import CONFIG_METADATA_3, DEFAULT_CONFIG
-from astrbot.dashboard.services.chat_service import extract_web_search_refs
-from astrbot.dashboard.services.live_chat_service import LiveChatService
+from bot.core import sp
+from bot.core.config.default import CONFIG_METADATA_3, DEFAULT_CONFIG
+from bot.dashboard.services.chat_service import extract_web_search_refs
+from bot.dashboard.services.live_chat_service import LiveChatService
 
 
 @pytest.mark.parametrize(

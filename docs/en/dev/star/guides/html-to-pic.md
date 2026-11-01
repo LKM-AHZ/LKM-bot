@@ -10,7 +10,7 @@ LKMBot supports rendering text into images.
 
 ```python
 @filter.command("image")  # Register an /image command that accepts a text parameter.
-async def on_aiocqhttp(self, event: AstrMessageEvent, text: str):
+async def on_aiocqhttp(self, event: BotMessageEvent, text: str):
     url = await self.text_to_image(
         text
     )  # text_to_image() is a method of the Star class.
@@ -41,7 +41,7 @@ TMPL = """
 
 
 @filter.command("todo")
-async def custom_t2i_tmpl(self, event: AstrMessageEvent):
+async def custom_t2i_tmpl(self, event: BotMessageEvent):
     options = {}  # Optionally pass rendering options.
     url = await self.html_render(
         TMPL, {"items": ["Eat", "Sleep", "Play Genshin"]}, options=options

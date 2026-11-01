@@ -1,0 +1,479 @@
+import asyncio
+import json
+import re
+import time
+import uuid
+from collections import deque
+from typing import Any, cast
+from urllib.parse import urlparse
+
+import aiohttp
+
+from bot.api import logger
+from bot.api.event import MessageChain
+from bot.api.message_components import At, ButtonInteraction, Plain
+from bot.core import bot_config
+from bot.core.platform import (
+    BotMessage,
+    Group,
+    MessageMember,
+    MessageType,
+    Platform,
+    PlatformMetadata,
+)
+from bot.core.platform.bot_message_event import MessageSession
+from bot.core.platform.button_interaction import decode_button_callback
+from bot.core.utils.webhook_utils import log_webhook_info
+
+from ...register import register_platform_adapter
+from .client import MattermostClient
+from .mattermost_event import MattermostMessageEvent
+
+
+@register_platform_adapter(
+    "mattermost",
+    "Mattermost 平台适配器",
+    support_streaming_message=False,
+)
+class MattermostPlatformAdapter(Platform):
+    def __init__(
+        self,
+        platform_config: dict,
+        platform_settings: dict,
+        event_queue: asyncio.Queue,
+    ) -> None:
+        super().__init__(platform_config, event_queue)
+        self.settings = platform_settings
+        self.base_url = str(platform_config.get("mattermost_url", "")).rstrip("/")
+        self.bot_token = str(platform_config.get("mattermost_bot_token", "")).strip()
+        self.reconnect_delay = float(
+            platform_config.get("mattermost_reconnect_delay", 5.0)
+        )
+
+        if not self.base_url:
+            raise ValueError("Mattermost URL 是必需的")
+        if not self.bot_token:
+            raise ValueError("Mattermost bot token 是必需的")
+
+        callback_base = str(bot_config.get("callback_api_base", "")).strip()
+        webhook_uuid = str(self.config.get("webhook_uuid", "")).strip()
+        parsed_callback_base = urlparse(callback_base)
+        if (
+            self.config.get("unified_webhook_mode", False)
+            and parsed_callback_base.scheme in {"http", "https"}
+            and parsed_callback_base.netloc
+            and webhook_uuid
+        ):
+            action_callback_url = (
+                f"{callback_base.rstrip('/')}/api/platform/webhook/{webhook_uuid}"
+            )
+        else:
+            action_callback_url = ""
+
+        self.client = MattermostClient(
+            self.base_url,
+            self.bot_token,
+            action_callback_url=action_callback_url,
+        )
+        self.metadata = PlatformMetadata(
+            name="mattermost",
+            description="Mattermost 平台适配器",
+            id=cast(str, self.config.get("id", "mattermost")),
+            support_streaming_message=False,
+        )
+        self.bot_self_id = ""
+        self.bot_username = ""
+        self._mention_pattern: re.Pattern[str] | None = None
+        self._running = True
+        self._seen_post_ids: dict[str, float] = {}
+        self._seen_post_queue: deque[tuple[str, float]] = deque()
+        self._dedup_ttl = 300.0
+
+    async def send_by_session(
+        self,
+        session: MessageSession,
+        message_chain: MessageChain,
+    ) -> None:
+        await self.client.send_message_chain(session.session_id, message_chain)
+        await super().send_by_session(session, message_chain)
+
+    def meta(self) -> PlatformMetadata:
+        return self.metadata
+
+    async def run(self) -> None:
+        me = await self.client.get_me()
+        self.bot_self_id = str(me.get("id", ""))
+        self.bot_username = str(me.get("username", ""))
+        self._mention_pattern = self._build_mention_pattern(self.bot_username)
+        if not self.bot_self_id:
+            raise RuntimeError("Mattermost auth succeeded but returned empty user id")
+
+        logger.info(
+            "Mattermost auth test OK. Bot: @%s (%s)",
+            self.bot_username,
+            self.bot_self_id,
+        )
+        webhook_uuid = str(self.config.get("webhook_uuid", "")).strip()
+        if self.client.action_callback_url:
+            log_webhook_info(f"{self.meta().id}(Mattermost)", webhook_uuid)
+        else:
+            logger.warning(
+                "Mattermost callback buttons are disabled because callback_api_base "
+                "or webhook_uuid is not configured."
+            )
+
+        while self._running:
+            try:
+                await self._ws_connect_and_listen()
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:
+                if not self._running:
+                    break
+                logger.warning(
+                    "Mattermost websocket disconnected: %s. Retrying in %.1fs.",
+                    exc,
+                    self.reconnect_delay,
+                )
+                await asyncio.sleep(self.reconnect_delay)
+
+    async def _ws_connect_and_listen(self) -> None:
+        ws = await self.client.ws_connect()
+        try:
+            await ws.send_json(
+                {
+                    "seq": 1,
+                    "action": "authentication_challenge",
+                    "data": {"token": self.bot_token},
+                }
+            )
+
+            async for message in ws:
+                if message.type != aiohttp.WSMsgType.TEXT:
+                    if message.type in {
+                        aiohttp.WSMsgType.CLOSE,
+                        aiohttp.WSMsgType.CLOSED,
+                        aiohttp.WSMsgType.CLOSING,
+                        aiohttp.WSMsgType.ERROR,
+                    }:
+                        break
+                    continue
+
+                try:
+                    payload = json.loads(message.data)
+                except json.JSONDecodeError:
+                    logger.debug(
+                        "Mattermost websocket received non-JSON text frame: %r",
+                        message.data,
+                    )
+                    continue
+                if isinstance(payload, dict):
+                    await self._handle_ws_event(payload)
+        finally:
+            await ws.close()
+
+    async def _handle_ws_event(self, payload: dict[str, Any]) -> None:
+        if payload.get("event") != "posted":
+            return
+
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            return
+
+        raw_post = data.get("post")
+        if not isinstance(raw_post, str):
+            return
+
+        post = self.client.parse_websocket_post(raw_post)
+        if not post:
+            return
+
+        user_id = str(post.get("user_id", ""))
+        if not user_id or user_id == self.bot_self_id:
+            return
+        if post.get("type"):
+            return
+
+        post_id = str(post.get("id", ""))
+        if post_id and self._is_duplicate_post(post_id):
+            return
+
+        abm = await self.convert_message(post=post, data=data)
+        if abm is not None:
+            await self.handle_msg(abm)
+
+    def _is_duplicate_post(self, post_id: str) -> bool:
+        now = time.monotonic()
+        self._prune_seen_posts(now)
+        if post_id in self._seen_post_ids:
+            return True
+        self._seen_post_ids[post_id] = now
+        self._seen_post_queue.append((post_id, now))
+        return False
+
+    def _prune_seen_posts(self, now: float) -> None:
+        while self._seen_post_queue:
+            queued_post_id, seen_at = self._seen_post_queue[0]
+            if now - seen_at <= self._dedup_ttl:
+                break
+            self._seen_post_queue.popleft()
+            current_seen_at = self._seen_post_ids.get(queued_post_id)
+            if current_seen_at == seen_at:
+                del self._seen_post_ids[queued_post_id]
+
+    async def convert_message(
+        self,
+        *,
+        post: dict[str, Any],
+        data: dict[str, Any],
+    ) -> BotMessage | None:
+        channel_id = str(post.get("channel_id", "") or "")
+        if not channel_id:
+            return None
+
+        channel_type = str(data.get("channel_type", "O") or "O")
+        sender_id = str(post.get("user_id", "") or "")
+        sender_name = str(data.get("sender_name", "") or sender_id).lstrip("@")
+        message_text = str(post.get("message", "") or "")
+        file_ids = [
+            str(file_id)
+            for file_id in (post.get("file_ids") or [])
+            if str(file_id).strip()
+        ]
+
+        abm = BotMessage()
+        abm.self_id = self.bot_self_id
+        abm.sender = MessageMember(user_id=sender_id, nickname=sender_name)
+        abm.session_id = channel_id
+        abm.message_id = str(post.get("id") or channel_id)
+        abm.raw_message = post
+        abm.timestamp = self._parse_timestamp(post.get("create_at"))
+        abm.message = self._parse_text_components(message_text)
+
+        if channel_type == "D":
+            abm.type = MessageType.FRIEND_MESSAGE
+        else:
+            abm.type = MessageType.GROUP_MESSAGE
+            abm.group = Group(
+                group_id=channel_id,
+                group_name=(
+                    data.get("channel_display_name") or data.get("channel_name") or None
+                ),
+            )
+
+        if file_ids:
+            attachment_components, _ = await self.client.parse_post_attachments(
+                file_ids
+            )
+            abm.message.extend(attachment_components)
+
+        abm.message_str = self._build_message_str(
+            abm.message,
+            message_text,
+            self.bot_self_id,
+        )
+        return abm
+
+    async def convert_button_interaction(
+        self,
+        payload: dict[str, Any],
+    ) -> BotMessage | None:
+        """Convert a Mattermost post action into a portable button interaction.
+
+        Args:
+            payload: Mattermost PostActionIntegrationRequest payload.
+
+        Returns:
+            Converted message, or ``None`` for non-LKMBot button actions.
+        """
+        context = payload.get("context")
+        if not isinstance(context, dict):
+            return None
+        encoded_callback = context.get("bot_callback")
+        if not isinstance(encoded_callback, str):
+            return None
+        try:
+            action_id, callback_data = decode_button_callback(
+                encoded_callback, allow_expired=True
+            )
+        except ValueError:
+            return None
+
+        channel_id = str(payload.get("channel_id", "")).strip()
+        user_id = str(payload.get("user_id", "")).strip()
+        if not channel_id or not user_id:
+            return None
+
+        is_direct = False
+        try:
+            channel = await self.client.get_channel(channel_id)
+            is_direct = str(channel.get("type", "")) == "D"
+        except Exception as exc:
+            logger.debug(
+                "Mattermost could not resolve interaction channel %s: %s",
+                channel_id,
+                exc,
+            )
+
+        interaction_id = str(payload.get("trigger_id", "")).strip() or uuid.uuid4().hex
+        source_message_id = str(payload.get("post_id", "")).strip() or None
+
+        abm = BotMessage()
+        abm.self_id = self.bot_self_id
+        abm.sender = MessageMember(
+            user_id=user_id,
+            nickname=str(payload.get("user_name", "")).strip() or user_id,
+        )
+        abm.type = (
+            MessageType.FRIEND_MESSAGE if is_direct else MessageType.GROUP_MESSAGE
+        )
+        abm.group = None if is_direct else Group(group_id=channel_id)
+        abm.session_id = channel_id
+        abm.message_id = interaction_id
+        abm.timestamp = int(time.time())
+        abm.message_str = ""
+        abm.message = [
+            ButtonInteraction(
+                action_id=action_id,
+                data=callback_data,
+                interaction_id=interaction_id,
+                source_message_id=source_message_id,
+                callback_data=encoded_callback,
+            )
+        ]
+        abm.raw_message = payload
+        return abm
+
+    async def _dispatch_button_interaction(self, payload: dict[str, Any]) -> None:
+        """Resolve and dispatch an acknowledged Mattermost button callback.
+
+        Args:
+            payload: Mattermost PostActionIntegrationRequest payload.
+        """
+        message = await self.convert_button_interaction(payload)
+        if message is not None:
+            await self.handle_msg(message)
+
+    async def webhook_callback(self, request: Any) -> Any:
+        """Acknowledge a Mattermost post action and dispatch it asynchronously.
+
+        Args:
+            request: Dashboard webhook request wrapper.
+
+        Returns:
+            An empty JSON object accepted by Mattermost.
+        """
+        try:
+            payload = await request.get_json(silent=False)
+        except Exception as exc:
+            logger.warning("Mattermost received invalid action callback JSON: %s", exc)
+            return {"error": {"message": "Invalid callback payload."}}, 400
+        if not isinstance(payload, dict):
+            return {"error": {"message": "Invalid callback payload."}}, 400
+
+        task = asyncio.create_task(self._dispatch_button_interaction(payload))
+        task.add_done_callback(
+            lambda done: (
+                logger.error(
+                    "Mattermost button interaction failed: %s",
+                    done.exception(),
+                )
+                if not done.cancelled() and done.exception()
+                else None
+            )
+        )
+        return {}
+
+    def _parse_text_components(self, message_text: str) -> list[Any]:
+        if not message_text:
+            return []
+
+        components: list[Any] = []
+        if not self.bot_username:
+            return [Plain(message_text)]
+
+        mention_pattern = self._mention_pattern
+        if mention_pattern is None:
+            mention_pattern = self._build_mention_pattern(self.bot_username)
+            if mention_pattern is None:
+                return [Plain(message_text)]
+        last_end = 0
+
+        for match in mention_pattern.finditer(message_text):
+            if match.start() > last_end:
+                components.append(Plain(message_text[last_end : match.start()]))
+            components.append(At(qq=self.bot_self_id, name=self.bot_username))
+            last_end = match.end()
+
+        if last_end < len(message_text):
+            components.append(Plain(message_text[last_end:]))
+
+        if not components:
+            components.append(Plain(message_text))
+        return components
+
+    @staticmethod
+    def _build_mention_pattern(bot_username: str) -> re.Pattern[str] | None:
+        if not bot_username:
+            return None
+        return re.compile(
+            rf"(?<![A-Za-z0-9_.-])@{re.escape(bot_username)}(?![A-Za-z0-9_.-])",
+            flags=re.IGNORECASE,
+        )
+
+    @staticmethod
+    def _build_message_str(
+        components: list[Any],
+        fallback: str,
+        self_id: str,
+    ) -> str:
+        text_parts: list[str] = []
+        leading_self_mention_skipped = False
+
+        for component in components:
+            if isinstance(component, Plain):
+                text_parts.append(component.text)
+            elif isinstance(component, At):
+                is_self_mention = str(component.qq) == self_id
+                if not leading_self_mention_skipped and is_self_mention:
+                    leading_self_mention_skipped = True
+                    if not text_parts or not "".join(text_parts).strip():
+                        continue
+                mention_name = str(component.name or component.qq or "").strip()
+                if mention_name:
+                    text_parts.append(f"@{mention_name}")
+        message_str = "".join(text_parts).strip()
+        return message_str or fallback.strip()
+
+    @staticmethod
+    def _parse_timestamp(raw_value: Any) -> int:
+        if isinstance(raw_value, int):
+            return raw_value // 1000 if raw_value > 1_000_000_000_000 else raw_value
+        return int(time.time())
+
+    def create_event(self, message: BotMessage) -> MattermostMessageEvent:
+        """Creates a Mattermost message event.
+
+        Args:
+            message: LKMBot message object to wrap.
+
+        Returns:
+            Created Mattermost message event.
+        """
+        return MattermostMessageEvent(
+            message_str=message.message_str,
+            message_obj=message,
+            platform_meta=self.meta(),
+            session_id=message.session_id,
+            client=self.client,
+        )
+
+    async def handle_msg(self, message: BotMessage) -> None:
+        self.commit_event(self.create_event(message))
+
+    async def terminate(self) -> None:
+        self._running = False
+        await self.client.close()
+
+    def get_client(self) -> MattermostClient:
+        return self.client

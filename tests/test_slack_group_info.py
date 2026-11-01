@@ -3,20 +3,20 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.core.platform import (
+    BotMessage,
     Group,
     MessageMember,
     MessageType,
     PlatformMetadata,
 )
-from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
-from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
+from bot.core.platform.sources.slack.slack_adapter import SlackAdapter
+from bot.core.platform.sources.slack.slack_event import SlackMessageEvent
 from tests.fixtures.helpers import make_platform_config
 
 
-def _build_message() -> AstrBotMessage:
-    message = AstrBotMessage()
+def _build_message() -> BotMessage:
+    message = BotMessage()
     message.type = MessageType.GROUP_MESSAGE
     message.group = Group(group_id="C123", group_name="cached-channel")
     message.session_id = "C123"

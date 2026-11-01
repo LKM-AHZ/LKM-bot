@@ -2,7 +2,7 @@
 
 import pytest
 
-from astrbot.core.provider.sources.dashscope_embedding_source import (
+from bot.core.provider.sources.dashscope_embedding_source import (
     DashScopeEmbeddingProvider,
 )
 
@@ -33,7 +33,7 @@ def _make_provider(config: dict | None = None) -> DashScopeEmbeddingProvider:
 
 def _patch_sdk(monkeypatch, *, text=None, multimodal=None):
     """Patch TextEmbedding.call / MultiModalEmbedding.call in the source module."""
-    import astrbot.core.provider.sources.dashscope_embedding_source as mod
+    import bot.core.provider.sources.dashscope_embedding_source as mod
 
     if text is not None:
         monkeypatch.setattr(mod.TextEmbedding, "call", text)

@@ -6,30 +6,30 @@ import botpy.message
 import pytest
 from botpy.interaction import Interaction
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
     Plain,
 )
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.core.platform import (
+    BotMessage,
     MessageMember,
     MessageType,
     PlatformMetadata,
 )
-from astrbot.core.platform.button_interaction import encode_button_callback
-from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import (
+from bot.core.platform.button_interaction import encode_button_callback
+from bot.core.platform.sources.qqofficial.qqofficial_message_event import (
     QQOfficialMessageEvent,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
+from bot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
     QQOfficialPlatformAdapter,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
+from bot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
     botClient as QQOfficialBotClient,
 )
-from astrbot.core.platform.sources.qqofficial_webhook.qo_webhook_adapter import (
+from bot.core.platform.sources.qqofficial_webhook.qo_webhook_adapter import (
     botClient as QQOfficialWebhookBotClient,
 )
 
@@ -80,7 +80,7 @@ def _make_group_event() -> QQOfficialMessageEvent:
             "timestamp": "0",
         },
     )
-    abm = AstrBotMessage()
+    abm = BotMessage()
     abm.message_id = "msg-1"
     abm.session_id = "group-1"
     abm.set_group("group-1")
@@ -102,7 +102,7 @@ def _make_group_event() -> QQOfficialMessageEvent:
 
 
 def test_qq_expired_callback_does_not_fall_back_to_button_id(monkeypatch):
-    from astrbot.core.platform import button_interaction
+    from bot.core.platform import button_interaction
 
     clock = [100.0]
     monkeypatch.setattr(button_interaction.time, "time", lambda: clock[0])

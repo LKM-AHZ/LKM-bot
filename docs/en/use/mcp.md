@@ -32,18 +32,18 @@ Use the transport specified by the server. A regular webpage or REST API URL is 
 
 Install dependencies in **the environment where LKMBot runs**. For a source deployment, use the same account and environment as LKMBot. For Docker, install them inside the container; installing them only on the host is insufficient.
 
-The official Docker image built from the current repository includes Node.js and uv. Older or third-party images may differ. Check first, replacing `astrbot` with your container name:
+The official Docker image built from the current repository includes Node.js and uv. Older or third-party images may differ. Check first, replacing `bot` with your container name:
 
 ```bash
-docker exec astrbot uv --version
-docker exec astrbot node --version
-docker exec astrbot npx --version
+docker exec bot uv --version
+docker exec bot node --version
+docker exec bot npx --version
 ```
 
 If uv is missing, use `Install pip Package` on `Data & Logs → Logs` to install `uv`, or run:
 
 ```bash
-docker exec astrbot python -m pip install uv
+docker exec bot python -m pip install uv
 ```
 
 For Node.js in a source deployment, follow the [Node.js download instructions](https://nodejs.org/en/download). For Docker, update to an image with the required dependencies or add them to your Dockerfile. Packages manually installed inside a container may disappear when it is recreated.
@@ -127,7 +127,7 @@ After connecting, make sure the tools are available to the current conversation:
 
 The default persona uses all available capabilities. Create or edit a custom persona to restrict the selection. Selecting a globally disabled tool in a persona does not enable it again.
 
-**Connected means the service is reachable; it does not guarantee the model will call a tool.** Tool use depends on the model, persona, task, and tool descriptions. External tools such as MCP searches do not require Computer Use. Configure an [execution environment and permissions](/en/use/astrbot-agent-sandbox) only when LKMBot itself needs to execute code or access files.
+**Connected means the service is reachable; it does not guarantee the model will call a tool.** Tool use depends on the model, persona, task, and tool descriptions. External tools such as MCP searches do not require Computer Use. Configure an [execution environment and permissions](/en/use/bot-agent-sandbox) only when LKMBot itself needs to execute code or access files.
 
 ## Manage and Sync Servers
 

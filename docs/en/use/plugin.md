@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# LKMBot Plugins {#astrbot-star}
+# LKMBot Plugins {#bot-star}
 
 Plugins are extensions that add features to LKMBot. They can introduce chat commands, connect external services, or give AI agents new tools without requiring changes to LKMBot itself.
 
@@ -185,7 +185,7 @@ Use the plugin repository's Issues page or the author's stated support channel. 
 
 If existing plugins do not meet your needs, you can build one in Python. Basic Python and Git / GitHub experience is recommended. Follow this learning path:
 
-1. **Create a project**: follow the [Plugin Development Guide](/en/dev/star/plugin-new.html) and create a repository from the [helloworld template](https://github.com/Soulter/helloworld). An `astrbot_plugin_` name prefix is recommended.
+1. **Create a project**: follow the [Plugin Development Guide](/en/dev/star/plugin-new.html) and create a repository from the [helloworld template](https://github.com/Soulter/helloworld). An `bot_plugin_` name prefix is recommended.
 2. **Set up development**: place the repository in LKMBot's `data/plugins/<plugin-directory>/` and fill in `metadata.yaml` so LKMBot can identify its name, version, author, and other metadata.
 3. **Build a minimal feature**: start with a command that receives a message and replies. See [Message Event Listening](/en/dev/star/guides/listen-message-event.html) and [Sending Messages](/en/dev/star/guides/send-message.html), then test with your bot.
 4. **Add capabilities gradually**: introduce [AI tools and model interaction](/en/dev/star/guides/ai.html), [plugin configuration](/en/dev/star/guides/plugin-config.html), [data storage](/en/dev/star/guides/storage.html), or [plugin pages](/en/dev/star/guides/plugin-pages.html) as needed. Reload through the WebUI after code changes.

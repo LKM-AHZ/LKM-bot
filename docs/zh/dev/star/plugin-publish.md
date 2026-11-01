@@ -11,7 +11,7 @@ LKMBot 使用 GitHub 托管插件，因此你需要先将插件代码推送到�
 以下是一个完整的插件元数据示例（`metadata.yaml`），系统会自动解析这些信息：
 
 ```yaml
-name: astrbot_plugin_example                 # 插件标识符，英文，唯一
+name: bot_plugin_example                 # 插件标识符，英文，唯一
 display_name: 示例插件名称                    # 插件展示名称
 # short_desc: 一句话介绍你的插件功能           # （可选）紧凑 UI 使用的短描述
 desc: 详细描述插件的功能、特性、使用方法等信息。 # 详细描述插件的信息

@@ -7,12 +7,12 @@ from unittest.mock import AsyncMock
 import pytest
 from PIL import Image as PILImage
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import Image
-from astrbot.core.platform.sources.mattermost.client import MattermostClient
-from astrbot.core.platform.sources.satori.satori_event import SatoriPlatformEvent
-from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
-from astrbot.core.platform.sources.webchat import webchat_event
+from bot.api.event import MessageChain
+from bot.api.message_components import Image
+from bot.core.platform.sources.mattermost.client import MattermostClient
+from bot.core.platform.sources.satori.satori_event import SatoriPlatformEvent
+from bot.core.platform.sources.slack.slack_event import SlackMessageEvent
+from bot.core.platform.sources.webchat import webchat_event
 
 
 @pytest.mark.asyncio

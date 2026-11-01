@@ -91,13 +91,13 @@ dev = [
 ]
 
 [project.scripts]
-lkmbot = "astrbot.cli.__main__:cli"
+lkmbot = "bot.cli.__main__:cli"
 
 [project.urls]
 Repository = "https://github.com/Alma1314/LKM-bot"
 
 [tool.ruff]
-exclude = ["astrbot/core/utils/t2i/local_strategy.py", "tests"]
+exclude = ["bot/core/utils/t2i/local_strategy.py", "tests"]
 line-length = 88
 target-version = "py312"
 
@@ -119,13 +119,13 @@ ignore = [
   "E501",
 ]
 
-# 豁免只给上游 astrbot/ 目录，不再全局关闭：
-# - ASYNC230/ASYNC240（阻塞式文件 I/O）：待上游迁移，本仓不改上游代码（实测全仓命中都在 astrbot/）；
+# 豁免只给上游 bot/ 目录，不再全局关闭：
+# - ASYNC230/ASYNC240（阻塞式文件 I/O）：待上游迁移，本仓不改上游代码（实测全仓命中都在 bot/）；
 # - UP*/ASYNC109：target-version 已随运行期门槛提到 py312，而上游树仍是 py310 写法（PEP695 泛型、
 #   datetime.UTC 等），全量迁移要改上游文件。
 # 自研文件（main.py / scripts/ 等）不受豁免，新代码仍按 3.12 口径被拦截。
 [tool.ruff.lint.per-file-ignores]
-"astrbot/**" = [
+"bot/**" = [
   "ASYNC109",
   "ASYNC230",
   "ASYNC240",
@@ -144,7 +144,7 @@ typeCheckingMode = "basic"
 pythonVersion = "3.12"
 reportMissingTypeStubs = false
 reportMissingImports = false
-include = ["astrbot"]
+include = ["bot"]
 exclude = ["dashboard", "node_modules", "dist", "data", "tests"]
 
 # ty（CI 硬门禁：`uv run ty check .` 必须 0 诊断且退出码 0）
@@ -161,13 +161,13 @@ exclude = ["tests", "dashboard", "node_modules", "dist", "data"]
 
 [tool.ty.rules]
 # 放宽项一律下移到 [[tool.ty.overrides]] 按目录收窄，不放全局：全局关掉等于以后新代码里的
-# 同类问题也永远不报（本仓的 `# type: ignore` 全在 astrbot/ 这棵上游树里）。
+# 同类问题也永远不报（本仓的 `# type: ignore` 全在 bot/ 这棵上游树里）。
 
 # 上游树的 `# type: ignore` 是给 pyright 写的（本仓库 pyright 仍是配置中的检查器）。
 # ty 判定"未使用"并不代表 pyright 也不再需要 → 保留注释本身，只在 ty 侧对这批文件关掉该提示，
 # 否则每条都会让 `ty check` 以非零码退出。
 [[tool.ty.overrides]]
-include = ["astrbot/**"]
+include = ["bot/**"]
 
 [tool.ty.overrides.rules]
 unused-type-ignore-comment = "ignore"
@@ -179,13 +179,13 @@ unused-type-ignore-comment = "ignore"
 # file (or its stub) becomes well-typed.
 [[tool.ty.overrides]]
 include = [
-    "astrbot/core/computer/windows_job.py",
-    "astrbot/core/platform/sources/discord/discord_platform_adapter.py",
-    "astrbot/core/platform/sources/lark/lark_event.py",
-    "astrbot/core/platform/sources/lark/lark_group_info.py",
-    "astrbot/core/platform/sources/line/line_adapter.py",
-    "astrbot/core/platform/sources/qqofficial/qqofficial_group_info.py",
-    "astrbot/core/platform/sources/telegram/tg_adapter.py",
+    "bot/core/computer/windows_job.py",
+    "bot/core/platform/sources/discord/discord_platform_adapter.py",
+    "bot/core/platform/sources/lark/lark_event.py",
+    "bot/core/platform/sources/lark/lark_group_info.py",
+    "bot/core/platform/sources/line/line_adapter.py",
+    "bot/core/platform/sources/qqofficial/qqofficial_group_info.py",
+    "bot/core/platform/sources/telegram/tg_adapter.py",
 ]
 
 [tool.ty.overrides.rules]
@@ -193,13 +193,13 @@ unresolved-attribute = "ignore"
 
 [[tool.ty.overrides]]
 include = [
-    "astrbot/core/platform/sources/kook/kook_adapter.py",
-    "astrbot/core/platform/sources/kook/kook_event.py",
-    "astrbot/core/platform/sources/lark/lark_adapter.py",
-    "astrbot/core/platform/sources/qqofficial/qqofficial_group_info.py",
-    "astrbot/core/platform/sources/qqofficial/qqofficial_message_event.py",
-    "astrbot/core/pipeline/waking_check/umo_auto_name.py",
-    "astrbot/dashboard/services/bot_cleanup_service.py",
+    "bot/core/platform/sources/kook/kook_adapter.py",
+    "bot/core/platform/sources/kook/kook_event.py",
+    "bot/core/platform/sources/lark/lark_adapter.py",
+    "bot/core/platform/sources/qqofficial/qqofficial_group_info.py",
+    "bot/core/platform/sources/qqofficial/qqofficial_message_event.py",
+    "bot/core/pipeline/waking_check/umo_auto_name.py",
+    "bot/dashboard/services/bot_cleanup_service.py",
 ]
 
 [tool.ty.overrides.rules]
@@ -207,9 +207,9 @@ invalid-argument-type = "ignore"
 
 [[tool.ty.overrides]]
 include = [
-    "astrbot/core/platform/sources/line/line_adapter.py",
-    "astrbot/core/pipeline/waking_check/umo_auto_name.py",
-    "astrbot/core/platform/sources/lark/lark_group_info.py",
+    "bot/core/platform/sources/line/line_adapter.py",
+    "bot/core/pipeline/waking_check/umo_auto_name.py",
+    "bot/core/platform/sources/lark/lark_group_info.py",
 ]
 
 [tool.ty.overrides.rules]
@@ -219,12 +219,12 @@ no-matching-overload = "ignore"
 [tool.hatch.metadata]
 allow-direct-references = true
 
-# 显式声明要打包的目录：项目名（LKMBot）与源码目录（astrbot/）在改名后不再一致，
+# 显式声明要打包的目录：项目名（LKMBot）与源码目录（bot/）在改名后不再一致，
 # hatchling 的默认启发式（按项目名找同名目录）会找不到包 → 构建 wheel 直接失败：
 #   ValueError: Unable to determine which files to ship ...
 # 后果是 `uv sync`（含 .github/workflows/code-format.yml）不可用。
 [tool.hatch.build.targets.wheel]
-packages = ["astrbot"]
+packages = ["bot"]
 
 [build-system]
 # 下界是 PEP 639（license/license-files 的 SPDX 形式）所需的版本；不设下界时

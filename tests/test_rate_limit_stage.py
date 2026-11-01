@@ -4,7 +4,7 @@ from datetime import timedelta
 
 import pytest
 
-from astrbot.core.pipeline.rate_limit_check import stage as rate_limit_stage
+from bot.core.pipeline.rate_limit_check import stage as rate_limit_stage
 
 
 class FakeEvent:

@@ -1,34 +1,33 @@
-> **LKMBot** 是本仓库维护的 LKM 品牌发行版，基于 AstrBot 开发。为兼容现有插件和历史数据，
-> 内部 Python 包名 `astrbot`、旧环境变量及 API 字段名暂时保留；面向用户的产品名和主命令均为
-> `LKMBot` / `lkmbot`。
+> **LKMBot** 是本仓库维护的 LKM 品牌发行版，基于上游 AstrBot 开发。内部 Python 包名为
+> `bot`，面向用户的产品名和主命令均为 `LKMBot` / `lkmbot`。
 
 ## 代码结构与开发入口
 
-目录与入口核对日期：2026-10-31。开发环境需要 Python 3.12+；发行名为 LKMBot，内部
-Python 包继续使用 `astrbot`，以兼容现有插件和数据。
+目录与入口核对日期：2026-11-01。开发环境需要 Python 3.12+；发行名为 LKMBot，内部
+Python 包名为 `bot`。
 
 | 路径 | 职责 |
 |---|---|
 | `main.py`、`runtime_bootstrap.py` | 启动参数、运行路径初始化与源码启动入口 |
-| `astrbot/core/initial_loader.py`、`astrbot/core/core_lifecycle.py` | Bot Core 与 Dashboard 的启动和关闭 |
-| `astrbot/core/pipeline/`、`astrbot/core/platform/`、`astrbot/core/provider/`、`astrbot/core/star/` | 消息阶段、平台适配、模型与插件生命周期 |
-| `astrbot/api/`、`astrbot/builtin_stars/` | 插件公共 API 与内置插件 |
-| `astrbot/dashboard/api/`、`astrbot/dashboard/services/`、`astrbot/dashboard/server.py` | FastAPI 路由、服务逻辑、Hypercorn 与静态资源 |
-| `astrbot/lkm/` | 社区 SSO 与面板子路径集成 |
+| `bot/core/initial_loader.py`、`bot/core/core_lifecycle.py` | Bot Core 与 Dashboard 的启动和关闭 |
+| `bot/core/pipeline/`、`bot/core/platform/`、`bot/core/provider/`、`bot/core/star/` | 消息阶段、平台适配、模型与插件生命周期 |
+| `bot/api/`、`bot/builtin_stars/` | 插件公共 API 与内置插件 |
+| `bot/dashboard/api/`、`bot/dashboard/services/`、`bot/dashboard/server.py` | FastAPI 路由、服务逻辑、Hypercorn 与静态资源 |
+| `bot/lkm/` | 社区 SSO 与面板子路径集成 |
 | `dashboard/src/` | Vue WebUI，开发命令见 [Dashboard 指南](./dashboard/README.md) |
 | `openspec/`、`tests/`、`docs/` | API 规格、回归测试与中英文使用/开发文档 |
 | `scripts/` | 构建、发布和 API 文档工具 |
 
 先在仓库根目录执行 `uv sync`、`uv run main.py`；另开终端进入 `dashboard/` 执行
-`pnpm install`、`pnpm dev`。社区集成优先放在 `astrbot/lkm/`，保留现有 `astrbot` 命名空间。
-`dashboard/src/api/generated/` 和打包后的 `astrbot/dashboard/dist/` 不直接编辑；API 变更后
+`pnpm install`、`pnpm dev`。社区集成优先放在 `bot/lkm/`，沿用 `bot` 命名空间。
+`dashboard/src/api/generated/` 和打包后的 `bot/dashboard/dist/` 不直接编辑；API 变更后
 在 `dashboard/` 运行 `pnpm generate:api`，同步相应测试和文档。
 
 Dashboard 配置服务按职责归属文件：`config_profile_service.py` 管理配置档和系统设置，
 `config_routing_service.py` 管理会话配置路由，`config_display_service.py` 构造编辑器元数据，
 `config_file_service.py` 处理配置附件，`bot_config_service.py` / `provider_config_service.py`
 管理平台与模型源。共享校验和保存逻辑保留在 `config_service.py`；
-`astrbot/dashboard/api/app.py` 统一装配，各路由直接导入所需服务。
+`bot/dashboard/api/app.py` 统一装配，各路由直接导入所需服务。
 
 嵌入 LKM-Website 时，完整栈部署以父仓库的 [部署手册](../docs/DEPLOYMENT.md) 为准；
 单独克隆时可查看 [LKM-Website 文档](https://github.com/LKM-AHZ/LKM-Website/tree/master/docs)。
@@ -51,7 +50,7 @@ Dashboard 配置服务按职责归属文件：`config_profile_service.py` 管理
 
 > [!NOTE]
 > 需要安装 [uv](https://docs.astral.sh/uv/)。
-> 对于 macOS 用户：由于 macOS 安全检查，首次运行 `astrbot` 命令可能需要较长时间（约 10-20 秒）。
+> 对于 macOS 用户：由于 macOS 安全检查，首次运行 `lkmbot` 命令可能需要较长时间（约 10-20 秒）。
 
 对于想快速体验 LKMBot、且熟悉命令行并能够自行安装 `uv` 环境的用户，我们推荐使用 `uv` 一键部署方式 ⚡️。
 

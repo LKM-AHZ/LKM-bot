@@ -4,12 +4,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.api.message_components import Json, Plain
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.builtin_stars.astrbot.group_chat_context import GroupChatContext
-from astrbot.builtin_stars.astrbot.main import Main
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.message_type import MessageType
+from bot.api.message_components import Json, Plain
+from bot.core.provider.entities import LLMResponse
+from bot.builtin_stars.bot.group_chat_context import GroupChatContext
+from bot.builtin_stars.bot.main import Main
+from bot.core.message.message_event_result import MessageChain
+from bot.core.platform.message_type import MessageType
 
 
 def make_main_with_conversation_manager(conv_mgr):
@@ -193,7 +193,7 @@ async def test_on_message_skips_recording_when_command_handler_matched():
     )
     event = make_event(
         handlers_parsed_params={
-            "astrbot.builtin_stars.builtin_commands.main_reset": {}
+            "bot.builtin_stars.builtin_commands.main_reset": {}
         },
     )
 

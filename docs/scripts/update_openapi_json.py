@@ -129,13 +129,13 @@ def filter_public_openapi(spec: dict[str, Any]) -> dict[str, Any]:
             if (
                 method not in HTTP_METHODS
                 or not isinstance(operation, dict)
-                or operation.get("x-astrbot-scope") not in PUBLIC_OPEN_API_SCOPES
+                or operation.get("x-bot-scope") not in PUBLIC_OPEN_API_SCOPES
             ):
                 continue
             operation = dict(operation)
-            required_scope = operation["x-astrbot-scope"]
+            required_scope = operation["x-bot-scope"]
             scope_description = f"**Required scope:** `{required_scope}`"
-            sensitive_scopes = operation.get("x-astrbot-sensitive-scopes", [])
+            sensitive_scopes = operation.get("x-bot-sensitive-scopes", [])
             if sensitive_scopes:
                 formatted_scopes = ", ".join(f"`{scope}`" for scope in sensitive_scopes)
                 scope_description += (
@@ -211,7 +211,7 @@ def render_scope_reference(spec: dict[str, Any], *, language: str) -> str:
         title = "API Scope 与接口对照"
         intro = (
             "本页由 `openspec/openapi-v1.yaml` 自动生成。"
-            "每个接口的基础权限来自 `x-astrbot-scope`；敏感操作还会列出需要显式授予的子权限。"
+            "每个接口的基础权限来自 `x-bot-scope`；敏感操作还会列出需要显式授予的子权限。"
         )
         method_header = "方法"
         endpoint_header = "接口"
@@ -224,7 +224,7 @@ def render_scope_reference(spec: dict[str, Any], *, language: str) -> str:
         title = "API Scope–Endpoint Reference"
         intro = (
             "This page is generated from `openspec/openapi-v1.yaml`. "
-            "Each endpoint's base permission comes from `x-astrbot-scope`; "
+            "Each endpoint's base permission comes from `x-bot-scope`; "
             "sensitive operations also list the sub-scope that must be granted explicitly."
         )
         method_header = "Method"
@@ -238,13 +238,13 @@ def render_scope_reference(spec: dict[str, Any], *, language: str) -> str:
         raise ValueError(f"Unsupported documentation language: {language}")
 
     operations = []
-    scope_definitions = spec.get("x-astrbot-scope-definitions", {})
+    scope_definitions = spec.get("x-bot-scope-definitions", {})
     for path, methods in spec.get("paths", {}).items():
         for method in HTTP_METHODS:
             operation = methods.get(method)
             if not isinstance(operation, dict):
                 continue
-            scope = operation.get("x-astrbot-scope")
+            scope = operation.get("x-bot-scope")
             if scope not in PUBLIC_OPEN_API_SCOPES:
                 continue
             operations.append((scope, path, method, operation))
@@ -302,7 +302,7 @@ def render_scope_reference(spec: dict[str, Any], *, language: str) -> str:
             ]
         )
         for _, path, method, operation in scoped_operations:
-            sensitive_scopes = operation.get("x-astrbot-sensitive-scopes", [])
+            sensitive_scopes = operation.get("x-bot-sensitive-scopes", [])
             sensitive_display = (
                 ", ".join(f"`{value}`" for value in sensitive_scopes)
                 if sensitive_scopes

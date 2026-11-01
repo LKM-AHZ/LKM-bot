@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image as PILImage
 
-from astrbot.dashboard.services.chat_service import (
+from bot.dashboard.services.chat_service import (
     ChatService,
     unique_attachment_filename,
 )

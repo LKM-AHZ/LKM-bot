@@ -1,4 +1,4 @@
-from astrbot.core.provider.sources.openai_embedding_source import (
+from bot.core.provider.sources.openai_embedding_source import (
     OpenAIEmbeddingProvider,
     _normalize_api_base,
 )

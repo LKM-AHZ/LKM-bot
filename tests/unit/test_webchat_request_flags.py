@@ -1,4 +1,4 @@
-from astrbot.core.platform.sources.webchat.request_flags import (
+from bot.core.platform.sources.webchat.request_flags import (
     resolve_webchat_request_flags,
 )
 

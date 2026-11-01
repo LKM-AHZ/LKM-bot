@@ -6,15 +6,15 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from astrbot.dashboard.api.chat import resume_chat_run
-from astrbot.dashboard.services import chat_service
-from astrbot.dashboard.services.chat_service import ChatService, ChatServiceError
+from bot.dashboard.api.chat import resume_chat_run
+from bot.dashboard.services import chat_service
+from bot.dashboard.services.chat_service import ChatService, ChatServiceError
 
 
 @pytest.fixture
 def chat_service_instance(monkeypatch, tmp_path):
     """Create a ChatService with isolated persistence dependencies."""
-    monkeypatch.setattr(chat_service, "get_astrbot_data_path", lambda: str(tmp_path))
+    monkeypatch.setattr(chat_service, "get_bot_data_path", lambda: str(tmp_path))
     platform_history_mgr = Mock()
     platform_history_mgr.insert = AsyncMock(
         return_value=SimpleNamespace(

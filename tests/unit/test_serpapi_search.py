@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 import aiohttp
 import pytest
 
-from astrbot.core.tools import registry
-from astrbot.core.tools import web_search_tools as tools
+from bot.core.tools import registry
+from bot.core.tools import web_search_tools as tools
 
 
 def _response(status=200, data=None, reason=""):
@@ -346,7 +346,7 @@ async def test_serpapi_images_light_maps_images_and_sources(
             "images_results": [
                 {"title": "Missing image"},
                 {
-                    "title": "AstrBot 标志",
+                    "title": "LKMBot 标志",
                     "source": "Example",
                     "link": "https://example.com/article",
                     "original": "https://example.com/image.png",
@@ -369,20 +369,20 @@ async def test_serpapi_images_light_maps_images_and_sources(
 
     result = json.loads(
         await tools.SerpApiImageSearchTool().call(
-            serpapi_context, query="AstrBot logo", country="us", search_lang="en"
+            serpapi_context, query="LKMBot logo", country="us", search_lang="en"
         )
     )["results"]
 
     assert serpapi_http.session.get.call_args.kwargs["params"] == {
         "engine": "google_images_light",
         "api_key": "test-key",
-        "q": "AstrBot logo",
+        "q": "LKMBot logo",
         "gl": "us",
         "hl": "en",
     }
     assert len(result) == 3
     assert result[0] == {
-        "title": "AstrBot 标志",
+        "title": "LKMBot 标志",
         "url": "https://example.com/article",
         "snippet": "Example",
         "image_url": "https://example.com/image.png",
@@ -417,7 +417,7 @@ async def test_serpapi_images_light_limits_results(
 
     result = json.loads(
         await tools.SerpApiImageSearchTool().call(
-            serpapi_context, query="AstrBot", **kwargs
+            serpapi_context, query="LKMBot", **kwargs
         )
     )
 
@@ -425,7 +425,7 @@ async def test_serpapi_images_light_limits_results(
     assert serpapi_http.session.get.call_args.kwargs["params"] == {
         "engine": "google_images_light",
         "api_key": "test-key",
-        "q": "AstrBot",
+        "q": "LKMBot",
     }
 
 
@@ -440,7 +440,7 @@ async def test_serpapi_images_light_handles_empty_success(
         }
     )
 
-    result = await tools.SerpApiImageSearchTool().call(serpapi_context, query="AstrBot")
+    result = await tools.SerpApiImageSearchTool().call(serpapi_context, query="LKMBot")
 
     assert json.loads(result) == {"results": []}
 
@@ -450,7 +450,7 @@ async def test_serpapi_images_light_surfaces_api_errors(serpapi_http, serpapi_co
     serpapi_http.session.get.return_value = _response(503, reason="Search failed")
 
     with pytest.raises(RuntimeError, match="status: 503"):
-        await tools.SerpApiImageSearchTool().call(serpapi_context, query="AstrBot")
+        await tools.SerpApiImageSearchTool().call(serpapi_context, query="LKMBot")
 
 
 @pytest.mark.asyncio
@@ -461,7 +461,7 @@ async def test_serpapi_tool_maps_query_results_and_citations(serpapi_http, monke
             "organic_results": [
                 {"title": "Missing link"},
                 {
-                    "title": "AstrBot 搜索",
+                    "title": "LKMBot 搜索",
                     "link": "https://example.com",
                     "snippet": "Search result",
                     "favicon": "https://example.com/favicon.ico",
@@ -484,7 +484,7 @@ async def test_serpapi_tool_maps_query_results_and_citations(serpapi_http, monke
     result = json.loads(
         await tools.SerpApiWebSearchTool().call(
             context,
-            query="AstrBot 搜索",
+            query="LKMBot 搜索",
             country="cn",
             search_lang="zh-cn",
             location="Shanghai, China",
@@ -498,14 +498,14 @@ async def test_serpapi_tool_maps_query_results_and_citations(serpapi_http, monke
     assert call.kwargs["params"] == {
         "engine": "google",
         "api_key": "test-key",
-        "q": "AstrBot 搜索",
+        "q": "LKMBot 搜索",
         "gl": "cn",
         "hl": "zh-cn",
         "location": "Shanghai, China",
     }
     assert call.kwargs["timeout"].total == 60
     assert result[0] == {
-        "title": "AstrBot 搜索",
+        "title": "LKMBot 搜索",
         "url": "https://example.com",
         "snippet": "Search result",
         "index": result[0]["index"],
@@ -532,13 +532,13 @@ async def test_serpapi_tool_limits_first_page_results(serpapi_http, limit, expec
     )
     kwargs = {} if limit is None else {"max_results": limit}
 
-    result = await tools.SerpApiWebSearchTool().call(context, query="AstrBot", **kwargs)
+    result = await tools.SerpApiWebSearchTool().call(context, query="LKMBot", **kwargs)
 
     assert len(json.loads(result)["results"]) == expected
     assert serpapi_http.session.get.call_args.kwargs["params"] == {
         "engine": "google",
         "api_key": "test-key",
-        "q": "AstrBot",
+        "q": "LKMBot",
     }
 
 
@@ -552,7 +552,7 @@ async def test_serpapi_news_maps_articles_and_metadata(
         data={
             "news_results": [
                 {
-                    "title": "AstrBot adds a news search tool",
+                    "title": "LKMBot adds a news search tool",
                     "link": "https://example.com/astrbot-news",
                     "snippet": "The project added Google News support.",
                     "source": {
@@ -571,7 +571,7 @@ async def test_serpapi_news_maps_articles_and_metadata(
     result = json.loads(
         await tools.SerpApiNewsSearchTool().call(
             serpapi_context,
-            query="AstrBot",
+            query="LKMBot",
             country="us",
             search_lang="en",
         )
@@ -580,13 +580,13 @@ async def test_serpapi_news_maps_articles_and_metadata(
     assert serpapi_http.session.get.call_args.kwargs["params"] == {
         "engine": "google_news",
         "api_key": "test-key",
-        "q": "AstrBot",
+        "q": "LKMBot",
         "gl": "us",
         "hl": "en",
     }
     assert result == [
         {
-            "title": "AstrBot adds a news search tool",
+            "title": "LKMBot adds a news search tool",
             "url": "https://example.com/astrbot-news",
             "snippet": "The project added Google News support.",
             "source": "Example News",
@@ -632,7 +632,7 @@ async def test_serpapi_news_flattens_groups_deduplicates_and_limits(
 
     result = json.loads(
         await tools.SerpApiNewsSearchTool().call(
-            serpapi_context, query="AstrBot", max_results=2
+            serpapi_context, query="LKMBot", max_results=2
         )
     )["results"]
 
@@ -672,7 +672,7 @@ async def test_serpapi_rotates_and_retries_key_errors(serpapi_http, status, engi
         _response(),
     ]
     settings = {"websearch_serpapi_key": ["first-key", "second-key"]}
-    payload = {"q": "AstrBot"}
+    payload = {"q": "LKMBot"}
 
     assert await tools._serpapi_request(settings, payload, engine=engine) == {}
     assert await tools._serpapi_request(settings, payload, engine=engine) == {}
@@ -685,7 +685,7 @@ async def test_serpapi_rotates_and_retries_key_errors(serpapi_http, status, engi
         call.kwargs["params"]["engine"] == engine
         for call in serpapi_http.session.get.call_args_list
     )
-    assert payload == {"q": "AstrBot"}
+    assert payload == {"q": "LKMBot"}
 
 
 @pytest.mark.asyncio
@@ -697,7 +697,7 @@ async def test_serpapi_exhausts_keys_and_redacts_error(serpapi_http):
 
     with pytest.raises(RuntimeError, match="Quota for \\[redacted\\], status: 429"):
         await tools._serpapi_search(
-            {"websearch_serpapi_key": ["first-key", "second-key"]}, {"q": "AstrBot"}
+            {"websearch_serpapi_key": ["first-key", "second-key"]}, {"q": "LKMBot"}
         )
 
     assert serpapi_http.session.get.call_count == 2
@@ -710,7 +710,7 @@ async def test_serpapi_does_not_retry_other_http_errors(serpapi_http, status):
 
     with pytest.raises(RuntimeError, match=f"status: {status}"):
         await tools._serpapi_search(
-            {"websearch_serpapi_key": ["first-key", "second-key"]}, {"q": "AstrBot"}
+            {"websearch_serpapi_key": ["first-key", "second-key"]}, {"q": "LKMBot"}
         )
 
     assert serpapi_http.session.get.call_count == 1
@@ -725,7 +725,7 @@ async def test_serpapi_surfaces_json_errors(serpapi_http, metadata):
 
     with pytest.raises(RuntimeError, match="Failed for \\[redacted\\]"):
         await tools._serpapi_search(
-            {"websearch_serpapi_key": ["test-key"]}, {"q": "AstrBot"}
+            {"websearch_serpapi_key": ["test-key"]}, {"q": "LKMBot"}
         )
 
 
@@ -741,7 +741,7 @@ async def test_serpapi_success_with_empty_results_is_not_an_error(serpapi_http):
 
     assert (
         await tools._serpapi_search(
-            {"websearch_serpapi_key": ["test-key"]}, {"q": "AstrBot"}
+            {"websearch_serpapi_key": ["test-key"]}, {"q": "LKMBot"}
         )
         == []
     )
@@ -758,7 +758,7 @@ async def test_serpapi_transport_errors_do_not_expose_credentials(
 
     with pytest.raises(RuntimeError, match="request failed or timed out") as error:
         await tools._serpapi_search(
-            {"websearch_serpapi_key": ["secret-key"]}, {"q": "AstrBot"}
+            {"websearch_serpapi_key": ["secret-key"]}, {"q": "LKMBot"}
         )
 
     assert "secret-key" not in str(error.value)
@@ -778,7 +778,7 @@ async def test_serpapi_transport_errors_do_not_expose_credentials(
 )
 async def test_serpapi_requires_credentials_before_request(serpapi_http, tool_class):
     with pytest.raises(ValueError, match="SerpApi API key is not configured"):
-        await tools._serpapi_search({}, {"q": "AstrBot"})
+        await tools._serpapi_search({}, {"q": "LKMBot"})
 
     config = {"provider_settings": {}}
     context = SimpleNamespace(
@@ -787,7 +787,7 @@ async def test_serpapi_requires_credentials_before_request(serpapi_http, tool_cl
             event=SimpleNamespace(unified_msg_origin="test:private:session"),
         )
     )
-    result = await tool_class().call(context, query="AstrBot")
+    result = await tool_class().call(context, query="LKMBot")
 
     assert "SerpApi API key is not configured" in result
     serpapi_http.factory.assert_not_called()

@@ -2,12 +2,12 @@ import sqlite3
 
 import pytest
 
-from astrbot.core.message.components import (
+from bot.core.message.components import (
     ActionRow,
     Button,
 )
-from astrbot.core.platform import button_interaction
-from astrbot.core.platform.button_interaction import (
+from bot.core.platform import button_interaction
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
@@ -132,7 +132,7 @@ def test_callback_action_rejects_non_json_data(data):
 def test_callback_codec_uses_compact_opaque_token():
     payload = encode_button_callback("approve")
 
-    assert payload.startswith("astrbot:")
+    assert payload.startswith("bot:")
     assert len(payload.encode("utf-8")) <= 64
     assert "approve" not in payload
     assert decode_button_callback(payload) == ("approve", None)
@@ -161,7 +161,7 @@ def test_callback_registry_survives_process_restart(tmp_path, monkeypatch):
     )
 
 
-@pytest.mark.parametrize("payload", ["approve", "astrbot:{}", "astrbot:not-json"])
+@pytest.mark.parametrize("payload", ["approve", "bot:{}", "bot:not-json"])
 def test_callback_codec_rejects_invalid_payload(payload):
     with pytest.raises(ValueError):
         decode_button_callback(payload)

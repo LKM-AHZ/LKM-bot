@@ -13,17 +13,17 @@ FENCED_BLOCK_RE = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 INLINE_CODE_RE = re.compile(r"(`[^`]*`)")
-MANIFEST_NAME = ".astrbot-wiki-sync-manifest"
+MANIFEST_NAME = ".bot-wiki-sync-manifest"
 SOURCE_ALIASES = {
     "zh/config/providers/start.md": "zh/providers/start.md",
     "en/config/providers/start.md": "en/providers/start.md",
 }
 LANG_CONFIG: dict[str, dict[str, Any]] = {
     "zh": {
-        "index_title": "# AstrBot 中文文档",
+        "index_title": "# LKMBot 中文文档",
         "index_intro": "该页面由 `AstrBot-docs` 自动同步到 GitHub Wiki。",
         "index_links": [
-            ("关于 LKMBot", "zh-what-is-astrbot"),
+            ("关于 LKMBot", "zh-what-is-bot"),
             ("社区", "zh-community"),
             ("常见问题", "zh-faq"),
         ],
@@ -41,7 +41,7 @@ LANG_CONFIG: dict[str, dict[str, Any]] = {
         "index_title": "# LKMBot English Documentation",
         "index_intro": "This page is synchronized automatically from `AstrBot-docs` to the GitHub wiki.",
         "index_links": [
-            ("What is LKMBot", "en-what-is-astrbot"),
+            ("What is LKMBot", "en-what-is-bot"),
             ("Community", "en-community"),
             ("FAQ", "en-faq"),
         ],

@@ -1,4 +1,4 @@
-from astrbot.core.desktop_runtime import (
+from bot.core.desktop_runtime import (
     DESKTOP_SESSION_SECRET_ENV,
     get_desktop_session_secret,
     is_desktop_session_auth_enabled,
@@ -8,7 +8,7 @@ from astrbot.core.desktop_runtime import (
 
 
 def test_desktop_session_auth_requires_managed_backend(monkeypatch):
-    monkeypatch.delenv("ASTRBOT_DESKTOP_MANAGED", raising=False)
+    monkeypatch.delenv("BOT_DESKTOP_MANAGED", raising=False)
     monkeypatch.setenv(DESKTOP_SESSION_SECRET_ENV, "a" * 64)
 
     assert get_desktop_session_secret() is None
@@ -16,7 +16,7 @@ def test_desktop_session_auth_requires_managed_backend(monkeypatch):
 
 
 def test_desktop_session_auth_rejects_short_secret(monkeypatch):
-    monkeypatch.setenv("ASTRBOT_DESKTOP_MANAGED", "1")
+    monkeypatch.setenv("BOT_DESKTOP_MANAGED", "1")
     monkeypatch.setenv(DESKTOP_SESSION_SECRET_ENV, "too-short")
 
     assert get_desktop_session_secret() is None
@@ -25,7 +25,7 @@ def test_desktop_session_auth_rejects_short_secret(monkeypatch):
 
 def test_desktop_session_secret_only_matches_on_loopback(monkeypatch):
     secret = "desktop-session-secret-" * 2
-    monkeypatch.setenv("ASTRBOT_DESKTOP_MANAGED", "1")
+    monkeypatch.setenv("BOT_DESKTOP_MANAGED", "1")
     monkeypatch.setenv(DESKTOP_SESSION_SECRET_ENV, secret)
 
     assert verify_desktop_session_secret(secret, "127.0.0.1") is True

@@ -1,7 +1,7 @@
 # Plugin Views
 
 
-Plugin Views let a plugin ship its own pages inside the LKMBot WebUI. View files live under `views/` in the plugin directory (`pages/` is still accepted) and are loaded by the Dashboard in a restricted iframe. Scripts in a view talk to the Dashboard through the `window.AstrBotPluginView` bridge (alias `window.AstrBotPluginPage`), which the Dashboard forwards to the plugin's registered backend Web APIs.
+Plugin Views let a plugin ship its own pages inside the LKMBot WebUI. View files live under `views/` in the plugin directory (`pages/` is still accepted) and are loaded by the Dashboard in a restricted iframe. Scripts in a view talk to the Dashboard through the `window.BotPluginView` bridge (alias `window.BotPluginPage`), which the Dashboard forwards to the plugin's registered backend Web APIs.
 
 If you only need a small set of editable settings, prefer [`_conf_schema.json`](./plugin-config.md). Views are a better fit for complex forms, runtime dashboards, logs, file upload/download, SSE streams, charts, and other custom workflows.
 
@@ -10,7 +10,7 @@ If you only need a small set of editable settings, prefer [`_conf_schema.json`](
 Each direct child directory under `views/` is one View. LKMBot only discovers `views/<view_name>/index.html`; directories without `index.html` are ignored.
 
 ```text
-astrbot_plugin_view_demo/
+bot_plugin_view_demo/
 ├─ main.py
 └─ views/
    ├─ bridge-demo/
@@ -30,22 +30,22 @@ Users open views from the plugin detail page in the WebUI.
 ## Development Flow
 
 1. Create `views/<view_name>/index.html` in the plugin directory.
-2. Use the `window.AstrBotPluginView` bridge from the View.
+2. Use the `window.BotPluginView` bridge from the View.
 3. Register backend APIs with `context.register_web_api()` in `main.py`.
-4. Read requests and return responses with `astrbot.api.web`.
+4. Read requests and return responses with `bot.api.web`.
 5. Reload the plugin after adding or removing View directories; refreshing the View is usually enough for static asset edits.
 
 ## Minimal Complete Example
 
 ### Backend
 
-Plugin backend code should use `astrbot.api.web`. Avoid exposing raw FastAPI, Starlette, or Quart request objects as the public API for your plugin business logic.
+Plugin backend code should use `bot.api.web`. Avoid exposing raw FastAPI, Starlette, or Quart request objects as the public API for your plugin business logic.
 
 ```python
-from astrbot.core.star import Context, Star
-from astrbot.api.web import error_response, json_response, request
+from bot.core.star import Context, Star
+from bot.api.web import error_response, json_response, request
 
-PLUGIN_NAME = "astrbot_plugin_view_demo"
+PLUGIN_NAME = "bot_plugin_view_demo"
 
 
 class MyPlugin(Star):
@@ -104,7 +104,7 @@ class MyPlugin(Star):
 `views/bridge-demo/app.js`
 
 ```js
-const bridge = window.AstrBotPluginView;
+const bridge = window.BotPluginView;
 const output = document.getElementById("output");
 
 const context = await bridge.ready();
@@ -116,7 +116,7 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-You do not need to import the bridge SDK manually. LKMBot injects `/api/v1/plugins/page-bridge-sdk.js` into returned HTML. If an inline script must access `window.AstrBotPluginView` synchronously, move it to an external module file or explicitly include the SDK before your script:
+You do not need to import the bridge SDK manually. LKMBot injects `/api/v1/plugins/page-bridge-sdk.js` into returned HTML. If an inline script must access `window.BotPluginView` synchronously, move it to an external module file or explicitly include the SDK before your script:
 
 ```html
 <script src="/api/v1/plugins/page-bridge-sdk.js"></script>
@@ -166,7 +166,7 @@ Supported dynamic segments:
 Recommended import:
 
 ```python
-from astrbot.api.web import request
+from bot.api.web import request
 ```
 
 `request` is a context proxy for the current request and is only available while a plugin Web API handler is running. Common fields and methods:
@@ -207,8 +207,8 @@ Upload example:
 ```python
 from pathlib import Path
 
-from astrbot.core.utils.astrbot_path import get_astrbot_plugin_data_path
-from astrbot.api.web import PluginUploadFile, error_response, json_response, request
+from bot.core.utils.bot_path import get_bot_plugin_data_path
+from bot.api.web import PluginUploadFile, error_response, json_response, request
 
 
 async def import_file(self):
@@ -219,7 +219,7 @@ async def import_file(self):
         return error_response("missing file")
 
     target_dir = (
-        Path(get_astrbot_plugin_data_path())
+        Path(get_bot_plugin_data_path())
         / (request.plugin_name or "unknown_plugin")
         / "imports"
     )
@@ -242,7 +242,7 @@ async def import_file(self):
 Recommended response helpers:
 
 ```python
-from astrbot.api.web import (
+from bot.api.web import (
     error_response,
     file_response,
     json_response,
@@ -277,7 +277,7 @@ SSE response:
 ```python
 import json
 
-from astrbot.api.web import stream_response
+from bot.api.web import stream_response
 
 
 async def stream_events(self):
@@ -288,24 +288,24 @@ async def stream_events(self):
     return stream_response(events())
 ```
 
-Returning a `dict`, `list`, `(body, status_code)`, or a lower-level Response object still works. New plugins should prefer `astrbot.api.web` helpers so plugin code remains decoupled from the Dashboard's internal web framework.
+Returning a `dict`, `list`, `(body, status_code)`, or a lower-level Response object still works. New plugins should prefer `bot.api.web` helpers so plugin code remains decoupled from the Dashboard's internal web framework.
 
 ### Request Object
 
 Handlers registered through `context.register_web_api()` run in the Dashboard's native request context:
 
 ```python
-from astrbot.api.web import json_response, request
+from bot.api.web import json_response, request
 ```
 
-The legacy Quart-compatible request context has been removed, so `from quart import request` no longer works. Plugins still using it must migrate to `astrbot.api.web`.
+The legacy Quart-compatible request context has been removed, so `from quart import request` no longer works. Plugins still using it must migrate to `bot.api.web`.
 
 ## Bridge API
 
-The View iframe cannot directly access Dashboard cookies, LocalStorage, or the parent DOM. View scripts must use `window.AstrBotPluginView` to call backend APIs and read context.
+The View iframe cannot directly access Dashboard cookies, LocalStorage, or the parent DOM. View scripts must use `window.BotPluginView` to call backend APIs and read context.
 
 ```js
-const bridge = window.AstrBotPluginView;
+const bridge = window.BotPluginView;
 ```
 
 ### Context
@@ -320,7 +320,7 @@ The context usually contains:
 
 ```json
 {
-  "pluginName": "astrbot_plugin_view_demo",
+  "pluginName": "bot_plugin_view_demo",
   "displayName": "Plugin View Demo",
   "pageName": "bridge-demo",
   "pageTitle": "Bridge Demo",
@@ -445,7 +445,7 @@ const result = await bridge.upload("files/import", file);
 Backend:
 
 ```python
-from astrbot.api.web import PluginUploadFile, error_response, json_response, request
+from bot.api.web import PluginUploadFile, error_response, json_response, request
 
 
 async def import_file(self):
@@ -539,7 +539,7 @@ Put View metadata such as the title and description in `.astrbot-plugin/i18n/<lo
 For example, localized metadata for the `bridge-demo` View is stored as follows:
 
 ```text
-astrbot_plugin_view_demo/
+bot_plugin_view_demo/
 ├─ views/
 │  └─ bridge-demo/
 │     └─ index.html

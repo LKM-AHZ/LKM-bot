@@ -41,14 +41,14 @@ Workflow applications receive input variables, execute the workflow, and output 
 
 For Workflow applications, LKMBot will attach two variables with each request:
 
-- `astrbot_text_query`: Input variable name. This is the text content entered by the user.
-- `astrbot_session_id`: Session ID
+- `bot_text_query`: Input variable name. This is the text content entered by the user.
+- `bot_session_id`: Session ID
 
 You can customize the input variable name in the configuration, which is the **Prompt Input Variable** field in the Dify settings.
 
 You need to modify the input variable name of your Workflow to adapt to LKMBot's input.
 
-Finally, the Workflow will output a result. You can customize the variable name of this result, which is the **Workflow Output Variable** field in the Dify settings, with a default value of `astrbot_wf_output`. You need to configure this variable name in the output node of the Dify Workflow, otherwise LKMBot cannot parse it correctly.
+Finally, the Workflow will output a result. You can customize the variable name of this result, which is the **Workflow Output Variable** field in the Dify settings, with a default value of `bot_wf_output`. You need to configure this variable name in the output node of the Dify Workflow, otherwise LKMBot cannot parse it correctly.
 
 #### Create API Key
 

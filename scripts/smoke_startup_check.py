@@ -59,8 +59,8 @@ def main() -> int:
     env.setdefault("PYTHONUTF8", "1")
     env.setdefault("TESTING", "true")
 
-    smoke_root = Path(tempfile.mkdtemp(prefix="astrbot-smoke-root-"))
-    env["ASTRBOT_ROOT"] = str(smoke_root)
+    smoke_root = Path(tempfile.mkdtemp(prefix="bot-smoke-root-"))
+    env["BOT_ROOT"] = str(smoke_root)
     log_path = smoke_root / "smoke.log"
     proc: subprocess.Popen[bytes] | None = None
 

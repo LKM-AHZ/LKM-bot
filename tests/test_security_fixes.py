@@ -12,7 +12,7 @@ import pytest
 
 def test_wecom_crypto_uses_secrets():
     """Test that WXBizJsonMsgCrypt uses secrets module instead of random."""
-    from astrbot.core.platform.sources.wecom_ai_bot.WXBizJsonMsgCrypt import Prpcrypt
+    from bot.core.platform.sources.wecom_ai_bot.WXBizJsonMsgCrypt import Prpcrypt
 
     # Create an instance and test that random string generation works
     prpcrypt = Prpcrypt(b"test_key_32_bytes_long_value!")
@@ -35,7 +35,7 @@ def test_wecom_crypto_uses_secrets():
 
 def test_wecomai_utils_uses_secrets():
     """Test that wecomai_utils uses secrets module for random string generation."""
-    from astrbot.core.platform.sources.wecom_ai_bot.wecomai_utils import (
+    from bot.core.platform.sources.wecom_ai_bot.wecomai_utils import (
         generate_random_string,
     )
 
@@ -57,7 +57,7 @@ def test_azure_tts_signature_uses_secrets():
     """Test that Azure TTS signature generation uses secrets module."""
     import asyncio
 
-    from astrbot.core.provider.sources.azure_tts_source import OTTSProvider
+    from bot.core.provider.sources.azure_tts_source import OTTSProvider
 
     # Create a provider with test config
     config = {
@@ -115,7 +115,7 @@ def test_ssl_context_fallback_explicit():
 
 def test_io_module_has_ssl_imports():
     """Verify that io.py properly imports ssl module."""
-    from astrbot.core.utils import io
+    from bot.core.utils import io
 
     # Check that ssl is available in the module
     assert hasattr(io, "ssl")

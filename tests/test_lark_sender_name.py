@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
+from bot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +14,7 @@ def mock_private_chat_storage(monkeypatch):
         monkeypatch: Fixture used to replace the route storage writer.
     """
     monkeypatch.setattr(
-        "astrbot.core.platform.sources.lark.lark_adapter.sp.put_async", AsyncMock()
+        "bot.core.platform.sources.lark.lark_adapter.sp.put_async", AsyncMock()
     )
 
 

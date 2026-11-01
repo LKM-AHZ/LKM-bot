@@ -3,13 +3,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.pipeline import context_utils
-from astrbot.core.pipeline.process_stage.method import star_request
-from astrbot.core.star.filter.command import CommandFilter
-from astrbot.core.star.filter.command_group import CommandGroupFilter
-from astrbot.core.star.filter.regex import RegexFilter
-from astrbot.core.star.star_handler import EventType
-from astrbot.dashboard.services.plugin_service import PluginService
+from bot.core.pipeline import context_utils
+from bot.core.pipeline.process_stage.method import star_request
+from bot.core.star.filter.command import CommandFilter
+from bot.core.star.filter.command_group import CommandGroupFilter
+from bot.core.star.filter.regex import RegexFilter
+from bot.core.star.star_handler import EventType
+from bot.dashboard.services.plugin_service import PluginService
 
 
 @pytest.mark.asyncio

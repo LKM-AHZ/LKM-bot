@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from astrbot.dashboard.services.config_profile_service import ConfigProfileService
+from bot.dashboard.services.config_profile_service import ConfigProfileService
 
 
 def test_get_system_config_includes_effective_server_time() -> None:
@@ -12,7 +12,7 @@ def test_get_system_config_includes_effective_server_time() -> None:
     fixed_time = datetime(2026, 8, 7, 2, 31, tzinfo=timezone.utc)
     service = ConfigProfileService(
         SimpleNamespace(
-            astrbot_config_mgr=SimpleNamespace(
+            bot_config_mgr=SimpleNamespace(
                 confs={"default": {"timezone": "Asia/Shanghai"}}
             )
         ),
@@ -20,7 +20,7 @@ def test_get_system_config_includes_effective_server_time() -> None:
     )
 
     with patch(
-        "astrbot.dashboard.services.config_profile_service.datetime"
+        "bot.dashboard.services.config_profile_service.datetime"
     ) as mock_datetime:
         mock_datetime.now.return_value = fixed_time
         result = service.get_system_config()
@@ -39,7 +39,7 @@ async def test_profile_mutations_await_config_manager() -> None:
         delete_conf=AsyncMock(return_value=True),
     )
     lifecycle = SimpleNamespace(
-        astrbot_config_mgr=config_manager,
+        bot_config_mgr=config_manager,
         reload_pipeline_scheduler=AsyncMock(),
         pipeline_scheduler_mapping={"profile-id": object()},
     )

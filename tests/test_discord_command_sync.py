@@ -16,8 +16,8 @@ class DiscordSyncError(Exception):
 
 
 def _build_adapter(monkeypatch: pytest.MonkeyPatch):
-    from astrbot.core.platform.sources.discord import discord_platform_adapter
-    from astrbot.core.platform.sources.discord.discord_platform_adapter import (
+    from bot.core.platform.sources.discord import discord_platform_adapter
+    from bot.core.platform.sources.discord.discord_platform_adapter import (
         DiscordPlatformAdapter,
     )
 
@@ -40,7 +40,7 @@ def _build_adapter(monkeypatch: pytest.MonkeyPatch):
 
 @pytest.mark.asyncio
 async def test_discord_command_sync_ignores_daily_quota(monkeypatch):
-    from astrbot.core.platform.sources.discord import discord_platform_adapter
+    from bot.core.platform.sources.discord import discord_platform_adapter
 
     adapter = _build_adapter(monkeypatch)
     warning = Mock()

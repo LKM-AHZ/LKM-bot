@@ -7,14 +7,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from telegram import Message, MessageEntity, TextQuote
 
-import astrbot.api.message_components as Comp
-from astrbot.api.event import MessageChain
-from astrbot.core.platform import Group
-from astrbot.core.platform.button_interaction import (
+import bot.api.message_components as Comp
+from bot.api.event import MessageChain
+from bot.core.platform import Group
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.register import unregister_platform_adapters_by_module
+from bot.core.platform.register import unregister_platform_adapters_by_module
 from tests.fixtures.helpers import (
     NoopAwaitable,
     create_mock_file,
@@ -53,7 +53,7 @@ def _load_telegram_module(module_name: str):
         return module
 
     with patch.dict(sys.modules, _build_telegram_patched_modules()):
-        if module_name == "astrbot.core.platform.sources.telegram.tg_adapter":
+        if module_name == "bot.core.platform.sources.telegram.tg_adapter":
             unregister_platform_adapters_by_module(module_name)
         sys.modules.pop(module_name, None)
         module = importlib.import_module(module_name)
@@ -68,7 +68,7 @@ def _load_telegram_adapter():
     if _TELEGRAM_PLATFORM_ADAPTER is not None:
         return _TELEGRAM_PLATFORM_ADAPTER
 
-    module = _load_telegram_module("astrbot.core.platform.sources.telegram.tg_adapter")
+    module = _load_telegram_module("bot.core.platform.sources.telegram.tg_adapter")
     _TELEGRAM_PLATFORM_ADAPTER = module.TelegramPlatformAdapter
     return _TELEGRAM_PLATFORM_ADAPTER
 
@@ -78,7 +78,7 @@ def _load_telegram_platform_event():
     if _TELEGRAM_PLATFORM_EVENT is not None:
         return _TELEGRAM_PLATFORM_EVENT
 
-    module = _load_telegram_module("astrbot.core.platform.sources.telegram.tg_event")
+    module = _load_telegram_module("bot.core.platform.sources.telegram.tg_event")
     _TELEGRAM_PLATFORM_EVENT = module.TelegramPlatformEvent
     return _TELEGRAM_PLATFORM_EVENT
 
@@ -941,12 +941,12 @@ async def test_telegram_voice_message_creates_record_component(tmp_path):
         patch.dict(
             convert_message_globals,
             {
-                "get_astrbot_temp_path": MagicMock(return_value=str(tmp_path)),
+                "get_bot_temp_path": MagicMock(return_value=str(tmp_path)),
                 "download_file": AsyncMock(),
             },
         ),
         patch(
-            "astrbot.core.utils.media_utils.ensure_wav",
+            "bot.core.utils.media_utils.ensure_wav",
             AsyncMock(return_value=str(wav_path)),
         ),
     ):
@@ -981,12 +981,12 @@ async def test_telegram_audio_caption_populates_message_text_and_plain(tmp_path)
         patch.dict(
             convert_message_globals,
             {
-                "get_astrbot_temp_path": MagicMock(return_value=str(tmp_path)),
+                "get_bot_temp_path": MagicMock(return_value=str(tmp_path)),
                 "download_file": AsyncMock(),
             },
         ),
         patch(
-            "astrbot.core.utils.media_utils.ensure_wav",
+            "bot.core.utils.media_utils.ensure_wav",
             AsyncMock(return_value=str(wav_path)),
         ),
     ):
@@ -1172,7 +1172,7 @@ async def test_telegram_callback_query_becomes_button_interaction():
 
 @pytest.mark.asyncio
 async def test_telegram_expired_button_shows_bilingual_alert(monkeypatch):
-    from astrbot.core.platform import button_interaction
+    from bot.core.platform import button_interaction
 
     clock = [100.0]
     monkeypatch.setattr(button_interaction.time, "time", lambda: clock[0])
@@ -1246,7 +1246,7 @@ async def test_telegram_final_segment_splits_long_plaintext_when_markdown_fails(
     payload = {"chat_id": "123456"}
 
     with patch(
-        "astrbot.core.platform.sources.telegram.tg_event.telegramify_markdown.markdownify",
+        "bot.core.platform.sources.telegram.tg_event.telegramify_markdown.markdownify",
         side_effect=Exception("boom"),
     ):
         await event._send_final_segment(delta, payload)

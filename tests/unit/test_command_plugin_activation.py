@@ -2,7 +2,7 @@
 
 from types import SimpleNamespace
 
-from astrbot.core.star.command_management import (
+from bot.core.star.command_management import (
     CommandDescriptor,
     _descriptor_to_dict,
     _group_conflicts,

@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.dashboard.services.cron_service import CronService
+from bot.dashboard.services.cron_service import CronService
 
 
 @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ async def test_create_job_resolves_default_timezone(
     service = CronService(
         SimpleNamespace(
             cron_manager=cron_manager,
-            astrbot_config_mgr=config_manager,
+            bot_config_mgr=config_manager,
         )
     )
     payload = {

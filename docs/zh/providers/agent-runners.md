@@ -12,7 +12,7 @@ LKMBot 内置了**强大的** Agent 执行器，用户也可以选择接入第�
 
 ## 快捷链接
 
-- [内置 Agent 执行器](/providers/agent-runners/astrbot-agent-runner)
+- [内置 Agent 执行器](/providers/agent-runners/bot-agent-runner)
 - [Dify](/providers/agent-runners/dify)
 - [扣子 Coze](/providers/agent-runners/coze)
 - [阿里云百炼应用](/providers/agent-runners/dashscope)

@@ -7,15 +7,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from astrbot.core.event_bus import EventBus
-from astrbot.core.message.components import Plain
-from astrbot.core.pipeline.scheduler import PipelineScheduler
-from astrbot.core.pipeline.waking_check.stage import WakingCheckStage
-from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.utils.active_event_registry import ActiveEventRegistry
+from bot.core.event_bus import EventBus
+from bot.core.message.components import Plain
+from bot.core.pipeline.scheduler import PipelineScheduler
+from bot.core.pipeline.waking_check.stage import WakingCheckStage
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.utils.active_event_registry import ActiveEventRegistry
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def mock_pipeline_scheduler():
     """Create a mock pipeline scheduler."""
     scheduler = MagicMock()
     scheduler.execute = AsyncMock()
-    scheduler.ctx.astrbot_config = {"platform_settings": {}}
+    scheduler.ctx.bot_config = {"platform_settings": {}}
     return scheduler
 
 
@@ -49,7 +49,7 @@ def event_bus(event_queue, mock_pipeline_scheduler, mock_config_manager):
     return EventBus(
         event_queue=event_queue,
         pipeline_scheduler_mapping={"test-conf-id": mock_pipeline_scheduler},
-        astrbot_config_mgr=mock_config_manager,
+        bot_config_mgr=mock_config_manager,
     )
 
 
@@ -61,19 +61,19 @@ class TestEventBusInit:
         bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping={"test": mock_pipeline_scheduler},
-            astrbot_config_mgr=mock_config_manager,
+            bot_config_mgr=mock_config_manager,
         )
 
         assert bus.event_queue == event_queue
         assert bus.pipeline_scheduler_mapping == {"test": mock_pipeline_scheduler}
-        assert bus.astrbot_config_mgr == mock_config_manager
+        assert bus.bot_config_mgr == mock_config_manager
 
 
 @pytest.mark.asyncio
 async def test_stop_platform_drains_only_owned_messages(event_bus, monkeypatch):
     """Drop queued messages and finish cancellation before database cleanup."""
     registry = ActiveEventRegistry()
-    monkeypatch.setattr("astrbot.core.event_bus.active_event_registry", registry)
+    monkeypatch.setattr("bot.core.event_bus.active_event_registry", registry)
     owned, other = MagicMock(), MagicMock()
     owned.get_platform_id.return_value = "bot"
     owned.unified_msg_origin = "bot:GroupMessage:1"
@@ -185,7 +185,7 @@ class TestEventBusDispatch:
 
         await event_queue.put(mock_event)
 
-        with patch("astrbot.core.event_bus.logger") as mock_logger:
+        with patch("bot.core.event_bus.logger") as mock_logger:
             mock_logger.error.side_effect = error_and_signal
             task = asyncio.create_task(event_bus.dispatch())
             try:
@@ -331,8 +331,8 @@ async def test_session_isolation_precedes_registration(
         "plugin_set": ["*"],
     }
     ctx = SimpleNamespace(
-        astrbot_config=config,
-        astrbot_config_id="test-conf-id",
+        bot_config=config,
+        bot_config_id="test-conf-id",
         db_helper=None,
     )
     scheduler = PipelineScheduler(ctx)
@@ -340,11 +340,11 @@ async def test_session_isolation_precedes_registration(
     await waking.initialize(ctx)
     waking._umo_auto_name_recorder = MagicMock()
     monkeypatch.setattr(
-        "astrbot.core.pipeline.waking_check.stage.star_handlers_registry.get_handlers_by_event_type",
+        "bot.core.pipeline.waking_check.stage.star_handlers_registry.get_handlers_by_event_type",
         lambda *_args, **_kwargs: [],
     )
     registry = ActiveEventRegistry()
-    monkeypatch.setattr("astrbot.core.platform.astr_message_event.active_event_registry", registry)
+    monkeypatch.setattr("bot.core.platform.bot_message_event.active_event_registry", registry)
     started = asyncio.Event()
     release = asyncio.Event()
 
@@ -361,14 +361,14 @@ async def test_session_isolation_precedes_registration(
 
     scheduler.stages = [waking, SimpleNamespace(process=hold_event)]
     bus = EventBus(event_queue, {"test-conf-id": scheduler}, mock_config_manager)
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = message_type
     message.set_group(group_id)
     message.self_id = "bot"
     message.sender = MessageMember(user_id="alice")
     message.message = [Plain("/hello")]
     message.raw_message = SimpleNamespace(message_type="text")
-    event = AstrMessageEvent(
+    event = BotMessageEvent(
         "/hello", message, PlatformMetadata(platform, "test", "platform"), "group"
     )
     event.set_extra("_session_isolated", True)
@@ -432,7 +432,7 @@ class TestPrintEvent:
         mock_event.get_sender_id.return_value = "user123"
         mock_event.get_message_outline.return_value = "Hello"
 
-        with patch("astrbot.core.event_bus.logger") as mock_logger:
+        with patch("bot.core.event_bus.logger") as mock_logger:
             event_bus._print_event(mock_event, "TestConfig")
 
         mock_logger.info.assert_called_once()
@@ -451,7 +451,7 @@ class TestPrintEvent:
         mock_event.get_sender_id.return_value = "user123"
         mock_event.get_message_outline.return_value = "Hello"
 
-        with patch("astrbot.core.event_bus.logger") as mock_logger:
+        with patch("bot.core.event_bus.logger") as mock_logger:
             event_bus._print_event(mock_event, "TestConfig")
 
         mock_logger.info.assert_called_once()
@@ -483,7 +483,7 @@ class TestEventSubscription:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=mock_config_manager,
+            bot_config_mgr=mock_config_manager,
         )
 
         # Verify both subscribers are registered
@@ -528,7 +528,7 @@ class TestEventSubscription:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=mock_config_manager,
+            bot_config_mgr=mock_config_manager,
         )
 
         mock_event = MagicMock()
@@ -565,7 +565,7 @@ class TestEventSubscription:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=mock_config_manager,
+            bot_config_mgr=mock_config_manager,
         )
 
         # Verify scheduler is registered
@@ -613,7 +613,7 @@ class TestEventSubscription:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=mock_config_manager,
+            bot_config_mgr=mock_config_manager,
         )
 
         # First event will cause exception
@@ -669,7 +669,7 @@ class TestEventFiltering:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=config_mgr,
+            bot_config_mgr=config_mgr,
         )
 
         processed = asyncio.Event()
@@ -716,7 +716,7 @@ class TestEventFiltering:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=mock_config_manager,
+            bot_config_mgr=mock_config_manager,
         )
 
         # Create event with group message origin
@@ -774,7 +774,7 @@ class TestEventFiltering:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=config_mgr,
+            bot_config_mgr=config_mgr,
         )
 
         processed = asyncio.Event()
@@ -823,7 +823,7 @@ class TestEventFiltering:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=config_mgr,
+            bot_config_mgr=config_mgr,
         )
 
         mock_event = MagicMock()
@@ -836,7 +836,7 @@ class TestEventFiltering:
 
         await event_queue.put(mock_event)
 
-        with patch("astrbot.core.event_bus.logger") as mock_logger:
+        with patch("bot.core.event_bus.logger") as mock_logger:
             mock_logger.error.side_effect = lambda *args, **kwargs: error_logged.set()  # noqa: ARG001
             task = asyncio.create_task(event_bus.dispatch())
             try:
@@ -868,7 +868,7 @@ class TestEventFiltering:
         event_bus = EventBus(
             event_queue=event_queue,
             pipeline_scheduler_mapping=pipeline_mapping,
-            astrbot_config_mgr=config_mgr,
+            bot_config_mgr=config_mgr,
         )
 
         mock_event = MagicMock()
@@ -881,7 +881,7 @@ class TestEventFiltering:
 
         await event_queue.put(mock_event)
 
-        with patch("astrbot.core.event_bus.logger") as mock_logger:
+        with patch("bot.core.event_bus.logger") as mock_logger:
             mock_logger.error.side_effect = lambda *args, **kwargs: error_logged.set()  # noqa: ARG001
             task = asyncio.create_task(event_bus.dispatch())
             try:

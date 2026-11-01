@@ -1,4 +1,4 @@
-from astrbot.core.platform.sources.weixin_oc.login_registration import (
+from bot.core.platform.sources.weixin_oc.login_registration import (
     DEFAULT_WEIXIN_OC_BASE_URL,
     normalize_weixin_oc_base_url,
     weixin_oc_login_result,

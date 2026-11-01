@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.star.filter.command import CommandFilter
+from bot.core.star.filter.command import CommandFilter
 
 
 async def postponed_annotations_handler(

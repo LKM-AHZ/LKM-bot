@@ -17,7 +17,7 @@ Open the LKMBot dashboard and go to **Providers → Chat Completion → Add → 
 | API Base URL | `https://api.mirarouter.com/v1` |
 | API Key | The API key created in the MiraRouter console |
 
-LKMBot automatically adds the `X-APP-CODE: astrbot` identifier to MiraRouter requests.
+LKMBot automatically adds the `X-APP-CODE: bot` identifier to MiraRouter requests.
 
 Enter the provider name and `API Key`, check the `API Base URL`, then click **Save and Fetch Models**. Click `+` beside the desired model and make sure it is enabled. Alternatively, click **Save Configuration**, then **Custom Model** and enter the exact model ID. Use **Test Model** beside the configured model to check availability.
 

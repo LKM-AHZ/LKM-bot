@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.agent.message import (
+from bot.core.agent.message import (
     AssistantMessageSegment,
     CheckpointData,
     CheckpointMessageSegment,
@@ -16,13 +16,13 @@ from astrbot.core.agent.message import (
     get_checkpoint_id,
     strip_checkpoint_messages,
 )
-from astrbot.core.db.po import Conversation
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
+from bot.core.db.po import Conversation
+from bot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
     InternalAgentSubStage,
 )
-from astrbot.core.provider.entities import LLMResponse, ProviderRequest, ToolCallsResult
-from astrbot.core.provider.provider import Provider
-from astrbot.dashboard.services.chat_service import find_turn_range
+from bot.core.provider.entities import LLMResponse, ProviderRequest, ToolCallsResult
+from bot.core.provider.provider import Provider
+from bot.dashboard.services.chat_service import find_turn_range
 
 
 def test_checkpoint_message_segment_round_trip():

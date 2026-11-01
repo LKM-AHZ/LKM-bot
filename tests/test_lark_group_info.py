@@ -4,13 +4,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.platform.astrbot_message import AstrBotMessage, Group, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.platform.sources.lark import lark_group_info
-from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
-from astrbot.core.platform.sources.lark.lark_event import LarkMessageEvent
-from astrbot.core.platform.sources.lark.lark_group_info import get_lark_group
+from bot.core.platform.bot_message import BotMessage, Group, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.platform.sources.lark import lark_group_info
+from bot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
+from bot.core.platform.sources.lark.lark_event import LarkMessageEvent
+from bot.core.platform.sources.lark.lark_group_info import get_lark_group
 
 
 def _lark_event(bot) -> LarkMessageEvent:
@@ -22,7 +22,7 @@ def _lark_event(bot) -> LarkMessageEvent:
     Returns:
         Group message event for tests.
     """
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.GROUP_MESSAGE
     message.self_id = "bot"
     message.session_id = "chat-1"
@@ -180,7 +180,7 @@ async def test_lark_success_cache_expiry_capacity_and_bot_isolation(
     monkeypatch.setattr(lark_group_info, "GROUP_INFO_CACHE_MAX_SIZE", 2)
     for group_id in ("1", "2", "1", "3"):
         await get_lark_group(group_bot, Group(group_id=group_id))
-    assert list(group_bot._astrbot_group_info_cache) == ["1", "3"]
+    assert list(group_bot._bot_group_info_cache) == ["1", "3"]
     assert group_bot.im.v1.chat.aget.await_count == 3
     clock[0] += lark_group_info.GROUP_INFO_CACHE_TTL - 1
     await get_lark_group(group_bot, Group(group_id="1"))

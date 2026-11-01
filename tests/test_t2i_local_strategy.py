@@ -1,6 +1,6 @@
 import pytest
 
-from astrbot.core.utils.t2i.local_strategy import (
+from bot.core.utils.t2i.local_strategy import (
     CodeBlock,
     FontManager,
     HeadingBlock,

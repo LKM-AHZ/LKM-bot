@@ -8,18 +8,18 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from opentelemetry.trace import format_trace_id, get_current_span
 
-from astrbot.core.agent.runners.base import AgentState
-from astrbot.core.cron.manager import CronJobManager
-from astrbot.core.log import _log_context, log_context
-from astrbot.core.pipeline import scheduler as scheduler_module
-from astrbot.core.platform.astr_message_event import AstrMessageEvent, event_context
-from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.utils import trace as trace_module
-from astrbot.core.utils.active_event_registry import active_event_registry
-from astrbot.core.utils.trace import trace_execution
-from astrbot.core.utils.trace_store import TraceStore
+from bot.core.agent.runners.base import AgentState
+from bot.core.cron.manager import CronJobManager
+from bot.core.log import _log_context, log_context
+from bot.core.pipeline import scheduler as scheduler_module
+from bot.core.platform.bot_message_event import BotMessageEvent, event_context
+from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.utils import trace as trace_module
+from bot.core.utils.active_event_registry import active_event_registry
+from bot.core.utils.trace import trace_execution
+from bot.core.utils.trace_store import TraceStore
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def frames(monkeypatch):
     store.append.side_effect = lambda packet, **kwargs: (
         captured.append(json.loads(json.dumps(packet))) or True
     )
-    monkeypatch.setitem(trace_module.astrbot_config, "trace_enable", True)
+    monkeypatch.setitem(trace_module.bot_config, "trace_enable", True)
     monkeypatch.setattr(trace_module, "get_trace_store", lambda *_: store)
     monkeypatch.setattr(trace_module, "_get_log_broker", lambda: None)
     return captured
@@ -53,11 +53,11 @@ def event(frames):
     Returns:
         Message event with a real trace model.
     """
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE
     message.sender = MessageMember(user_id="test-user", nickname="Test User")
     message.message = []
-    return AstrMessageEvent(
+    return BotMessageEvent(
         "Test event",
         message,
         PlatformMetadata(id="test", name="test-platform", description="Test"),
@@ -231,7 +231,7 @@ async def test_scheduler_uses_event_scope(event, frames, monkeypatch, failure_at
 
     scheduler._process_stages = AsyncMock(side_effect=process)
     event.send = AsyncMock(side_effect=deliver)
-    monkeypatch.setattr(scheduler_module, "WebChatMessageEvent", AstrMessageEvent)
+    monkeypatch.setattr(scheduler_module, "WebChatMessageEvent", BotMessageEvent)
     if failure_at:
         with pytest.raises(RuntimeError):
             await scheduler.execute(event)
@@ -265,8 +265,8 @@ async def test_cron_uses_event_scope(frames, monkeypatch, failure_at):
         monkeypatch: Pytest patch manager.
         failure_at: Optional execution step that fails.
     """
-    from astrbot.core import astr_main_agent
-    from astrbot.core.cron import manager as cron_module
+    from bot.core import bot_main_agent
+    from bot.core.cron import manager as cron_module
 
     ctx = MagicMock()
     ctx.get_config.return_value = {"admins_id": []}
@@ -320,8 +320,8 @@ async def test_cron_uses_event_scope(frames, monkeypatch, failure_at):
         if failure_at == "history":
             raise RuntimeError("history failed")
 
-    monkeypatch.setattr(astr_main_agent, "_get_session_conv", conversation)
-    monkeypatch.setattr(astr_main_agent, "build_main_agent", build)
+    monkeypatch.setattr(bot_main_agent, "_get_session_conv", conversation)
+    monkeypatch.setattr(bot_main_agent, "build_main_agent", build)
     save = AsyncMock(side_effect=persist)
     monkeypatch.setattr(cron_module, "persist_agent_history", save)
     execution = manager._woke_main_agent(

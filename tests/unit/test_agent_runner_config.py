@@ -4,14 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.config.agent_runner import (
+from bot.core.config.agent_runner import (
     AGENT_RUNNER_CONFIG_DEFAULTS,
     get_agent_runner_config_default,
     normalize_agent_runner,
 )
-from astrbot.core.config.astrbot_config import AstrBotConfig
-from astrbot.core.config.default import DEFAULT_CONFIG
-from astrbot.core.pipeline.process_stage.stage import AgentRequestSubStage
+from bot.core.config.bot_config import BotConfig
+from bot.core.config.default import DEFAULT_CONFIG
+from bot.core.pipeline.process_stage.stage import AgentRequestSubStage
 
 
 @pytest.mark.parametrize(
@@ -71,7 +71,7 @@ async def test_agent_request_normalizes_incomplete_runner_config():
     }
     stage = AgentRequestSubStage()
 
-    await stage.initialize(SimpleNamespace(astrbot_config=config))
+    await stage.initialize(SimpleNamespace(bot_config=config))
 
     assert stage.agent_sub_stage.runner_config == {
         **get_agent_runner_config_default("dify"),
@@ -92,9 +92,9 @@ def test_each_runner_configuration_round_trips(tmp_path, runner_type: str):
     config_path = tmp_path / f"{runner_type}.json"
     config_path.write_text(json.dumps(config), encoding="utf-8")
 
-    loaded = AstrBotConfig(config_path=str(config_path))
+    loaded = BotConfig(config_path=str(config_path))
     loaded.save_config()
-    reloaded = AstrBotConfig(config_path=str(config_path))
+    reloaded = BotConfig(config_path=str(config_path))
 
     assert reloaded["agent_runner"] == expected
 
@@ -132,7 +132,7 @@ def test_new_agent_runner_config_is_authoritative_and_opaque_on_reload(tmp_path)
     config_path = tmp_path / "config.json"
     config_path.write_text(json.dumps(config), encoding="utf-8")
 
-    loaded = AstrBotConfig(config_path=str(config_path))
+    loaded = BotConfig(config_path=str(config_path))
 
     assert loaded["agent_runner"]["runner_type"] == "dify"
     assert loaded["agent_runner"]["config"]["dify_api_key"] == "saved-key"

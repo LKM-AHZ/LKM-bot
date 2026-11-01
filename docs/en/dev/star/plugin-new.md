@@ -17,7 +17,7 @@ Welcome to the LKMBot Plugin Development Guide! This section will guide you thro
 2. Click `Use this template` in the upper right corner
 3. Then click `Create new repository`.
 4. Fill in your plugin name in the `Repository name` field. Plugin naming conventions:
-   - Recommended to start with `astrbot_plugin_`;
+   - Recommended to start with `bot_plugin_`;
    - Must not contain spaces;
    - Keep all letters lowercase;
    - Keep it concise.

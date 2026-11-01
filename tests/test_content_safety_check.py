@@ -3,9 +3,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from astrbot.core.message.components import Plain, Reply
-from astrbot.core.pipeline.content_safety_check.stage import ContentSafetyCheckStage
-from astrbot.core.pipeline.content_safety_check.strategies.strategy import (
+from bot.core.message.components import Plain, Reply
+from bot.core.pipeline.content_safety_check.stage import ContentSafetyCheckStage
+from bot.core.pipeline.content_safety_check.strategies.strategy import (
     StrategySelector,
 )
 

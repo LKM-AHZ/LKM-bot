@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import aiohttp
 import pytest
 
-from astrbot.core.provider.sources.vllm_rerank_source import VLLMRerankProvider
+from bot.core.provider.sources.vllm_rerank_source import VLLMRerankProvider
 
 
 class FakeResponse:

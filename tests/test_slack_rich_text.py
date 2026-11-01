@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.message_components import At, Plain
-from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
+from bot.api.message_components import At, Plain
+from bot.core.platform.sources.slack.slack_adapter import SlackAdapter
 from tests.fixtures.helpers import make_platform_config
 
 

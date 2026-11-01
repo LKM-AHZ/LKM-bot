@@ -8,7 +8,7 @@ from datetime import datetime
 
 import pytest
 
-from astrbot.dashboard.services.diagnostic_service import DiagnosticRedactor
+from bot.dashboard.services.diagnostic_service import DiagnosticRedactor
 
 
 @pytest.mark.parametrize("flag", [True, False])
@@ -122,7 +122,7 @@ def test_long_log_tokens_do_not_stall_redaction():
         [
             sys.executable,
             "-c",
-            "from astrbot.dashboard.services.diagnostic_service import DiagnosticRedactor\n"
+            "from bot.dashboard.services.diagnostic_service import DiagnosticRedactor\n"
             "redactor = DiagnosticRedactor()\n"
             "for value in ('a' * 100_000, 'token' * 20_000, 'token' * 20_000 + '='):\n"
             "    assert redactor.text(value) == value\n"
@@ -139,7 +139,7 @@ def test_long_log_tokens_do_not_stall_redaction():
 
 def test_stream_drops_oversized_lines_without_leaking_suffixes(monkeypatch):
     monkeypatch.setattr(
-        "astrbot.dashboard.services.diagnostic_service.MAX_LOG_LINE_BYTES", 32
+        "bot.dashboard.services.diagnostic_service.MAX_LOG_LINE_BYTES", 32
     )
     redactor = DiagnosticRedactor()
     content = b"a" * 100 + b"private-tail\nnormal log\n"
@@ -237,7 +237,7 @@ def test_stream_time_range_respects_explicit_timezone_offsets(line):
 
 def test_raw_time_range_preserves_long_lines_and_non_utf8_bytes(monkeypatch):
     monkeypatch.setattr(
-        "astrbot.dashboard.services.diagnostic_service.MAX_LOG_LINE_BYTES", 32
+        "bot.dashboard.services.diagnostic_service.MAX_LOG_LINE_BYTES", 32
     )
     selected = b"[2026-10-21 11:00:00] " + b"a" * 100 + b"\xff\r\n"
     content = selected + b"[2026-10-21 11:00:01] excluded\n"

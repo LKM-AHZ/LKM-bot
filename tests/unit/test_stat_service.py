@@ -5,10 +5,10 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-import astrbot.dashboard.services.stat_service as stat_service
-from astrbot.core.computer import process_sandbox
-from astrbot.core.computer.process_sandbox import SandboxRunResult, SandboxTimeoutError
-from astrbot.dashboard.services.stat_service import StatService
+import bot.dashboard.services.stat_service as stat_service
+from bot.core.computer import process_sandbox
+from bot.core.computer.process_sandbox import SandboxRunResult, SandboxTimeoutError
+from bot.dashboard.services.stat_service import StatService
 
 
 @pytest.fixture(autouse=True)
@@ -57,7 +57,7 @@ def test_runtime_detects_platform_dependencies(
     sandbox.run.return_value = SandboxRunResult(returncode=0)
     factory = Mock(return_value=sandbox)
     monkeypatch.setattr(process_sandbox, "create_process_sandbox", factory)
-    monkeypatch.setattr(process_sandbox, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(process_sandbox, "get_bot_temp_path", lambda: str(tmp_path))
 
     service = _make_service(MagicMock())
 
@@ -135,7 +135,7 @@ def test_runtime_reports_sandbox_startup_failure(
     else:
         sandbox.run.return_value = outcome
     monkeypatch.setattr(process_sandbox, "create_process_sandbox", lambda: sandbox)
-    monkeypatch.setattr(process_sandbox, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(process_sandbox, "get_bot_temp_path", lambda: str(tmp_path))
 
     service = _make_service(MagicMock())
 

@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from astrbot.core.db.vec_db.faiss_impl.document_storage import DocumentStorage
+from bot.core.db.vec_db.faiss_impl.document_storage import DocumentStorage
 
 
 @pytest.mark.asyncio

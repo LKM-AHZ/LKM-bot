@@ -11,13 +11,13 @@ from openai.types.chat.chat_completion import ChatCompletion
 from openai.types.chat.chat_completion_chunk import ChatCompletionChunk
 from PIL import Image as PILImage
 
-import astrbot.core.provider.sources.openai_source as openai_source_module
-import astrbot.core.provider.sources.request_retry as request_retry
-from astrbot.core.exceptions import EmptyModelOutputError
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.core.provider.sources.groq_source import ProviderGroq
-from astrbot.core.provider.sources.openai_source import ProviderOpenAIOfficial
-from astrbot.core.utils.media_utils import ResolvedMediaData, file_uri_to_path
+import bot.core.provider.sources.openai_source as openai_source_module
+import bot.core.provider.sources.request_retry as request_retry
+from bot.core.exceptions import EmptyModelOutputError
+from bot.core.provider.entities import LLMResponse
+from bot.core.provider.sources.groq_source import ProviderGroq
+from bot.core.provider.sources.openai_source import ProviderOpenAIOfficial
+from bot.core.utils.media_utils import ResolvedMediaData, file_uri_to_path
 
 
 class _ErrorWithBody(Exception):
@@ -907,7 +907,7 @@ async def test_prepare_chat_payload_materializes_context_http_image_urls_with_de
                 f.write(image_path.read_bytes())
 
         monkeypatch.setattr(
-            "astrbot.core.utils.media_utils.download_file",
+            "bot.core.utils.media_utils.download_file",
             fake_download,
         )
 
@@ -1201,7 +1201,7 @@ async def test_prepare_chat_payload_materializes_context_localhost_file_uri_imag
 @pytest.mark.asyncio
 async def test_resolve_audio_part_supports_data_audio_uri(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "astrbot.core.utils.media_utils.get_astrbot_temp_path",
+        "bot.core.utils.media_utils.get_bot_temp_path",
         lambda: str(tmp_path),
     )
     provider = _make_provider()
@@ -1226,7 +1226,7 @@ async def test_resolve_audio_part_supports_data_audio_uri(tmp_path, monkeypatch)
 @pytest.mark.asyncio
 async def test_resolve_audio_part_supports_base64_scheme(tmp_path, monkeypatch):
     monkeypatch.setattr(
-        "astrbot.core.utils.media_utils.get_astrbot_temp_path",
+        "bot.core.utils.media_utils.get_bot_temp_path",
         lambda: str(tmp_path),
     )
     provider = _make_provider()

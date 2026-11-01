@@ -3,14 +3,14 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.message.components import Unknown
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.core.message.components import Unknown
+from bot.core.platform import (
+    BotMessage,
     Group,
     MessageType,
     PlatformMetadata,
 )
-from astrbot.core.message.components import (
+from bot.core.message.components import (
     ActionRow,
     At,
     AtAll,
@@ -22,11 +22,11 @@ from astrbot.core.message.components import (
     Reply,
     Video,
 )
-from astrbot.core.platform.button_interaction import decode_button_callback
-from astrbot.core.platform.sources.kook.kook_event import KookEvent
-from astrbot.core.platform.sources.kook.kook_types import KookMessageType, OrderMessage
+from bot.core.platform.button_interaction import decode_button_callback
+from bot.core.platform.sources.kook.kook_event import KookEvent
+from bot.core.platform.sources.kook.kook_types import KookMessageType, OrderMessage
 from tests.test_kook.shared import (
-    mock_astrbot_message,
+    mock_bot_message,
     mock_file_message,
     mock_kook_client,
     mock_record_message,
@@ -149,7 +149,7 @@ async def test_kook_event_warp_message(
 
     event = KookEvent(
         "",
-        mock_astrbot_message(),
+        mock_bot_message(),
         PlatformMetadata(
             name="test",
             id="test",
@@ -189,7 +189,7 @@ async def test_kook_event_renders_portable_buttons():
     client = mock_kook_client("", "")
     event = KookEvent(
         "",
-        mock_astrbot_message(),
+        mock_bot_message(),
         PlatformMetadata(name="test", id="test", description="test"),
         "",
         client,
@@ -236,7 +236,7 @@ async def test_kook_event_splits_action_rows_at_four_buttons():
     client = mock_kook_client("", "")
     event = KookEvent(
         "",
-        mock_astrbot_message(),
+        mock_bot_message(),
         PlatformMetadata(name="test", id="test", description="test"),
         "",
         client,
@@ -295,7 +295,7 @@ async def test_kook_get_group_enriches_channel_with_guild_members():
             },
         ],
     )
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.GROUP_MESSAGE
     message.group = Group(group_id="channel-1", group_name="cached-channel")
     message.session_id = "channel-1"
@@ -341,7 +341,7 @@ async def test_kook_get_group_enriches_channel_with_guild_members():
 async def test_kook_get_group_returns_basic_group_when_lookup_fails():
     client = mock_kook_client("", "")
     client.get_channel = AsyncMock(side_effect=RuntimeError("forbidden"))
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.GROUP_MESSAGE
     message.group = Group(group_id="channel-1", group_name="cached-channel")
     message.session_id = "channel-1"

@@ -1,4 +1,4 @@
-from astrbot.core.platform.sources.lark.app_registration import (
+from bot.core.platform.sources.lark.app_registration import (
     DEFAULT_FEISHU_OPEN_DOMAIN,
     DEFAULT_LARK_OPEN_DOMAIN,
     _registration_data,

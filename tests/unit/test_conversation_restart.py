@@ -8,33 +8,33 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.builtin_stars.astrbot.group_chat_context import GroupChatContext
-from astrbot.builtin_stars.astrbot.main import Main as CorePlugin
-from astrbot.builtin_stars.builtin_commands.commands import conversation as commands
-from astrbot.builtin_stars.builtin_commands.main import Main
-from astrbot.core import conversation_mgr
-from astrbot.core.config.astrbot_config import AstrBotConfig
-from astrbot.core.config.default import (
+from bot.builtin_stars.bot.group_chat_context import GroupChatContext
+from bot.builtin_stars.bot.main import Main as CorePlugin
+from bot.builtin_stars.builtin_commands.commands import conversation as commands
+from bot.builtin_stars.builtin_commands.main import Main
+from bot.core import conversation_mgr
+from bot.core.config.bot_config import BotConfig
+from bot.core.config.default import (
     CONFIG_METADATA_2,
     CONFIG_METADATA_3,
     DEFAULT_CONFIG,
 )
-from astrbot.core.event_bus import UNIQUE_SESSION_ID_BUILDERS, EventBus
-from astrbot.core.message.components import Plain
-from astrbot.core.pipeline.waking_check import stage as waking
-from astrbot.core.platform.astr_message_event import AstrMessageEvent
-from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.star import base as star_base
-from astrbot.core.star import star_handler
-from astrbot.core.star.filter.permission import (
+from bot.core.event_bus import UNIQUE_SESSION_ID_BUILDERS, EventBus
+from bot.core.message.components import Plain
+from bot.core.pipeline.waking_check import stage as waking
+from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.star import base as star_base
+from bot.core.star import star_handler
+from bot.core.star.filter.permission import (
     COMMAND_PERMISSION_TYPES,
     PermissionTypeFilter,
 )
-from astrbot.core.star.register import star_handler as handler_registration
-from astrbot.core.star.star import StarMetadata
-from astrbot.core.star.star_handler import StarHandlerRegistry
+from bot.core.star.register import star_handler as handler_registration
+from bot.core.star.star import StarMetadata
+from bot.core.star.star_handler import StarHandlerRegistry
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def restart_handlers(monkeypatch):
     registry = StarHandlerRegistry()
     path = (
         Path(__file__).resolve().parents[2]
-        / "astrbot/builtin_stars/builtin_commands/main.py"
+        / "bot/builtin_stars/builtin_commands/main.py"
     )
     spec = importlib.util.spec_from_file_location(Main.__module__, path)
     assert spec is not None and spec.loader is not None
@@ -196,25 +196,25 @@ async def test_restart_permissions_follow_pipeline_isolation(
             "admins_id": [],
             "wake_prefix": ["/"],
         }
-        if profile not in profiles or profiles[profile].ctx.astrbot_config != config:
+        if profile not in profiles or profiles[profile].ctx.bot_config != config:
             stage = waking.WakingCheckStage()
             await stage.initialize(
                 SimpleNamespace(
-                    astrbot_config=config,
-                    astrbot_config_id=profile,
+                    bot_config=config,
+                    bot_config_id=profile,
                     db_helper=MagicMock(),
                 )
             )
             stage._umo_auto_name_recorder = MagicMock()
             profiles[profile] = stage
-        message = AstrBotMessage()
+        message = BotMessage()
         message.type = MessageType.GROUP_MESSAGE
         message.set_group("group")
         message.self_id = "bot"
         message.sender = MessageMember(user_id="member")
         text = "/new" if entry == "new_conv" else "/reset"
         message.message = [Plain(text)]
-        event = AstrMessageEvent(
+        event = BotMessageEvent(
             text, message, PlatformMetadata(platform, "test", "qq"), "group"
         )
         event.send = AsyncMock()
@@ -532,7 +532,7 @@ def test_config_preserves_isolation(tmp_path):
     config = copy.deepcopy(DEFAULT_CONFIG)
     config["platform_settings"]["unique_session"] = True
     path.write_text(json.dumps(config), encoding="utf-8")
-    loaded = AstrBotConfig(str(path))
+    loaded = BotConfig(str(path))
     assert loaded["platform_settings"]["unique_session"] is True
 
 

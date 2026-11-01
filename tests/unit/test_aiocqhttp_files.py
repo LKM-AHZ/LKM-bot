@@ -4,9 +4,9 @@ from unittest.mock import AsyncMock, call
 import pytest
 from aiocqhttp import Event
 
-import astrbot.api  # noqa: F401  # Initialize API before platform adapters.
-from astrbot.core.message.components import File
-from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import (
+import bot.api  # noqa: F401  # Initialize API before platform adapters.
+from bot.core.message.components import File
+from bot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import (
     AiocqhttpAdapter,
 )
 

@@ -1,7 +1,7 @@
 # 接入 VoceChat
 
 > [!TIP]
-> LKMBot 未自带这个适配器，需要安装 [astrbot_plugin_vocechat](https://github.com/HikariFroya/astrbot_plugin_vocechat) 插件。该插件由 [HikariFroya](https://github.com/HikariFroya) 开发 ❤️。
+> LKMBot 未自带这个适配器，需要安装 [bot_plugin_vocechat](https://github.com/HikariFroya/astrbot_plugin_vocechat) 插件。该插件由 [HikariFroya](https://github.com/HikariFroya) 开发 ❤️。
 > **如果您觉得有帮助，请支持开发者，给该仓库点一个 Star。**
 
 > [!WARNING]
@@ -13,9 +13,9 @@ VoceChat 是一个开源的支持多平台、搭建简单的即时通讯平台�
 
 请在 [VoceChat 官方网站](https://voce.chat/zh-CN)查看部署方式。
 
-## 安装 astrbot_plugin_vocechat 插件
+## 安装 bot_plugin_vocechat 插件
 
-进入 LKMBot WebUI 的 `插件 → 插件市场`，搜索 `astrbot_plugin_vocechat`，点击安装。
+进入 LKMBot WebUI 的 `插件 → 插件市场`，搜索 `bot_plugin_vocechat`，点击安装。
 
 安装完成后，前往 `机器人` → `+ 创建机器人` → 选择 VoceChat（若选项缺失，尝试重启 LKMBot 或检查插件安装状态）。
 
@@ -38,4 +38,4 @@ VoceChat 是一个开源的支持多平台、搭建简单的即时通讯平台�
 
 如有疑问，请提交 issue 至[插件仓库](https://github.com/HikariFroya/astrbot_plugin_vocechat/issues) 以及 [LKMBot 仓库](https://github.com/AstrBotDevs/AstrBot/issues/new?template=bug-report.yml)。
 
-**如果您觉得有帮助，请支持开发者，给 [astrbot_plugin_vocechat](https://github.com/HikariFroya/astrbot_plugin_vocechat) 仓库点一个 Star。**
+**如果您觉得有帮助，请支持开发者，给 [bot_plugin_vocechat](https://github.com/HikariFroya/astrbot_plugin_vocechat) 仓库点一个 Star。**

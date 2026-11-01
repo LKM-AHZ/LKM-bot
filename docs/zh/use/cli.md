@@ -1,4 +1,4 @@
-# AstrBot CLI {#cli-指令}
+# LKMBot CLI {#cli-指令}
 
 LKMBot CLI 用于初始化实例、启动 LKMBot、修改常用配置和管理插件。
 

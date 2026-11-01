@@ -77,7 +77,7 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm run build
           echo "$TAG" > dist/assets/version
-          # 资产名须与 astrbot/core/dashboard_assets.py 的回退 URL、面板 404 页提示
+          # 资产名须与 bot/core/dashboard_assets.py 的回退 URL、面板 404 页提示
           # （dashboard/services/static_file_service.py）保持一致，否则自动安装会 404
           zip -r "LKMBot-$TAG-dashboard.zip" dist
 
@@ -88,8 +88,8 @@ jobs:
         run: |
           git archive \
             --format=zip \
-            --prefix="AstrBot-$TAG/" \
-            --output="AstrBot-$TAG-core.zip" \
+            --prefix="LKMBot-$TAG/" \
+            --output="LKMBot-$TAG-core.zip" \
             HEAD
 
       - name: Upload dashboard artifact
@@ -105,9 +105,9 @@ jobs:
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
-          R2_BUCKET_NAME: "astrbot"
-          DASHBOARD_LATEST_OBJECT_NAME: "astrbot-webui-latest.zip"
-          CORE_LATEST_OBJECT_NAME: "astrbot-core-latest.zip"
+          R2_BUCKET_NAME: "bot"
+          DASHBOARD_LATEST_OBJECT_NAME: "bot-webui-latest.zip"
+          CORE_LATEST_OBJECT_NAME: "bot-core-latest.zip"
           VERSION_TAG: ${{ steps.tag.outputs.tag }}
         shell: bash
         run: |
@@ -131,15 +131,15 @@ jobs:
 
           cp "dashboard/LKMBot-${VERSION_TAG}-dashboard.zip" "dashboard/${DASHBOARD_LATEST_OBJECT_NAME}"
           rclone copy "dashboard/${DASHBOARD_LATEST_OBJECT_NAME}" "r2:${R2_BUCKET_NAME}" --progress
-          cp "dashboard/LKMBot-${VERSION_TAG}-dashboard.zip" "dashboard/astrbot-webui-${VERSION_TAG}.zip"
-          rclone copy "dashboard/astrbot-webui-${VERSION_TAG}.zip" "r2:${R2_BUCKET_NAME}" --progress
+          cp "dashboard/LKMBot-${VERSION_TAG}-dashboard.zip" "dashboard/bot-webui-${VERSION_TAG}.zip"
+          rclone copy "dashboard/bot-webui-${VERSION_TAG}.zip" "r2:${R2_BUCKET_NAME}" --progress
 
-          cp "AstrBot-${VERSION_TAG}-core.zip" "${CORE_LATEST_OBJECT_NAME}"
+          cp "LKMBot-${VERSION_TAG}-core.zip" "${CORE_LATEST_OBJECT_NAME}"
           rclone copy "${CORE_LATEST_OBJECT_NAME}" "r2:${R2_BUCKET_NAME}" --progress
-          cp "AstrBot-${VERSION_TAG}-core.zip" "astrbot-core-${VERSION_TAG}.zip"
-          rclone copy "astrbot-core-${VERSION_TAG}.zip" "r2:${R2_BUCKET_NAME}" --progress
-          rclone copyto "AstrBot-${VERSION_TAG}-core.zip" "r2:${R2_BUCKET_NAME}/astrbot-core/${VERSION_TAG}/source.zip" --progress
-          rclone copyto "AstrBot-${VERSION_TAG}-core.zip" "r2:${R2_BUCKET_NAME}/download/astrbot-core/${VERSION_TAG}/source.zip" --progress
+          cp "LKMBot-${VERSION_TAG}-core.zip" "bot-core-${VERSION_TAG}.zip"
+          rclone copy "bot-core-${VERSION_TAG}.zip" "r2:${R2_BUCKET_NAME}" --progress
+          rclone copyto "LKMBot-${VERSION_TAG}-core.zip" "r2:${R2_BUCKET_NAME}/bot-core/${VERSION_TAG}/source.zip" --progress
+          rclone copyto "LKMBot-${VERSION_TAG}-core.zip" "r2:${R2_BUCKET_NAME}/download/bot-core/${VERSION_TAG}/source.zip" --progress
 
   publish-release:
     name: Publish GitHub Release
@@ -283,9 +283,9 @@ jobs:
         env:
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
-          mkdir -p astrbot/dashboard/dist
+          mkdir -p bot/dashboard/dist
           unzip -q "${RUNNER_TEMP}/dashboard-artifact/LKMBot-$TAG-dashboard.zip" -d "${RUNNER_TEMP}/dashboard-artifact/unpacked"
-          cp -r "${RUNNER_TEMP}/dashboard-artifact/unpacked/dist/." astrbot/dashboard/dist/
+          cp -r "${RUNNER_TEMP}/dashboard-artifact/unpacked/dist/." bot/dashboard/dist/
 
       - name: Set up Python
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -310,8 +310,8 @@ jobs:
             echo "pyproject version ${pkg_version} does not match tag $TAG" >&2
             exit 1
           fi
-          # Dashboard assets are already in astrbot/dashboard/dist/;
-          # ASTRBOT_BUILD_DASHBOARD is intentionally unset so the hatch hook skips npm.
+          # Dashboard assets are already in bot/dashboard/dist/;
+          # BOT_BUILD_DASHBOARD is intentionally unset so the hatch hook skips npm.
           uv build
 
       - name: Publish to PyPI

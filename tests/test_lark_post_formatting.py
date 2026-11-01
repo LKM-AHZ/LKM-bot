@@ -5,15 +5,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from astrbot.core.astr_main_agent import _process_quote_message, collect_initial_request
-from astrbot.core.message.components import Reply
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages import third_party
-from astrbot.core.pipeline.waking_check import stage as waking
-from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
-from astrbot.core.provider.entities import ProviderRequest
-from astrbot.core.star.filter.command import CommandFilter
-from astrbot.core.star.filter.command_group import CommandGroupFilter
-from astrbot.core.utils.quoted_message_parser import extract_quoted_message_text
+from bot.core.bot_main_agent import _process_quote_message, collect_initial_request
+from bot.core.message.components import Reply
+from bot.core.pipeline.process_stage.method.agent_sub_stages import third_party
+from bot.core.pipeline.waking_check import stage as waking
+from bot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
+from bot.core.provider.entities import ProviderRequest
+from bot.core.star.filter.command import CommandFilter
+from bot.core.star.filter.command_group import CommandGroupFilter
+from bot.core.utils.quoted_message_parser import extract_quoted_message_text
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def lark_message():
     """
     adapter = LarkPlatformAdapter.__new__(LarkPlatformAdapter)
     adapter.config = {"id": "lark-test"}
-    adapter.bot_open_id, adapter.bot_name = "ou_bot", "AstrBot"
+    adapter.bot_open_id, adapter.bot_name = "ou_bot", "LKMBot"
     adapter._user_name_cache = {}
     adapter.commit_event = MagicMock()
     parent = SimpleNamespace(
@@ -36,12 +36,12 @@ def lark_message():
         msg_type="post",
         mentions=[
             SimpleNamespace(
-                key="@_user_1", id=SimpleNamespace(open_id="ou_bot"), name="AstrBot"
+                key="@_user_1", id=SimpleNamespace(open_id="ou_bot"), name="LKMBot"
             )
         ],
     )
     adapter.lark_api = MagicMock()
-    adapter.lark_api._astrbot_group_info_cache = None
+    adapter.lark_api._bot_group_info_cache = None
     adapter.lark_api.contact.v3.user.aget = AsyncMock(
         return_value=SimpleNamespace(
             success=lambda: True,
@@ -87,12 +87,12 @@ async def waking_stage(monkeypatch):
     stage = waking.WakingCheckStage()
     await stage.initialize(
         SimpleNamespace(
-            astrbot_config={
+            bot_config={
                 "admins_id": [],
                 "wake_prefix": ["/"],
                 "platform_settings": {},
             },
-            astrbot_config_id="test",
+            bot_config_id="test",
             db_helper=MagicMock(),
         )
     )
@@ -186,10 +186,10 @@ async def test_lark_post_preserves_formatting(
         parsed_event.platform_meta.name = "telegram"
         assert await extract_quoted_message_text(parsed_event) == expected.strip()
     else:
-        waking_stage.ctx.astrbot_config["wake_prefix"] = [wake_prefix]
+        waking_stage.ctx.bot_config["wake_prefix"] = [wake_prefix]
         main_agent_build_config.provider_wake_prefix = provider_prefix
         monkeypatch.setattr(
-            "astrbot.core.astr_main_agent._get_session_conv",
+            "bot.core.bot_main_agent._get_session_conv",
             AsyncMock(return_value=SimpleNamespace(history="[]")),
         )
         await waking_stage.process(parsed_event)
@@ -283,7 +283,7 @@ async def test_lark_commands_match_complete_message(
     parsed_event = adapter.commit_event.call_args.args[0]
     if mention and not title:
         assert parsed_event.message_str == (
-            f"\n \t {body}@AstrBot" if message_type == "post" else f"{body} @AstrBot"
+            f"\n \t {body}@LKMBot" if message_type == "post" else f"{body} @LKMBot"
         )
 
     await waking_stage.process(parsed_event)
@@ -291,9 +291,9 @@ async def test_lark_commands_match_complete_message(
     command = CommandFilter("help")
     command.handler_params = {}
     assert parsed_event.is_wake is is_wake
-    assert command.filter(parsed_event, waking_stage.ctx.astrbot_config) is matches
+    assert command.filter(parsed_event, waking_stage.ctx.bot_config) is matches
     assert (
-        CommandGroupFilter("help").filter(parsed_event, waking_stage.ctx.astrbot_config)
+        CommandGroupFilter("help").filter(parsed_event, waking_stage.ctx.bot_config)
         is matches
     )
 
@@ -304,7 +304,7 @@ async def test_lark_commands_match_complete_message(
     [
         ("file", {"file_key": "file", "file_name": "report.pdf"}, "[File:report.pdf]"),
         ("image", {"image_key": "image"}, "[Image]"),
-        ("text", {"text": "@_user_1 hello"}, "@AstrBothello"),
+        ("text", {"text": "@_user_1 hello"}, "@LKMBothello"),
     ],
 )
 async def test_lark_non_post_quotes_keep_existing_text(

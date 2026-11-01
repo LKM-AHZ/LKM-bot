@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, call
 
 import pytest
 
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.sources.satori.satori_adapter import (
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.sources.satori.satori_adapter import (
     SatoriPlatformAdapter,
 )
 

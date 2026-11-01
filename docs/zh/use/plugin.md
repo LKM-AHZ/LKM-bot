@@ -2,7 +2,7 @@
 outline: deep
 ---
 
-# LKMBot 插件 {#astrbot-star}
+# LKMBot 插件 {#bot-star}
 
 插件是为 LKMBot 增加功能的扩展程序。安装插件后，你可以让机器人支持新的指令、接入外部服务，或为 AI 提供新的工具，而不必修改 LKMBot 本体的代码。
 
@@ -185,7 +185,7 @@ LKMBot 负责接收消息、连接模型、管理对话等基础工作；插件�
 
 如果现有插件无法满足需求，你可以用 Python 开发自己的插件。建议具备基础的 Python 和 Git / GitHub 使用经验，再按以下顺序学习：
 
-1. **创建项目**：按照[插件开发指南](/dev/star/plugin-new.html)，从 [helloworld 模板](https://github.com/Soulter/helloworld)创建仓库。建议以 `astrbot_plugin_` 开头命名。
+1. **创建项目**：按照[插件开发指南](/dev/star/plugin-new.html)，从 [helloworld 模板](https://github.com/Soulter/helloworld)创建仓库。建议以 `bot_plugin_` 开头命名。
 2. **接入开发环境**：将仓库放到 LKMBot 的 `data/plugins/<插件目录>/` 中，填写 `metadata.yaml`，让 LKMBot 识别插件名称、版本和作者等信息。
 3. **实现一个最小功能**：先完成一个接收消息并回复的指令。参考[消息事件监听](/dev/star/guides/listen-message-event.html)和[发送消息](/dev/star/guides/send-message.html)，在自己的机器人中测试。
 4. **逐步增加能力**：根据需要添加[AI 工具与模型交互](/dev/star/guides/ai.html)、[插件配置](/dev/star/guides/plugin-config.html)、[数据存储](/dev/star/guides/storage.html)或[插件页面](/dev/star/guides/plugin-pages.html)。修改代码后可以通过 WebUI 重载插件。

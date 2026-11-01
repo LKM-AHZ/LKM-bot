@@ -37,7 +37,7 @@ A Decision Provider handles low-latency structured choices, such as whether to r
 One request can answer multiple questions. `state` is passed to the decision model as-is and must be a `str`, `list`, or `dict`:
 
 ```py
-from astrbot.core.provider.entities import (
+from bot.core.provider.entities import (
     DecisionBooleanQuestion,
     DecisionChoiceAnswer,
     DecisionChoiceQuestion,
@@ -106,7 +106,7 @@ should_reply = await self.context.decision.yes_no(
 )
 ```
 
-Pass `provider_id="provider_id"` to use a specific configured decision provider; otherwise the default one is used. `DecisionError` is raised for an unconfigured provider, timeout, connection failure, HTTP error, invalid JSON, or an answer outside the requested contract. Underlying details are written to the AstrBot log, so plugins can catch the exception and decide whether to skip or degrade this decision.
+Pass `provider_id="provider_id"` to use a specific configured decision provider; otherwise the default one is used. `DecisionError` is raised for an unconfigured provider, timeout, connection failure, HTTP error, invalid JSON, or an answer outside the requested contract. Underlying details are written to the LKMBot log, so plugins can catch the exception and decide whether to skip or degrade this decision.
 
 ## Defining Tools
 
@@ -116,13 +116,13 @@ Tools enable large language models to invoke external capabilities.
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.agent.tool import FunctionTool, ToolExecResult
-from astrbot.core.astr_agent_context import AstrAgentContext
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.agent.tool import FunctionTool, ToolExecResult
+from bot.core.bot_agent_context import BotAgentContext
 
 
 @dataclass
-class BilibiliTool(FunctionTool[AstrAgentContext]):
+class BilibiliTool(FunctionTool[BotAgentContext]):
     name: str = "bilibili_videos"  # Tool name
     description: str = "A tool to fetch Bilibili videos."  # Tool description
     parameters: dict = Field(
@@ -139,7 +139,7 @@ class BilibiliTool(FunctionTool[AstrAgentContext]):
     )
 
     async def call(
-        self, context: ContextWrapper[AstrAgentContext], **kwargs
+        self, context: ContextWrapper[BotAgentContext], **kwargs
     ) -> ToolExecResult:
         return "1. Video Title: How to Use LKMBot\nVideo Link: xxxxxx"
 ```
@@ -176,7 +176,7 @@ Alternatively, you can use the `@filter.llm_tool` decorator to define and regist
 ```py{3,4,5,6,7}
 @filter.llm_tool(name="get_weather")  # If name is omitted, the function name is used
 async def get_weather(
-    self, event: AstrMessageEvent, location: str
+    self, event: BotMessageEvent, location: str
 ) -> MessageEventResult:
     """Get weather information.
 
@@ -237,16 +237,16 @@ In the example below, we define a Main Agent responsible for delegating tasks to
 Define Tools:
 
 ```py
-from astrbot.api import logger
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.agent.tool import FunctionTool, ToolExecResult, ToolSet
-from astrbot.core.astr_agent_context import AstrAgentContext
+from bot.api import logger
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.agent.tool import FunctionTool, ToolExecResult, ToolSet
+from bot.core.bot_agent_context import BotAgentContext
 from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 
 @dataclass
-class AssignAgentTool(FunctionTool[AstrAgentContext]):
+class AssignAgentTool(FunctionTool[BotAgentContext]):
     """Main agent uses this tool to decide which sub-agent to delegate a task to."""
 
     name: str = "assign_agent"
@@ -265,7 +265,7 @@ class AssignAgentTool(FunctionTool[AstrAgentContext]):
     )
 
     async def call(
-        self, context: ContextWrapper[AstrAgentContext], **kwargs
+        self, context: ContextWrapper[BotAgentContext], **kwargs
     ) -> ToolExecResult:
         # Here you would implement the actual agent assignment logic.
         # For demonstration purposes, we'll return a dummy response.
@@ -273,7 +273,7 @@ class AssignAgentTool(FunctionTool[AstrAgentContext]):
 
 
 @dataclass
-class WeatherTool(FunctionTool[AstrAgentContext]):
+class WeatherTool(FunctionTool[BotAgentContext]):
     """In this example, sub agent 1 uses this tool to get weather information."""
 
     name: str = "weather"
@@ -292,7 +292,7 @@ class WeatherTool(FunctionTool[AstrAgentContext]):
     )
 
     async def call(
-        self, context: ContextWrapper[AstrAgentContext], **kwargs
+        self, context: ContextWrapper[BotAgentContext], **kwargs
     ) -> ToolExecResult:
         city = kwargs["city"]
         # Here you would implement the actual weather fetching logic.
@@ -301,7 +301,7 @@ class WeatherTool(FunctionTool[AstrAgentContext]):
 
 
 @dataclass
-class SubAgent1(FunctionTool[AstrAgentContext]):
+class SubAgent1(FunctionTool[BotAgentContext]):
     """Define a sub-agent as a function tool."""
 
     name: str = "subagent1_name"
@@ -320,7 +320,7 @@ class SubAgent1(FunctionTool[AstrAgentContext]):
     )
 
     async def call(
-        self, context: ContextWrapper[AstrAgentContext], **kwargs
+        self, context: ContextWrapper[BotAgentContext], **kwargs
     ) -> ToolExecResult:
         ctx = context.context.context
         event = context.context.event
@@ -338,7 +338,7 @@ class SubAgent1(FunctionTool[AstrAgentContext]):
 
 
 @dataclass
-class SubAgent2(FunctionTool[AstrAgentContext]):
+class SubAgent2(FunctionTool[BotAgentContext]):
     """Define a sub-agent as a function tool."""
 
     name: str = "subagent2_name"
@@ -357,7 +357,7 @@ class SubAgent2(FunctionTool[AstrAgentContext]):
     )
 
     async def call(
-        self, context: ContextWrapper[AstrAgentContext], **kwargs
+        self, context: ContextWrapper[BotAgentContext], **kwargs
     ) -> ToolExecResult:
         return "I am useless :(, you shouldn't call me :("
 ```
@@ -366,7 +366,7 @@ Then, similarly, invoke the Agent using the `tool_loop_agent()` method:
 
 ```py
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
+async def test(self, event: BotMessageEvent):
     umo = event.unified_msg_origin
     prov_id = await self.context.get_current_chat_provider_id(umo)
     llm_resp = await self.context.tool_loop_agent(
@@ -388,7 +388,7 @@ async def test(self, event: AstrMessageEvent):
 ### Getting the Current LLM Conversation History for a Session
 
 ```py
-from astrbot.core.conversation_mgr import Conversation
+from bot.core.conversation_mgr import Conversation
 
 uid = event.unified_msg_origin
 conv_mgr = self.context.conversation_manager
@@ -426,7 +426,7 @@ class Conversation:
 ### Quickly Adding LLM Records to a Conversation `add_message_pair`
 
 ```py
-from astrbot.core.agent.message import (
+from bot.core.agent.message import (
     AssistantMessageSegment,
     UserMessageSegment,
     TextPart,

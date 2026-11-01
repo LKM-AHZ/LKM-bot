@@ -7,20 +7,20 @@ from urllib.parse import urlencode
 
 import pytest
 
-from astrbot.api.message_components import (
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
     Plain,
 )
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.button_interaction import (
+from bot.core.message.message_event_result import MessageChain
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.sources.slack.client import SlackWebhookClient
-from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
-from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
+from bot.core.platform.sources.slack.client import SlackWebhookClient
+from bot.core.platform.sources.slack.slack_adapter import SlackAdapter
+from bot.core.platform.sources.slack.slack_event import SlackMessageEvent
 
 
 @pytest.mark.asyncio
@@ -109,7 +109,7 @@ async def test_slack_rejected_button_blocks_retry_readable_text(fallback_text):
 
 @pytest.mark.asyncio
 async def test_slack_expired_button_notifies_only_clicking_user(monkeypatch):
-    from astrbot.core.platform import button_interaction
+    from bot.core.platform import button_interaction
 
     clock = [100.0]
     monkeypatch.setattr(button_interaction.time, "time", lambda: clock[0])

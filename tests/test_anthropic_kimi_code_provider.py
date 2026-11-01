@@ -4,11 +4,11 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-import astrbot.core.provider.sources.anthropic_source as anthropic_source
-import astrbot.core.provider.sources.kimi_code_source as kimi_code_source
-import astrbot.core.provider.sources.request_retry as request_retry
-from astrbot.core.exceptions import EmptyModelOutputError
-from astrbot.core.provider.entities import LLMResponse
+import bot.core.provider.sources.anthropic_source as anthropic_source
+import bot.core.provider.sources.kimi_code_source as kimi_code_source
+import bot.core.provider.sources.request_retry as request_retry
+from bot.core.exceptions import EmptyModelOutputError
+from bot.core.provider.entities import LLMResponse
 
 
 class _FakeAsyncAnthropic:
@@ -337,7 +337,7 @@ def test_prepare_payload_merges_consecutive_tool_results_into_single_user_messag
                         "type": "function",
                         "id": "call_00",
                         "function": {
-                            "name": "astrbot_file_read_tool",
+                            "name": "bot_file_read_tool",
                             "arguments": '{"path": "/tmp/one.txt"}',
                         },
                     },
@@ -345,7 +345,7 @@ def test_prepare_payload_merges_consecutive_tool_results_into_single_user_messag
                         "type": "function",
                         "id": "call_01",
                         "function": {
-                            "name": "astrbot_file_read_tool",
+                            "name": "bot_file_read_tool",
                             "arguments": '{"path": "/tmp/two.txt"}',
                         },
                     },
@@ -385,7 +385,7 @@ def test_prepare_payload_keeps_single_tool_result_as_single_user_message():
                         "type": "function",
                         "id": "call_00",
                         "function": {
-                            "name": "astrbot_file_read_tool",
+                            "name": "bot_file_read_tool",
                             "arguments": '{"path": "/tmp/one.txt"}',
                         },
                     }
@@ -421,7 +421,7 @@ def test_prepare_payload_does_not_merge_non_consecutive_tool_results():
                         "type": "function",
                         "id": "call_00",
                         "function": {
-                            "name": "astrbot_file_read_tool",
+                            "name": "bot_file_read_tool",
                             "arguments": '{"path": "/tmp/one.txt"}',
                         },
                     }
@@ -440,7 +440,7 @@ def test_prepare_payload_does_not_merge_non_consecutive_tool_results():
                         "type": "function",
                         "id": "call_01",
                         "function": {
-                            "name": "astrbot_file_read_tool",
+                            "name": "bot_file_read_tool",
                             "arguments": '{"path": "/tmp/two.txt"}',
                         },
                     }
@@ -461,7 +461,7 @@ def test_prepare_payload_does_not_merge_non_consecutive_tool_results():
                 {"type": "text", "text": "First tool"},
                 {
                     "type": "tool_use",
-                    "name": "astrbot_file_read_tool",
+                    "name": "bot_file_read_tool",
                     "input": {"path": "/tmp/one.txt"},
                     "id": "call_00",
                 },
@@ -479,7 +479,7 @@ def test_prepare_payload_does_not_merge_non_consecutive_tool_results():
                 {"type": "text", "text": "Second tool"},
                 {
                     "type": "tool_use",
-                    "name": "astrbot_file_read_tool",
+                    "name": "bot_file_read_tool",
                     "input": {"path": "/tmp/two.txt"},
                     "id": "call_01",
                 },

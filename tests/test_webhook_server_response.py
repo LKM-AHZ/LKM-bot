@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse, Response
 
-from astrbot.core.platform.webhook_server import webhook_response_from_result
+from bot.core.platform.webhook_server import webhook_response_from_result
 
 
 def test_webhook_response_preserves_plain_string():

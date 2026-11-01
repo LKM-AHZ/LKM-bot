@@ -4,8 +4,8 @@ from types import SimpleNamespace
 import pytest
 from openai.types.responses import Response
 
-from astrbot.core.config.default import CONFIG_METADATA_2
-from astrbot.core.provider.sources.openai_responses_source import (
+from bot.core.config.default import CONFIG_METADATA_2
+from bot.core.provider.sources.openai_responses_source import (
     ProviderOpenAIResponses,
 )
 

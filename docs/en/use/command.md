@@ -27,7 +27,7 @@ The following commands are shipped with LKMBot and loaded by default:
 These commands are located in:
 
 ```text
-astrbot/builtin_stars/builtin_commands
+bot/builtin_stars/builtin_commands
 ```
 
 ## Core Command Details
@@ -97,7 +97,7 @@ Permission notes:
 - With **Isolate Conversation** disabled, the command switches the conversation for the whole group; with isolation enabled and applied, it affects only the sender's conversation. Select **Everyone** to allow regular members to use the command in shared group conversations.
 - Command disabling and renaming are also managed here.
 
-Upgrade note: commands without explicitly saved permissions default to **Follow Conversation Isolation**. Permissions saved in command management and **Isolate Conversation** settings are preserved. Select **Follow Conversation Isolation** to restore automatic permission checks. If you customized the legacy `group_unique_on`, `group_unique_off`, or `private` values under `alter_cmd.astrbot.reset`, these values are no longer read; select the desired permission in command management instead.
+Upgrade note: commands without explicitly saved permissions default to **Follow Conversation Isolation**. Permissions saved in command management and **Isolate Conversation** settings are preserved. Select **Follow Conversation Isolation** to restore automatic permission checks. If you customized the legacy `group_unique_on`, `group_unique_off`, or `private` values under `alter_cmd.bot.reset`, these values are no longer read; select the desired permission in command management instead.
 
 ### `/stop`
 

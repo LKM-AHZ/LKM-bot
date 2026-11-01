@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.db.vec_db.faiss_impl.embedding_storage import EmbeddingStorage
-from astrbot.core.db.vec_db.faiss_impl.vec_db import FaissVecDB
-from astrbot.core.exceptions import KnowledgeBaseUploadError
-from astrbot.core.provider.provider import EmbeddingProvider
+from bot.core.db.vec_db.faiss_impl.embedding_storage import EmbeddingStorage
+from bot.core.db.vec_db.faiss_impl.vec_db import FaissVecDB
+from bot.core.exceptions import KnowledgeBaseUploadError
+from bot.core.provider.provider import EmbeddingProvider
 
 
 class DelayedEmbeddingProvider(EmbeddingProvider):

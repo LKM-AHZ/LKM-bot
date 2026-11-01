@@ -8,9 +8,9 @@ from pathlib import Path
 def test_builtin_skill_creator_initializes_and_validates(tmp_path: Path) -> None:
     skill_creator_root = (
         Path(__file__).parents[1]
-        / "astrbot"
+        / "bot"
         / "builtin_stars"
-        / "astrbot"
+        / "bot"
         / "skills"
         / "skill-creator"
     )

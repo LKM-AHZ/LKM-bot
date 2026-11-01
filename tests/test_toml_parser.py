@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.utils.toml_parser import read_pyproject_project_dependencies
+from bot.core.utils.toml_parser import read_pyproject_project_dependencies
 
 
 def test_read_pyproject_project_dependencies_reads_multiline_array(

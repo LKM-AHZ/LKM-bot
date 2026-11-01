@@ -3,8 +3,8 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from astrbot.cli.commands import cmd_init
-from astrbot.core.utils.auth_password import verify_dashboard_password
+from bot.cli.commands import cmd_init
+from bot.core.utils.auth_password import verify_dashboard_password
 
 
 def test_init_yes_skips_install_confirmation(monkeypatch, tmp_path):
@@ -18,7 +18,7 @@ def test_init_yes_skips_install_confirmation(monkeypatch, tmp_path):
     result = CliRunner().invoke(cmd_init.init, ["-y"])
 
     assert result.exit_code == 0, result.output
-    assert (tmp_path / ".astrbot").exists()
+    assert (tmp_path / ".bot").exists()
     assert (tmp_path / "data" / "config").is_dir()
     assert (tmp_path / "data" / "plugins").is_dir()
     assert (tmp_path / "data" / "temp").is_dir()
@@ -31,9 +31,9 @@ async def test_init_without_initial_password_env_does_not_create_config(
     tmp_path,
 ):
     monkeypatch.delenv(cmd_init.DASHBOARD_INITIAL_PASSWORD_ENV, raising=False)
-    (tmp_path / ".astrbot").touch()
+    (tmp_path / ".bot").touch()
 
-    await cmd_init.initialize_astrbot(tmp_path)
+    await cmd_init.initialize_bot(tmp_path)
 
     assert not (tmp_path / "data" / "cmd_config.json").exists()
 
@@ -43,11 +43,11 @@ async def test_init_uses_initial_password_env_to_create_config(
     monkeypatch,
     tmp_path,
 ):
-    initial_password = "AstrBotInitialPassword123"
+    initial_password = "BotInitialPassword123"
     monkeypatch.setenv(cmd_init.DASHBOARD_INITIAL_PASSWORD_ENV, initial_password)
-    (tmp_path / ".astrbot").touch()
+    (tmp_path / ".bot").touch()
 
-    await cmd_init.initialize_astrbot(tmp_path)
+    await cmd_init.initialize_bot(tmp_path)
 
     config_path = tmp_path / "data" / "cmd_config.json"
     config = json.loads(config_path.read_text(encoding="utf-8-sig"))

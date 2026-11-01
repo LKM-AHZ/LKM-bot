@@ -4,29 +4,29 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
     Plain,
 )
-from astrbot.core.platform import AstrBotMessage, MessageMember, MessageType
-from astrbot.core.platform.button_interaction import decode_button_callback
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_adapter import (
+from bot.core.platform import BotMessage, MessageMember, MessageType
+from bot.core.platform.button_interaction import decode_button_callback
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.platform.sources.wecom_ai_bot.wecomai_adapter import (
     WecomAIBotAdapter,
 )
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_buttons import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_buttons import (
     build_wecom_button_card,
 )
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_event import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_event import (
     WecomAIBotMessageEvent,
 )
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_queue_mgr import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_queue_mgr import (
     WecomAIQueueMgr,
 )
-from astrbot.core.platform.sources.wecom_ai_bot.wecomai_webhook import (
+from bot.core.platform.sources.wecom_ai_bot.wecomai_webhook import (
     WecomAIBotWebhookClient,
 )
 
@@ -51,8 +51,8 @@ def _button_row() -> ActionRow:
     )
 
 
-def _interaction_message(stream_id: str) -> AstrBotMessage:
-    message = AstrBotMessage()
+def _interaction_message(stream_id: str) -> BotMessage:
+    message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE
     message.self_id = "bot"
     message.session_id = "session"
@@ -103,7 +103,7 @@ async def test_wecom_webhook_sends_action_row_as_template_card():
 @pytest.mark.asyncio
 async def test_wecom_template_card_callback_becomes_button_interaction():
     adapter = object.__new__(WecomAIBotAdapter)
-    adapter.bot_name = "AstrBot"
+    adapter.bot_name = "LKMBot"
     adapter.encoding_aes_key = ""
     callback_key = build_wecom_button_card([_button_row()])["button_list"][0]["key"]
 
@@ -205,7 +205,7 @@ async def test_wecom_webhook_click_can_return_immediate_card_update():
     adapter.webhook_client = None
     adapter.initial_respond_text = ""
     adapter.friend_message_welcome_text = ""
-    adapter.bot_name = "AstrBot"
+    adapter.bot_name = "LKMBot"
     adapter.encoding_aes_key = ""
     adapter.metadata = PlatformMetadata(
         name="wecom_ai_bot",

@@ -37,7 +37,7 @@ if ($ast.Extent.Text -notmatch '\$bootstrapText = ConvertFrom-Json @''' -or
     $ast.Extent.Text -notmatch '\$defaultLanguage = ''en-US''' -or
     $ast.Extent.Text -notmatch '\$Indent = ''  ''' -or
     $ast.Extent.Text -notmatch 'Write-Host "\$Indent\$Prefix    \$Message"' -or
-    # CLI 已更名为 lkmbot（此前是 astrbot）：上游用 astrbot 的那版断言在本仓库
+    # CLI 已更名为 lkmbot（此前是 bot）：上游用 bot 的那版断言在本仓库
     # 合并上游代码后必然失败，这里改按本仓库实际的命令名断言。
     $ast.Extent.Text -notmatch 'Write-Host "\$\(\$Indent\)\$\(\$Indent\)lkmbot init"' -or
     $ast.Extent.Text -notmatch 'Write-Host "\$\(\$Indent\)\$\(\$Indent\)lkmbot run"' -or
@@ -62,7 +62,7 @@ $zipFunctionAst = $ast.Find({
 if (-not $zipFunctionAst) { throw 'Test-ZipArchive is missing.' }
 Invoke-Expression $zipFunctionAst.Extent.Text
 
-$archiveTestDir = Join-Path ([System.IO.Path]::GetTempPath()) ("astrbot-install-test-{0}" -f [guid]::NewGuid())
+$archiveTestDir = Join-Path ([System.IO.Path]::GetTempPath()) ("bot-install-test-{0}" -f [guid]::NewGuid())
 $null = New-Item -ItemType Directory -Path $archiveTestDir
 try {
     $validArchive = Join-Path $archiveTestDir 'valid.zip'
@@ -121,7 +121,7 @@ try {
         $_[1] -eq 'install' -and
         $_[2] -eq '--python' -and
         $_[3] -eq '3.12' -and
-        $_[4] -eq 'astrbot' -and
+        $_[4] -eq 'bot' -and
         $_[5] -eq '--default-index' -and
         $_[6] -eq 'https://pypi.org/simple/'
     })
@@ -154,7 +154,7 @@ $uvInstallFunctionAst = $ast.Find({
 if (-not $uvInstallFunctionAst) { throw 'Invoke-UvToolInstall is missing.' }
 Invoke-Expression $uvInstallFunctionAst.Extent.Text
 
-$applicationTestDir = Join-Path ([System.IO.Path]::GetTempPath()) ("astrbot-uv-process-test-{0}" -f [guid]::NewGuid())
+$applicationTestDir = Join-Path ([System.IO.Path]::GetTempPath()) ("bot-uv-process-test-{0}" -f [guid]::NewGuid())
 $null = New-Item -ItemType Directory -Path $applicationTestDir
 $previousPath = $env:PATH
 $previousLocation = (Get-Location).Path

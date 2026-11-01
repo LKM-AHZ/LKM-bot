@@ -9,14 +9,14 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.config.astrbot_config import AstrBotConfig, RateLimitStrategy
-from astrbot.core.config.default import (
+from bot.core.config.bot_config import BotConfig, RateLimitStrategy
+from bot.core.config.default import (
     DEFAULT_CONFIG,
     DEFAULT_VALUE_MAP,
     get_local_permission_defaults,
 )
-from astrbot.core.config.i18n_utils import ConfigMetadataI18n
-from astrbot.core.utils.auth_password import (
+from bot.core.config.i18n_utils import ConfigMetadataI18n
+from bot.core.utils.auth_password import (
     DEFAULT_DASHBOARD_PASSWORD,
     hash_dashboard_password,
     hash_md5_dashboard_password,
@@ -63,8 +63,8 @@ class TestRateLimitStrategy:
         assert RateLimitStrategy.DISCARD.value == "discard"
 
 
-class TestAstrBotConfigLoad:
-    """Tests for AstrBotConfig loading and initialization."""
+class TestBotConfigLoad:
+    """Tests for BotConfig loading and initialization."""
 
     def test_init_creates_file_if_not_exists(
         self, temp_config_path, minimal_default_config
@@ -72,7 +72,7 @@ class TestAstrBotConfigLoad:
         """Test that config file is created when it doesn't exist."""
         assert not os.path.exists(temp_config_path)
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -90,7 +90,7 @@ class TestAstrBotConfigLoad:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -111,7 +111,7 @@ class TestAstrBotConfigLoad:
                     {"provider_settings": {"computer_use_local_permissions": existing}}
                 )
             )
-        config = AstrBotConfig(
+        config = BotConfig(
             temp_config_path,
             default_config={
                 "provider_settings": {"computer_use_local_permissions": defaults}
@@ -134,7 +134,7 @@ class TestAstrBotConfigLoad:
 
     def test_first_deploy_flag(self, temp_config_path, minimal_default_config):
         """Test first_deploy flag is set for new config."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -157,7 +157,7 @@ class TestAstrBotConfigLoad:
             },
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert config.test_field == "test_value"
         assert config.nested["enabled"] is False
@@ -165,7 +165,7 @@ class TestAstrBotConfigLoad:
 
     def test_dot_notation_access(self, temp_config_path, minimal_default_config):
         """Test accessing config values using dot notation."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -174,7 +174,7 @@ class TestAstrBotConfigLoad:
 
     def test_setattr_updates_config(self, temp_config_path, minimal_default_config):
         """Test that setting attributes updates config."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -184,7 +184,7 @@ class TestAstrBotConfigLoad:
 
     def test_delattr_removes_field(self, temp_config_path, minimal_default_config):
         """Test that deleting attributes removes them."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         config.temp_field = "temp"
@@ -198,7 +198,7 @@ class TestAstrBotConfigLoad:
 
     def test_delattr_saves_config(self, temp_config_path, minimal_default_config):
         """Test that deleting attributes saves config to file."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         config.temp_field = "temp"
@@ -211,7 +211,7 @@ class TestAstrBotConfigLoad:
 
     def test_check_exist(self, temp_config_path, minimal_default_config):
         """Test check_exist method."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -227,7 +227,7 @@ class TestAstrBotConfigLoad:
         assert not os.path.exists(non_existent_path)
 
         # Create config which will auto-create the file
-        config2 = AstrBotConfig(
+        config2 = BotConfig(
             config_path=non_existent_path, default_config=minimal_default_config
         )
 
@@ -239,12 +239,12 @@ class TestAstrBotConfigLoad:
         """Test that an empty dashboard password is replaced with a random password."""
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
             },
         }
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
@@ -279,15 +279,15 @@ class TestAstrBotConfigLoad:
     ):
         """Test that the generated dashboard password can be provided by env."""
         env_password = "CustomInitial123"
-        monkeypatch.setenv("ASTRBOT_DASHBOARD_INITIAL_PASSWORD", env_password)
+        monkeypatch.setenv("BOT_DASHBOARD_INITIAL_PASSWORD", env_password)
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
             },
         }
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
@@ -307,16 +307,16 @@ class TestAstrBotConfigLoad:
         self, temp_config_path, monkeypatch
     ):
         """Test that weak env-provided initial passwords fail fast."""
-        monkeypatch.setenv("ASTRBOT_DASHBOARD_INITIAL_PASSWORD", "weak")
+        monkeypatch.setenv("BOT_DASHBOARD_INITIAL_PASSWORD", "weak")
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
             },
         }
 
         with pytest.raises(ValueError, match="Password must be at least"):
-            AstrBotConfig(
+            BotConfig(
                 config_path=temp_config_path,
                 default_config=default_config,
             )
@@ -327,7 +327,7 @@ class TestAstrBotConfigLoad:
         """A pending password change must not silently rotate the stored password."""
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
                 "pbkdf2_password": "",
                 "password_storage_upgraded": False,
@@ -339,7 +339,7 @@ class TestAstrBotConfigLoad:
             json.dump(
                 {
                     "dashboard": {
-                        "username": "astrbot",
+                        "username": "bot",
                         "password": "",
                         "pbkdf2_password": stored_pbkdf2,
                         "password_storage_upgraded": True,
@@ -349,7 +349,7 @@ class TestAstrBotConfigLoad:
                 f,
             )
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
@@ -367,7 +367,7 @@ class TestAstrBotConfigLoad:
         """Repeated constructions must not rotate a pending generated password (issue #9662)."""
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
                 "pbkdf2_password": "",
                 "password_storage_upgraded": False,
@@ -378,7 +378,7 @@ class TestAstrBotConfigLoad:
             json.dump(
                 {
                     "dashboard": {
-                        "username": "astrbot",
+                        "username": "bot",
                         "password": "",
                         "pbkdf2_password": "pbkdf2_sha256$600000$00$00",
                         "password_storage_upgraded": True,
@@ -388,11 +388,11 @@ class TestAstrBotConfigLoad:
                 f,
             )
 
-        first = AstrBotConfig(
+        first = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
-        second = AstrBotConfig(
+        second = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
@@ -411,7 +411,7 @@ class TestAstrBotConfigLoad:
         old_password = "OldPassword123"
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
                 "pbkdf2_password": "",
             },
@@ -420,7 +420,7 @@ class TestAstrBotConfigLoad:
             json.dump(
                 {
                     "dashboard": {
-                        "username": "astrbot",
+                        "username": "bot",
                         "password": hash_md5_dashboard_password(old_password),
                         "pbkdf2_password": hash_dashboard_password(old_password),
                         "password_change_required": False,
@@ -430,8 +430,8 @@ class TestAstrBotConfigLoad:
                 f,
             )
 
-        monkeypatch.setenv("ASTRBOT_RESET_DASHBOARD_PASSWORD", "1")
-        config = AstrBotConfig(
+        monkeypatch.setenv("BOT_RESET_DASHBOARD_PASSWORD", "1")
+        config = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
@@ -440,7 +440,7 @@ class TestAstrBotConfigLoad:
         assert isinstance(generated_password, str)
         assert config["dashboard"]["password_change_required"] is True
         assert config["dashboard"]["password_storage_upgraded"] is True
-        assert "ASTRBOT_RESET_DASHBOARD_PASSWORD" not in os.environ
+        assert "BOT_RESET_DASHBOARD_PASSWORD" not in os.environ
         assert verify_dashboard_password(
             config["dashboard"]["pbkdf2_password"], generated_password
         )
@@ -451,13 +451,13 @@ class TestAstrBotConfigLoad:
             config["dashboard"]["password"], generated_password
         )
 
-    def test_legacy_astrbot_user_without_change_flag_keeps_legacy_password(
+    def test_legacy_bot_user_without_change_flag_keeps_legacy_password(
         self, temp_config_path
     ):
         """Test old MD5 configs keep legacy auth until the manual upgrade."""
         default_config = {
             "dashboard": {
-                "username": "astrbot",
+                "username": "bot",
                 "password": "",
                 "pbkdf2_password": "",
             },
@@ -466,14 +466,16 @@ class TestAstrBotConfigLoad:
             json.dump(
                 {
                     "dashboard": {
-                        "username": "astrbot",
-                        "password": "77b90590a8945a7d36c963981a307dc9",
+                        "username": "bot",
+                        "password": hash_md5_dashboard_password(
+                            DEFAULT_DASHBOARD_PASSWORD
+                        ),
                     }
                 },
                 f,
             )
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
@@ -487,7 +489,7 @@ class TestAstrBotConfigLoad:
 
     def test_legacy_md5_password_requires_plain_password(self):
         """Test that a leaked legacy MD5 hash cannot be used as the login password."""
-        legacy_hash = "77b90590a8945a7d36c963981a307dc9"
+        legacy_hash = hash_md5_dashboard_password(DEFAULT_DASHBOARD_PASSWORD)
 
         assert verify_dashboard_password(legacy_hash, DEFAULT_DASHBOARD_PASSWORD)
         assert not verify_dashboard_password(legacy_hash, legacy_hash)
@@ -504,7 +506,7 @@ class TestConfigValidation:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -521,12 +523,12 @@ class TestConfigValidation:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        AstrBotConfig(
+        BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
         # Reload to verify the values were replaced
-        config2 = AstrBotConfig(
+        config2 = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -543,7 +545,7 @@ class TestConfigValidation:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        AstrBotConfig(
+        BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -565,7 +567,7 @@ class TestConfigValidation:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -591,7 +593,7 @@ class TestConfigValidation:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=default_config
         )
 
@@ -602,7 +604,7 @@ class TestConfigValidation:
         self, temp_config_path, monkeypatch
     ):
         """Default values may contain secrets and should not be logged."""
-        from astrbot.core.config import astrbot_config
+        from bot.core.config import bot_config
 
         existing_config = {}
         default_config = {"api_key": "secret-value"}
@@ -613,9 +615,9 @@ class TestConfigValidation:
         def capture_info(message, *args):
             messages.append(message % args if args else message)
 
-        monkeypatch.setattr(astrbot_config.logger, "info", capture_info)
+        monkeypatch.setattr(bot_config.logger, "info", capture_info)
 
-        AstrBotConfig(config_path=temp_config_path, default_config=default_config)
+        BotConfig(config_path=temp_config_path, default_config=default_config)
 
         assert messages
         assert all("secret-value" not in message for message in messages)
@@ -628,7 +630,7 @@ class TestConfigHotReload:
 
     def test_save_config(self, temp_config_path, minimal_default_config):
         """Test saving config to file."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         config.new_field = "new_value"
@@ -643,7 +645,7 @@ class TestConfigHotReload:
     async def test_save_config_async_keeps_event_loop_responsive(
         self, temp_config_path, minimal_default_config, monkeypatch
     ):
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         write_started = threading.Event()
@@ -673,7 +675,7 @@ class TestConfigHotReload:
     async def test_save_config_async_writes_stable_snapshot(
         self, temp_config_path, minimal_default_config, monkeypatch
     ):
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         dump_started = threading.Event()
@@ -701,7 +703,7 @@ class TestConfigHotReload:
     async def test_save_config_async_does_not_block_next_snapshot_during_replace(
         self, temp_config_path, minimal_default_config, monkeypatch
     ):
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         first_replace_started = threading.Event()
@@ -739,7 +741,7 @@ class TestConfigHotReload:
     async def test_save_config_async_discards_older_late_write(
         self, temp_config_path, minimal_default_config, monkeypatch
     ):
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         first_write_started = threading.Event()
@@ -777,7 +779,7 @@ class TestConfigHotReload:
     async def test_save_config_commits_older_snapshot_when_newer_write_fails(
         self, temp_config_path, minimal_default_config, monkeypatch
     ):
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         first_write_started = threading.Event()
@@ -815,7 +817,7 @@ class TestConfigHotReload:
 
     def test_save_config_with_replace(self, temp_config_path, minimal_default_config):
         """Test saving config with replacement."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -838,7 +840,7 @@ class TestConfigHotReload:
         self, temp_config_path, minimal_default_config, monkeypatch
     ):
         """Config saves should not corrupt the existing file on write failure."""
-        config = AstrBotConfig(
+        config = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         with open(temp_config_path, encoding="utf-8-sig") as f:
@@ -851,7 +853,7 @@ class TestConfigHotReload:
 
         config.new_field = "new_value"
         monkeypatch.setattr(
-            "astrbot.core.config.astrbot_config.json.dump",
+            "bot.core.config.bot_config.json.dump",
             failing_dump,
         )
 
@@ -870,13 +872,13 @@ class TestConfigHotReload:
         self, temp_config_path, minimal_default_config
     ):
         """Test that modifications persist after reloading."""
-        config1 = AstrBotConfig(
+        config1 = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
         config1.platform_settings["unique_session"] = True
         config1.save_config()
 
-        config2 = AstrBotConfig(
+        config2 = BotConfig(
             config_path=temp_config_path, default_config=minimal_default_config
         )
 
@@ -894,7 +896,7 @@ class TestConfigSchemaToDefault:
             "bool_field": {"type": "bool", "default": True},
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert config.string_field == "custom"
         assert config.int_field == 100
@@ -908,7 +910,7 @@ class TestConfigSchemaToDefault:
             "bool_field": {"type": "bool"},
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert config.string_field == DEFAULT_VALUE_MAP["string"]
         assert config.int_field == DEFAULT_VALUE_MAP["int"]
@@ -921,7 +923,7 @@ class TestConfigSchemaToDefault:
         }
 
         with pytest.raises(TypeError, match="不受支持的配置类型"):
-            AstrBotConfig(config_path=temp_config_path, schema=schema)
+            BotConfig(config_path=temp_config_path, schema=schema)
 
     def test_template_list_type(self, temp_config_path):
         """Test template_list schema type."""
@@ -929,7 +931,7 @@ class TestConfigSchemaToDefault:
             "templates": {"type": "template_list", "default": []},
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert config.templates == []
 
@@ -945,7 +947,7 @@ class TestConfigSchemaToDefault:
             },
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert config.nested["field1"] == ""
         assert config.nested["field2"] == 0
@@ -1161,11 +1163,11 @@ class TestDictTypeConfigIntegrity:
             },
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
         config["user_map"] = {"group_a": "123", "group_b": "456"}
         config.save_config()
 
-        reloaded = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        reloaded = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert reloaded["user_map"] == {"group_a": "123", "group_b": "456"}
 
@@ -1187,11 +1189,11 @@ class TestDictTypeConfigIntegrity:
             },
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
         config["section"]["mapping"] = {"key1": "value1"}
         config.save_config()
 
-        reloaded = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        reloaded = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert reloaded["section"]["enabled"] is False
         assert reloaded["section"]["mapping"] == {"key1": "value1"}
@@ -1207,11 +1209,11 @@ class TestDictTypeConfigIntegrity:
             },
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
         config["user_map"] = {"preset_a": "2", "user_added": "3"}
         config.save_config()
 
-        reloaded = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        reloaded = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert reloaded["user_map"] == {"preset_a": "2", "user_added": "3"}
 
@@ -1221,11 +1223,11 @@ class TestDictTypeConfigIntegrity:
             "section": {"type": "object", "items": {}},
         }
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
         config["section"] = {"user_key": "value"}
         config.save_config()
 
-        reloaded = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        reloaded = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert reloaded["section"] == {}
 
@@ -1234,7 +1236,7 @@ class TestDictTypeConfigIntegrity:
         refer_conf = {"structured": {"keep": 1}}
         conf = {"structured": {"keep": 2, "stale": 3}}
 
-        config = AstrBotConfig.__new__(AstrBotConfig)
+        config = BotConfig.__new__(BotConfig)
         has_new = config.check_config_integrity(refer_conf, conf)
 
         assert has_new is True
@@ -1250,6 +1252,6 @@ class TestDictTypeConfigIntegrity:
         with open(temp_config_path, "w", encoding="utf-8-sig") as f:
             json.dump(existing_config, f)
 
-        config = AstrBotConfig(config_path=temp_config_path, schema=schema)
+        config = BotConfig(config_path=temp_config_path, schema=schema)
 
         assert config["user_map"] == {}

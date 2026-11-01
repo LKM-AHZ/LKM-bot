@@ -8,7 +8,7 @@ from unittest import mock
 
 import pytest
 
-from astrbot.core.dashboard_assets import get_dashboard_version
+from bot.core.dashboard_assets import get_dashboard_version
 from main import (
     DASHBOARD_RESET_PASSWORD_ENV,
     _apply_startup_env_flags,
@@ -66,7 +66,7 @@ def test_check_env(monkeypatch):
     monkeypatch.setattr(sys, "version_info", version_info_correct)
     with mock.patch("os.makedirs") as mock_makedirs:
         check_env()
-        # check_env uses get_astrbot_*_path() which returns absolute paths,
+        # check_env uses get_bot_*_path() which returns absolute paths,
         # so just verify makedirs was called the expected number of times
         assert mock_makedirs.call_count >= 4
         # Verify all calls used exist_ok=True
@@ -103,45 +103,45 @@ def test_apply_startup_env_flags_does_not_reset_for_help(monkeypatch):
 
 
 def test_check_env_appends_user_site_packages_after_runtime_paths(monkeypatch):
-    astrbot_root = "/tmp/astrbot-root"
-    site_packages_path = "/tmp/astrbot-site-packages"
+    bot_root = "/tmp/bot-root"
+    site_packages_path = "/tmp/bot-site-packages"
     original_sys_path = list(sys.path)
 
     monkeypatch.setattr(sys, "version_info", _version_info(3, 12))
-    monkeypatch.setattr("main.get_astrbot_root", lambda: astrbot_root)
+    monkeypatch.setattr("main.get_bot_root", lambda: bot_root)
     monkeypatch.setattr(
-        "main.get_astrbot_site_packages_path", lambda: site_packages_path
+        "main.get_bot_site_packages_path", lambda: site_packages_path
     )
-    monkeypatch.setattr("main.get_astrbot_config_path", lambda: "/tmp/config")
-    monkeypatch.setattr("main.get_astrbot_plugin_path", lambda: "/tmp/plugins")
-    monkeypatch.setattr("main.get_astrbot_temp_path", lambda: "/tmp/temp")
-    monkeypatch.setattr("main.get_astrbot_knowledge_base_path", lambda: "/tmp/kb")
+    monkeypatch.setattr("main.get_bot_config_path", lambda: "/tmp/config")
+    monkeypatch.setattr("main.get_bot_plugin_path", lambda: "/tmp/plugins")
+    monkeypatch.setattr("main.get_bot_temp_path", lambda: "/tmp/temp")
+    monkeypatch.setattr("main.get_bot_knowledge_base_path", lambda: "/tmp/kb")
     monkeypatch.setattr(sys, "path", ["/runtime/lib", *original_sys_path])
 
     with mock.patch("os.makedirs"):
         check_env()
 
-    assert sys.path[0] == astrbot_root
+    assert sys.path[0] == bot_root
     assert sys.path[-1] == site_packages_path
     assert sys.path.index(site_packages_path) > sys.path.index("/runtime/lib")
 
 
 def test_check_env_does_not_append_duplicate_user_site_packages(monkeypatch):
-    astrbot_root = "/tmp/astrbot-root"
-    site_packages_path = "/tmp/astrbot-site-packages"
+    bot_root = "/tmp/bot-root"
+    site_packages_path = "/tmp/bot-site-packages"
     original_sys_path = list(sys.path)
 
     monkeypatch.setattr(sys, "version_info", _version_info(3, 12))
-    monkeypatch.setattr("main.get_astrbot_root", lambda: astrbot_root)
+    monkeypatch.setattr("main.get_bot_root", lambda: bot_root)
     monkeypatch.setattr(
-        "main.get_astrbot_site_packages_path", lambda: site_packages_path
+        "main.get_bot_site_packages_path", lambda: site_packages_path
     )
-    monkeypatch.setattr("main.get_astrbot_config_path", lambda: "/tmp/config")
-    monkeypatch.setattr("main.get_astrbot_plugin_path", lambda: "/tmp/plugins")
-    monkeypatch.setattr("main.get_astrbot_temp_path", lambda: "/tmp/temp")
-    monkeypatch.setattr("main.get_astrbot_knowledge_base_path", lambda: "/tmp/kb")
+    monkeypatch.setattr("main.get_bot_config_path", lambda: "/tmp/config")
+    monkeypatch.setattr("main.get_bot_plugin_path", lambda: "/tmp/plugins")
+    monkeypatch.setattr("main.get_bot_temp_path", lambda: "/tmp/temp")
+    monkeypatch.setattr("main.get_bot_knowledge_base_path", lambda: "/tmp/kb")
     monkeypatch.setattr(
-        sys, "path", [astrbot_root, *original_sys_path, site_packages_path]
+        sys, "path", [bot_root, *original_sys_path, site_packages_path]
     )
 
     with mock.patch("os.makedirs"):
@@ -200,7 +200,7 @@ async def test_check_dashboard_files_returns_none_without_static_files(
 ):
     """Startup has no static panel when neither --webui-dir nor data/dist exists."""
     monkeypatch.setattr(
-        "astrbot.core.dashboard_assets.get_astrbot_data_path",
+        "bot.core.dashboard_assets.get_bot_data_path",
         lambda: str(tmp_path / "data"),
     )
 
@@ -213,7 +213,7 @@ async def test_check_dashboard_files_serves_data_dist_fallback(monkeypatch, tmp_
     data_dir = tmp_path / "data"
     _write_dashboard_dist(data_dir / "dist")
     monkeypatch.setattr(
-        "astrbot.core.dashboard_assets.get_astrbot_data_path",
+        "bot.core.dashboard_assets.get_bot_data_path",
         lambda: str(data_dir),
     )
 
@@ -225,7 +225,7 @@ async def test_get_dashboard_version_returns_none_without_static_files(
     monkeypatch, tmp_path
 ):
     monkeypatch.setattr(
-        "astrbot.core.dashboard_assets.get_astrbot_data_path",
+        "bot.core.dashboard_assets.get_bot_data_path",
         lambda: str(tmp_path / "data"),
     )
 
@@ -237,7 +237,7 @@ async def test_get_dashboard_version_reads_data_dist(monkeypatch, tmp_path):
     data_dir = tmp_path / "data"
     _write_dashboard_dist(data_dir / "dist", "v4.24.4")
     monkeypatch.setattr(
-        "astrbot.core.dashboard_assets.get_astrbot_data_path",
+        "bot.core.dashboard_assets.get_bot_data_path",
         lambda: str(data_dir),
     )
 

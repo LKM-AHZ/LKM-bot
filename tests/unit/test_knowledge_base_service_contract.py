@@ -6,15 +6,15 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import Request
 
-from astrbot.core.provider.provider import EmbeddingProvider
-from astrbot.dashboard.api.knowledge_bases import (
+from bot.core.provider.provider import EmbeddingProvider
+from bot.dashboard.api.knowledge_bases import (
     list_knowledge_bases,
 )
-from astrbot.dashboard.api.multipart import MultiDict
-from astrbot.dashboard.schemas import (
+from bot.dashboard.api.multipart import MultiDict
+from bot.dashboard.schemas import (
     KnowledgeBaseRequest,
 )
-from astrbot.dashboard.services.knowledge_base_service import (
+from bot.dashboard.services.knowledge_base_service import (
     KnowledgeBaseService,
     KnowledgeBaseServiceError,
 )
@@ -322,11 +322,11 @@ async def test_upload_document_accepts_more_than_ten_files_and_cleans_temporary_
         return task
 
     monkeypatch.setattr(
-        "astrbot.dashboard.services.knowledge_base_service.get_astrbot_system_tmp_path",
+        "bot.dashboard.services.knowledge_base_service.get_bot_system_tmp_path",
         lambda: tmp_path,
     )
     monkeypatch.setattr(
-        "astrbot.dashboard.services.knowledge_base_service.asyncio.create_task",
+        "bot.dashboard.services.knowledge_base_service.asyncio.create_task",
         capture_task,
     )
 

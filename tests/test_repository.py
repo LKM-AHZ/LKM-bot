@@ -1,6 +1,6 @@
 import pytest
 
-from astrbot.core.repository import (
+from bot.core.repository import (
     GitHubRepository,
     normalize_repository_url,
     parse_repository_url,

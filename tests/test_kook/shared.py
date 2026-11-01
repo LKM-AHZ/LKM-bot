@@ -4,8 +4,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
 
-from astrbot.core.platform import AstrBotMessage, MessageType
-from astrbot.core.message.components import (
+from bot.core.platform import BotMessage, MessageType
+from bot.core.message.components import (
     File,
     Record,
 )
@@ -95,8 +95,8 @@ def mock_record_message(input: str):
     return message
 
 
-def mock_astrbot_message():
-    message = AstrBotMessage()
+def mock_bot_message():
+    message = BotMessage()
     message.type = MessageType.OTHER_MESSAGE
     message.set_group("test")
     message.session_id = "test"

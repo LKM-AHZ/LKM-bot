@@ -1,10 +1,10 @@
 import pytest
 
-from astrbot.core.platform.astrbot_message import AstrBotMessage, MessageMember
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform_metadata import PlatformMetadata
-from astrbot.core.platform.sources.webchat.webchat_event import WebChatMessageEvent
-from astrbot.core.platform.sources.webchat.webchat_queue_mgr import webchat_queue_mgr
+from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform_metadata import PlatformMetadata
+from bot.core.platform.sources.webchat.webchat_event import WebChatMessageEvent
+from bot.core.platform.sources.webchat.webchat_queue_mgr import webchat_queue_mgr
 
 
 def _event(message_id: str) -> WebChatMessageEvent:
@@ -16,7 +16,7 @@ def _event(message_id: str) -> WebChatMessageEvent:
     Returns:
         Configured WebChat event.
     """
-    message = AstrBotMessage()
+    message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE
     message.self_id = "webchat"
     message.session_id = "session-1"

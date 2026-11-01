@@ -13,18 +13,18 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.computer import process_sandbox
-from astrbot.core.computer.booters import local
-from astrbot.core.computer.process_sandbox import (
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.computer import process_sandbox
+from bot.core.computer.booters import local
+from bot.core.computer.process_sandbox import (
     SandboxSpec,
     bubblewrap,
     create_process_sandbox,
     seatbelt,
     unix,
 )
-from astrbot.core.tools.computer_tools import fs, python, shell
-from astrbot.dashboard.services import stat_service
+from bot.core.tools.computer_tools import fs, python, shell
+from bot.dashboard.services import stat_service
 
 requires_local_sandbox = pytest.mark.skipif(
     not (
@@ -47,7 +47,7 @@ async def test_managed_shell_output_cannot_be_redirected_outside_sandbox(
     shared_temp.mkdir()
     secret = tmp_path / "host-only.txt"
     secret.write_text("host-only marker", encoding="utf-8")
-    monkeypatch.setattr(local, "get_astrbot_system_tmp_path", lambda: str(shared_temp))
+    monkeypatch.setattr(local, "get_bot_system_tmp_path", lambda: str(shared_temp))
     code = f"""
 from pathlib import Path
 
@@ -89,7 +89,7 @@ print("original process output")
 def test_runtime_probe_launches_native_sandbox(monkeypatch, tmp_path):
     """Verify the dashboard startup check against each platform's real backend."""
     process_sandbox.get_process_sandbox_status.cache_clear()
-    monkeypatch.setattr(process_sandbox, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(process_sandbox, "get_bot_temp_path", lambda: str(tmp_path))
 
     service = stat_service.StatService(MagicMock(), MagicMock(), {})
 
@@ -409,16 +409,16 @@ async def test_local_execution_obeys_file_tool_roots(
     secret = tmp_path / "data" / "private.txt"
     secret.write_text("outside content", encoding="utf-8")
     (workspace / "outside-link").symlink_to(secret)
-    monkeypatch.setattr(fs, "get_astrbot_skills_path", lambda: str(installed))
+    monkeypatch.setattr(fs, "get_bot_skills_path", lambda: str(installed))
     monkeypatch.setattr(
-        fs, "get_astrbot_plugin_path", lambda: str(plugin.parent.parent)
+        fs, "get_bot_plugin_path", lambda: str(plugin.parent.parent)
     )
     monkeypatch.setattr(
-        fs, "get_astrbot_builtin_plugin_path", lambda: str(builtin.parent.parent)
+        fs, "get_bot_builtin_plugin_path", lambda: str(builtin.parent.parent)
     )
-    monkeypatch.setattr(fs, "get_astrbot_temp_path", lambda: str(temporary))
-    monkeypatch.setattr(fs, "get_astrbot_system_tmp_path", lambda: str(system_temp))
-    monkeypatch.setattr(local, "get_astrbot_system_tmp_path", lambda: str(system_temp))
+    monkeypatch.setattr(fs, "get_bot_temp_path", lambda: str(temporary))
+    monkeypatch.setattr(fs, "get_bot_system_tmp_path", lambda: str(system_temp))
+    monkeypatch.setattr(local, "get_bot_system_tmp_path", lambda: str(system_temp))
     monkeypatch.setattr(
         shell, "workspace_root_for_context", AsyncMock(return_value=workspace)
     )

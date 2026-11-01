@@ -1,4 +1,4 @@
-"""Tests for astrbot/core/computer module.
+"""Tests for bot/core/computer module.
 
 This module tests the ComputerClient, Booter implementations (local, shipyard, boxlite),
 filesystem operations, Python execution, shell execution, and security restrictions.
@@ -11,8 +11,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from astrbot.core.computer.booters.base import ComputerBooter
-from astrbot.core.computer.booters.local import (
+from bot.core.computer.booters.base import ComputerBooter
+from bot.core.computer.booters.local import (
     LocalBooter,
     LocalFileSystemComponent,
     LocalPythonComponent,
@@ -168,7 +168,7 @@ class TestLocalShellComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -263,7 +263,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -281,7 +281,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -297,7 +297,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -314,7 +314,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -332,7 +332,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -351,7 +351,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -373,7 +373,7 @@ class TestLocalFileSystemComponent:
 
         with (
             patch(
-                "astrbot.core.computer.booters.local.get_astrbot_root",
+                "bot.core.computer.booters.local.get_bot_root",
                 return_value=str(tmp_path),
             ),
         ):
@@ -404,7 +404,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_unwraps_bay_exec_response(self):
         """Bay exec responses keep shell output under the data field."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -435,7 +435,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_keeps_flat_exec_response_compatible(self):
         """Flat shell responses remain compatible with ShipyardShellWrapper."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -467,7 +467,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_maps_nonzero_return_code(self):
         """A non-zero Bay return_code is exposed as exit_code and failure."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -493,7 +493,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_failure_without_success_field(self):
         """A nonzero return code without `success` is reported as a failure."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -508,7 +508,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_keeps_envelope_error(self):
         """A nested `data.error = None` must not hide the envelope error."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -534,7 +534,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_file_tools_unwrap_bay_exec_response(self):
         """Bay file responses keep their payload under the data field too."""
-        from astrbot.core.computer.booters.shipyard import (
+        from bot.core.computer.booters.shipyard import (
             ShipyardFileSystemWrapper,
         )
 
@@ -598,7 +598,7 @@ class TestShipyardBooter:
         self, method, kwargs, inner
     ):
         """Every fs wrapper flattens the envelope, not only read_file/list_dir."""
-        from astrbot.core.computer.booters.shipyard import (
+        from bot.core.computer.booters.shipyard import (
             ShipyardFileSystemWrapper,
         )
 
@@ -619,7 +619,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_envelope_failure_wins_over_data_success(self):
         """A failed request is not reported as a success by data.success."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -644,7 +644,7 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_shell_envelope_failure_without_data(self):
         """A request-level failure carrying no `data` is still a failure."""
-        from astrbot.core.computer.booters.shipyard import ShipyardShellWrapper
+        from bot.core.computer.booters.shipyard import ShipyardShellWrapper
 
         raw_shell = MagicMock()
         raw_shell.exec = AsyncMock(
@@ -665,8 +665,8 @@ class TestShipyardBooter:
     @pytest.mark.asyncio
     async def test_shipyard_booter_init(self):
         """Test ShipyardBooter initialization."""
-        with patch("astrbot.core.computer.booters.shipyard.ShipyardClient"):
-            from astrbot.core.computer.booters.shipyard import ShipyardBooter
+        with patch("bot.core.computer.booters.shipyard.ShipyardClient"):
+            from bot.core.computer.booters.shipyard import ShipyardBooter
 
             booter = ShipyardBooter(
                 endpoint_url="http://localhost:8080",
@@ -690,10 +690,10 @@ class TestShipyardBooter:
         mock_client.create_ship = AsyncMock(return_value=mock_ship)
 
         with patch(
-            "astrbot.core.computer.booters.shipyard.ShipyardClient",
+            "bot.core.computer.booters.shipyard.ShipyardClient",
             return_value=mock_client,
         ):
-            from astrbot.core.computer.booters.shipyard import ShipyardBooter
+            from bot.core.computer.booters.shipyard import ShipyardBooter
 
             booter = ShipyardBooter(
                 endpoint_url="http://localhost:8080",
@@ -712,10 +712,10 @@ class TestShipyardBooter:
         mock_client.get_ship = AsyncMock(return_value={"status": 1})
 
         with patch(
-            "astrbot.core.computer.booters.shipyard.ShipyardClient",
+            "bot.core.computer.booters.shipyard.ShipyardClient",
             return_value=mock_client,
         ):
-            from astrbot.core.computer.booters.shipyard import ShipyardBooter
+            from bot.core.computer.booters.shipyard import ShipyardBooter
 
             booter = ShipyardBooter(
                 endpoint_url="http://localhost:8080",
@@ -737,10 +737,10 @@ class TestShipyardBooter:
         mock_client.get_ship = AsyncMock(return_value={"status": 0})
 
         with patch(
-            "astrbot.core.computer.booters.shipyard.ShipyardClient",
+            "bot.core.computer.booters.shipyard.ShipyardClient",
             return_value=mock_client,
         ):
-            from astrbot.core.computer.booters.shipyard import ShipyardBooter
+            from bot.core.computer.booters.shipyard import ShipyardBooter
 
             booter = ShipyardBooter(
                 endpoint_url="http://localhost:8080",
@@ -764,7 +764,7 @@ class TestBoxliteBooter:
         mock_boxlite.SimpleBox = MagicMock()
 
         with patch.dict(sys.modules, {"boxlite": mock_boxlite}):
-            from astrbot.core.computer.booters.boxlite import BoxliteBooter
+            from bot.core.computer.booters.boxlite import BoxliteBooter
 
             # Just verify class exists and can be instantiated (boot is async)
             booter = BoxliteBooter.__new__(BoxliteBooter)
@@ -778,7 +778,7 @@ class TestComputerClient:
     @pytest.mark.parametrize("runtime", [None, "none", "local"])
     async def test_get_booter_requires_explicit_runtime(self, runtime):
         """An omitted runtime must not start or reuse a computer environment."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         provider_settings = {} if runtime is None else {"computer_use_runtime": runtime}
         context = MagicMock()
@@ -798,7 +798,7 @@ class TestComputerClient:
 
     def test_get_local_booter(self):
         """Test get_local_booter returns singleton LocalBooter."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         # Clear the global booter to test singleton
         computer_client.local_booter = None
@@ -815,7 +815,7 @@ class TestComputerClient:
     @pytest.mark.asyncio
     async def test_shutdown_local_booter_clears_singleton(self):
         """Test local managed resources are released during lifecycle shutdown."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         booter = MagicMock(spec=LocalBooter)
         booter.shutdown = AsyncMock()
@@ -829,8 +829,8 @@ class TestComputerClient:
     @pytest.mark.asyncio
     async def test_get_booter_shipyard(self):
         """Test get_booter with shipyard type."""
-        from astrbot.core.computer import computer_client
-        from astrbot.core.computer.booters.shipyard import ShipyardBooter
+        from bot.core.computer import computer_client
+        from bot.core.computer.booters.shipyard import ShipyardBooter
 
         # Clear session booter
         computer_client.session_booter.clear()
@@ -867,7 +867,7 @@ class TestComputerClient:
         with (
             patch.object(ShipyardBooter, "boot", new=AsyncMock()),
             patch(
-                "astrbot.core.computer.computer_client._sync_skills_to_sandbox",
+                "bot.core.computer.computer_client._sync_skills_to_sandbox",
                 AsyncMock(),
             ),
         ):
@@ -883,7 +883,7 @@ class TestComputerClient:
     @pytest.mark.asyncio
     async def test_get_booter_unknown_type(self):
         """Test get_booter with unknown booter type raises ValueError."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         computer_client.session_booter.clear()
 
@@ -906,8 +906,8 @@ class TestComputerClient:
     @pytest.mark.asyncio
     async def test_get_booter_reuses_existing(self):
         """Test get_booter reuses existing booter for same session."""
-        from astrbot.core.computer import computer_client
-        from astrbot.core.computer.booters.shipyard import ShipyardBooter
+        from bot.core.computer import computer_client
+        from bot.core.computer.booters.shipyard import ShipyardBooter
 
         computer_client.session_booter.clear()
 
@@ -934,7 +934,7 @@ class TestComputerClient:
         with (
             patch.object(ShipyardBooter, "boot", new=AsyncMock()),
             patch(
-                "astrbot.core.computer.computer_client._sync_skills_to_sandbox",
+                "bot.core.computer.computer_client._sync_skills_to_sandbox",
                 AsyncMock(),
             ),
         ):
@@ -951,8 +951,8 @@ class TestComputerClient:
     @pytest.mark.asyncio
     async def test_get_booter_rebuild_unavailable(self):
         """Test get_booter rebuilds when existing booter is unavailable."""
-        from astrbot.core.computer import computer_client
-        from astrbot.core.computer.booters.shipyard import ShipyardBooter
+        from bot.core.computer import computer_client
+        from bot.core.computer.booters.shipyard import ShipyardBooter
 
         computer_client.session_booter.clear()
 
@@ -978,11 +978,11 @@ class TestComputerClient:
 
         with (
             patch(
-                "astrbot.core.computer.booters.shipyard.ShipyardBooter",
+                "bot.core.computer.booters.shipyard.ShipyardBooter",
                 return_value=mock_new_booter,
             ) as mock_booter_cls,
             patch(
-                "astrbot.core.computer.computer_client._sync_skills_to_sandbox",
+                "bot.core.computer.computer_client._sync_skills_to_sandbox",
                 AsyncMock(),
             ),
         ):
@@ -1011,7 +1011,7 @@ class TestSyncSkillsToSandbox:
     @pytest.mark.asyncio
     async def test_sync_skills_no_skills_dir(self):
         """Test sync does nothing when skills directory doesn't exist."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         mock_booter = MagicMock()
         mock_booter.shell.exec = AsyncMock()
@@ -1019,11 +1019,11 @@ class TestSyncSkillsToSandbox:
 
         with (
             patch(
-                "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+                "bot.core.computer.computer_client.get_bot_skills_path",
                 return_value="/nonexistent/path",
             ),
             patch(
-                "astrbot.core.computer.computer_client.os.path.isdir",
+                "bot.core.computer.computer_client.os.path.isdir",
                 return_value=False,
             ),
         ):
@@ -1033,7 +1033,7 @@ class TestSyncSkillsToSandbox:
     @pytest.mark.asyncio
     async def test_sync_skills_empty_dir(self):
         """Test sync does nothing when skills directory is empty."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         mock_booter = MagicMock()
         mock_booter.shell.exec = AsyncMock()
@@ -1041,15 +1041,15 @@ class TestSyncSkillsToSandbox:
 
         with (
             patch(
-                "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+                "bot.core.computer.computer_client.get_bot_skills_path",
                 return_value="/tmp/empty",
             ),
             patch(
-                "astrbot.core.computer.computer_client.os.path.isdir",
+                "bot.core.computer.computer_client.os.path.isdir",
                 return_value=True,
             ),
             patch(
-                "astrbot.core.computer.computer_client.Path.iterdir",
+                "bot.core.computer.computer_client.Path.iterdir",
                 return_value=iter([]),
             ),
         ):
@@ -1059,7 +1059,7 @@ class TestSyncSkillsToSandbox:
     @pytest.mark.asyncio
     async def test_sync_skills_success(self):
         """Test successful skills sync."""
-        from astrbot.core.computer import computer_client
+        from bot.core.computer import computer_client
 
         mock_booter = MagicMock()
         mock_booter.shell.exec = AsyncMock(return_value={"exit_code": 0})
@@ -1071,30 +1071,30 @@ class TestSyncSkillsToSandbox:
 
         with (
             patch(
-                "astrbot.core.computer.computer_client.get_astrbot_skills_path",
+                "bot.core.computer.computer_client.get_bot_skills_path",
                 return_value="/tmp/skills",
             ),
             patch(
-                "astrbot.core.computer.computer_client.os.path.isdir",
+                "bot.core.computer.computer_client.os.path.isdir",
                 return_value=True,
             ),
             patch(
-                "astrbot.core.computer.computer_client.Path.iterdir",
+                "bot.core.computer.computer_client.Path.iterdir",
                 return_value=iter([mock_skill_file]),
             ),
             patch(
-                "astrbot.core.computer.computer_client.get_astrbot_temp_path",
+                "bot.core.computer.computer_client.get_bot_temp_path",
                 return_value="/tmp",
             ),
             patch(
-                "astrbot.core.computer.computer_client.shutil.make_archive",
+                "bot.core.computer.computer_client.shutil.make_archive",
             ),
             patch(
-                "astrbot.core.computer.computer_client.os.path.exists",
+                "bot.core.computer.computer_client.os.path.exists",
                 return_value=True,
             ),
             patch(
-                "astrbot.core.computer.computer_client.os.remove",
+                "bot.core.computer.computer_client.os.remove",
             ),
         ):
             # Should not raise

@@ -20,31 +20,31 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from PIL import Image as PILImage
 
-import astrbot.dashboard.services.config_display_service as config_display_service
-import astrbot.dashboard.services.config_file_service as config_file_service
-import astrbot.dashboard.services.config_service as config_service
-import astrbot.dashboard.services.stat_service as stat_service
-from astrbot.core import file_token_service
-from astrbot.core.utils import llm_metadata
-from astrbot.dashboard.api.app import create_dashboard_asgi_app
-from astrbot.dashboard.api.backups import download_backup as download_backup_route
-from astrbot.dashboard.asgi_runtime import (
+import bot.dashboard.services.config_display_service as config_display_service
+import bot.dashboard.services.config_file_service as config_file_service
+import bot.dashboard.services.config_service as config_service
+import bot.dashboard.services.stat_service as stat_service
+from bot.core import file_token_service
+from bot.core.utils import llm_metadata
+from bot.dashboard.api.app import create_dashboard_asgi_app
+from bot.dashboard.api.backups import download_backup as download_backup_route
+from bot.dashboard.asgi_runtime import (
     FastAPIAppAdapter,
     g,
 )
-from astrbot.dashboard.asgi_runtime import (
+from bot.dashboard.asgi_runtime import (
     request as dashboard_request,
 )
-from astrbot.dashboard.responses import ok
-from astrbot.dashboard.services.api_key_service import ApiKeyService
-from astrbot.dashboard.services.auth_service import DASHBOARD_JWT_COOKIE_NAME
-from astrbot.dashboard.services.backup_service import BackupDownload
-from astrbot.dashboard.services.plugin_service import (
+from bot.dashboard.responses import ok
+from bot.dashboard.services.api_key_service import ApiKeyService
+from bot.dashboard.services.auth_service import DASHBOARD_JWT_COOKIE_NAME
+from bot.dashboard.services.backup_service import BackupDownload
+from bot.dashboard.services.plugin_service import (
     PLUGIN_UPDATE_SOURCE_REQUIRED_MESSAGE,
     PluginServiceError,
 )
-from astrbot.dashboard.services.provider_config_service import ProviderConfigService
-from astrbot.dashboard.services.skills_service import SkillArchive, SkillsServiceError
+from bot.dashboard.services.provider_config_service import ProviderConfigService
+from bot.dashboard.services.skills_service import SkillArchive, SkillsServiceError
 
 JWT_SECRET = "fastapi-v1-test-secret-with-32-bytes"
 
@@ -611,7 +611,7 @@ class FakeUmopConfigRouter:
         self.umop_to_conf_id.pop(umo, None)
 
 
-class FakeAstrBotUpdater:
+class FakeBotUpdater:
     async def check_update(self, *_args, **_kwargs):
         return None
 
@@ -622,14 +622,14 @@ class FakeAstrBotUpdater:
         return None
 
 
-class FakeAstrBotConfig(dict):
+class FakeBotConfig(dict):
     def save_config(self, post_config: dict) -> None:
         self.clear()
         self.update(copy.deepcopy(post_config))
 
 
 def _build_fake_config() -> dict:
-    return FakeAstrBotConfig(
+    return FakeBotConfig(
         {
             "platform": [
                 {
@@ -744,7 +744,7 @@ def _register_dashboard_alias_routes(
     async def dashboard_alias_plugin_list(request: Request):
         return ok(
             {
-                "plugins": [{"name": "astrbot_plugin_demo"}],
+                "plugins": [{"name": "bot_plugin_demo"}],
                 "alias_username": _alias_username(request),
             }
         )
@@ -935,7 +935,7 @@ def fake_core_lifecycle():
         terminated_platform_ids.append(platform_id)
 
     demo_plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
         repo=None,
         author="demo",
         desc="Demo plugin",
@@ -978,10 +978,10 @@ def fake_core_lifecycle():
         )
 
     return SimpleNamespace(
-        astrbot_config=config,
-        astrbot_updater=FakeAstrBotUpdater(),
+        bot_config=config,
+        bot_updater=FakeBotUpdater(),
         start_time=1234567890,
-        astrbot_config_mgr=SimpleNamespace(
+        bot_config_mgr=SimpleNamespace(
             confs={"default": config}, default_conf=config
         ),
         reload_pipeline_scheduler=reload_pipeline_scheduler,
@@ -1031,7 +1031,7 @@ def asgi_app(fake_core_lifecycle, fake_db: FakeDb):
     app.state.dashboard_app_adapter = FastAPIAppAdapter(app)
     _register_dashboard_alias_routes(
         app,
-        fake_core_lifecycle.astrbot_config,
+        fake_core_lifecycle.bot_config,
         fake_core_lifecycle.provider_manager,
     )
     return app
@@ -1066,7 +1066,7 @@ async def test_version_routes_return_startup_runtime_snapshot(
     platform = SimpleNamespace(
         system=Mock(return_value="Linux"), machine=Mock(return_value="aarch64")
     )
-    from astrbot.core.computer import process_sandbox
+    from bot.core.computer import process_sandbox
 
     process_sandbox.get_process_sandbox_status.cache_clear()
     monkeypatch.setattr(process_sandbox, "platform", platform)
@@ -1080,7 +1080,7 @@ async def test_version_routes_return_startup_runtime_snapshot(
     )
     factory = Mock(return_value=sandbox)
     monkeypatch.setattr(process_sandbox, "create_process_sandbox", factory)
-    monkeypatch.setattr(process_sandbox, "get_astrbot_temp_path", lambda: str(tmp_path))
+    monkeypatch.setattr(process_sandbox, "get_bot_temp_path", lambda: str(tmp_path))
     monkeypatch.setattr(
         stat_service, "is_desktop_session_auth_enabled", lambda: desktop_auth
     )
@@ -1170,7 +1170,7 @@ async def test_public_versions_route_uses_static_folder(
     assert data["status"] == "ok"
     assert data["data"]["webui_version"] == "v9.8.7"
     assert data["data"]["astrbot_version"]
-    assert "astrbot_code_version" in data["data"]
+    assert "bot_code_version" in data["data"]
 
 
 def test_fastapi_app_adapter_registers_on_app_state():
@@ -1218,16 +1218,16 @@ async def test_v1_openapi_is_served_by_fastapi(asgi_client: httpx.AsyncClient):
     assert "/api/v1/file" in spec["paths"]
 
     bot_list = spec["paths"]["/api/v1/bots"]["get"]
-    assert bot_list["x-astrbot-scope"] == "bot"
+    assert bot_list["x-bot-scope"] == "bot"
     assert "**Required scope:** `bot`" in bot_list["description"]
 
     conversation_list = spec["paths"]["/api/v1/conversations"]["get"]
-    assert conversation_list["x-astrbot-scope"] == "data"
+    assert conversation_list["x-bot-scope"] == "data"
     assert "**Required scope:** `data`" in conversation_list["description"]
 
     chat_send = spec["paths"]["/api/v1/chat"]["post"]
-    assert chat_send["x-astrbot-scope"] == "chat"
-    assert chat_send["x-astrbot-sensitive-scopes"] == ["chat:admin"]
+    assert chat_send["x-bot-scope"] == "chat"
+    assert chat_send["x-bot-sensitive-scopes"] == ["chat:admin"]
     assert "**Required scope:** `chat`" in chat_send["description"]
     assert "**Conditional sensitive scope:** `chat:admin`" in chat_send["description"]
 
@@ -1236,17 +1236,17 @@ async def test_v1_openapi_is_served_by_fastapi(asgi_client: httpx.AsyncClient):
     )
     public_spec = json.loads(public_spec_path.read_text(encoding="utf-8"))
     runtime_scope_map = {
-        (method, path): operation["x-astrbot-scope"]
+        (method, path): operation["x-bot-scope"]
         for path, methods in spec["paths"].items()
         for method, operation in methods.items()
-        if isinstance(operation, dict) and "x-astrbot-scope" in operation
+        if isinstance(operation, dict) and "x-bot-scope" in operation
     }
     public_scope_map = {
-        (method, path): operation["x-astrbot-scope"]
+        (method, path): operation["x-bot-scope"]
         for path, methods in public_spec["paths"].items()
         for method, operation in methods.items()
         if isinstance(operation, dict)
-        and "x-astrbot-scope" in operation
+        and "x-bot-scope" in operation
         and not operation.get("x-websocket")
     }
     assert public_scope_map == runtime_scope_map
@@ -1284,11 +1284,11 @@ async def test_dashboard_static_dist_files_are_served(
     )
     (static_folder / "favicon.svg").write_text("<svg></svg>", encoding="utf-8")
     (assets_folder / "index-demo.js").write_text(
-        "window.__astrbotStaticTest = true;",
+        "window.__botStaticTest = true;",
         encoding="utf-8",
     )
     (assets_folder / "index-AbCd1234.js").write_text(
-        "window.__astrbotHashedStaticTest = true;",
+        "window.__botHashedStaticTest = true;",
         encoding="utf-8",
     )
     (assets_folder / "config-metadata.json").write_text("{}", encoding="utf-8")
@@ -1296,7 +1296,7 @@ async def test_dashboard_static_dist_files_are_served(
     t2i_folder = static_folder / "t2i"
     t2i_folder.mkdir()
     (t2i_folder / "shiki_runtime.iife.js").write_text(
-        "window.__astrbotShikiRuntimeTest = true;",
+        "window.__botShikiRuntimeTest = true;",
         encoding="utf-8",
     )
     (tmp_path / "secret.txt").write_text("outside static root", encoding="utf-8")
@@ -1326,7 +1326,7 @@ async def test_dashboard_static_dist_files_are_served(
         api_response = await client.get("/api/not-found")
 
     assert asset_response.status_code == 200
-    assert "window.__astrbotStaticTest" in asset_response.text
+    assert "window.__botStaticTest" in asset_response.text
     assert asset_response.headers["cache-control"] == "no-cache"
     assert hashed_asset_response.status_code == 200
     assert hashed_asset_response.headers["cache-control"] == "no-cache"
@@ -1359,9 +1359,9 @@ async def test_dashboard_static_dist_files_are_served(
 @pytest.mark.parametrize(
     ("desktop_managed", "query", "should_clear_cache"),
     [
-        (True, "?astrbot_bundle=desktop-4.27.5-core-4.27.5-webui-deadbeef", True),
+        (True, "?bot_bundle=desktop-4.27.5-core-4.27.5-webui-deadbeef", True),
         (True, "", False),
-        (False, "?astrbot_bundle=desktop-4.27.5-core-4.27.5-webui-deadbeef", False),
+        (False, "?bot_bundle=desktop-4.27.5-core-4.27.5-webui-deadbeef", False),
     ],
 )
 async def test_dashboard_index_clears_legacy_cache_only_for_desktop_bundle(
@@ -1380,9 +1380,9 @@ async def test_dashboard_index_clears_legacy_cache_only_for_desktop_bundle(
         encoding="utf-8",
     )
     if desktop_managed:
-        monkeypatch.setenv("ASTRBOT_DESKTOP_MANAGED", "1")
+        monkeypatch.setenv("BOT_DESKTOP_MANAGED", "1")
     else:
-        monkeypatch.delenv("ASTRBOT_DESKTOP_MANAGED", raising=False)
+        monkeypatch.delenv("BOT_DESKTOP_MANAGED", raising=False)
 
     app = create_dashboard_asgi_app(
         core_lifecycle=fake_core_lifecycle,
@@ -1499,7 +1499,7 @@ async def test_v1_openapi_uses_pydantic_request_bodies(
     assert open_api_file_upload["requestBody"]["content"]["multipart/form-data"][
         "schema"
     ]["$ref"].endswith("/Body_uploadOpenApiFile")
-    assert open_api_file_upload["x-astrbot-scope"] == "file"
+    assert open_api_file_upload["x-bot-scope"] == "file"
 
 
 @pytest.mark.asyncio
@@ -1592,7 +1592,7 @@ async def test_conversation_list_normalizes_comma_separated_filters(
         params={
             "platforms": ", webchat-main ,",
             "message_types": ", FriendMessage ,",
-            "exclude_ids": "astrbot, ,",
+            "exclude_ids": "bot, ,",
             "exclude_platforms": ", webchat ,",
         },
         headers=_jwt_headers(),
@@ -1603,7 +1603,7 @@ async def test_conversation_list_normalizes_comma_separated_filters(
     assert fake_core_lifecycle.conversation_manager.last_filter_args == {
         "platforms": ["webchat-main"],
         "message_types": ["FriendMessage"],
-        "exclude_ids": ["astrbot"],
+        "exclude_ids": ["bot"],
         "exclude_platforms": ["webchat"],
     }
 
@@ -1833,18 +1833,18 @@ async def test_v1_system_config_update_preserves_independent_bot_provider_sectio
     monkeypatch: pytest.MonkeyPatch,
 ):
     def fake_save_config(
-        post_config: dict, config: FakeAstrBotConfig, is_core=False, *, runtime=None
+        post_config: dict, config: FakeBotConfig, is_core=False, *, runtime=None
     ):
         config.save_config(post_config)
 
     monkeypatch.setattr(config_service, "save_config", fake_save_config)
 
-    original_platform = copy.deepcopy(fake_core_lifecycle.astrbot_config["platform"])
+    original_platform = copy.deepcopy(fake_core_lifecycle.bot_config["platform"])
     original_provider_sources = copy.deepcopy(
-        fake_core_lifecycle.astrbot_config["provider_sources"]
+        fake_core_lifecycle.bot_config["provider_sources"]
     )
-    original_providers = copy.deepcopy(fake_core_lifecycle.astrbot_config["provider"])
-    payload = copy.deepcopy(fake_core_lifecycle.astrbot_config)
+    original_providers = copy.deepcopy(fake_core_lifecycle.bot_config["provider"])
+    payload = copy.deepcopy(fake_core_lifecycle.bot_config)
     payload["platform"] = []
     payload["provider_sources"] = []
     payload["provider"] = []
@@ -1858,13 +1858,13 @@ async def test_v1_system_config_update_preserves_independent_bot_provider_sectio
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    assert fake_core_lifecycle.astrbot_config["platform"] == original_platform
+    assert fake_core_lifecycle.bot_config["platform"] == original_platform
     assert (
-        fake_core_lifecycle.astrbot_config["provider_sources"]
+        fake_core_lifecycle.bot_config["provider_sources"]
         == original_provider_sources
     )
-    assert fake_core_lifecycle.astrbot_config["provider"] == original_providers
-    assert fake_core_lifecycle.astrbot_config["provider_settings"] == {
+    assert fake_core_lifecycle.bot_config["provider"] == original_providers
+    assert fake_core_lifecycle.bot_config["provider_settings"] == {
         "default_provider_id": "gpt-mini"
     }
     assert fake_core_lifecycle.reloaded_config_ids == ["default"]
@@ -1875,11 +1875,11 @@ async def test_v1_system_config_update_preserves_independent_bot_provider_sectio
 async def test_config_update_revokes_only_affected_shell_sessions(
     asgi_app, fake_core_lifecycle, monkeypatch, tmp_path, change
 ):
-    from astrbot.core.computer import computer_client
-    from astrbot.core.computer.booters.local import LocalBooter
-    from astrbot.core.tools.computer_tools import shell as shell_tools
+    from bot.core.computer import computer_client
+    from bot.core.computer.booters.local import LocalBooter
+    from bot.core.tools.computer_tools import shell as shell_tools
 
-    config = fake_core_lifecycle.astrbot_config
+    config = fake_core_lifecycle.bot_config
     config["admins_id"] = ["creator", "other-admin"]
     config["agent_runner"] = {"runner_type": "local"}
     config["provider_settings"] = {
@@ -2003,7 +2003,7 @@ async def test_config_api_saves_local_permissions_without_isolation(
     runtime.update({"os": system, "sandbox": {"backend": backend, "status": status}})
     if status == "unavailable":
         runtime["sandbox"]["error"] = reason
-    original = copy.deepcopy(fake_core_lifecycle.astrbot_config)
+    original = copy.deepcopy(fake_core_lifecycle.bot_config)
     payload = copy.deepcopy(original)
     payload["agent_runner"] = {"runner_type": "local"}
     payload["provider_settings"] = {
@@ -2029,7 +2029,7 @@ async def test_config_api_saves_local_permissions_without_isolation(
         allow_execution=False, allow_network=False
     )
     assert (
-        fake_core_lifecycle.astrbot_config["provider_settings"]
+        fake_core_lifecycle.bot_config["provider_settings"]
         == payload["provider_settings"]
     )
     assert fake_core_lifecycle.reloaded_config_ids == ["default"]
@@ -2041,11 +2041,11 @@ async def test_welcome_page_can_enable_local_computer_access_without_isolation(
     asgi_app, asgi_client, fake_core_lifecycle, status
 ):
     """Welcome setup only changes the runtime and retains default permissions."""
-    from astrbot.core.config.default import get_local_permission_defaults
+    from bot.core.config.default import get_local_permission_defaults
 
     runtime = asgi_app.state.services.stats.runtime
     runtime.update({"os": "linux", "sandbox": {"status": status}})
-    config = fake_core_lifecycle.astrbot_config
+    config = fake_core_lifecycle.bot_config
     config["agent_runner"] = {"runner_type": "local"}
     config["provider_settings"] = {
         "computer_use_runtime": "none",
@@ -2086,7 +2086,7 @@ async def test_v1_provider_schema_keeps_reasoning_in_model_metadata(
     fake_core_lifecycle,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    fake_core_lifecycle.astrbot_config["provider"][0]["reasoning"] = True
+    fake_core_lifecycle.bot_config["provider"][0]["reasoning"] = True
     model_metadata = {
         "id": "gpt-4o-mini",
         "reasoning": True,
@@ -2122,7 +2122,7 @@ async def test_v1_provider_source_rename_updates_provider_refs(
     monkeypatch: pytest.MonkeyPatch,
 ):
     monkeypatch.setattr(
-        "astrbot.dashboard.services.config_service.save_config",
+        "bot.dashboard.services.config_service.save_config",
         lambda *_args, **_kwargs: None,
     )
 
@@ -2142,7 +2142,7 @@ async def test_v1_provider_source_rename_updates_provider_refs(
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    config = fake_core_lifecycle.astrbot_config
+    config = fake_core_lifecycle.bot_config
     assert config["provider_sources"][0]["id"] == "openai-renamed"
     assert config["provider"][0]["provider_source_id"] == "openai-renamed"
     assert (
@@ -2175,7 +2175,7 @@ async def test_v1_provider_update_keeps_dashboard_id_rename_behavior(
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    config = fake_core_lifecycle.astrbot_config
+    config = fake_core_lifecycle.bot_config
     assert config["provider"][0]["id"] == "gpt-renamed"
     assert "reasoning" not in config["provider"][0]
     assert fake_core_lifecycle.provider_manager.reloaded_providers == [
@@ -2204,7 +2204,7 @@ async def test_v1_create_source_provider_strips_reasoning_metadata(
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    provider = fake_core_lifecycle.astrbot_config["provider"][-1]
+    provider = fake_core_lifecycle.bot_config["provider"][-1]
     assert provider["id"] == "gpt-source-model"
     assert "reasoning" not in provider
 
@@ -2230,7 +2230,7 @@ async def test_v1_create_standalone_provider_matches_dashboard_alias_capability(
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    assert fake_core_lifecycle.astrbot_config["provider"][-1] == {
+    assert fake_core_lifecycle.bot_config["provider"][-1] == {
         "id": "tts-main",
         "type": "edge_tts",
         "provider_type": "text_to_speech",
@@ -2261,7 +2261,7 @@ async def test_v1_decision_provider_capability_maps_and_filters(
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    provider = fake_core_lifecycle.astrbot_config["provider"][-1]
+    provider = fake_core_lifecycle.bot_config["provider"][-1]
     assert provider["provider_type"] == "decision"
 
     list_response = await asgi_client.get(
@@ -2283,7 +2283,7 @@ async def test_v1_safe_provider_routes_accept_slash_ids(
 
     source_id = "https://example.com/source"
     provider_id = "qianxun/kimi-k2-0905-preview"
-    config = fake_core_lifecycle.astrbot_config
+    config = fake_core_lifecycle.bot_config
     config["provider_sources"].append(
         {
             "id": source_id,
@@ -2390,7 +2390,7 @@ async def test_v1_safe_bot_routes_accept_slash_ids(
     monkeypatch.setattr(config_service, "save_config", lambda *_args, **_kwargs: None)
 
     bot_id = "group/a"
-    fake_core_lifecycle.astrbot_config["platform"].append(
+    fake_core_lifecycle.bot_config["platform"].append(
         {"id": bot_id, "type": "webchat", "enable": True}
     )
     headers = _jwt_headers()
@@ -2490,7 +2490,7 @@ async def test_v1_plugins_accept_api_key(
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
-    assert [item["name"] for item in data["data"]] == ["astrbot_plugin_demo"]
+    assert [item["name"] for item in data["data"]] == ["bot_plugin_demo"]
 
 
 @pytest.mark.asyncio
@@ -2499,7 +2499,7 @@ async def test_v1_plugin_enabled_patch_calls_service(
     fake_core_lifecycle,
 ):
     response = await asgi_client.patch(
-        "/api/v1/plugins/astrbot_plugin_demo/enabled",
+        "/api/v1/plugins/bot_plugin_demo/enabled",
         json={"enabled": False},
         headers=_jwt_headers(),
     )
@@ -2518,7 +2518,7 @@ async def test_v1_plugin_version_support_check_uses_service(
 ):
     response = await asgi_client.post(
         "/api/v1/plugins/version-support/check",
-        json={"plugin_ids": ["astrbot_plugin_demo"]},
+        json={"plugin_ids": ["bot_plugin_demo"]},
         headers=_jwt_headers(),
     )
 
@@ -2545,7 +2545,7 @@ async def test_v1_plugin_validate_repo_uses_service(
         captured["payload"] = payload
         return {
             "valid": True,
-            "name": "astrbot_plugin_demo",
+            "name": "bot_plugin_demo",
             "version": "1.2.3",
         }, "插件校验通过。"
 
@@ -2588,7 +2588,7 @@ async def test_v1_plugin_url_install_accepts_download_url_and_missing_body(
         captured_payloads.append(payload)
         if not payload.get("url"):
             raise RuntimeError("missing url")
-        return {"name": "astrbot_plugin_demo"}, "安装成功。"
+        return {"name": "bot_plugin_demo"}, "安装成功。"
 
     monkeypatch.setattr(plugin_service, "install_plugin", fake_install_plugin)
 
@@ -2649,7 +2649,7 @@ async def test_v1_plugin_repository_install_uses_transport_route(
 
     async def fake_install_plugin(payload):
         captured.update(payload)
-        return {"name": "astrbot_plugin_demo"}, "安装成功。"
+        return {"name": "bot_plugin_demo"}, "安装成功。"
 
     monkeypatch.setattr(plugin_service, "install_plugin", fake_install_plugin)
 
@@ -2699,7 +2699,7 @@ async def test_plugin_service_market_install_uses_registry_entry(
         captured["proxy"] = proxy
         captured["ignore_version_check"] = ignore_version_check
         captured["download_url"] = download_url
-        return {"name": "astrbot_plugin_demo"}
+        return {"name": "bot_plugin_demo"}
 
     async def fake_persist_plugin_install_source(
         plugin_info,
@@ -2747,7 +2747,7 @@ async def test_plugin_service_market_install_uses_registry_entry(
         }
     )
 
-    assert result == {"name": "astrbot_plugin_demo"}
+    assert result == {"name": "bot_plugin_demo"}
     assert message == "安装成功。"
     assert captured["registry_url"] == "https://example.com/plugins.json"
     assert captured["force_refresh"] is False
@@ -2784,7 +2784,7 @@ async def test_plugin_service_validate_plugin_repo_fetches_metadata_file(
         assert repo_url == "https://github.com/AstrBotDevs/astrbot-plugin-demo"
         captured["proxy"] = proxy
         return {
-            "name": "astrbot_plugin_demo",
+            "name": "bot_plugin_demo",
             "desc": "Demo plugin",
             "version": "2.0.0",
             "author": "AstrBotDevs",
@@ -2823,7 +2823,7 @@ async def test_plugin_service_validate_plugin_repo_preserves_ssh_locator(
         captured["repo_url"] = repo_url
         captured["proxy"] = proxy
         return {
-            "name": "astrbot_plugin_demo",
+            "name": "bot_plugin_demo",
             "desc": "Demo plugin",
             "version": "2.0.0",
             "author": "AstrBotDevs",
@@ -2873,7 +2873,7 @@ async def test_plugin_service_exposes_missing_git_error(
     asgi_app: FastAPI,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    from astrbot.core.repository import GitUnavailableError
+    from bot.core.repository import GitUnavailableError
 
     plugin_service = asgi_app.state.services.plugins
 
@@ -2954,8 +2954,8 @@ async def test_plugin_service_bind_market_source_validates_and_persists(
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
     )
     captured = {}
@@ -2977,7 +2977,7 @@ async def test_plugin_service_bind_market_source_validates_and_persists(
         }, None
 
     async def fake_get_plugin_install_sources():
-        return {"astrbot_plugin_demo": {"installed_at": "2026-06-26T00:00:00+00:00"}}
+        return {"bot_plugin_demo": {"installed_at": "2026-06-26T00:00:00+00:00"}}
 
     async def fake_save_plugin_install_sources(records):
         captured["records"] = records
@@ -2997,7 +2997,7 @@ async def test_plugin_service_bind_market_source_validates_and_persists(
 
     record, message = await plugin_service.bind_plugin_market_source(
         {
-            "name": "astrbot_plugin_demo",
+            "name": "bot_plugin_demo",
             "registry_url": "https://example.com/plugins.json",
             "market_plugin_id": "AstrBotDevs/astrbot-plugin-demo",
         }
@@ -3012,7 +3012,7 @@ async def test_plugin_service_bind_market_source_validates_and_persists(
     assert record["repo"] == "https://github.com/AstrBotDevs/astrbot-plugin-demo.git"
     assert record["download_url"] == "https://cdn.example/plugin.zip"
     assert record["installed_at"] == "2026-06-26T00:00:00+00:00"
-    assert captured["records"]["astrbot_plugin_demo"] == record
+    assert captured["records"]["bot_plugin_demo"] == record
 
 
 @pytest.mark.asyncio
@@ -3022,14 +3022,14 @@ async def test_plugin_service_bind_repo_source_persists_github_method(
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
     )
     captured = {}
 
     async def fake_get_plugin_install_sources():
-        return {"astrbot_plugin_demo": {"installed_at": "2026-06-26T00:00:00+00:00"}}
+        return {"bot_plugin_demo": {"installed_at": "2026-06-26T00:00:00+00:00"}}
 
     async def fake_save_plugin_install_sources(records):
         captured["records"] = records
@@ -3048,7 +3048,7 @@ async def test_plugin_service_bind_repo_source_persists_github_method(
 
     record, message = await plugin_service.bind_plugin_market_source(
         {
-            "name": "astrbot_plugin_demo",
+            "name": "bot_plugin_demo",
             "install_method": "repository",
         }
     )
@@ -3059,7 +3059,7 @@ async def test_plugin_service_bind_repo_source_persists_github_method(
     assert record["registry_name"] == "Repository"
     assert record["repo"] == "https://github.com/AstrBotDevs/astrbot-plugin-demo"
     assert record["installed_at"] == "2026-06-26T00:00:00+00:00"
-    assert captured["records"]["astrbot_plugin_demo"] == record
+    assert captured["records"]["bot_plugin_demo"] == record
 
 
 @pytest.mark.asyncio
@@ -3069,8 +3069,8 @@ async def test_plugin_service_bind_market_source_rejects_repo_mismatch(
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
     )
 
@@ -3093,7 +3093,7 @@ async def test_plugin_service_bind_market_source_rejects_repo_mismatch(
     with pytest.raises(Exception) as exc_info:
         await plugin_service.bind_plugin_market_source(
             {
-                "name": "astrbot_plugin_demo",
+                "name": "bot_plugin_demo",
                 "market_plugin_id": "AstrBotDevs/astrbot-plugin-demo",
             }
         )
@@ -3155,8 +3155,8 @@ async def test_plugin_service_persist_install_source_resolves_registry_before_re
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
     )
     events = []
@@ -3192,7 +3192,7 @@ async def test_plugin_service_persist_install_source_resolves_registry_before_re
     )
 
     await plugin_service.persist_plugin_install_source(
-        {"name": "astrbot_plugin_demo"},
+        {"name": "bot_plugin_demo"},
         {
             "registry_url": "https://example.com/plugins.json",
             "install_method": "market",
@@ -3208,7 +3208,7 @@ async def test_plugin_service_persist_install_source_resolves_registry_before_re
         ("get", None),
         ("save", None),
     ]
-    record = captured["records"]["astrbot_plugin_demo"]
+    record = captured["records"]["bot_plugin_demo"]
     assert record["registry_name"] == "Custom"
 
 
@@ -3217,8 +3217,8 @@ def test_plugin_service_missing_install_source_is_implicit_for_display(
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
         reserved=False,
     )
@@ -3230,8 +3230,8 @@ def test_plugin_service_missing_install_source_is_implicit_for_display(
     assert record["registry_name"] == "Default"
     assert record["repo"] == "https://github.com/AstrBotDevs/astrbot-plugin-demo"
     assert record["implicit"] is True
-    assert record["name"] == "astrbot_plugin_demo"
-    assert record["marketplace_name"] == "astrbot-plugin-demo"
+    assert record["name"] == "bot_plugin_demo"
+    assert record["marketplace_name"] == "bot-plugin-demo"
 
 
 @pytest.mark.asyncio
@@ -3241,8 +3241,8 @@ async def test_plugin_service_update_missing_source_requires_selection(
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
         reserved=False,
     )
@@ -3258,7 +3258,7 @@ async def test_plugin_service_update_missing_source_requires_selection(
     )
 
     with pytest.raises(PluginServiceError) as exc_info:
-        await plugin_service.resolve_market_update_info("astrbot_plugin_demo")
+        await plugin_service.resolve_market_update_info("bot_plugin_demo")
 
     assert exc_info.value.public_message == PLUGIN_UPDATE_SOURCE_REQUIRED_MESSAGE
 
@@ -3270,15 +3270,15 @@ async def test_plugin_service_update_github_source_uses_plugin_repo(
 ):
     plugin_service = asgi_app.state.services.plugins
     plugin = SimpleNamespace(
-        name="astrbot_plugin_demo",
-        root_dir_name="astrbot_plugin_demo",
+        name="bot_plugin_demo",
+        root_dir_name="bot_plugin_demo",
         repo="https://github.com/AstrBotDevs/astrbot-plugin-demo",
         reserved=False,
     )
 
     async def fake_get_plugin_install_sources():
         return {
-            "astrbot_plugin_demo": {
+            "bot_plugin_demo": {
                 "install_method": "repository",
                 "repo": "https://github.com/AstrBotDevs/astrbot-plugin-demo",
             }
@@ -3291,7 +3291,7 @@ async def test_plugin_service_update_github_source_uses_plugin_repo(
         fake_get_plugin_install_sources,
     )
 
-    update_info = await plugin_service.resolve_market_update_info("astrbot_plugin_demo")
+    update_info = await plugin_service.resolve_market_update_info("bot_plugin_demo")
 
     assert update_info["repo"] == "https://github.com/AstrBotDevs/astrbot-plugin-demo"
     assert update_info["download_url"] == ""
@@ -3304,7 +3304,7 @@ async def test_v1_plugin_update_all_hides_internal_exceptions(
 ):
     response = await asgi_client.post(
         "/api/v1/plugins/update",
-        json={"plugin_ids": ["astrbot_plugin_demo"]},
+        json={"plugin_ids": ["bot_plugin_demo"]},
         headers=_jwt_headers(),
     )
 
@@ -3323,7 +3323,7 @@ async def test_v1_plugin_extension_maps_nested_plugin_path(
     asgi_client: httpx.AsyncClient,
 ):
     response = await asgi_client.post(
-        "/api/v1/plugins/extensions/astrbot_plugin_demo/api/action",
+        "/api/v1/plugins/extensions/bot_plugin_demo/api/action",
         json={"value": "demo"},
         headers=_jwt_headers(),
     )
@@ -3332,7 +3332,7 @@ async def test_v1_plugin_extension_maps_nested_plugin_path(
     data = response.json()
     assert data["status"] == "ok"
     assert data["data"] == {
-        "plugin_path": "astrbot_plugin_demo/api/action",
+        "plugin_path": "bot_plugin_demo/api/action",
         "method": "POST",
         "payload": {"value": "demo"},
         "username": "fastapi-v1-test",
@@ -3340,14 +3340,14 @@ async def test_v1_plugin_extension_maps_nested_plugin_path(
 
 
 @pytest.mark.asyncio
-async def test_v1_plugin_extension_supports_astrbot_web_api(
+async def test_v1_plugin_extension_supports_bot_web_api(
     asgi_client: httpx.AsyncClient,
     fake_core_lifecycle,
 ):
-    from astrbot.api.web import json_response
-    from astrbot.api.web import request as plugin_request
+    from bot.api.web import json_response
+    from bot.api.web import request as plugin_request
 
-    async def astrbot_web_plugin_extension(item_id: str):
+    async def bot_web_plugin_extension(item_id: str):
         return json_response(
             {
                 "item_id": item_id,
@@ -3364,7 +3364,7 @@ async def test_v1_plugin_extension_supports_astrbot_web_api(
         )
 
     fake_core_lifecycle.star_context.registered_web_apis = [
-        ("/web/<item_id>", astrbot_web_plugin_extension, ["POST"], "web")
+        ("/web/<item_id>", bot_web_plugin_extension, ["POST"], "web")
     ]
 
     response = await asgi_client.post(
@@ -3389,14 +3389,14 @@ async def test_v1_plugin_extension_supports_astrbot_web_api(
 
 
 @pytest.mark.asyncio
-async def test_v1_plugin_extension_astrbot_web_api_reads_form_and_files(
+async def test_v1_plugin_extension_bot_web_api_reads_form_and_files(
     asgi_client: httpx.AsyncClient,
     fake_core_lifecycle,
 ):
-    from astrbot.api.web import PluginUploadFile, json_response
-    from astrbot.api.web import request as plugin_request
+    from bot.api.web import PluginUploadFile, json_response
+    from bot.api.web import request as plugin_request
 
-    async def astrbot_web_upload_extension():
+    async def bot_web_upload_extension():
         form = await plugin_request.form()
         files = await plugin_request.files()
         upload: PluginUploadFile | None = files.get("file")
@@ -3411,7 +3411,7 @@ async def test_v1_plugin_extension_astrbot_web_api_reads_form_and_files(
         )
 
     fake_core_lifecycle.star_context.registered_web_apis = [
-        ("/upload", astrbot_web_upload_extension, ["POST"], "upload")
+        ("/upload", bot_web_upload_extension, ["POST"], "upload")
     ]
 
     response = await asgi_client.post(
@@ -3433,22 +3433,22 @@ async def test_v1_plugin_extension_astrbot_web_api_reads_form_and_files(
     }
 
 
-def test_astrbot_web_request_requires_plugin_context():
-    from astrbot.api.web import request as plugin_request
+def test_bot_web_request_requires_plugin_context():
+    from bot.api.web import request as plugin_request
 
     with pytest.raises(RuntimeError, match="plugin Web API handler"):
         _ = plugin_request.method
 
 
-def test_astrbot_web_request_proxy_exposes_typed_methods():
+def test_bot_web_request_proxy_exposes_typed_methods():
     from typing import get_type_hints
 
-    from astrbot.api.web import (
+    from bot.api.web import (
         PluginMultiDict,
         PluginRequestProxy,
         PluginUploadFile,
     )
-    from astrbot.api.web import request as plugin_request
+    from bot.api.web import request as plugin_request
 
     assert isinstance(plugin_request, PluginRequestProxy)
     assert get_type_hints(type(plugin_request).form)["return"] == PluginMultiDict[str]
@@ -3462,7 +3462,7 @@ def test_astrbot_web_request_proxy_exposes_typed_methods():
 async def test_multipart_parts_preserves_duplicate_form_values():
     from starlette.datastructures import FormData
 
-    from astrbot.dashboard.api.multipart import multipart_parts
+    from bot.dashboard.api.multipart import multipart_parts
 
     class FakeRequest:
         async def form(self):
@@ -3496,7 +3496,7 @@ async def test_v1_plugin_config_save_reports_reload_failure(
 ):
     """Report reload failures without claiming the saved configuration was reverted."""
     config_path = tmp_path / "plugin.json"
-    plugin_config = config_service.AstrBotConfig(
+    plugin_config = config_service.BotConfig(
         str(config_path),
         schema={"endpoint": {"type": "string", "default": "old"}},
     )
@@ -3545,17 +3545,17 @@ async def test_v1_plugin_config_file_routes_reach_service_layer(
     headers = _jwt_headers()
 
     list_response = await asgi_client.get(
-        "/api/v1/plugins/astrbot_plugin_demo/config-files/assets",
+        "/api/v1/plugins/bot_plugin_demo/config-files/assets",
         headers=headers,
     )
     upload_response = await asgi_client.post(
-        "/api/v1/plugins/astrbot_plugin_demo/config-files/assets",
+        "/api/v1/plugins/bot_plugin_demo/config-files/assets",
         json={"filename": "demo.txt"},
         headers=headers,
     )
     delete_response = await asgi_client.request(
         "DELETE",
-        "/api/v1/plugins/astrbot_plugin_demo/config-files",
+        "/api/v1/plugins/bot_plugin_demo/config-files",
         json={"path": "demo.txt"},
         headers=headers,
     )
@@ -3690,11 +3690,11 @@ async def test_v1_safe_plugin_source_delete_accepts_slash_ids(
         sources[:] = value
 
     monkeypatch.setattr(
-        "astrbot.dashboard.services.plugin_service.sp.global_get",
+        "bot.dashboard.services.plugin_service.sp.global_get",
         fake_global_get,
     )
     monkeypatch.setattr(
-        "astrbot.dashboard.services.plugin_service.sp.global_put",
+        "bot.dashboard.services.plugin_service.sp.global_put",
         fake_global_put,
     )
 
@@ -4407,7 +4407,7 @@ async def test_v1_log_export_packs_log_files_and_memory_logs(
     monkeypatch, tmp_path: Path, asgi_app, asgi_client: httpx.AsyncClient
 ):
     """The archive covers data/logs, configured log files elsewhere and memory logs."""
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     logs_dir = tmp_path / "data" / "logs"
     logs_dir.mkdir(parents=True)
     (logs_dir / "event_loop_watchdog.log").write_text("watchdog", encoding="utf-8")
@@ -4440,7 +4440,7 @@ async def test_v1_log_export_packs_log_files_and_memory_logs(
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/zip"
-    assert "astrbot-diagnostics-" in response.headers["content-disposition"]
+    assert "bot-diagnostics-" in response.headers["content-disposition"]
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         assert sorted(archive.namelist()) == [
             "config.json",
@@ -4448,7 +4448,7 @@ async def test_v1_log_export_packs_log_files_and_memory_logs(
             "external/2/custom.log",
             "external/custom.1.log",
             "external/custom.log",
-            "logs/astrbot.in-memory.log",
+            "logs/bot.in-memory.log",
             "logs/event_loop_watchdog.log",
             "manifest.json",
             "plugins.json",
@@ -4459,7 +4459,7 @@ async def test_v1_log_export_packs_log_files_and_memory_logs(
         assert archive.read("external/custom.1.log") == b"rotated"
         assert archive.read("external/2/custom.log") == b"same name"
         assert archive.read("logs/event_loop_watchdog.log") == b"watchdog"
-        assert archive.read("logs/astrbot.in-memory.log").decode() == "[INFO] hello\n"
+        assert archive.read("logs/bot.in-memory.log").decode() == "[INFO] hello\n"
         traces = archive.read("traces/history.in-memory.jsonl").decode().splitlines()
         # Current LogBroker only retains ordinary logs; traces are persisted.
         assert traces == []
@@ -4481,9 +4481,9 @@ async def test_v1_log_export_packs_log_files_and_memory_logs(
 async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
     monkeypatch, tmp_path, asgi_app, asgi_client, redact
 ):
-    from astrbot.core.utils.trace_store import TraceStore
+    from bot.core.utils.trace_store import TraceStore
 
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     service = asgi_app.state.services.logs
     base = int(time.time()) - 3600
     logs_dir = tmp_path / "data" / "logs"
@@ -4493,7 +4493,7 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
         "  selected traceback\n"
         f"[{datetime.fromtimestamp(base + 2).isoformat(sep=' ')}] last selected log\n"
     )
-    (logs_dir / "astrbot.log").write_text(
+    (logs_dir / "bot.log").write_text(
         "undated preamble\n"
         f"[{datetime.fromtimestamp(base).isoformat(sep=' ')}] outside-before\n"
         + selected
@@ -4516,7 +4516,7 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
     service.config["trace_db_path"] = str(path)
     store = TraceStore(path, {"trace_db_max_mb": 8})
     monkeypatch.setattr(
-        "astrbot.dashboard.services.log_service.get_trace_store", lambda *_: store
+        "bot.dashboard.services.log_service.get_trace_store", lambda *_: store
     )
     try:
         for index in range(60):
@@ -4549,7 +4549,7 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
         )
         assert response.status_code == 200
         with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-            disk_log = archive.read("logs/astrbot.log").decode()
+            disk_log = archive.read("logs/bot.log").decode()
             assert disk_log == (
                 selected.replace("private-range-value", "[REDACTED]")
                 if redact
@@ -4557,7 +4557,7 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
             )
             assert archive.read("logs/undated.log") == b""
             assert (
-                archive.read("logs/astrbot.in-memory.log") == b"selected memory log\n"
+                archive.read("logs/bot.in-memory.log") == b"selected memory log\n"
             )
             assert (
                 json.loads(archive.read("traces/history.in-memory.jsonl"))["data"]
@@ -4609,7 +4609,7 @@ async def test_diagnostic_export_rejects_invalid_time_ranges(
 async def test_diagnostic_export_includes_active_webui_version(
     monkeypatch, tmp_path, fake_core_lifecycle, fake_db, webui_version
 ):
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     static_folder = tmp_path / "custom-webui"
     assets_folder = static_folder / "assets"
     assets_folder.mkdir(parents=True)
@@ -4639,10 +4639,10 @@ async def test_v1_log_export_skips_files_that_are_not_regular(
     monkeypatch, tmp_path: Path, asgi_client: httpx.AsyncClient
 ):
     """A symlink in the log directory must not pull in a file from elsewhere."""
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     logs_dir = tmp_path / "data" / "logs"
     logs_dir.mkdir(parents=True)
-    (logs_dir / "astrbot.log").write_text("ok", encoding="utf-8")
+    (logs_dir / "bot.log").write_text("ok", encoding="utf-8")
     outside = tmp_path / "outside.txt"
     outside.write_text("not a log", encoding="utf-8")
     link = logs_dir / "link.log"
@@ -4666,7 +4666,7 @@ async def test_v1_log_export_skips_files_that_are_not_regular(
     assert response.status_code == 200
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         assert "logs/link.log" not in archive.namelist()
-        assert archive.read("logs/astrbot.log") == b"ok"
+        assert archive.read("logs/bot.log") == b"ok"
         manifest = json.loads(archive.read("manifest.json"))
     assert manifest["skipped"] == [
         {"name": "logs/link.log", "reason": "not a regular file"}
@@ -4678,10 +4678,10 @@ async def test_v1_log_export_keeps_archive_names_unique(
     monkeypatch, tmp_path: Path, asgi_app, asgi_client: httpx.AsyncClient
 ):
     """Log files never take the names of the generated entries."""
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     data_dir = tmp_path / "data"
     (data_dir / "logs").mkdir(parents=True)
-    (data_dir / "logs" / "astrbot.in-memory.log").write_text(
+    (data_dir / "logs" / "bot.in-memory.log").write_text(
         "file log", encoding="utf-8"
     )
     (data_dir / "traces").mkdir()
@@ -4699,13 +4699,13 @@ async def test_v1_log_export_keeps_archive_names_unique(
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         names = archive.namelist()
         assert len(names) == len(set(names))
-        assert archive.read("logs/2/astrbot.in-memory.log") == b"file log"
+        assert archive.read("logs/2/bot.in-memory.log") == b"file log"
         assert archive.read("traces/2/history.in-memory.jsonl") == b"file trace"
         assert archive.read("2/manifest.json") == b"trace log"
         manifest = json.loads(archive.read("manifest.json"))
     assert sorted(manifest["files"]) == [
         "2/manifest.json",
-        "logs/2/astrbot.in-memory.log",
+        "logs/2/bot.in-memory.log",
         "traces/2/history.in-memory.jsonl",
     ]
 
@@ -4714,12 +4714,12 @@ async def test_v1_log_export_keeps_archive_names_unique(
 async def test_v1_log_export_refuses_when_disk_space_is_short(
     monkeypatch, tmp_path: Path, asgi_client: httpx.AsyncClient
 ):
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     logs_dir = tmp_path / "data" / "logs"
     logs_dir.mkdir(parents=True)
-    (logs_dir / "astrbot.log").write_text("x" * 1024, encoding="utf-8")
+    (logs_dir / "bot.log").write_text("x" * 1024, encoding="utf-8")
     monkeypatch.setattr(
-        "astrbot.dashboard.services.log_service.shutil.disk_usage",
+        "bot.dashboard.services.log_service.shutil.disk_usage",
         lambda _path: SimpleNamespace(total=2048, used=2048, free=0),
     )
 
@@ -4734,7 +4734,7 @@ async def test_v1_log_export_refuses_when_disk_space_is_short(
 async def test_v1_log_export_runs_one_export_at_a_time(
     monkeypatch, tmp_path: Path, asgi_app, asgi_client: httpx.AsyncClient
 ):
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     lock = asgi_app.state.services.logs._export_lock
     lock.acquire()
     try:
@@ -4797,7 +4797,7 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
 ):
     from urllib.parse import quote
 
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     service = asgi_app.state.services.logs
     config = service.config
     config["trace_enable"] = False
@@ -4825,12 +4825,12 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
     plugin.config = {"api_key": plugin_secret}
     logs = tmp_path / "data/logs"
     logs.mkdir(parents=True)
-    (logs / "astrbot.log").write_text(
+    (logs / "bot.log").write_text(
         f"{aes_secret}\n"
         f"{secret}\n{quote(secret, safe='')}\n{plugin_secret}\n{trace_secret}\nhttp://8.8.8.8:8080/v1 https://[2606:4700:4700::1111]:443/v1 http://192.168.1.2:6185/health\nAuthorization: Bearer unknown-header-token\nCookie: session=unknown; second=secret\n-----BEGIN PRIVATE KEY-----\nprivate-key-body\n-----END PRIVATE KEY-----\n",
         encoding="utf-8",
     )
-    (logs / "astrbot.1.log").write_text(plugin_secret, encoding="utf-8")
+    (logs / "bot.1.log").write_text(plugin_secret, encoding="utf-8")
     (logs / "binary.log").write_bytes(b"\x00binary-private-data")
     service.log_broker.publish(
         {"time": 1, "level": "INFO", "data": f"{secret} peer=8.8.8.8"}
@@ -4860,7 +4860,7 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
             }
 
     monkeypatch.setattr(
-        "astrbot.dashboard.services.log_service.get_trace_store", lambda *_: Store()
+        "bot.dashboard.services.log_service.get_trace_store", lambda *_: Store()
     )
     response = await asgi_client.get(
         "/api/v1/logs/export",
@@ -4889,7 +4889,7 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
         assert "binary-private-data" not in all_text
         if not redact:
             assert (
-                archive.read("logs/astrbot.log") == (logs / "astrbot.log").read_bytes()
+                archive.read("logs/bot.log") == (logs / "bot.log").read_bytes()
             )
         exported = json.loads(archive.read("config.json"))["profiles"]["default"]
         if redact:
@@ -4901,7 +4901,7 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
                 exported["diagnostic_network"]["public_ipv6"]
                 == "https://[PUBLIC_IP_2]:443/v1"
             )
-            assert b"peer=[PUBLIC_IP_1]" in archive.read("logs/astrbot.in-memory.log")
+            assert b"peer=[PUBLIC_IP_1]" in archive.read("logs/bot.in-memory.log")
             trace = json.loads(archive.read("traces/history.jsonl"))["spans"][0][
                 "attributes"
             ]
@@ -4938,11 +4938,11 @@ async def test_diagnostic_export_without_trace_does_not_create_or_enable_it(
 ):
     from unittest.mock import Mock
 
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     asgi_app.state.services.logs.config["trace_enable"] = False
     getter = Mock(side_effect=AssertionError("No database should be opened"))
     monkeypatch.setattr(
-        "astrbot.dashboard.services.log_service.get_trace_store", getter
+        "bot.dashboard.services.log_service.get_trace_store", getter
     )
     response = await asgi_client.get("/api/v1/logs/export", headers=_jwt_headers())
     assert response.status_code == 200
@@ -4960,7 +4960,7 @@ async def test_diagnostic_export_without_trace_does_not_create_or_enable_it(
 async def test_diagnostic_export_authenticates_dashboard_cookie(
     monkeypatch, tmp_path, asgi_client
 ):
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     token = _jwt_headers()["Authorization"].removeprefix("Bearer ")
     asgi_client.cookies.set(DASHBOARD_JWT_COOKIE_NAME, token)
     response = await asgi_client.get("/api/v1/logs/export")
@@ -4973,9 +4973,9 @@ async def test_diagnostic_export_redaction_failure_is_closed_and_unlocks(
 ):
     from unittest.mock import Mock
 
-    from astrbot.dashboard.services import log_service
+    from bot.dashboard.services import log_service
 
-    monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+    monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     original = log_service.collect_diagnostics
     monkeypatch.setattr(
         log_service,
@@ -4995,8 +4995,8 @@ async def test_diagnostic_export_redaction_failure_is_closed_and_unlocks(
 @pytest.mark.asyncio
 async def test_v1_persistent_trace_routes(asgi_client, asgi_app, monkeypatch, tmp_path):
     """Verify durable history/detail validation and dashboard authentication."""
-    from astrbot.core.utils.trace_store import TraceStore
-    from astrbot.dashboard.services import log_service
+    from bot.core.utils.trace_store import TraceStore
+    from bot.dashboard.services import log_service
 
     store = TraceStore(tmp_path / "traces.db", {"trace_db_max_mb": 8})
     monkeypatch.setattr(log_service, "get_trace_store", lambda *_: store)
@@ -5014,7 +5014,7 @@ async def test_v1_persistent_trace_routes(asgi_client, asgi_app, monkeypatch, tm
         "has_models": False,
         "has_plugins": False,
         "span_count": 1,
-        "attributes": {"astrbot.message_outline": "Hello"},
+        "attributes": {"bot.message_outline": "Hello"},
     }
     try:
         assert store.append(
@@ -5037,7 +5037,7 @@ async def test_v1_persistent_trace_routes(asgi_client, asgi_app, monkeypatch, tm
         response = await asgi_client.get("/api/v1/trace/history")
         assert response.status_code == 401
         token = jwt.encode(
-            {"username": "astrbot", "exp": int(time.time()) + 600},
+            {"username": "bot", "exp": int(time.time()) + 600},
             JWT_SECRET,
             algorithm="HS256",
         )
@@ -5072,7 +5072,7 @@ async def test_v1_persistent_trace_routes(asgi_client, asgi_app, monkeypatch, tm
         assert (
             await asgi_client.get("/api/v1/trace/settings", headers=headers)
         ).status_code == 200
-        monkeypatch.setenv("ASTRBOT_ROOT", str(tmp_path))
+        monkeypatch.setenv("BOT_ROOT", str(tmp_path))
         asgi_app.state.services.logs.config.update(
             trace_enable=False, trace_db_path=str(tmp_path / "traces.db")
         )
@@ -5104,7 +5104,7 @@ async def test_v1_trace_storage_cleanup_target(asgi_client, monkeypatch):
         stat_service.StatService, "get_storage_status", AsyncMock(return_value=usage)
     )
     token = jwt.encode(
-        {"username": "astrbot", "exp": int(time.time()) + 600},
+        {"username": "bot", "exp": int(time.time()) + 600},
         JWT_SECRET,
         algorithm="HS256",
     )

@@ -7,12 +7,12 @@ from typing import Any
 
 import pytest
 
-from astrbot.core.platform.sources.qqofficial import qqofficial_message_event
-from astrbot.core.platform.sources.qqofficial.qqofficial_chunked_upload import (
+from bot.core.platform.sources.qqofficial import qqofficial_message_event
+from bot.core.platform.sources.qqofficial.qqofficial_chunked_upload import (
     QQOfficialChunkedUploader,
     _compute_file_hashes,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import (
+from bot.core.platform.sources.qqofficial.qqofficial_message_event import (
     QQOfficialMessageEvent,
 )
 

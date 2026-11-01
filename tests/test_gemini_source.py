@@ -4,12 +4,12 @@ import httpx
 import pytest
 from google.genai import types
 
-import astrbot.core.message.components as Comp
-import astrbot.core.provider.sources.gemini_source as gemini_source
-import astrbot.core.provider.sources.request_retry as request_retry
-from astrbot.core.exceptions import EmptyModelOutputError
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.core.provider.sources.gemini_source import ProviderGoogleGenAI
+import bot.core.message.components as Comp
+import bot.core.provider.sources.gemini_source as gemini_source
+import bot.core.provider.sources.request_retry as request_retry
+from bot.core.exceptions import EmptyModelOutputError
+from bot.core.provider.entities import LLMResponse
+from bot.core.provider.sources.gemini_source import ProviderGoogleGenAI
 
 
 @pytest.mark.asyncio
@@ -361,7 +361,7 @@ async def test_gemini_stream_keeps_conversation_header_until_consumed(
     observed_headers: list[str | None] = []
 
     async def fake_stream():
-        observed_headers.append(headers.get("x-astrbot-conversation-id"))
+        observed_headers.append(headers.get("x-bot-conversation-id"))
         yield _gemini_stream_chunk(text="ok")
 
     async def fake_retry(provider_name, request_factory, max_attempts=None):
@@ -382,7 +382,7 @@ async def test_gemini_stream_keeps_conversation_header_until_consumed(
 
     assert responses[-1].completion_text == "ok"
     assert observed_headers == ["conversation-1"]
-    assert "x-astrbot-conversation-id" not in headers
+    assert "x-bot-conversation-id" not in headers
 
 
 @pytest.mark.asyncio

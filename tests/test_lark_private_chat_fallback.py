@@ -4,14 +4,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-import astrbot.api.message_components as Comp
-from astrbot.api.event import MessageChain
-from astrbot.core.platform.message_session import MessageSession
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.platform.platform import Platform
-from astrbot.core.platform.sources.lark import lark_adapter
-from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
-from astrbot.core.platform.sources.lark.lark_event import LarkMessageEvent
+import bot.api.message_components as Comp
+from bot.api.event import MessageChain
+from bot.core.platform.message_session import MessageSession
+from bot.core.platform.message_type import MessageType
+from bot.core.platform.platform import Platform
+from bot.core.platform.sources.lark import lark_adapter
+from bot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
+from bot.core.platform.sources.lark.lark_event import LarkMessageEvent
 
 
 @pytest.fixture

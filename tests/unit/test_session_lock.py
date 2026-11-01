@@ -10,12 +10,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages import internal
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
+from bot.core.pipeline.process_stage.method.agent_sub_stages import internal
+from bot.core.pipeline.process_stage.method.agent_sub_stages.internal import (
     InternalAgentSubStage,
 )
-from astrbot.core.star.session_llm_manager import SessionServiceManager
-from astrbot.core.utils.session_lock import SessionLockManager
+from bot.core.star.session_llm_manager import SessionServiceManager
+from bot.core.utils.session_lock import SessionLockManager
 
 
 class TestSessionLockManagerBasic:
@@ -369,7 +369,7 @@ class TestIssue5464:
         (each potentially running in different event loops) access the
         same SessionLockManager concurrently.
         """
-        from astrbot.core.utils.session_lock import session_lock_manager
+        from bot.core.utils.session_lock import session_lock_manager
 
         errors: list[Exception] = []
         results: list[str] = []
@@ -463,7 +463,7 @@ class TestIssue5464:
         This verifies the fix: locks are isolated per event loop,
         so different loops can acquire the "same" session lock concurrently.
         """
-        from astrbot.core.utils.session_lock import session_lock_manager
+        from bot.core.utils.session_lock import session_lock_manager
 
         session_id = "global-session"
         acquisition_times: list[float] = []

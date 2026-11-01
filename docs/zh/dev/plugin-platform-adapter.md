@@ -52,22 +52,22 @@ class FakeClient:
 ```py
 import asyncio
 
-from astrbot.core.platform import (
+from bot.core.platform import (
     Platform,
-    AstrBotMessage,
+    BotMessage,
     MessageMember,
     PlatformMetadata,
     MessageType,
 )
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     Plain,
     Image,
     Record,
 )  # 消息链中的组件，可以根据需要导入
-from astrbot.core.platform.astr_message_event import MessageSession
-from astrbot.core.platform.register import register_platform_adapter
-from astrbot import logger
+from bot.core.platform.bot_message_event import MessageSession
+from bot.core.platform.register import register_platform_adapter
+from bot import logger
 from .client import FakeClient
 from .fake_platform_event import FakePlatformEvent
 
@@ -105,7 +105,7 @@ class FakePlatformAdapter(Platform):
         # FakeClient 是我们自己定义的，这里只是示例。这个是其回调函数
         async def on_received(data):
             logger.info(data)
-            abm = await self.convert_message(data=data)  # 转换成 AstrBotMessage
+            abm = await self.convert_message(data=data)  # 转换成 BotMessage
             await self.handle_msg(abm)
 
         # 初始化 FakeClient
@@ -113,10 +113,10 @@ class FakePlatformAdapter(Platform):
         self.client.on_message_received = on_received
         await self.client.start_polling()  # 持续监听消息，这是个堵塞方法。
 
-    async def convert_message(self, data: dict) -> AstrBotMessage:
-        # 将平台消息转换成 AstrBotMessage
+    async def convert_message(self, data: dict) -> BotMessage:
+        # 将平台消息转换成 BotMessage
         # 这里就体现了适配程度，不同平台的消息结构不一样，这里需要根据实际情况进行转换。
-        abm = AstrBotMessage()
+        abm = BotMessage()
         abm.type = (
             MessageType.GROUP_MESSAGE
         )  # 还有 friend_message，对应私聊。具体平台具体分析。重要！
@@ -135,7 +135,7 @@ class FakePlatformAdapter(Platform):
 
         return abm
 
-    async def handle_msg(self, message: AstrBotMessage):
+    async def handle_msg(self, message: BotMessage):
         # 处理消息
         message_event = FakePlatformEvent(
             message_str=message.message_str,
@@ -151,17 +151,17 @@ class FakePlatformAdapter(Platform):
 `fake_platform_event.py`：
 
 ```py
-from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.core.platform import AstrBotMessage, PlatformMetadata
-from astrbot.api.message_components import Plain, Image
+from bot.api.event import BotMessageEvent, MessageChain
+from bot.core.platform import BotMessage, PlatformMetadata
+from bot.api.message_components import Plain, Image
 from .client import FakeClient
 
 
-class FakePlatformEvent(AstrMessageEvent):
+class FakePlatformEvent(BotMessageEvent):
     def __init__(
         self,
         message_str: str,
-        message_obj: AstrBotMessage,
+        message_obj: BotMessage,
         platform_meta: PlatformMetadata,
         session_id: str,
         client: FakeClient,
@@ -198,7 +198,7 @@ class FakePlatformEvent(AstrMessageEvent):
 如果你手上已经是本地文件，推荐使用组件提供的构造方法，它会生成标准 `file:` URI：
 
 ```py
-from astrbot.api.message_components import Image, Record, Video
+from bot.api.message_components import Image, Record, Video
 
 abm.message.append(Image.fromFileSystem("/tmp/image.png"))
 abm.message.append(Record.fromFileSystem("/tmp/audio.wav"))
@@ -243,7 +243,7 @@ message_event.track_temporary_local_file(temp_media_path)
 最后，main.py 只需这样，在初始化的时候导入 fake_platform_adapter 模块。装饰器会自动注册。
 
 ```py
-from astrbot.core.star import Context, Star
+from bot.core.star import Context, Star
 
 
 class MyPlugin(Star):

@@ -268,13 +268,13 @@ Templates also support these optional fields:
 When loading plugins, LKMBot will check if there's a `_conf_schema.json` file in the plugin directory. If it exists, it will automatically parse the configuration and save it under `data/config/<plugin_name>_config.json` (a configuration file entity created according to the Schema), and pass it to `__init__()` when instantiating the plugin class.
 
 ```py
-from astrbot.api import AstrBotConfig
+from bot.api import BotConfig
 
 
 class ConfigPlugin(Star):
     def __init__(
-        self, context: Context, config: AstrBotConfig
-    ):  # AstrBotConfig inherits from Dict and has all dictionary methods
+        self, context: Context, config: BotConfig
+    ):  # BotConfig inherits from Dict and has all dictionary methods
         super().__init__(context)
         self.config = config
         print(self.config)

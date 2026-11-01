@@ -4,8 +4,8 @@ import time
 import pytest
 import pytest_asyncio
 
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.utils.shared_preferences import SharedPreferences
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.utils.shared_preferences import SharedPreferences
 
 
 @pytest_asyncio.fixture

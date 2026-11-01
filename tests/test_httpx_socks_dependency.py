@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 import tomllib
 
-from astrbot.core.utils.toml_parser import read_pyproject_project_dependencies
+from bot.core.utils.toml_parser import read_pyproject_project_dependencies
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"

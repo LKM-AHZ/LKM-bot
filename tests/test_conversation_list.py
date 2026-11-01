@@ -6,9 +6,9 @@ import pytest
 from sqlalchemy import event, text
 from sqlalchemy import inspect as sqlalchemy_inspect
 
-from astrbot.core.conversation_mgr import ConversationManager
-from astrbot.core.db.po import ConversationV2, PlatformSession
-from astrbot.core.db.sqlite import SQLiteDatabase
+from bot.core.conversation_mgr import ConversationManager
+from bot.core.db.po import ConversationV2, PlatformSession
+from bot.core.db.sqlite import SQLiteDatabase
 
 
 @pytest.mark.asyncio
@@ -53,25 +53,25 @@ async def test_filtered_conversations_summary_skips_content_and_applies_filters(
             updated_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
         ),
         ConversationV2(
-            conversation_id="astrbot",
+            conversation_id="bot",
             platform_id="qq",
-            user_id="astrbot:FriendMessage:5",
+            user_id="bot:FriendMessage:5",
             content=[{"role": "assistant", "content": "excluded"}],
             created_at=datetime(2023, 1, 1, tzinfo=timezone.utc),
             updated_at=datetime(2023, 1, 1, tzinfo=timezone.utc),
         ),
         ConversationV2(
-            conversation_id="astrbotweb",
-            platform_id="astrbotweb",
-            user_id="astrbotweb:GroupMessage:9",
+            conversation_id="botweb",
+            platform_id="botweb",
+            user_id="botweb:GroupMessage:9",
             content=[{"role": "assistant", "content": "kept"}],
             created_at=datetime(2025, 6, 1, tzinfo=timezone.utc),
             updated_at=datetime(2025, 6, 1, tzinfo=timezone.utc),
         ),
         ConversationV2(
-            conversation_id="astrbot-legacy",
-            platform_id="astrbot",
-            user_id="astrbot",
+            conversation_id="bot-legacy",
+            platform_id="bot",
+            user_id="bot",
             content=[{"role": "assistant", "content": "excluded"}],
             created_at=datetime(2022, 1, 1, tzinfo=timezone.utc),
             updated_at=datetime(2022, 1, 1, tzinfo=timezone.utc),
@@ -86,7 +86,7 @@ async def test_filtered_conversations_summary_skips_content_and_applies_filters(
         page_size=10,
         include_history=False,
         message_types=["GroupMessage", "FriendMessage"],
-        exclude_ids=["astrbot"],
+        exclude_ids=["bot"],
         exclude_platforms=["webchat"],
     )
 
@@ -94,7 +94,7 @@ async def test_filtered_conversations_summary_skips_content_and_applies_filters(
     assert [item.conversation_id for item in summary] == [
         "friend",
         "group",
-        "astrbotweb",
+        "botweb",
         "other",
     ]
     assert all("content" in sqlalchemy_inspect(item).unloaded for item in summary)
@@ -106,7 +106,7 @@ async def test_filtered_conversations_summary_skips_content_and_applies_filters(
         page_size=10,
         include_history=False,
         message_types=["GroupMessage", "FriendMessage"],
-        exclude_ids=["astrbot"],
+        exclude_ids=["bot"],
         exclude_platforms=["webchat"],
     )
     assert manager_total == total
@@ -114,19 +114,19 @@ async def test_filtered_conversations_summary_skips_content_and_applies_filters(
     assert all(json.loads(item.history) == [] for item in manager_summary)
 
     # exclude_ids must match only the exact user_id or its platform segment,
-    # so "astrbot" does not swallow "astrbotweb", while a colon-less legacy
-    # user_id "astrbot" is still matched exactly.
+    # so "bot" does not swallow "botweb", while a colon-less legacy
+    # user_id "bot" is still matched exactly.
     segment_matches, segment_total = await db.get_filtered_conversations(
         page=1,
         page_size=10,
         include_history=False,
-        exclude_ids=["astrbot"],
+        exclude_ids=["bot"],
     )
     assert segment_total == 5
     assert [item.conversation_id for item in segment_matches] == [
         "friend",
         "group",
-        "astrbotweb",
+        "botweb",
         "other",
         "webchat",
     ]
@@ -179,18 +179,18 @@ async def test_filtered_conversations_summary_skips_content_and_applies_filters(
         include_history=False,
     )
     assert [item.conversation_id for item in updated_ascending] == [
-        "astrbot-legacy",
-        "astrbot",
+        "bot-legacy",
+        "bot",
         "webchat",
         "other",
-        "astrbotweb",
+        "botweb",
         "group",
         "friend",
     ]
 
     assert await db.get_conversation_platform_ids() == [
-        "astrbot",
-        "astrbotweb",
+        "bot",
+        "botweb",
         "qq",
         "telegram",
         "webchat",
@@ -376,7 +376,7 @@ async def test_webchat_session_title_matches_search_and_keyword(tmp_path: Path):
                         platform_id="webchat",
                         user_id=(
                             "webchat:FriendMessage:"
-                            f"webchat!astrbot!{matched_session_id}"
+                            f"webchat!bot!{matched_session_id}"
                         ),
                         content=[{"role": "user", "content": "hello"}],
                         created_at=datetime(2026, 1, 2, tzinfo=timezone.utc),
@@ -385,7 +385,7 @@ async def test_webchat_session_title_matches_search_and_keyword(tmp_path: Path):
                     ConversationV2(
                         conversation_id="webchat-other",
                         platform_id="webchat",
-                        user_id="webchat:FriendMessage:webchat!astrbot!other-session",
+                        user_id="webchat:FriendMessage:webchat!bot!other-session",
                         content=[{"role": "user", "content": "hello"}],
                         created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
                         updated_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
@@ -393,13 +393,13 @@ async def test_webchat_session_title_matches_search_and_keyword(tmp_path: Path):
                     PlatformSession(
                         session_id=matched_session_id,
                         platform_id="webchat",
-                        creator="astrbot",
+                        creator="bot",
                         display_name="美食推荐晚餐食谱",
                     ),
                     PlatformSession(
                         session_id="other-session",
                         platform_id="webchat",
-                        creator="astrbot",
+                        creator="bot",
                         display_name="成都旅行三日游计划",
                     ),
                 ]

@@ -41,14 +41,14 @@ Workflow 应用接收输入变量，然后执行工作流，最后输出结果�
 
 对于 Workflow 应用，LKMBot 在每次请求时会附上两个变量:
 
-- `astrbot_text_query`: 输入变量名。即用户输入的文本内容。
-- `astrbot_session_id`: 会话 ID
+- `bot_text_query`: 输入变量名。即用户输入的文本内容。
+- `bot_session_id`: 会话 ID
 
 你可以在配置中自定义输入变量名，即当前 Dify 设置中的「Prompt 输入变量名」。
 
 您需要修改您的 Workflow 的输入的变量名以适配 LKMBot 的输入。
 
-最终，Workflow 会输出一个结果，您可以自定义这个结果的变量名，即当前 Dify 设置中的「Workflow 输出变量名」，默认为  `astrbot_wf_output`。你需要在 Dify 的 Workflow 的输出节点中配置这个变量名，否则 LKMBot 无法正确解析。
+最终，Workflow 会输出一个结果，您可以自定义这个结果的变量名，即当前 Dify 设置中的「Workflow 输出变量名」，默认为  `bot_wf_output`。你需要在 Dify 的 Workflow 的输出节点中配置这个变量名，否则 LKMBot 无法正确解析。
 
 #### 创建 API Key
 

@@ -32,9 +32,9 @@ const sidebarScopeClass = computed(() => {
     .replace(/\/$/, '') || '/'
 
   if (
-    normalizedPath === '/what-is-astrbot' || normalizedPath === '/community' || normalizedPath === '/faq'
+    normalizedPath === '/what-is-bot' || normalizedPath === '/community' || normalizedPath === '/faq'
     || path.startsWith('/deploy/') || path.startsWith('/others/') || path.startsWith('/ospp/')
-    || normalizedPath === '/en/what-is-astrbot' || normalizedPath === '/en/community' || normalizedPath === '/en/faq'
+    || normalizedPath === '/en/what-is-bot' || normalizedPath === '/en/community' || normalizedPath === '/en/faq'
     || path.startsWith('/en/deploy/') || path.startsWith('/en/others/') || path.startsWith('/en/ospp/')
   )
     return 'sidebar-scope-intro-deploy'

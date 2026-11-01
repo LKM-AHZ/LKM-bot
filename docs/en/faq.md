@@ -34,23 +34,23 @@ If you forgot your LKMBot dashboard password, choose the reset method that match
 The image ships with the LKMBot CLI, so you can reset the password inside the container:
 
 ```bash
-sudo docker exec -it astrbot astrbot password
-sudo docker restart astrbot # the new password takes effect after a restart
+sudo docker exec -it bot bot password
+sudo docker restart bot # the new password takes effect after a restart
 ```
 
-The first `astrbot` is the container name; replace it with your actual container name (check with `sudo docker ps`).
+The first `bot` is the container name; replace it with your actual container name (check with `sudo docker ps`).
 
-To also change the username, add the `--username` option: `sudo docker exec -it astrbot astrbot password --username <new-username>`.
+To also change the username, add the `--username` option: `sudo docker exec -it bot bot password --username <new-username>`.
 
 #### uv / pip Package Deployment
 
-Run the following in the LKMBot working directory (the one initialized with `astrbot init`):
+Run the following in the LKMBot working directory (the one initialized with `bot init`):
 
 ```bash
-astrbot password
+bot password
 ```
 
-To also change the username, add the `--username` option: `astrbot password --username <new-username>`.
+To also change the username, add the `--username` option: `bot password --username <new-username>`.
 
 Then restart LKMBot for the change to take effect.
 
@@ -122,7 +122,7 @@ After restart, LKMBot will reload or download WebUI files that match the current
 
 > [!TIP]
 > For security reasons, when runtime environment is set to `local`, LKMBot only allows LKMBot administrators to use computer capabilities by default.
-> You can select `sandbox` for the runtime environment, which allows all users to use computer capabilities (in an isolated sandbox). For more details, see [LKMBot Sandbox Environment](/en/use/astrbot-agent-sandbox.md)
+> You can select `sandbox` for the runtime environment, which allows all users to use computer capabilities (in an isolated sandbox). For more details, see [LKMBot Sandbox Environment](/en/use/bot-agent-sandbox.md)
 
 ### Bot Cannot Chat in Group Conversations
 

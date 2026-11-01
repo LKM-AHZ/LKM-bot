@@ -107,7 +107,7 @@ fi
 run_smoke_test() {
   # 不复刻一套 bash 版冒烟：CI（.github/workflows/smoke_test.yml）用的就是
   # scripts/smoke_startup_check.py，这里保持同一个实现，避免两套各写各的探活逻辑。
-  # 该脚本自带临时 ASTRBOT_ROOT 与 stub webui，不写仓库 data/，并自己在 finally
+  # 该脚本自带临时 BOT_ROOT 与 stub webui，不写仓库 data/，并自己在 finally
   # 里收进程、清临时目录。
   echo "==> Running startup smoke check"
   uv run python scripts/smoke_startup_check.py

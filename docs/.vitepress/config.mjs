@@ -33,7 +33,7 @@ export default defineConfig({
           {
             text: "简介",
             items: [
-              { text: "关于 LKMBot", link: "/what-is-astrbot" },
+              { text: "关于 LKMBot", link: "/what-is-bot" },
               { text: "社区", link: "/community" },
               { text: "常见问题", link: "/faq" },
             ],
@@ -43,23 +43,23 @@ export default defineConfig({
             base: "/deploy",
             collapsed: false,
             items: [
-              { text: "脚本部署", link: "/astrbot/package" },
-              { text: "雨云一键云部署", link: "/astrbot/rainyun" },
-              { text: "桌面客户端部署", link: "/astrbot/desktop" },
-              { text: "启动器一键部署", link: "/astrbot/launcher" },
-              { text: "Docker 部署", link: "/astrbot/docker" },
-              { text: "Kubernetes 部署", link: "/astrbot/kubernetes" },
-              { text: "宝塔面板部署", link: "/astrbot/btpanel" },
-              { text: "1Panel 部署", link: "/astrbot/1panel" },
-              { text: "源码部署", link: "/astrbot/cli" },
+              { text: "脚本部署", link: "/bot/package" },
+              { text: "雨云一键云部署", link: "/bot/rainyun" },
+              { text: "桌面客户端部署", link: "/bot/desktop" },
+              { text: "启动器一键部署", link: "/bot/launcher" },
+              { text: "Docker 部署", link: "/bot/docker" },
+              { text: "Kubernetes 部署", link: "/bot/kubernetes" },
+              { text: "宝塔面板部署", link: "/bot/btpanel" },
+              { text: "1Panel 部署", link: "/bot/1panel" },
+              { text: "源码部署", link: "/bot/cli" },
               {
                 text: "其他部署方式",
-                link: "/astrbot/other-deployments",
+                link: "/bot/other-deployments",
                 collapsed: true,
                 items: [
-                  { text: "CasaOS 部署", link: "/astrbot/casaos" },
-                  { text: "优云智算 GPU 部署", link: "/astrbot/compshare" },
-                  { text: "社区提供的部署方式", link: "/astrbot/community-deployment" },
+                  { text: "CasaOS 部署", link: "/bot/casaos" },
+                  { text: "优云智算 GPU 部署", link: "/bot/compshare" },
+                  { text: "社区提供的部署方式", link: "/bot/community-deployment" },
                 ],
               },
               {
@@ -147,7 +147,7 @@ export default defineConfig({
                 link: "/agent-runners",
                 collapsed: false,
                 items: [
-                  { text: "内置 Agent 执行器", link: "/agent-runners/astrbot-agent-runner" },
+                  { text: "内置 Agent 执行器", link: "/agent-runners/bot-agent-runner" },
                   { text: "Dify", link: "/agent-runners/dify" },
                   { text: "扣子 Coze", link: "/agent-runners/coze" },
                   { text: "阿里云百炼应用", link: "/agent-runners/dashscope" },
@@ -176,7 +176,7 @@ export default defineConfig({
                 text: "LKMBot 内置 AI",
                 collapsed: false,
                 items: [
-                  { text: "Agent 沙盒环境", link: "/astrbot-agent-sandbox" },
+                  { text: "Agent 沙盒环境", link: "/bot-agent-sandbox" },
                   { text: "主动型能力", link: "/proactive-agent" },
                   {
                     text: "网页搜索",
@@ -245,7 +245,7 @@ export default defineConfig({
               },
               {
                 text: "LKMBot 配置文件",
-                link: "/astrbot-config",
+                link: "/bot-config",
               },
             ],
           },
@@ -265,7 +265,7 @@ export default defineConfig({
             collapsed: false,
             items: [
               { text: "开源之夏 2025", link: "/ospp-2025" },
-              { text: "桐谷霁屿 x LKMBot 插件奖励活动", link: "/tonggujiyu-astrbot-plugin-reward-program" },
+              { text: "桐谷霁屿 x LKMBot 插件奖励活动", link: "/tonggujiyu-bot-plugin-reward-program" },
             ],
           },
         ],
@@ -310,7 +310,7 @@ export default defineConfig({
           {
             text: "Introduction",
             items: [
-              { text: "What is LKMBot", link: "/en/what-is-astrbot" },
+              { text: "What is LKMBot", link: "/en/what-is-bot" },
               { text: "Community", link: "/en/community" },
               { text: "FAQ", link: "/en/faq" },
             ],
@@ -320,22 +320,22 @@ export default defineConfig({
             base: "/en/deploy",
             collapsed: false,
             items: [
-              { text: "Script Deployment", link: "/astrbot/package" },
-              { text: "Desktop Client", link: "/astrbot/desktop" },
-              { text: "One-click Launcher", link: "/astrbot/launcher" },
-              { text: "Docker", link: "/astrbot/docker" },
-              { text: "Kubernetes", link: "/astrbot/kubernetes" },
-              { text: "BT Panel", link: "/astrbot/btpanel" },
-              { text: "1Panel", link: "/astrbot/1panel" },
-              { text: "Source Deployment", link: "/astrbot/cli" },
+              { text: "Script Deployment", link: "/bot/package" },
+              { text: "Desktop Client", link: "/bot/desktop" },
+              { text: "One-click Launcher", link: "/bot/launcher" },
+              { text: "Docker", link: "/bot/docker" },
+              { text: "Kubernetes", link: "/bot/kubernetes" },
+              { text: "BT Panel", link: "/bot/btpanel" },
+              { text: "1Panel", link: "/bot/1panel" },
+              { text: "Source Deployment", link: "/bot/cli" },
               {
                 text: "Other Deployments",
-                link: "/astrbot/other-deployments",
+                link: "/bot/other-deployments",
                 collapsed: true,
                 items: [
-                  { text: "CasaOS", link: "/astrbot/casaos" },
-                  { text: "Compshare GPU", link: "/astrbot/compshare" },
-                  { text: "Community-provided Deployment", link: "/astrbot/community-deployment" },
+                  { text: "CasaOS", link: "/bot/casaos" },
+                  { text: "Compshare GPU", link: "/bot/compshare" },
+                  { text: "Community-provided Deployment", link: "/bot/community-deployment" },
                 ],
               },
               {
@@ -425,7 +425,7 @@ export default defineConfig({
                 link: "/agent-runners",
                 collapsed: false,
                 items: [
-                  { text: "Built-in Agent Runner", link: "/agent-runners/astrbot-agent-runner" },
+                  { text: "Built-in Agent Runner", link: "/agent-runners/bot-agent-runner" },
                   { text: "Dify", link: "/agent-runners/dify" },
                   { text: "Coze", link: "/agent-runners/coze" },
                   { text: "Alibaba Bailian", link: "/agent-runners/dashscope" },
@@ -455,7 +455,7 @@ export default defineConfig({
                 text: "LKMBot Built-in AI",
                 collapsed: false,
                 items: [
-                  { text: "Agent Sandbox", link: "/astrbot-agent-sandbox" },
+                  { text: "Agent Sandbox", link: "/bot-agent-sandbox" },
                   { text: "Proactive Capabilities", link: "/proactive-agent" },
                   {
                     text: "Web Search",
@@ -522,7 +522,7 @@ export default defineConfig({
               },
               {
                 text: "LKMBot Configuration File",
-                link: "/astrbot-config",
+                link: "/bot-config",
               },
             ],
           },

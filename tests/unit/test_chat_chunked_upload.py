@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.utils.upload import UploadTooLargeError
-from astrbot.dashboard.services.chat_service import (
+from bot.core.utils.upload import UploadTooLargeError
+from bot.dashboard.services.chat_service import (
     MAX_UPLOAD_FILE_SIZE_BYTES,
     ChatService,
     ChatServiceError,
@@ -29,7 +29,7 @@ class _StubChunk:
 @pytest.fixture
 def service(monkeypatch, tmp_path):
     monkeypatch.setattr(
-        "astrbot.dashboard.services.chat_service.get_astrbot_data_path",
+        "bot.dashboard.services.chat_service.get_bot_data_path",
         lambda: str(tmp_path),
     )
     db = SimpleNamespace(inserted=None)

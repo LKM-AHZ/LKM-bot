@@ -26,14 +26,14 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from astrbot.dashboard.api.router import build_api_router
-from astrbot.dashboard.responses import ApiError, error
-from astrbot.dashboard.services.auth_service import (
+from bot.dashboard.api.router import build_api_router
+from bot.dashboard.responses import ApiError, error
+from bot.dashboard.services.auth_service import (
     DASHBOARD_JWT_COOKIE_NAME,
     AuthService,
 )
-from astrbot.lkm import sso as auth_sso
-from astrbot.lkm.base_path import (
+from bot.lkm import sso as auth_sso
+from bot.lkm.base_path import (
     dashboard_base_path,
     dashboard_cookie_path,
     with_base,
@@ -88,7 +88,7 @@ def _reset_sso_state(monkeypatch: pytest.MonkeyPatch):
     for name in (
         auth_sso.SSO_PUBLIC_KEY_ENV,
         auth_sso.SSO_PUBLIC_KEY_FILE_ENV,
-        "ASTRBOT_DASHBOARD_BASE_PATH",
+        "BOT_DASHBOARD_BASE_PATH",
     ):
         monkeypatch.delenv(name, raising=False)
     yield
@@ -129,7 +129,7 @@ def test_base_path_normalization(monkeypatch: pytest.MonkeyPatch) -> None:
     """前缀规范化：空 / ``/`` / 带尾斜杠 / 缺前导斜杠 都收敛成 ``""`` 或 ``"/bot"``。"""
     assert dashboard_base_path() == ""
     for raw in ("", "/", "  ", "/bot", "bot", "/bot/", "//bot//"):
-        monkeypatch.setenv("ASTRBOT_DASHBOARD_BASE_PATH", raw)
+        monkeypatch.setenv("BOT_DASHBOARD_BASE_PATH", raw)
         expected = "" if raw.strip() in ("", "/") else "/bot"
         assert dashboard_base_path() == expected, raw
 
@@ -140,7 +140,7 @@ def test_with_base_and_cookie_path(monkeypatch: pytest.MonkeyPatch) -> None:
     assert dashboard_cookie_path() == "/"
     assert dashboard_cookie_path("/api/auth") == "/api/auth"
 
-    monkeypatch.setenv("ASTRBOT_DASHBOARD_BASE_PATH", "/bot")
+    monkeypatch.setenv("BOT_DASHBOARD_BASE_PATH", "/bot")
     assert with_base("/") == "/bot/"
     assert with_base("/api/v1/auth/sso") == "/bot/api/v1/auth/sso"
     assert dashboard_cookie_path() == "/bot/"
@@ -347,7 +347,7 @@ async def test_sso_establishes_session_and_is_single_use(
     """有效票 → 进面板：302 到 ``<base>/#/next``、URL 不带票、cookie Path 收窄、之后可水合。"""
     private_pem, public_pem = rsa_keys
     monkeypatch.setenv(auth_sso.SSO_PUBLIC_KEY_ENV, public_pem)
-    monkeypatch.setenv("ASTRBOT_DASHBOARD_BASE_PATH", "/bot")
+    monkeypatch.setenv("BOT_DASHBOARD_BASE_PATH", "/bot")
     ticket = _ticket(private_pem)
 
     resp = await client.get(
@@ -450,11 +450,11 @@ def test_dashboard_modules_use_log_manager() -> None:
     ``Formatting field not found in record: 'plugin_tag'``，而该异常发生在请求处理路径上，
     表现为 400（真机验收踩到过，单测因不经 loguru 格式化而漏掉）。
     """
-    # SSO 端点已迁到定制的 lkm 层（astrbot/lkm/sso.py），同样在请求路径上记日志，故一并纳入扫描。
-    astrbot_dir = Path(__file__).resolve().parents[1] / "astrbot"
-    scanned_dirs = [astrbot_dir / "dashboard", astrbot_dir / "lkm"]
+    # SSO 端点已迁到定制的 lkm 层（bot/lkm/sso.py），同样在请求路径上记日志，故一并纳入扫描。
+    bot_dir = Path(__file__).resolve().parents[1] / "bot"
+    scanned_dirs = [bot_dir / "dashboard", bot_dir / "lkm"]
     offenders = [
-        f"{path.relative_to(astrbot_dir)}:{lineno}"
+        f"{path.relative_to(bot_dir)}:{lineno}"
         for directory in scanned_dirs
         for path in directory.rglob("*.py")
         for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1)

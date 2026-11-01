@@ -23,8 +23,8 @@ class SyncDocsHelpersTest(unittest.TestCase):
         module = load_sync_module()
 
         self.assertEqual(
-            module.page_name_for_source("zh/deploy/astrbot/docker.md"),
-            "zh-deploy-astrbot-docker",
+            module.page_name_for_source("zh/deploy/bot/docker.md"),
+            "zh-deploy-bot-docker",
         )
 
     def test_strip_frontmatter_removes_leading_block(self):
@@ -95,15 +95,15 @@ class SyncDocsHelpersTest(unittest.TestCase):
 
         resolver = module.LinkResolver(Path(__file__).resolve().parents[1])
 
-        content = "See [Docker](/deploy/astrbot/docker).\n"
+        content = "See [Docker](/deploy/bot/docker).\n"
 
         self.assertEqual(
             module.rewrite_links(
                 content,
-                source_path="zh/what-is-astrbot.md",
+                source_path="zh/what-is-bot.md",
                 resolver=resolver,
             ),
-            "See [Docker](zh-deploy-astrbot-docker).\n",
+            "See [Docker](zh-deploy-bot-docker).\n",
         )
 
     def test_rewrite_links_handles_relative_links(self):
@@ -132,7 +132,7 @@ class SyncDocsHelpersTest(unittest.TestCase):
         self.assertEqual(
             module.rewrite_links(
                 content,
-                source_path="zh/what-is-astrbot.md",
+                source_path="zh/what-is-bot.md",
                 resolver=resolver,
             ),
             "See [Connecting Model Services](zh-providers-start).\n",

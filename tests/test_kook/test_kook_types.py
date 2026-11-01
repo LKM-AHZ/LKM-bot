@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.platform.sources.kook.kook_types import (
+from bot.core.platform.sources.kook.kook_types import (
     ActionGroupModule,
     ButtonElement,
     ContextModule,

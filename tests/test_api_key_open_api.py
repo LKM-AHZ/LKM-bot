@@ -8,19 +8,19 @@ import pytest
 import pytest_asyncio
 from werkzeug.datastructures import FileStorage
 
-from astrbot.core import LogBroker
-from astrbot.core.core_lifecycle import AstrBotCoreLifecycle
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.utils.auth_password import (
+from bot.core import LogBroker
+from bot.core.core_lifecycle import BotCoreLifecycle
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.utils.auth_password import (
     hash_dashboard_password,
     hash_md5_dashboard_password,
 )
-from astrbot.dashboard.api import open_api as open_api_routes
-from astrbot.dashboard.asgi_runtime import FastAPIAppAdapter
-from astrbot.dashboard.responses import ok
-from astrbot.dashboard.server import AstrBotDashboard
+from bot.dashboard.api import open_api as open_api_routes
+from bot.dashboard.asgi_runtime import FastAPIAppAdapter
+from bot.dashboard.responses import ok
+from bot.dashboard.server import BotDashboard
 
-_TEST_DASHBOARD_PASSWORD = "AstrbotTest123"
+_TEST_DASHBOARD_PASSWORD = "BotTest123"
 
 
 async def _create_api_key(
@@ -47,20 +47,20 @@ async def core_lifecycle_td(tmp_path_factory):
     tmp_db_path = tmp_path_factory.mktemp("data") / "test_data_api_key.db"
     db = SQLiteDatabase(str(tmp_db_path))
     log_broker = LogBroker()
-    core_lifecycle = AstrBotCoreLifecycle(log_broker, db)
+    core_lifecycle = BotCoreLifecycle(log_broker, db)
     await core_lifecycle.initialize()
-    core_lifecycle.astrbot_config["admins_id"] = ["api-key-test-admin"]
+    core_lifecycle.bot_config["admins_id"] = ["api-key-test-admin"]
     generated_password = getattr(
-        core_lifecycle.astrbot_config,
+        core_lifecycle.bot_config,
         "_generated_dashboard_password",
         None,
     )
     dashboard_password = generated_password or _TEST_DASHBOARD_PASSWORD
     if not generated_password:
-        core_lifecycle.astrbot_config["dashboard"]["pbkdf2_password"] = (
+        core_lifecycle.bot_config["dashboard"]["pbkdf2_password"] = (
             hash_dashboard_password(dashboard_password)
         )
-        core_lifecycle.astrbot_config["dashboard"]["password"] = (
+        core_lifecycle.bot_config["dashboard"]["password"] = (
             hash_md5_dashboard_password(dashboard_password)
         )
     object.__setattr__(
@@ -80,31 +80,31 @@ async def core_lifecycle_td(tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def app(core_lifecycle_td: AstrBotCoreLifecycle):
+def app(core_lifecycle_td: BotCoreLifecycle):
     shutdown_event = asyncio.Event()
-    server = AstrBotDashboard(core_lifecycle_td, core_lifecycle_td.db, shutdown_event)
+    server = BotDashboard(core_lifecycle_td, core_lifecycle_td.db, shutdown_event)
     return server.app
 
 
-def _resolve_dashboard_password(core_lifecycle_td: AstrBotCoreLifecycle) -> str:
+def _resolve_dashboard_password(core_lifecycle_td: BotCoreLifecycle) -> str:
     generated_password = getattr(core_lifecycle_td, "_dashboard_plain_password", None)
     if generated_password:
         return generated_password
-    password = core_lifecycle_td.astrbot_config["dashboard"]["pbkdf2_password"]
+    password = core_lifecycle_td.bot_config["dashboard"]["pbkdf2_password"]
     if isinstance(password, str) and password.startswith("pbkdf2_sha256$"):
-        return "astrbot"
+        return "bot"
     return password
 
 
 @pytest_asyncio.fixture(scope="module")
 async def authenticated_header(
-    app: FastAPIAppAdapter, core_lifecycle_td: AstrBotCoreLifecycle
+    app: FastAPIAppAdapter, core_lifecycle_td: BotCoreLifecycle
 ):
     test_client = app.test_client()
     response = await test_client.post(
         "/api/v1/auth/login",
         json={
-            "username": core_lifecycle_td.astrbot_config["dashboard"]["username"],
+            "username": core_lifecycle_td.bot_config["dashboard"]["username"],
             "password": _resolve_dashboard_password(core_lifecycle_td),
         },
     )
@@ -205,7 +205,7 @@ async def test_open_send_message_with_api_key(
 async def test_open_chat_send_auto_session_id_and_username(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
 ):
     test_client = app.test_client()
 
@@ -290,7 +290,7 @@ async def test_open_chat_send_auto_session_id_and_username(
     assert missing_username_data["status"] == "error"
     assert missing_username_data["message"] == "Missing key: username"
 
-    admin_username = str(core_lifecycle_td.astrbot_config["admins_id"][0])
+    admin_username = str(core_lifecycle_td.bot_config["admins_id"][0])
     reserved_admin_res = await test_client.post(
         "/api/v1/chat",
         json={
@@ -311,7 +311,7 @@ async def test_open_chat_send_auto_session_id_and_username(
 async def test_chat_admin_subscope_allows_configured_admin_username(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
     monkeypatch: pytest.MonkeyPatch,
 ):
     """A chat-admin key may use an administrator ID from configuration."""
@@ -337,7 +337,7 @@ async def test_chat_admin_subscope_allows_configured_admin_username(
         "_build_streaming_chat_response",
         fake_chat_response,
     )
-    admin_username = str(core_lifecycle_td.astrbot_config["admins_id"][0])
+    admin_username = str(core_lifecycle_td.bot_config["admins_id"][0])
 
     response = await test_client.post(
         "/api/v1/chat",
@@ -360,7 +360,7 @@ async def test_chat_admin_subscope_allows_configured_admin_username(
 async def test_open_chat_sessions_pagination(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
 ):
     test_client = app.test_client()
 
@@ -499,7 +499,7 @@ async def test_open_api_auth_validation_and_key_carriers(
 async def test_open_chat_send_conversation_alias_and_blank_username(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
     monkeypatch: pytest.MonkeyPatch,
 ):
     test_client = app.test_client()
@@ -702,7 +702,7 @@ async def test_open_chat_send_config_resolution(
 async def test_open_chat_sessions_input_validation_and_filtering(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
 ):
     test_client = app.test_client()
     raw_key, _ = await _create_api_key(
@@ -914,7 +914,7 @@ async def test_open_api_key_scope_normalization(
 async def test_config_edit_admin_subscope_controls_admin_id_changes(
     app: FastAPIAppAdapter,
     authenticated_header: dict,
-    core_lifecycle_td: AstrBotCoreLifecycle,
+    core_lifecycle_td: BotCoreLifecycle,
 ):
     """Only the config edit-admin subscope may change administrator IDs."""
     test_client = app.test_client()
@@ -959,7 +959,7 @@ async def test_config_edit_admin_subscope_controls_admin_id_changes(
         allowed_data = await allowed_res.get_json()
         assert allowed_res.status_code == 200
         assert allowed_data["status"] == "ok"
-        assert "api-admin-test" in core_lifecycle_td.astrbot_config["admins_id"]
+        assert "api-admin-test" in core_lifecycle_td.bot_config["admins_id"]
     finally:
         restore_res = await test_client.put(
             "/api/v1/system-config",

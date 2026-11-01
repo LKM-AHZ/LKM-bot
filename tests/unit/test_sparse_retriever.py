@@ -5,8 +5,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.knowledge_base.retrieval import sparse_retriever
-from astrbot.core.knowledge_base.retrieval.sparse_retriever import SparseRetriever
+from bot.core.knowledge_base.retrieval import sparse_retriever
+from bot.core.knowledge_base.retrieval.sparse_retriever import SparseRetriever
 
 
 def make_doc(

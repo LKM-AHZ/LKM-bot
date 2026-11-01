@@ -3,30 +3,30 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from wechatpy.enterprise import parse_message
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import (
+from bot.api.event import MessageChain
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
     Plain,
 )
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.core.platform import (
+    BotMessage,
     MessageMember,
     MessageType,
     PlatformMetadata,
 )
-from astrbot.core.platform.button_interaction import (
+from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
 )
-from astrbot.core.platform.sources.wecom.wecom_adapter import WecomPlatformAdapter
-from astrbot.core.platform.sources.wecom.wecom_event import WecomPlatformEvent
-from astrbot.core.platform.sources.wecom.wecom_kf_message import WeChatKFMessage
+from bot.core.platform.sources.wecom.wecom_adapter import WecomPlatformAdapter
+from bot.core.platform.sources.wecom.wecom_event import WecomPlatformEvent
+from bot.core.platform.sources.wecom.wecom_kf_message import WeChatKFMessage
 
 
-def _message() -> AstrBotMessage:
-    message = AstrBotMessage()
+def _message() -> BotMessage:
+    message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE
     message.self_id = "100001"
     message.session_id = "alice"
@@ -86,7 +86,7 @@ async def test_wecom_application_sends_action_row_as_template_card():
     card = payload["template_card"]
     assert card["card_type"] == "button_interaction"
     assert card["main_title"] == {"title": "Choose an action"}
-    assert card["task_id"].startswith("astrbot_")
+    assert card["task_id"].startswith("bot_")
     callback_button, url_button = card["button_list"]
     assert callback_button["type"] == 0
     assert callback_button["style"] == 4
@@ -193,7 +193,7 @@ async def test_wecom_foreign_customer_service_menu_stays_plain_text():
 
 @pytest.mark.asyncio
 async def test_wecom_expired_menu_does_not_become_regular_message(monkeypatch):
-    from astrbot.core.platform import button_interaction
+    from bot.core.platform import button_interaction
 
     clock = [100.0]
     monkeypatch.setattr(button_interaction.time, "time", lambda: clock[0])

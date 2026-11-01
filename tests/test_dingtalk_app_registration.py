@@ -1,4 +1,4 @@
-from astrbot.core.platform.sources.dingtalk.app_registration import (
+from bot.core.platform.sources.dingtalk.app_registration import (
     DEFAULT_DINGTALK_REGISTRATION_BASE_URL,
     DEFAULT_DINGTALK_REGISTRATION_SOURCE,
     dingtalk_registration_base_url,

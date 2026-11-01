@@ -1,5 +1,5 @@
-from astrbot.core.config.default import CONFIG_METADATA_2
-from astrbot.core.provider.sources.mirarouter_source import ProviderMiraRouter
+from bot.core.config.default import CONFIG_METADATA_2
+from bot.core.provider.sources.mirarouter_source import ProviderMiraRouter
 
 
 def test_mirarouter_template_and_attribution_header():
@@ -24,4 +24,4 @@ def test_mirarouter_template_and_attribution_header():
     )
 
     assert str(provider.client.base_url) == "https://api.mirarouter.com/v1/"
-    assert provider.client._custom_headers["X-APP-CODE"] == "astrbot"
+    assert provider.client._custom_headers["X-APP-CODE"] == "bot"

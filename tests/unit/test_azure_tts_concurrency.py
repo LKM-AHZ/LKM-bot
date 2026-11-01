@@ -3,8 +3,8 @@ import json
 
 import pytest
 
-import astrbot.api  # noqa: F401
-from astrbot.core.provider.sources.azure_tts_source import (
+import bot.api  # noqa: F401
+from bot.core.provider.sources.azure_tts_source import (
     AzureNativeProvider,
     AzureTTSProvider,
     OTTSProvider,

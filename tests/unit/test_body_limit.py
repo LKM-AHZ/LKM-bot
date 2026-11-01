@@ -1,6 +1,6 @@
-from astrbot.dashboard.server import _check_body_limit
-from astrbot.dashboard.services.backup_service import CHUNK_SIZE
-from astrbot.dashboard.services.chat_service import MAX_UPLOAD_FILE_SIZE_BYTES
+from bot.dashboard.server import _check_body_limit
+from bot.dashboard.services.backup_service import CHUNK_SIZE
+from bot.dashboard.services.chat_service import MAX_UPLOAD_FILE_SIZE_BYTES
 
 DEFAULT_LIMIT = 128 * 1024 * 1024
 MULTIPART = "multipart/form-data; boundary=----test"

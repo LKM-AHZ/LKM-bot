@@ -28,6 +28,6 @@ GenieData/
 data/
 tests/
 .ruff_cache/
-.astrbot
-.astrbot-tmp
-astrbot.lock
+.bot
+.bot-tmp
+bot.lock

@@ -41,7 +41,7 @@ You can also ask it to:
 - “Move my break reminder to 3 PM tomorrow.”
 - “Delete the news task I just created.”
 
-All group members can list **every task in the current group conversation**, including its creator. Regular members can only edit and delete tasks they created in that group. AstrBot admins can also delete other members' tasks in the current group, but editing remains limited to the creator. Tasks created in the WebUI without a recorded chat creator also appear in the corresponding group's list and can be deleted by AstrBot admins. These permissions stay within the current conversation and do not allow access across groups. In private chats, listing, editing, and deletion remain limited to tasks created by the current sender in the current conversation.
+All group members can list **every task in the current group conversation**, including its creator. Regular members can only edit and delete tasks they created in that group. LKMBot admins can also delete other members' tasks in the current group, but editing remains limited to the creator. Tasks created in the WebUI without a recorded chat creator also appear in the corresponding group's list and can be deleted by LKMBot admins. These permissions stay within the current conversation and do not allow access across groups. In private chats, listing, editing, and deletion remain limited to tasks created by the current sender in the current conversation.
 
 ## Create and manage tasks in the WebUI
 
@@ -92,7 +92,7 @@ Tasks use the target conversation's configuration and conversation context. Late
 Scheduling does not grant extra capabilities:
 
 - For current information, configure [Web Search](./websearch.md).
-- For file operations or code execution, configure [Agent Sandbox](./astrbot-agent-sandbox.md).
+- For file operations or code execution, configure [Agent Sandbox](./bot-agent-sandbox.md).
 - For a business service, configure its [plugin](./plugin.md) or [MCP](./mcp.md).
 
 ### Supported Platforms

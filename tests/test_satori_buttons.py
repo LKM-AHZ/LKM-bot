@@ -2,16 +2,16 @@ import asyncio
 
 import pytest
 
-from astrbot.api.message_components import (
+from bot.api.message_components import (
     ActionRow,
     Button,
     ButtonInteraction,
 )
-from astrbot.core.platform.button_interaction import decode_button_callback
-from astrbot.core.platform.sources.satori.satori_adapter import (
+from bot.core.platform.button_interaction import decode_button_callback
+from bot.core.platform.sources.satori.satori_adapter import (
     SatoriPlatformAdapter,
 )
-from astrbot.core.platform.sources.satori.satori_event import SatoriPlatformEvent
+from bot.core.platform.sources.satori.satori_event import SatoriPlatformEvent
 from tests.fixtures.helpers import make_platform_config
 
 

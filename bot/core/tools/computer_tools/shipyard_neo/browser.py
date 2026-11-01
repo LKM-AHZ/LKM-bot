@@ -1,0 +1,207 @@
+import json
+from dataclasses import dataclass, field
+from typing import Any
+
+from bot.api import FunctionTool
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.agent.tool import ToolExecResult
+from bot.core.bot_agent_context import BotAgentContext
+from bot.core.computer.computer_client import get_booter
+from bot.core.tools.computer_tools.util import check_admin_permission
+from bot.core.tools.registry import builtin_tool
+
+_SHIPYARD_NEO_TOOL_CONFIG = {
+    "provider_settings.computer_use_runtime": "sandbox",
+    "provider_settings.sandbox.booter": "shipyard_neo",
+}
+
+
+def _to_json(data: Any) -> str:
+    return json.dumps(data, ensure_ascii=False, default=str)
+
+
+async def _get_browser_component(context: ContextWrapper[BotAgentContext]) -> Any:
+    booter = await get_booter(
+        context.context.context,
+        context.context.event.unified_msg_origin,
+    )
+    browser = getattr(booter, "browser", None)
+    if browser is None:
+        raise RuntimeError(
+            "Current sandbox booter does not support browser capability. "
+            "Please switch to shipyard_neo."
+        )
+    return browser
+
+
+@builtin_tool(config=_SHIPYARD_NEO_TOOL_CONFIG)
+@dataclass
+class BrowserExecTool(FunctionTool):
+    name: str = "bot_execute_browser"
+    description: str = "Execute one browser automation command in the sandbox."
+    parameters: dict = field(
+        default_factory=lambda: {
+            "type": "object",
+            "properties": {
+                "cmd": {"type": "string", "description": "Browser command to execute."},
+                "timeout": {"type": "integer", "default": 30},
+                "description": {
+                    "type": "string",
+                    "description": "Optional execution description.",
+                },
+                "tags": {"type": "string", "description": "Optional tags."},
+                "learn": {
+                    "type": "boolean",
+                    "description": "Whether to mark execution as learn evidence.",
+                    "default": False,
+                },
+                "include_trace": {
+                    "type": "boolean",
+                    "description": "Whether to include trace_ref in response.",
+                    "default": False,
+                },
+            },
+            "required": ["cmd"],
+        }
+    )
+
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+        self,
+        context: ContextWrapper[BotAgentContext],
+        cmd: str,
+        timeout: int = 30,
+        description: str | None = None,
+        tags: str | None = None,
+        learn: bool = False,
+        include_trace: bool = False,
+        **kwargs: Any,
+    ) -> ToolExecResult:
+        if err := check_admin_permission(context, "Using browser tools"):
+            return err
+        try:
+            browser = await _get_browser_component(context)
+            result = await browser.exec(
+                cmd=cmd,
+                timeout=timeout,
+                description=description,
+                tags=tags,
+                learn=learn,
+                include_trace=include_trace,
+            )
+            return _to_json(result)
+        except Exception as e:
+            return f"Error executing browser command: {str(e)}"
+
+
+@builtin_tool(config=_SHIPYARD_NEO_TOOL_CONFIG)
+@dataclass
+class BrowserBatchExecTool(FunctionTool):
+    name: str = "bot_execute_browser_batch"
+    description: str = "Execute a browser command batch in the sandbox."
+    parameters: dict = field(
+        default_factory=lambda: {
+            "type": "object",
+            "properties": {
+                "commands": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Ordered browser commands.",
+                },
+                "timeout": {"type": "integer", "default": 60},
+                "stop_on_error": {"type": "boolean", "default": True},
+                "description": {
+                    "type": "string",
+                    "description": "Optional execution description.",
+                },
+                "tags": {"type": "string", "description": "Optional tags."},
+                "learn": {
+                    "type": "boolean",
+                    "description": "Whether to mark execution as learn evidence.",
+                    "default": False,
+                },
+                "include_trace": {
+                    "type": "boolean",
+                    "description": "Whether to include trace_ref in response.",
+                    "default": False,
+                },
+            },
+            "required": ["commands"],
+        }
+    )
+
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+        self,
+        context: ContextWrapper[BotAgentContext],
+        commands: list[str],
+        timeout: int = 60,
+        stop_on_error: bool = True,
+        description: str | None = None,
+        tags: str | None = None,
+        learn: bool = False,
+        include_trace: bool = False,
+        **kwargs: Any,
+    ) -> ToolExecResult:
+        if err := check_admin_permission(context, "Using browser tools"):
+            return err
+        try:
+            browser = await _get_browser_component(context)
+            result = await browser.exec_batch(
+                commands=commands,
+                timeout=timeout,
+                stop_on_error=stop_on_error,
+                description=description,
+                tags=tags,
+                learn=learn,
+                include_trace=include_trace,
+            )
+            return _to_json(result)
+        except Exception as e:
+            return f"Error executing browser batch command: {str(e)}"
+
+
+@builtin_tool(config=_SHIPYARD_NEO_TOOL_CONFIG)
+@dataclass
+class RunBrowserSkillTool(FunctionTool):
+    name: str = "bot_run_browser_skill"
+    description: str = "Run a released browser skill in the sandbox by skill_key."
+    parameters: dict = field(
+        default_factory=lambda: {
+            "type": "object",
+            "properties": {
+                "skill_key": {"type": "string"},
+                "timeout": {"type": "integer", "default": 60},
+                "stop_on_error": {"type": "boolean", "default": True},
+                "include_trace": {"type": "boolean", "default": False},
+                "description": {"type": "string"},
+                "tags": {"type": "string"},
+            },
+            "required": ["skill_key"],
+        }
+    )
+
+    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+        self,
+        context: ContextWrapper[BotAgentContext],
+        skill_key: str,
+        timeout: int = 60,
+        stop_on_error: bool = True,
+        include_trace: bool = False,
+        description: str | None = None,
+        tags: str | None = None,
+        **kwargs: Any,
+    ) -> ToolExecResult:
+        if err := check_admin_permission(context, "Using browser tools"):
+            return err
+        try:
+            browser = await _get_browser_component(context)
+            result = await browser.run_skill(
+                skill_key=skill_key,
+                timeout=timeout,
+                stop_on_error=stop_on_error,
+                include_trace=include_trace,
+                description=description,
+                tags=tags,
+            )
+            return _to_json(result)
+        except Exception as e:
+            return f"Error running browser skill: {str(e)}"

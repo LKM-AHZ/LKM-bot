@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.builtin_stars.builtin_commands.commands import (
+from bot.builtin_stars.builtin_commands.commands import (
     conversation as conversation_module,
 )
 

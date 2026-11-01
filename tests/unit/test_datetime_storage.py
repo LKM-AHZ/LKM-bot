@@ -7,15 +7,15 @@ import pytest
 from sqlalchemy import Column, DateTime, MetaData, create_engine, literal, select
 from sqlmodel import SQLModel
 
-import astrbot.core.db.sqlite as sqlite_module
-from astrbot.core.db.po import (
+import bot.core.db.sqlite as sqlite_module
+from bot.core.db.po import (
     ConversationV2,
     PlatformMessageHistory,
     PlatformStat,
 )
-from astrbot.core.db.sqlite import SQLiteDatabase
-from astrbot.core.db.vec_db.faiss_impl.document_storage import BaseDocModel, Document
-from astrbot.core.knowledge_base.models import BaseKBModel, KnowledgeBase
+from bot.core.db.sqlite import SQLiteDatabase
+from bot.core.db.vec_db.faiss_impl.document_storage import BaseDocModel, Document
+from bot.core.knowledge_base.models import BaseKBModel, KnowledgeBase
 
 
 @pytest.mark.parametrize(
@@ -39,7 +39,7 @@ def test_datetime_columns_preserve_wall_time(
     """Exercise each datetime column's SQLite bind and result processing.
 
     Args:
-        metadata: One of AstrBot's three database model registries.
+        metadata: One of LKMBot's three database model registries.
         value: An input accepted by the existing datetime storage contract.
     """
     columns = [

@@ -35,23 +35,23 @@ Set dashboard.host in data/cmd_config.json to enable remote access.
 镜像内置了 LKMBot CLI，可以直接在容器内重置密码：
 
 ```bash
-sudo docker exec -it astrbot astrbot password
-sudo docker restart astrbot # 修改后需要重启容器才能生效
+sudo docker exec -it bot bot password
+sudo docker restart bot # 修改后需要重启容器才能生效
 ```
 
-其中第一个 `astrbot` 是容器名，如果你的容器名不同，请相应替换（可通过 `sudo docker ps` 查看容器名）。
+其中第一个 `bot` 是容器名，如果你的容器名不同，请相应替换（可通过 `sudo docker ps` 查看容器名）。
 
-如需同时修改用户名，可以加 `--username` 参数：`sudo docker exec -it astrbot astrbot password --username <新用户名>`。
+如需同时修改用户名，可以加 `--username` 参数：`sudo docker exec -it bot bot password --username <新用户名>`。
 
 #### uv / pip 软件包部署
 
-在 LKMBot 工作目录（即 `astrbot init` 初始化的目录）中执行：
+在 LKMBot 工作目录（即 `bot init` 初始化的目录）中执行：
 
 ```bash
-astrbot password
+bot password
 ```
 
-如需同时修改用户名，可以加 `--username` 参数：`astrbot password --username <新用户名>`。
+如需同时修改用户名，可以加 `--username` 参数：`bot password --username <新用户名>`。
 
 然后重启 LKMBot 生效。
 
@@ -123,23 +123,23 @@ astrbot password
 
 > [!TIP]
 > LKMBot 为了安全起见，运行环境选择 `local` 时，默认仅允许 LKMBot 管理员使用电脑能力。
-> 运行环境可以选择 `sandbox`，此时所有用户都可以使用电脑能力（在一个隔离的沙箱中）。详情请看 [LKMBot 沙箱环境](/use/astrbot-agent-sandbox.md)
+> 运行环境可以选择 `sandbox`，此时所有用户都可以使用电脑能力（在一个隔离的沙箱中）。详情请看 [LKMBot 沙箱环境](/use/bot-agent-sandbox.md)
 
 ### 通过 LKMBot 桌面客户端安装的 LKMBot，data 目录在哪？
 
-在家目录下的 `.astrbot` 目录下。
+在家目录下的 `.bot` 目录下。
 
-- Windows: `C:\Users\你的用户名\.astrbot`
-- MacOS / Linux: `/Users/你的用户名/.astrbot` 或者 `/home/你的用户名/.astrbot`
+- Windows: `C:\Users\你的用户名\.bot`
+- MacOS / Linux: `/Users/你的用户名/.bot` 或者 `/home/你的用户名/.bot`
 
 ### 通过 LKMBot Launcher 安装的 LKMBot，data 目录在哪？
 
 如果是旧版本的 LKMBot Launcher（Powershell），data 目录就在 Launcher bat 脚本的同级目录下。
 
-如果是新版本的 LKMBot Launcher（可视化），data 目录在家目录下的 `.astrbot_launcher` 目录下。
+如果是新版本的 LKMBot Launcher（可视化），data 目录在家目录下的 `.bot_launcher` 目录下。
 
-- Windows: `C:\Users\你的用户名\.astrbot_launcher`
-- MacOS / Linux: `/Users/你的用户名/.astrbot_launcher` 或者 `/home/你的用户名/.astrbot_launcher`
+- Windows: `C:\Users\你的用户名\.bot_launcher`
+- MacOS / Linux: `/Users/你的用户名/.bot_launcher` 或者 `/home/你的用户名/.bot_launcher`
 
 ### 机器人在群聊无法聊天
 
@@ -193,19 +193,19 @@ astrbot password
 
 ## OneBot v11 实现端 NapCat 连接相关
 
-### 我明明按照文档的步骤做了，为什么 NapCat 连不上 Astrbot？
+### 我明明按照文档的步骤做了，为什么 NapCat 连不上 Bot？
 
 1. 如果你两个**全都**是使用 Docker 部署，请尝试在终端运行：
 
 ```bash
 sudo docker network create newnet           # 创建新网络 
-sudo docker network connect newnet astrbot  
+sudo docker network connect newnet bot  
 sudo docker network connect newnet napcat   # 让两个容器连到一起
-sudo docker restart astrbot
+sudo docker restart bot
 sudo docker restart napcat                  # 重启容器
 ```
 
-运行无报错则回到 NapCat 的 WebUI，网络配置中，将你之前填写的 `ws://127.0.0.1:6199/ws` 修改为 `ws://astrbot:6199/ws`。
+运行无报错则回到 NapCat 的 WebUI，网络配置中，将你之前填写的 `ws://127.0.0.1:6199/ws` 修改为 `ws://bot:6199/ws`。
 
 2. 如果只有 NapCat 是 Docker 部署，请将 NapCat 的 WebUI 网络配置中的 `ws://127.0.0.1:6199/ws` 修改为 `ws://宿主机IP:6199/ws`（宿主机 IP 请自行搜索如何查看）。
 3. 如果都不是 Docker 部署，则请将 NapCat 的 WebUI 网络配置中的 `ws://127.0.0.1:6199/ws` 修改为 `ws://localhost:6199/ws` 或 `ws://127.0.0.1:6199/ws`。

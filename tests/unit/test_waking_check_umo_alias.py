@@ -6,10 +6,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from astrbot.core.pipeline.waking_check.stage import WakingCheckStage
-from astrbot.core.pipeline.waking_check.umo_auto_name import UmoAutoNameRecorder
-from astrbot.core.platform.message_type import MessageType
-from astrbot.core.star.session_plugin_manager import SessionPluginManager
+from bot.core.pipeline.waking_check.stage import WakingCheckStage
+from bot.core.pipeline.waking_check.umo_auto_name import UmoAutoNameRecorder
+from bot.core.platform.message_type import MessageType
+from bot.core.star.session_plugin_manager import SessionPluginManager
 
 
 def make_group_event(group_id: str, group_name: str | None, message: str = "/hello"):
@@ -55,7 +55,7 @@ async def make_stage(db_helper: MagicMock) -> WakingCheckStage:
     stage = WakingCheckStage()
     await stage.initialize(
         SimpleNamespace(
-            astrbot_config={
+            bot_config={
                 "admins_id": [],
                 "wake_prefix": ["/"],
                 "plugin_set": ["*"],
@@ -63,7 +63,7 @@ async def make_stage(db_helper: MagicMock) -> WakingCheckStage:
                     "friend_message_needs_wake_prefix": True,
                 },
             },
-            astrbot_config_id="test-conf-id",
+            bot_config_id="test-conf-id",
             db_helper=db_helper,
         )
     )
@@ -78,7 +78,7 @@ async def test_waking_stage_records_only_awakened_events(monkeypatch):
     db_helper.upsert_umo_auto_name = AsyncMock()
     stage = await make_stage(db_helper)
     monkeypatch.setattr(
-        "astrbot.core.pipeline.waking_check.stage.star_handlers_registry.get_handlers_by_event_type",
+        "bot.core.pipeline.waking_check.stage.star_handlers_registry.get_handlers_by_event_type",
         lambda *_args, **_kwargs: [],
     )
 
@@ -163,7 +163,7 @@ async def test_waking_stage_bounds_auto_name_cache():
     recorder = UmoAutoNameRecorder(db_helper, "test-conf-id")
 
     with patch(
-        "astrbot.core.pipeline.waking_check.umo_auto_name.MAX_UMO_AUTO_NAME_CACHE_SIZE",
+        "bot.core.pipeline.waking_check.umo_auto_name.MAX_UMO_AUTO_NAME_CACHE_SIZE",
         2,
     ):
         for index in range(3):
@@ -191,7 +191,7 @@ async def test_waking_stage_retries_after_database_failure():
     recorder = UmoAutoNameRecorder(db_helper, "test-conf-id")
     event = make_group_event("group-1", "Engineering")
 
-    with patch("astrbot.core.pipeline.waking_check.umo_auto_name.logger"):
+    with patch("bot.core.pipeline.waking_check.umo_auto_name.logger"):
         recorder.schedule(event)
         first_writer = recorder._writer_task
         assert first_writer is not None
@@ -285,7 +285,7 @@ async def test_sender_cache_is_bounded_and_skips_missing_ids():
     db_helper.upsert_umo_sender = AsyncMock()
     recorder = UmoAutoNameRecorder(db_helper, "test-conf-id")
     with patch(
-        "astrbot.core.pipeline.waking_check.umo_auto_name.MAX_UMO_AUTO_NAME_CACHE_SIZE", 2
+        "bot.core.pipeline.waking_check.umo_auto_name.MAX_UMO_AUTO_NAME_CACHE_SIZE", 2
     ):
         for sender_id in ("sender-1", "sender-2", "sender-3", None):
             event = make_group_event("group-1", None)

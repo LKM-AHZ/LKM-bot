@@ -17,7 +17,7 @@ WebUI 可访问时，进入 `数据与日志 → 日志` 查看实时日志。�
 优先查看 LKMBot 主日志：
 
 ```text
-data/logs/astrbot.log
+data/logs/bot.log
 ```
 
 如果使用 Docker 部署，也可以查看容器日志：
@@ -77,7 +77,7 @@ data/logs/event_loop_watchdog.log
 - LKMBot 版本、部署方式（Docker、源码部署、桌面客户端等）、操作系统。
 - 触发方式：启动、普通聊天、群聊、平台回调、定时任务、MCP 工具、插件功能等。
 - 影响范围：所有会话、某个平台、某个群、某个用户，还是某个插件。
-- `data/logs/astrbot.log` 中问题发生前后 1 到 3 分钟的日志。
+- `data/logs/bot.log` 中问题发生前后 1 到 3 分钟的日志。
 - 如果存在卡顿或 CPU 异常，请附带 `data/logs/event_loop_watchdog.log` 和 `data/logs/event_loop_watchdog.log.1`。
 - 如果使用 Docker，请附带对应时间段的 `docker logs`。
 - 已安装插件列表，以及问题是否在禁用第三方插件后仍然出现。

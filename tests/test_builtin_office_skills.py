@@ -12,9 +12,9 @@ from openpyxl import Workbook, load_workbook
 
 BUILTIN_SKILLS_DIR = (
     Path(__file__).resolve().parents[1]
-    / "astrbot"
+    / "bot"
     / "builtin_stars"
-    / "astrbot"
+    / "bot"
     / "skills"
 )
 SPREADSHEET_SCRIPTS = BUILTIN_SKILLS_DIR / "spreadsheets" / "scripts"

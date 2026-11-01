@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.message.components import Image, Record
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.core.pipeline.process_stage.method.agent_sub_stages import third_party
+from bot.core.message.components import Image, Record
+from bot.core.message.message_event_result import MessageChain
+from bot.core.provider.entities import LLMResponse
+from bot.core.pipeline.process_stage.method.agent_sub_stages import third_party
 
 
 @pytest.mark.asyncio
@@ -54,7 +54,7 @@ async def test_third_party_runner_receives_inline_profile_config(
 
     monkeypatch.setattr(third_party, runner_class_name, RunnerFactory)
     monkeypatch.setattr(
-        third_party, "AstrAgentContext", MagicMock(return_value=object())
+        third_party, "BotAgentContext", MagicMock(return_value=object())
     )
     monkeypatch.setattr(
         third_party, "AgentContextWrapper", MagicMock(return_value=object())
@@ -73,7 +73,7 @@ async def test_third_party_runner_receives_inline_profile_config(
     stage = third_party.ThirdPartyAgentSubStage()
     await stage.initialize(
         SimpleNamespace(
-            astrbot_config=config,
+            bot_config=config,
             plugin_manager=SimpleNamespace(
                 context=SimpleNamespace(
                     conversation_manager=MagicMock(),
@@ -127,7 +127,7 @@ async def test_third_party_skips_unavailable_voice_attachment(
 
     monkeypatch.setattr(third_party, "DifyAgentRunner", RunnerFactory)
     monkeypatch.setattr(
-        third_party, "AstrAgentContext", MagicMock(return_value=object())
+        third_party, "BotAgentContext", MagicMock(return_value=object())
     )
     monkeypatch.setattr(
         third_party, "AgentContextWrapper", MagicMock(return_value=object())
@@ -151,7 +151,7 @@ async def test_third_party_skips_unavailable_voice_attachment(
     stage = third_party.ThirdPartyAgentSubStage()
     await stage.initialize(
         SimpleNamespace(
-            astrbot_config=config,
+            bot_config=config,
             plugin_manager=SimpleNamespace(
                 context=SimpleNamespace(
                     conversation_manager=MagicMock(),
@@ -207,7 +207,7 @@ async def test_third_party_skips_unavailable_image_attachment(
 
     monkeypatch.setattr(third_party, "DifyAgentRunner", RunnerFactory)
     monkeypatch.setattr(
-        third_party, "AstrAgentContext", MagicMock(return_value=object())
+        third_party, "BotAgentContext", MagicMock(return_value=object())
     )
     monkeypatch.setattr(
         third_party, "AgentContextWrapper", MagicMock(return_value=object())
@@ -231,7 +231,7 @@ async def test_third_party_skips_unavailable_image_attachment(
     stage = third_party.ThirdPartyAgentSubStage()
     await stage.initialize(
         SimpleNamespace(
-            astrbot_config=config,
+            bot_config=config,
             plugin_manager=SimpleNamespace(
                 context=SimpleNamespace(
                     conversation_manager=MagicMock(),

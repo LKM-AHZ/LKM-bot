@@ -14,7 +14,7 @@ Always reference these instructions first and fallback to search or bash command
 
 ### Running the Application
 - Run main application: `uv run main.py` -- starts in ~3 seconds
-- Application creates WebUI on http://localhost:6185 (default credentials: `astrbot`/`astrbot`)
+- Application creates WebUI on http://localhost:6185 (default credentials: `bot`/`bot`)
 
 ### Dashboard Build (Vue.js/Node.js)
 - **Prerequisites**: Node.js 20+ and npm 10+ required
@@ -34,9 +34,9 @@ Always reference these instructions first and fallback to search or bash command
 - **ALWAYS** run `uv run ruff check .` and `uv run ruff format .` before committing changes
 
 ### Plugin Development
-- Plugins load from `astrbot/builtin_stars/` (built-in) and `data/plugins/` (user-installed)
+- Plugins load from `bot/builtin_stars/` (built-in) and `data/plugins/` (user-installed)
 - Plugin system supports function tools and message handlers
-- Key plugins: python_interpreter, web_searcher, astrbot, reminder, session_controller
+- Key plugins: python_interpreter, web_searcher, bot, reminder, session_controller
 
 ### Common Issues and Workarounds
 - **Dashboard download fails**: Known issue with "division by zero" error - application still works
@@ -54,7 +54,7 @@ Always reference these instructions first and fallback to search or bash command
   dedicated `bot.` subdomain, `deploy/k8s/` manifests) — see its `DEPLOYMENT.md` "LKM Bot" section.
 - Standalone build/run (not using the LKM stack): `docker build -t lkmbot:latest .` then
   `docker run -itd -p 6185:6185 -p 6199:6199 -v $PWD/data:/LKMBot/data --name lkmbot lkmbot:latest`
-  (see `docs/*/deploy/astrbot/docker.md`).
+  (see `docs/*/deploy/bot/docker.md`).
 - Exposes ports: 6185 (WebUI), 6195 (WeChat), 6199 (QQ), etc.
 - Volume mount required: `./data:/LKMBot/data`
 

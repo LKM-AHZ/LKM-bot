@@ -13,7 +13,7 @@ stalled ``getupdates`` connection forever, which is exactly the case its
 
 import asyncio
 
-from astrbot.core.platform.sources.weixin_oc.weixin_oc_adapter import (
+from bot.core.platform.sources.weixin_oc.weixin_oc_adapter import (
     WeixinOCAdapter,
 )
 

@@ -16,15 +16,15 @@ from unittest.mock import AsyncMock
 import botpy.message
 import pytest
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import Plain
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.api.event import MessageChain
+from bot.api.message_components import Plain
+from bot.core.platform import (
+    BotMessage,
     MessageMember,
     MessageType,
     PlatformMetadata,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import (
+from bot.core.platform.sources.qqofficial.qqofficial_message_event import (
     QQOfficialMessageEvent,
 )
 
@@ -53,7 +53,7 @@ def _make_group_event() -> QQOfficialMessageEvent:
             "timestamp": "0",
         },
     )
-    abm = AstrBotMessage()
+    abm = BotMessage()
     abm.message_id = "msg-1"
     abm.session_id = "group-1"
     abm.set_group("group-1")
@@ -85,7 +85,7 @@ def _make_c2c_event() -> QQOfficialMessageEvent:
             "timestamp": "0",
         },
     )
-    abm = AstrBotMessage()
+    abm = BotMessage()
     abm.message_id = "msg-1"
     abm.session_id = "user-1"
     abm.self_id = "bot-1"

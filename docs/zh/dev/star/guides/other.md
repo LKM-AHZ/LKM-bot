@@ -5,12 +5,12 @@
 > v3.4.34 后
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.command("test")
-async def test_(self, event: AstrMessageEvent):
-    from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import (
+async def test_(self, event: BotMessageEvent):
+    from bot.core.platform.sources.aiocqhttp.aiocqhttp_platform_adapter import (
         AiocqhttpAdapter,
     )  # 其他平台同理
 
@@ -27,10 +27,10 @@ async def test_(self, event: AstrMessageEvent):
 
 ```py
 @filter.command("helloworld")
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     if event.get_platform_name() == "aiocqhttp":
         # qq
-        from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
+        from bot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
             AiocqhttpMessageEvent,
         )
 
@@ -58,7 +58,7 @@ plugins = self.context.get_all_stars()  # 返回 StarMetadata 包含了插件类
 ## 获取加载的所有平台
 
 ```py
-from astrbot.core.platform import Platform
+from bot.core.platform import Platform
 
 platforms = self.context.platform_manager.get_insts()  # List[Platform]
 ```

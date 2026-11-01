@@ -4,11 +4,11 @@ import pytest
 from click import ClickException
 from click.testing import CliRunner
 
-import astrbot.cli.utils.plugin as plugin_utils
-from astrbot.cli.commands.cmd_plug import plug
+import bot.cli.utils.plugin as plugin_utils
+from bot.cli.commands.cmd_plug import plug
 
 
-def _write_plugin(path: Path, name: str = "astrbot_plugin_local_demo") -> None:
+def _write_plugin(path: Path, name: str = "bot_plugin_local_demo") -> None:
     path.mkdir(parents=True)
     (path / "metadata.yaml").write_text(
         "\n".join(
@@ -33,8 +33,8 @@ def _write_ignored_plugin_files(path: Path) -> None:
     (path / "__pycache__" / "main.pyc").write_bytes(b"ignored")
 
 
-def _write_astrbot_root(path: Path) -> None:
-    (path / ".astrbot").touch()
+def _write_bot_root(path: Path) -> None:
+    (path / ".bot").touch()
     (path / "data" / "plugins").mkdir(parents=True)
 
 
@@ -46,7 +46,7 @@ def test_plugin_install_editable_symlinks_local_plugin(
     root = tmp_path / "root"
     source = tmp_path / "source-plugin"
     root.mkdir()
-    _write_astrbot_root(root)
+    _write_bot_root(root)
     _write_plugin(source)
     monkeypatch.chdir(root)
 
@@ -56,8 +56,8 @@ def test_plugin_install_editable_symlinks_local_plugin(
         catch_exceptions=False,
     )
 
-    target = root / "data" / "plugins" / "astrbot_plugin_local_demo"
-    target = root / "data" / "plugins" / "astrbot_plugin_local_demo"
+    target = root / "data" / "plugins" / "bot_plugin_local_demo"
+    target = root / "data" / "plugins" / "bot_plugin_local_demo"
     assert result.exit_code == 0
     assert target.is_symlink()
     assert (target / "metadata.yaml").exists()
@@ -71,14 +71,14 @@ def test_plugin_install_accepts_local_path_without_editable_flag(
     root = tmp_path / "root"
     source = tmp_path / "source-plugin"
     root.mkdir()
-    _write_astrbot_root(root)
+    _write_bot_root(root)
     _write_plugin(source)
     _write_ignored_plugin_files(source)
     monkeypatch.chdir(root)
 
     result = CliRunner().invoke(plug, ["install", str(source)])
 
-    target = root / "data" / "plugins" / "astrbot_plugin_local_demo"
+    target = root / "data" / "plugins" / "bot_plugin_local_demo"
     assert result.exit_code == 0
     assert not target.is_symlink()
     assert (target / "metadata.yaml").exists()
@@ -97,9 +97,9 @@ def test_plugin_install_editable_rejects_existing_plugin(
     root = tmp_path / "root"
     source = tmp_path / "source-plugin"
     root.mkdir()
-    _write_astrbot_root(root)
+    _write_bot_root(root)
     _write_plugin(source)
-    _write_plugin(root / "data" / "plugins" / "astrbot_plugin_local_demo")
+    _write_plugin(root / "data" / "plugins" / "bot_plugin_local_demo")
     monkeypatch.chdir(root)
 
     result = CliRunner().invoke(plug, ["install", "-e", str(source)])
@@ -115,7 +115,7 @@ def test_plugin_install_rejects_plugin_name_with_path_separator(
     root = tmp_path / "root"
     source = tmp_path / "source-plugin"
     root.mkdir()
-    _write_astrbot_root(root)
+    _write_bot_root(root)
     _write_plugin(source, name="../bad_plugin")
     monkeypatch.chdir(root)
 
@@ -133,11 +133,11 @@ def test_plugin_install_copy_does_not_delete_existing_target_on_race(
     root = tmp_path / "root"
     source = tmp_path / "source-plugin"
     root.mkdir()
-    _write_astrbot_root(root)
+    _write_bot_root(root)
     _write_plugin(source)
     monkeypatch.chdir(root)
 
-    target = root / "data" / "plugins" / "astrbot_plugin_local_demo"
+    target = root / "data" / "plugins" / "bot_plugin_local_demo"
     target.mkdir()
     marker = target / "keep.txt"
     marker.write_text("keep\n", encoding="utf-8")
@@ -157,7 +157,7 @@ def test_plugin_install_copy_does_not_delete_concurrently_created_target(
     plugins_dir = tmp_path / "plugins"
     _write_plugin(source)
 
-    target = plugins_dir / "astrbot_plugin_local_demo"
+    target = plugins_dir / "bot_plugin_local_demo"
 
     def create_target_then_fail(
         _source_path: Path,
@@ -182,7 +182,7 @@ def test_plugin_install_requires_name_or_editable_path(
 ) -> None:
     root = tmp_path / "root"
     root.mkdir()
-    _write_astrbot_root(root)
+    _write_bot_root(root)
     monkeypatch.chdir(root)
 
     result = CliRunner().invoke(plug, ["install"])

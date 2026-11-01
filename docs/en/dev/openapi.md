@@ -39,7 +39,7 @@ The legacy Dashboard `/api/*` compatibility routes have been removed in favor of
 | `/api/plugin/page/bridge-sdk.js` | `/api/v1/plugins/page-bridge-sdk.js` |
 | `/api/plugin/get`, `/api/plugin/detail`, ... | `/api/v1/plugins`, `/api/v1/plugins/by-id` |
 
-Plugin web API handlers no longer run inside a Quart-compatible request context; use `from astrbot.api.web import request` instead. The complete route list is in `/api/v1/openapi.json`.
+Plugin web API handlers no longer run inside a Quart-compatible request context; use `from bot.api.web import request` instead. The complete route list is in `/api/v1/openapi.json`.
 
 ## Scope Permissions
 

@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock
 import pytest
 from starlette.websockets import WebSocketDisconnect
 
-from astrbot.core.platform.sources.webchat.webchat_queue_mgr import webchat_queue_mgr
-from astrbot.dashboard.services.live_chat_service import LiveChatService
+from bot.core.platform.sources.webchat.webchat_queue_mgr import webchat_queue_mgr
+from bot.dashboard.services.live_chat_service import LiveChatService
 
 
 def _service() -> LiveChatService:
     core_lifecycle = SimpleNamespace(
-        astrbot_config={"dashboard": {"jwt_secret": "test-secret"}},
+        bot_config={"dashboard": {"jwt_secret": "test-secret"}},
         plugin_manager=SimpleNamespace(),
         platform_message_history_manager=SimpleNamespace(),
     )
@@ -125,7 +125,7 @@ async def test_run_websocket_session_handles_disconnect_without_error_log(
         raise AssertionError("disconnect should not be logged as an error")
 
     monkeypatch.setattr(
-        "astrbot.dashboard.services.live_chat_service.logger.error",
+        "bot.dashboard.services.live_chat_service.logger.error",
         fail_error_log,
     )
 

@@ -1,6 +1,6 @@
 import pytest
 
-from astrbot.core.agent.runners.deerflow.deerflow_api_client import (
+from bot.core.agent.runners.deerflow.deerflow_api_client import (
     DeerFlowAPIClient,
     DeerFlowAPIError,
 )

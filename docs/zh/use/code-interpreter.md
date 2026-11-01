@@ -1,7 +1,7 @@
 # 基于 Docker 的代码执行器
 
 > [!WARNING]
-> 已过时，请参考最新的 [Agent 沙盒环境](/use/astrbot-agent-sandbox.md) 文档。在 v4.12.0 之后，该功能不可用。
+> 已过时，请参考最新的 [Agent 沙盒环境](/use/bot-agent-sandbox.md) 文档。在 v4.12.0 之后，该功能不可用。
 
 在 `v3.4.2` 版本及之后，LKMBot 支持代码执行器以强化 LLM 的能力，并实现一些自动化的操作。
 
@@ -37,7 +37,7 @@ sudo —E python3 main.py
 
 ## 使用
 
-本功能使用的镜像是 `soulter/astrbot-code-interpreter-sandbox`，您可以在 [Docker Hub](https://hub.docker.com/r/soulter/astrbot-code-interpreter-sandbox) 上查看镜像的详细信息。
+本功能使用的镜像是 `soulter/bot-code-interpreter-sandbox`，您可以在 [Docker Hub](https://hub.docker.com/r/soulter/astrbot-code-interpreter-sandbox) 上查看镜像的详细信息。
 
 镜像中提供了常用的 Python 库：
 

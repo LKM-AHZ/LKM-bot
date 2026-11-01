@@ -17,7 +17,7 @@ When the WebUI is available, open `Data & Logs → Logs` to view live logs. To c
 Start with the main LKMBot log:
 
 ```text
-data/logs/astrbot.log
+data/logs/bot.log
 ```
 
 For Docker deployments, also check container logs:
@@ -77,7 +77,7 @@ When filing an issue, include as much of the following as possible:
 - LKMBot version, deployment method (Docker, manual deployment, desktop client, etc.), and operating system.
 - Trigger path: startup, normal chat, group chat, platform callback, scheduled task, MCP tool, plugin feature, etc.
 - Scope: all sessions, one platform, one group, one user, or one plugin.
-- Logs from `data/logs/astrbot.log` for 1 to 3 minutes around the incident.
+- Logs from `data/logs/bot.log` for 1 to 3 minutes around the incident.
 - If the issue involves lag or abnormal CPU usage, include `data/logs/event_loop_watchdog.log` and `data/logs/event_loop_watchdog.log.1`.
 - For Docker deployments, include the matching `docker logs` output.
 - Installed plugin list, and whether the issue still happens after disabling third-party plugins.

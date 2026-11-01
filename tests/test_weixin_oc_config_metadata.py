@@ -1,6 +1,6 @@
 """Tests for personal WeChat configuration metadata."""
 
-from astrbot.core.config.default import PERSONAL_WECHAT_CONFIG_METADATA
+from bot.core.config.default import PERSONAL_WECHAT_CONFIG_METADATA
 
 
 def test_personal_wechat_only_exposes_user_adjustable_fields():

@@ -1,0 +1,138 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse
+
+from bot.core.utils.async_utils import run_maybe_async
+from bot.dashboard.responses import ApiError, ok
+from bot.dashboard.schemas import T2iActiveTemplateRequest, T2iTemplateRequest
+from bot.dashboard.services.t2i_service import T2iService, T2iServiceError
+
+from .auth import AuthContext, ScopeDependency
+
+router = APIRouter(tags=["Text To Image"])
+
+
+def get_service(request: Request) -> T2iService:
+    return request.app.state.services.t2i
+
+
+require_config_scope = ScopeDependency("config")
+
+
+def _raise_t2i_error(exc: T2iServiceError) -> None:
+    raise ApiError(str(exc), status_code=exc.status_code) from exc
+
+
+def _response(
+    data=None,
+    *,
+    message: str | None = None,
+    status_code: int = 200,
+):
+    payload = ok(data, message)
+    if status_code == 200:
+        return payload
+    return JSONResponse(payload, status_code=status_code)
+
+
+async def _run(
+    operation,
+    *,
+    message: str | None = None,
+    status_code: int = 200,
+    result_as_message: bool = False,
+):
+    try:
+        result = await run_maybe_async(operation)
+        if isinstance(result, tuple):
+            payload, result_message = result
+            return _response(payload, message=result_message)
+        if result_as_message:
+            return _response(message=str(result), status_code=status_code)
+        return _response(result, message=message, status_code=status_code)
+    except T2iServiceError as exc:
+        _raise_t2i_error(exc)
+
+
+@router.get("/t2i/templates")
+async def list_t2i_templates(
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(service.list_templates)
+
+
+@router.post("/t2i/templates")
+async def create_t2i_template(
+    payload: T2iTemplateRequest,
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(
+        lambda: service.create_template(payload.name, payload.content),
+        message="Template created successfully.",
+        status_code=201,
+    )
+
+
+@router.get("/t2i/templates/active")
+async def get_active_t2i_template(
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(service.get_active_template)
+
+
+@router.put("/t2i/templates/active")
+async def set_active_t2i_template(
+    payload: T2iActiveTemplateRequest,
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(
+        lambda: service.set_active_template(payload.name),
+        result_as_message=True,
+    )
+
+
+@router.post("/t2i/templates/default/reset")
+async def reset_default_t2i_template(
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(
+        service.reset_default_template,
+        result_as_message=True,
+    )
+
+
+@router.get("/t2i/templates/{name:path}")
+async def get_t2i_template(
+    name: str,
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(lambda: service.get_template(name))
+
+
+@router.put("/t2i/templates/{name:path}")
+async def update_t2i_template(
+    name: str,
+    payload: T2iTemplateRequest,
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(lambda: service.update_template(name, payload.content))
+
+
+@router.delete("/t2i/templates/{name:path}")
+async def delete_t2i_template(
+    name: str,
+    _auth: AuthContext = Depends(require_config_scope),
+    service: T2iService = Depends(get_service),
+):
+    return await _run(
+        lambda: service.delete_template(name),
+        message="Template deleted successfully.",
+    )

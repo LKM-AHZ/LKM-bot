@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-import astrbot.core.message.components as Comp
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
+import bot.core.message.components as Comp
+from bot.core.message.message_event_result import MessageChain
+from bot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
 

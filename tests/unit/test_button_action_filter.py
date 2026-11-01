@@ -3,15 +3,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.api.event import filter
-from astrbot.core.message.components import ButtonInteraction
-from astrbot.core.pipeline.waking_check.stage import (
+from bot.api.event import filter
+from bot.core.message.components import ButtonInteraction
+from bot.core.pipeline.waking_check.stage import (
     WakingCheckStage,
     star_handlers_registry,
 )
-from astrbot.core.platform import button_interaction
-from astrbot.core.star.filter.button_action import ButtonActionFilter
-from astrbot.core.star.session_plugin_manager import SessionPluginManager
+from bot.core.platform import button_interaction
+from bot.core.star.filter.button_action import ButtonActionFilter
+from bot.core.star.session_plugin_manager import SessionPluginManager
 
 
 def test_button_action_filter_matches_action():
@@ -68,7 +68,7 @@ async def test_expired_button_notifies_before_any_plugin_filter(monkeypatch):
 async def test_button_click_only_activates_button_handlers(monkeypatch):
     stage = WakingCheckStage()
     stage.ctx = SimpleNamespace(
-        astrbot_config={
+        bot_config={
             "admins_id": [],
             "wake_prefix": [],
             "plugin_set": ["*"],

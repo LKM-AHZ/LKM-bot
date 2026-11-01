@@ -17,7 +17,7 @@
 | API Base URL | `https://api.mirarouter.com/v1` |
 | API Key | 在 MiraRouter 控制台创建的 API Key |
 
-LKMBot 会自动为 MiraRouter 请求添加 `X-APP-CODE: astrbot` 标识。
+LKMBot 会自动为 MiraRouter 请求添加 `X-APP-CODE: bot` 标识。
 
 填写提供商名称和 `API Key`，确认 `API Base URL`，点击「保存并获取模型」。在模型列表中点击所需模型右侧的 `+`，确认模型已启用；也可先「保存配置」，再通过「自定义模型」填写准确的模型 ID。点击已配置模型旁的「测试模型」按钮可检查是否可用。
 

@@ -3,7 +3,7 @@ layout: false
 head:
   - - meta
     - http-equiv: refresh
-      content: '0; url=/en/use/astrbot-agent-sandbox.html'
+      content: '0; url=/en/use/bot-agent-sandbox.html'
   - - meta
     - name: robots
       content: noindex
@@ -16,8 +16,8 @@ head:
 import { onMounted } from 'vue'
 
 onMounted(() => {
-  window.location.replace('/en/use/astrbot-agent-sandbox.html')
+  window.location.replace('/en/use/bot-agent-sandbox.html')
 })
 </script>
 
-[View the Agent Sandbox Environment guide](/en/use/astrbot-agent-sandbox.html)
+[View the Agent Sandbox Environment guide](/en/use/bot-agent-sandbox.html)

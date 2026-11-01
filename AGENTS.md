@@ -45,9 +45,9 @@ ruff check .
 3. After finishing, use `ruff format .` and `ruff check .` to format and check the code.
 4. When committing, ensure to use conventional commits messages, such as `feat: add new agent for data analysis` or `fix: resolve bug in provider manager`.
 5. Use **English** for all comments and logs.
-6. For path handling, use `pathlib.Path` instead of string paths, and use `astrbot.core.utils.astrbot_path` to get the LKMBot data and temp directory.
+6. For path handling, use `pathlib.Path` instead of string paths, and use `bot.core.utils.bot_path` to get the LKMBot data and temp directory.
 7. When backend API routes, request/response schemas, or OpenAPI definitions change, regenerate the panel API client in the website repository: `cd ../LKM-official-website/bot-panel && pnpm generate:api`.
-8. When updating the project version, keep `[project].version` in `pyproject.toml` and `__version__` in `astrbot/__init__.py` in sync. `VERSION` in `astrbot/core/config/default.py` should derive from `astrbot.__version__` instead of hardcoding a separate version string.
+8. When updating the project version, keep `[project].version` in `pyproject.toml` and `__version__` in `bot/__init__.py` in sync. `VERSION` in `bot/core/config/default.py` should derive from `bot.__version__` instead of hardcoding a separate version string.
 9. When designing WebUI dialogs, use `text-h3 pa-4 pb-0 pl-6` as the base class for dialog titles, and use `variant="text"` or `variant="tonal"` for dialog buttons.
 10. Consider cross-platform compatibility (e.g., Windows, macOS, and Linux, as well as Arm64 and x86 CPU architectures) and compatibility with Python 3.12+ (the minimum in `pyproject.toml`).
 11. When changing WebUI navigation, page structure, or terminology, update the affected instructions and screenshots in `docs/zh` and `docs/en` in the same PR. For renamed, moved, or merged entry points, include an old-to-new mapping in the relevant docs and changelog. Keep layout redesigns separate from feature additions where practical, and explain necessary navigation changes in the PR. See `CONTRIBUTING.md` for the review checklist.
@@ -109,7 +109,7 @@ Prepare a release from a clean worktree with:
 uv run python scripts/prepare_release.py 4.25.0
 ```
 
-The script updates `pyproject.toml` and `astrbot/__init__.py`, creates `changelogs/v4.25.0.md`, runs the required Python checks, and prints the remaining steps. Use these flags when needed:
+The script updates `pyproject.toml` and `bot/__init__.py`, creates `changelogs/v4.25.0.md`, runs the required Python checks, and prints the remaining steps. Use these flags when needed:
 
 ```bash
 uv run python scripts/prepare_release.py 4.25.0 --commit --push

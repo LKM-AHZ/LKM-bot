@@ -1,7 +1,7 @@
 import pytest
 from openai.types.chat.chat_completion import ChatCompletion
 
-from astrbot.core.provider.sources.openai_source import ProviderOpenAIOfficial
+from bot.core.provider.sources.openai_source import ProviderOpenAIOfficial
 
 
 @pytest.mark.asyncio

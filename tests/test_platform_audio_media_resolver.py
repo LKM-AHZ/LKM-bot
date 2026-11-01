@@ -1,25 +1,25 @@
 import pytest
 
-from astrbot.api.event import MessageChain
-from astrbot.api.message_components import Record
-from astrbot.core.platform.sources.lark import lark_adapter
-from astrbot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
-from astrbot.core.platform.sources.line import line_adapter
-from astrbot.core.platform.sources.line.line_adapter import LinePlatformAdapter
-from astrbot.core.platform.sources.misskey import misskey_utils
-from astrbot.core.platform.sources.misskey.misskey_utils import create_file_component
-from astrbot.core.platform.sources.qqofficial import (
+from bot.api.event import MessageChain
+from bot.api.message_components import Record
+from bot.core.platform.sources.lark import lark_adapter
+from bot.core.platform.sources.lark.lark_adapter import LarkPlatformAdapter
+from bot.core.platform.sources.line import line_adapter
+from bot.core.platform.sources.line.line_adapter import LinePlatformAdapter
+from bot.core.platform.sources.misskey import misskey_utils
+from bot.core.platform.sources.misskey.misskey_utils import create_file_component
+from bot.core.platform.sources.qqofficial import (
     qqofficial_message_event,
     qqofficial_platform_adapter,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_message_event import (
+from bot.core.platform.sources.qqofficial.qqofficial_message_event import (
     QQOfficialMessageEvent,
 )
-from astrbot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
+from bot.core.platform.sources.qqofficial.qqofficial_platform_adapter import (
     QQOfficialPlatformAdapter,
 )
 
-WAV_PATH = "/tmp/astrbot-platform-audio.wav"
+WAV_PATH = "/tmp/bot-platform-audio.wav"
 
 
 class FakeMediaResolver:

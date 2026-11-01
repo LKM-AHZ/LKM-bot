@@ -2,28 +2,28 @@
 
 事件监听器可以收到平台下发的消息内容，可以实现指令、指令组、事件监听等功能。
 
-事件监听器的注册器在 `astrbot.api.event.filter` 下，需要先导入。请务必导入，否则会和 python 的高阶函数 filter 冲突。
+事件监听器的注册器在 `bot.api.event.filter` 下，需要先导入。请务必导入，否则会和 python 的高阶函数 filter 冲突。
 
 ```py
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 ```
 
 ## 消息与事件
 
-LKMBot 接收消息平台下发的消息，并将其封装为 `AstrMessageEvent` 对象，传递给插件进行处理。
+LKMBot 接收消息平台下发的消息，并将其封装为 `BotMessageEvent` 对象，传递给插件进行处理。
 
 ![message-event](https://files.astrbot.app/docs/zh/dev/star/guides/message-event.svg)
 
 ### 消息事件
 
-`AstrMessageEvent` 是 LKMBot 的消息事件对象，其中存储了消息发送者、消息内容等信息。
+`BotMessageEvent` 是 LKMBot 的消息事件对象，其中存储了消息发送者、消息内容等信息。
 
 ### 消息对象
 
-`AstrBotMessage` 是 LKMBot 的消息对象，其中存储了消息平台下发的消息具体内容，`AstrMessageEvent` 对象中包含一个 `message_obj` 属性用于获取该消息对象。
+`BotMessage` 是 LKMBot 的消息对象，其中存储了消息平台下发的消息具体内容，`BotMessageEvent` 对象中包含一个 `message_obj` 属性用于获取该消息对象。
 
 ```py{11}
-class AstrBotMessage:
+class BotMessage:
     """LKMBot 的消息对象"""
 
     type: MessageType  # 消息类型
@@ -73,16 +73,16 @@ class AstrBotMessage:
 ![message-event-simple-command](https://files.astrbot.app/docs/zh/dev/star/guides/message-event-simple-command.svg)
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.star import Context, Star
+from bot.api.event import filter, BotMessageEvent
+from bot.core.star import Context, Star
 
 
 class MyPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
 
-    @filter.command("helloworld")  # from astrbot.api.event.filter import command
-    async def helloworld(self, event: AstrMessageEvent):
+    @filter.command("helloworld")  # from bot.api.event.filter import command
+    async def helloworld(self, event: BotMessageEvent):
         """这是 hello world 指令"""
         user_name = event.get_sender_name()
         message_str = event.message_str  # 获取消息的纯文本内容
@@ -100,7 +100,7 @@ LKMBot 会自动帮你解析指令的参数。
 
 ```python
 @filter.command("add")
-async def add(self, event: AstrMessageEvent, a: int, b: int):
+async def add(self, event: BotMessageEvent, a: int, b: int):
     # /add 1 2 -> 结果是: 3
     yield event.plain_result(f"Wow! The answer is {a + b}!")
 ```
@@ -116,13 +116,13 @@ def math():
 
 
 @math.command("add")
-async def add(self, event: AstrMessageEvent, a: int, b: int):
+async def add(self, event: BotMessageEvent, a: int, b: int):
     # /math add 1 2 -> 结果是: 3
     yield event.plain_result(f"结果是: {a + b}")
 
 
 @math.command("sub")
-async def sub(self, event: AstrMessageEvent, a: int, b: int):
+async def sub(self, event: BotMessageEvent, a: int, b: int):
     # /math sub 1 2 -> 结果是: -1
     yield event.plain_result(f"结果是: {a - b}")
 ```
@@ -160,17 +160,17 @@ def calc():
 
 
 @calc.command("add")
-async def add(self, event: AstrMessageEvent, a: int, b: int):
+async def add(self, event: BotMessageEvent, a: int, b: int):
     yield event.plain_result(f"结果是: {a + b}")
 
 
 @calc.command("sub")
-async def sub(self, event: AstrMessageEvent, a: int, b: int):
+async def sub(self, event: BotMessageEvent, a: int, b: int):
     yield event.plain_result(f"结果是: {a - b}")
 
 
 @calc.command("help")
-async def calc_help(self, event: AstrMessageEvent):
+async def calc_help(self, event: BotMessageEvent):
     # /math calc help
     yield event.plain_result("这是一个计算器插件，拥有 add, sub 指令。")
 ```
@@ -183,7 +183,7 @@ async def calc_help(self, event: AstrMessageEvent):
 
 ```python
 @filter.command("help", alias={"帮助", "helpme"})
-async def help(self, event: AstrMessageEvent):
+async def help(self, event: BotMessageEvent):
     yield event.plain_result("这是一个计算器插件，拥有 add, sub 指令。")
 ```
 
@@ -195,7 +195,7 @@ async def help(self, event: AstrMessageEvent):
 
 ```python
 @filter.event_message_type(filter.EventMessageType.ALL)
-async def on_all_message(self, event: AstrMessageEvent):
+async def on_all_message(self, event: BotMessageEvent):
     yield event.plain_result("收到了一条消息。")
 ```
 
@@ -203,7 +203,7 @@ async def on_all_message(self, event: AstrMessageEvent):
 
 ```python
 @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
-async def on_private_message(self, event: AstrMessageEvent):
+async def on_private_message(self, event: BotMessageEvent):
     message_str = event.message_str  # 获取消息的纯文本内容
     yield event.plain_result("收到了一条私聊消息。")
 ```
@@ -216,7 +216,7 @@ async def on_private_message(self, event: AstrMessageEvent):
 @filter.platform_adapter_type(
     filter.PlatformAdapterType.AIOCQHTTP | filter.PlatformAdapterType.QQOFFICIAL
 )
-async def on_aiocqhttp(self, event: AstrMessageEvent):
+async def on_aiocqhttp(self, event: BotMessageEvent):
     """只接收 AIOCQHTTP 和 QQOFFICIAL 的消息"""
     yield event.plain_result("收到了一条信息")
 ```
@@ -228,7 +228,7 @@ async def on_aiocqhttp(self, event: AstrMessageEvent):
 ```python
 @filter.permission_type(filter.PermissionType.ADMIN)
 @filter.command("test")
-async def test(self, event: AstrMessageEvent):
+async def test(self, event: BotMessageEvent):
     pass
 ```
 
@@ -241,7 +241,7 @@ async def test(self, event: AstrMessageEvent):
 ```python
 @filter.command("helloworld")
 @filter.event_message_type(filter.EventMessageType.PRIVATE_MESSAGE)
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     yield event.plain_result("你好！")
 ```
 
@@ -255,11 +255,11 @@ async def helloworld(self, event: AstrMessageEvent):
 > v3.4.34 后
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
-@filter.on_astrbot_loaded()
-async def on_astrbot_loaded(self):
+@filter.on_bot_loaded()
+async def on_bot_loaded(self):
     print("LKMBot 初始化完成")
 ```
 
@@ -270,11 +270,11 @@ async def on_astrbot_loaded(self):
 这个钩子适合用于发送"正在等待请求..."等用户反馈提示，亦或是在锁外及时获取LLM请求而不用等到锁被释放。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.on_waiting_llm_request()
-async def on_waiting_llm(self, event: AstrMessageEvent):
+async def on_waiting_llm(self, event: BotMessageEvent):
     await event.send(event.plain_result("🤔 正在等待请求..."))
 ```
 
@@ -291,13 +291,13 @@ async def on_waiting_llm(self, event: AstrMessageEvent):
 ProviderRequest 对象包含了 LLM 请求的所有信息，包括请求的文本、系统提示等。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.provider.entities import ProviderRequest
+from bot.api.event import filter, BotMessageEvent
+from bot.core.provider.entities import ProviderRequest
 
 
 @filter.on_llm_request()
 async def my_custom_hook_1(
-    self, event: AstrMessageEvent, req: ProviderRequest
+    self, event: BotMessageEvent, req: ProviderRequest
 ):  # 请注意有三个参数
     print(req)  # 打印请求的文本
     req.system_prompt += "自定义 system_prompt"  # 如果有其他替代方法，不建议使用此种方式来追加每轮对话都会改变的提示词，否则会破坏缓存，大大增加价格（约增加 7-20 倍的价格）。
@@ -312,10 +312,10 @@ async def my_custom_hook_1(
 > 对于每轮都会变化、内容量中小的提示词，优先通过 `req.extra_user_content_parts` 追加。它会作为额外的用户消息内容块放在本轮用户输入之后，更适合承载"当前时间""角色好感度""本轮相关记忆片段"等动态上下文：
 >
 > ```python
-> from astrbot.core.agent.message import TextPart
+> from bot.core.agent.message import TextPart
 >
 > @filter.on_llm_request()
-> async def add_dynamic_prompt(self, event: AstrMessageEvent, req: ProviderRequest):
+> async def add_dynamic_prompt(self, event: BotMessageEvent, req: ProviderRequest):
 >     req.extra_user_content_parts.append(
 >         TextPart(
 >             text=(
@@ -346,13 +346,13 @@ async def my_custom_hook_1(
 可以获取到 `ProviderResponse` 对象，可以对其进行修改。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.provider.entities import LLMResponse
+from bot.api.event import filter, BotMessageEvent
+from bot.core.provider.entities import LLMResponse
 
 
 @filter.on_llm_response()
 async def on_llm_resp(
-    self, event: AstrMessageEvent, resp: LLMResponse
+    self, event: BotMessageEvent, resp: LLMResponse
 ):  # 请注意有三个参数
     print(resp)
 ```
@@ -366,14 +366,14 @@ async def on_llm_resp(
 在 Agent 开始运行时，会触发 `on_agent_begin` 钩子。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.astr_agent_context import AstrAgentContext
+from bot.api.event import filter, BotMessageEvent
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.bot_agent_context import BotAgentContext
 
 
 @filter.on_agent_begin()
 async def on_agent_begin(
-    self, event: AstrMessageEvent, run_context: ContextWrapper[AstrAgentContext]
+    self, event: BotMessageEvent, run_context: ContextWrapper[BotAgentContext]
 ):
     print("Agent 开始运行")
 ```
@@ -389,14 +389,14 @@ async def on_agent_begin(
 可以获取到 `FunctionTool` 对象和工具调用参数。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.agent.tool import FunctionTool
+from bot.api.event import filter, BotMessageEvent
+from bot.core.agent.tool import FunctionTool
 
 
 @filter.on_using_llm_tool()
 async def on_using_llm_tool(
     self,
-    event: AstrMessageEvent,
+    event: BotMessageEvent,
     tool: FunctionTool,
     tool_args: dict | None,
 ):
@@ -416,14 +416,14 @@ async def on_using_llm_tool(
 ```python
 from mcp.types import CallToolResult
 
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.agent.tool import FunctionTool
+from bot.api.event import filter, BotMessageEvent
+from bot.core.agent.tool import FunctionTool
 
 
 @filter.on_llm_tool_respond()
 async def on_llm_tool_respond(
     self,
-    event: AstrMessageEvent,
+    event: BotMessageEvent,
     tool: FunctionTool,
     tool_args: dict | None,
     tool_result: CallToolResult | None,
@@ -440,17 +440,17 @@ async def on_llm_tool_respond(
 在 Agent 运行完成后，会触发 `on_agent_done` 钩子。这个钩子会在 `on_llm_response` 之后触发。本质上和 `on_llm_response` 一样。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-from astrbot.core.provider.entities import LLMResponse
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.astr_agent_context import AstrAgentContext
+from bot.api.event import filter, BotMessageEvent
+from bot.core.provider.entities import LLMResponse
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.bot_agent_context import BotAgentContext
 
 
 @filter.on_agent_done()
 async def on_agent_done(
     self,
-    event: AstrMessageEvent,
-    run_context: ContextWrapper[AstrAgentContext],
+    event: BotMessageEvent,
+    run_context: ContextWrapper[BotAgentContext],
     resp: LLMResponse,
 ):
     print(resp)
@@ -465,12 +465,12 @@ async def on_agent_done(
 可以在这里实现一些消息的装饰，比如转语音、转图片、加前缀等等
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
-import astrbot.api.message_components as Comp
+from bot.api.event import filter, BotMessageEvent
+import bot.api.message_components as Comp
 
 
 @filter.on_decorating_result()
-async def on_decorating_result(self, event: AstrMessageEvent):
+async def on_decorating_result(self, event: BotMessageEvent):
     result = event.get_result()
     chain = result.chain
     print(chain)  # 打印消息链
@@ -484,11 +484,11 @@ async def on_decorating_result(self, event: AstrMessageEvent):
 在发送消息给消息平台后，会触发 `after_message_sent` 钩子。
 
 ```python
-from astrbot.api.event import filter, AstrMessageEvent
+from bot.api.event import filter, BotMessageEvent
 
 
 @filter.after_message_sent()
-async def after_message_sent(self, event: AstrMessageEvent):
+async def after_message_sent(self, event: BotMessageEvent):
     pass
 ```
 
@@ -500,7 +500,7 @@ async def after_message_sent(self, event: AstrMessageEvent):
 
 ```python
 @filter.command("helloworld", priority=1)
-async def helloworld(self, event: AstrMessageEvent):
+async def helloworld(self, event: BotMessageEvent):
     yield event.plain_result("Hello!")
 ```
 
@@ -508,7 +508,7 @@ async def helloworld(self, event: AstrMessageEvent):
 
 ```python{6}
 @filter.command("check_ok")
-async def check_ok(self, event: AstrMessageEvent):
+async def check_ok(self, event: BotMessageEvent):
     ok = self.check()  # 自己的逻辑
     if not ok:
         yield event.plain_result("检查失败")

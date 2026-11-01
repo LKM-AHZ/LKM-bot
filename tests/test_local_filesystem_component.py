@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from astrbot.core.computer import process_sandbox
-from astrbot.core.computer.booters import local as local_booter
-from astrbot.core.computer.booters.local import LocalFileSystemComponent
+from bot.core.computer import process_sandbox
+from bot.core.computer.booters import local as local_booter
+from bot.core.computer.booters.local import LocalFileSystemComponent
 
 
 def _allow_tmp_root(monkeypatch, tmp_path: Path) -> None:
-    monkeypatch.setattr(local_booter, "get_astrbot_root", lambda: str(tmp_path))
+    monkeypatch.setattr(local_booter, "get_bot_root", lambda: str(tmp_path))
 
 
 def test_local_file_system_component_prefers_utf8_before_windows_locale(

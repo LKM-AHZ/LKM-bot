@@ -47,7 +47,7 @@ After starting LKMBot, you can access the admin panel by visiting `http://localh
 
 ## Login
 
-For first-time login, LKMBot generates a random initial password and prints it in startup logs. Please read the startup log line containing the WebUI credential and use that password to log in (username is usually `astrbot`).
+For first-time login, LKMBot generates a random initial password and prints it in startup logs. Please read the startup log line containing the WebUI credential and use that password to log in (username is usually `bot`).
 
 ## Two-Factor Authentication
 
@@ -131,7 +131,7 @@ The page title and section navigation stay fixed while only the settings pane on
 
 - `General`: timezone, external callback address, logs, and cache.
 - `Appearance`: theme colors.
-- `Network`: HTTP proxy, Python package sources, and GitHub proxy. For the address to use when LKMBot runs in Docker, see [Deploy with Docker](/en/deploy/astrbot/docker.md).
+- `Network`: HTTP proxy, Python package sources, and GitHub proxy. For the address to use when LKMBot runs in Docker, see [Deploy with Docker](/en/deploy/bot/docker.md).
 - `Security`: WebUI HTTPS, login rate limits, and TOTP.
 - `Maintenance`: backup, restore, diagnostic export, and restart.
 - `OpenAPI`: developer access keys.
@@ -178,7 +178,7 @@ Click `Export diagnostics` and confirm the content and privacy notice to downloa
 
 The export dialog offers `Last hour`, `Last 12 hours`, `Last day`, `Last 3 days` and `Custom`, with `Last day` selected by default. Preset ranges are calculated when you click download. Select `Custom` to enter start and end times using your browser’s local time. Only disk logs, cached logs and traces within that range are exported. Timestamp-free continuation lines follow the preceding disk-log record; standalone content without a recognized timestamp is excluded. Disk timestamps without an explicit offset use the server’s local time. Traces are selected by start time and retain their complete details, with the existing limit of the latest 50 matching traces and 16 MiB. Configuration, plugin status and environment details remain current snapshots. The selected range is recorded in `manifest.json`.
 
-In the diagnostic bundle, cached logs are stored in `logs/astrbot.in-memory.log`, cached traces in `traces/history.in-memory.jsonl`, and persisted trace history in `traces/history.jsonl`. The `webui_version` field in `environment.json` records the version declared by the WebUI assets being served, or `null` when unavailable.
+In the diagnostic bundle, cached logs are stored in `logs/bot.in-memory.log`, cached traces in `traces/history.in-memory.jsonl`, and persisted trace history in `traces/history.jsonl`. The `webui_version` field in `environment.json` records the version declared by the WebUI assets being served, or `null` when unavailable.
 
 Open `Filters` next to the search box to filter by level, source (System/Plugin), individual plugin, and bot platform, or exclude user-chat logs. Combine these conditions with `Search logs`. The plugin dropdown lists only plugins that appear in the current logs, not every installed plugin, so installed plugins that have not logged anything are absent. Plugin menus prefer display names and show plugin IDs as subtitles; `System` replaces the former Core source label.
 
@@ -198,7 +198,7 @@ Traces containing Agent calls add a borderless Tokens statistics card. Its total
 
 The Type column precedes UMO. Blue Agent indicates an Agent call; green Command indicates a command-handler call. Neutral Group chat / Private chat chips appear independently alongside them. Ordinary listeners and event hooks do not count as commands. Message type comes from the summary, falling back to UMO for older records; unknown types have no chat chip. Legacy command flags are derived for the current page without opening each trace's details.
 
-New spans identify calls with `astrbot.kind` and describe execution through timestamps and status. They no longer store `astrbot.action`, `astrbot.end_action`, or `astrbot.duration_ms`; duration is calculated from nanosecond timestamps and `astrbot.handler_type` remains. Existing trace history stays readable without rewriting stored records.
+New spans identify calls with `bot.kind` and describe execution through timestamps and status. They no longer store `bot.action`, `bot.end_action`, or `bot.duration_ms`; duration is calculated from nanosecond timestamps and `bot.handler_type` remains. Existing trace history stays readable without rewriting stored records.
 
 Long titles show two lines and received/sent message previews show four lines by default. Overflowing text offers Show full text / Collapse. This only folds the display; recorded content is not truncated.
 

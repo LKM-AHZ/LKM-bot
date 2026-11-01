@@ -4,20 +4,20 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from astrbot.api.event import AstrMessageEvent, MessageChain
-from astrbot.api.message_components import Plain, Record
-from astrbot.core.platform import (
-    AstrBotMessage,
+from bot.api.event import BotMessageEvent, MessageChain
+from bot.api.message_components import Plain, Record
+from bot.core.platform import (
+    BotMessage,
     MessageMember,
     MessageType,
     Platform,
     PlatformMetadata,
 )
-from astrbot.core.message.message_event_result import MessageEventResult
-from astrbot.core.pipeline.respond.stage import RespondStage
-from astrbot.core.platform.astr_message_event import MessageSession
-from astrbot.core.platform.sources.slack.slack_adapter import SlackAdapter
-from astrbot.core.platform.sources.slack.slack_event import SlackMessageEvent
+from bot.core.message.message_event_result import MessageEventResult
+from bot.core.pipeline.respond.stage import RespondStage
+from bot.core.platform.bot_message_event import MessageSession
+from bot.core.platform.sources.slack.slack_adapter import SlackAdapter
+from bot.core.platform.sources.slack.slack_event import SlackMessageEvent
 
 
 @pytest.fixture
@@ -33,8 +33,8 @@ def audio_path(tmp_path):
 
 @pytest.fixture
 def slack_event(monkeypatch):
-    monkeypatch.setattr(AstrMessageEvent, "send", AsyncMock())
-    message = AstrBotMessage()
+    monkeypatch.setattr(BotMessageEvent, "send", AsyncMock())
+    message = BotMessage()
     message.type = MessageType.GROUP_MESSAGE
     message.set_group("C123")
     message.sender = MessageMember(user_id="U123", nickname="Tester")
@@ -96,7 +96,7 @@ async def test_slack_tts_upload_failure_preserves_source_text(
     stage.platform_settings = {}
     stage.enable_seg = False
     monkeypatch.setattr(
-        "astrbot.core.pipeline.respond.stage.call_event_hook",
+        "bot.core.pipeline.respond.stage.call_event_hook",
         AsyncMock(return_value=False),
     )
 

@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 import httpx
 import pytest
 
-from astrbot.core.config.default import CONFIG_METADATA_2
-from astrbot.core.provider.decision import DecisionService
-from astrbot.core.provider.entities import (
+from bot.core.config.default import CONFIG_METADATA_2
+from bot.core.provider.decision import DecisionService
+from bot.core.provider.entities import (
     DecisionBooleanAnswer,
     DecisionBooleanQuestion,
     DecisionChoiceAnswer,
@@ -16,9 +16,9 @@ from astrbot.core.provider.entities import (
     DecisionError,
     ProviderType,
 )
-from astrbot.core.provider.manager import ProviderManager
-from astrbot.core.provider.provider import DecisionProvider, Provider
-from astrbot.core.provider.sources.system_one_decision_source import (
+from bot.core.provider.manager import ProviderManager
+from bot.core.provider.provider import DecisionProvider, Provider
+from bot.core.provider.sources.system_one_decision_source import (
     SystemOneDecisionProvider,
 )
 
@@ -290,7 +290,7 @@ async def test_system_one_rejects_invalid_choice_answers(choice_answer):
 
 @pytest.mark.asyncio
 async def test_system_one_invalid_choice_reports_response_summary(caplog):
-    caplog.set_level(logging.WARNING, logger="astrbot")
+    caplog.set_level(logging.WARNING, logger="bot")
     provider = _provider(
         lambda request: httpx.Response(
             200,
@@ -325,7 +325,7 @@ async def test_system_one_invalid_choice_reports_response_summary(caplog):
 
 @pytest.mark.asyncio
 async def test_system_one_normalizes_http_errors_and_closes_client(caplog):
-    caplog.set_level(logging.ERROR, logger="astrbot")
+    caplog.set_level(logging.ERROR, logger="bot")
     provider = _provider(
         lambda request: httpx.Response(
             400,
@@ -493,7 +493,7 @@ async def test_decision_service_maps_choice_ids_and_applies_threshold():
 
 @pytest.mark.asyncio
 async def test_decision_service_yes_no_uses_default_on_provider_failure(caplog):
-    caplog.set_level(logging.WARNING, logger="astrbot")
+    caplog.set_level(logging.WARNING, logger="bot")
     provider = MagicMock(spec=DecisionProvider)
     provider.ask = AsyncMock(side_effect=DecisionError("upstream failed"))
     manager = MagicMock()
@@ -559,14 +559,14 @@ async def test_decision_service_rejects_non_decision_provider():
     [
         ("", ""),
         ("sk-direct", "sk-direct"),
-        ("$ASTRBOT_TEST_DECISION_KEY", "sk-env"),
-        ("${ASTRBOT_TEST_DECISION_KEY}", "sk-env"),
-        ("$ASTRBOT_TEST_MISSING_DECISION_KEY", ""),
+        ("$BOT_TEST_DECISION_KEY", "sk-env"),
+        ("${BOT_TEST_DECISION_KEY}", "sk-env"),
+        ("$BOT_TEST_MISSING_DECISION_KEY", ""),
     ],
 )
 async def test_provider_manager_loads_decision_provider(monkeypatch, key, expected_key):
-    monkeypatch.setenv("ASTRBOT_TEST_DECISION_KEY", "sk-env")
-    monkeypatch.delenv("ASTRBOT_TEST_MISSING_DECISION_KEY", raising=False)
+    monkeypatch.setenv("BOT_TEST_DECISION_KEY", "sk-env")
+    monkeypatch.delenv("BOT_TEST_MISSING_DECISION_KEY", raising=False)
     config = {
         "provider": [],
         "provider_sources": [],

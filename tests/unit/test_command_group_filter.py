@@ -3,13 +3,13 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.pipeline.waking_check import stage as waking_stage
-from astrbot.core.pipeline.waking_check.stage import WakingCheckStage
-from astrbot.core.star.filter.command_group import CommandGroupFilter
-from astrbot.core.star.filter.permission import PermissionType, PermissionTypeFilter
-from astrbot.core.star.session_plugin_manager import SessionPluginManager
-from astrbot.core.star.star import StarMetadata
-from astrbot.core.star.star_handler import EventType, StarHandlerMetadata
+from bot.core.pipeline.waking_check import stage as waking_stage
+from bot.core.pipeline.waking_check.stage import WakingCheckStage
+from bot.core.star.filter.command_group import CommandGroupFilter
+from bot.core.star.filter.permission import PermissionType, PermissionTypeFilter
+from bot.core.star.session_plugin_manager import SessionPluginManager
+from bot.core.star.star import StarMetadata
+from bot.core.star.star_handler import EventType, StarHandlerMetadata
 
 
 @pytest.mark.parametrize(
@@ -96,7 +96,7 @@ async def test_admin_group_only_blocks_its_own_commands(message, blocked, monkey
 
     stage = WakingCheckStage()
     stage.ctx = SimpleNamespace(
-        astrbot_config={
+        bot_config={
             "admins_id": ["admin-user"],
             "wake_prefix": ["/"],
             "plugin_set": ["*"],

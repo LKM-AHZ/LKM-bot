@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from astrbot.core.utils.trace_store import MAX_FRAME_BYTES, QUEUE_BYTES, TraceStore
+from bot.core.utils.trace_store import MAX_FRAME_BYTES, QUEUE_BYTES, TraceStore
 
 
 @pytest.mark.parametrize("body_bytes", [32, 1536 * 1024])
@@ -38,7 +38,7 @@ def test_trace_queue_limits_bytes_without_frame_count_cap(tmp_path, monkeypatch,
             "has_errors": False,
             "has_models": True,
             "has_plugins": False,
-            "attributes": {"astrbot.message_outline": "x" * body_bytes},
+            "attributes": {"bot.message_outline": "x" * body_bytes},
         },
         "time_unix_nano": now,
     }

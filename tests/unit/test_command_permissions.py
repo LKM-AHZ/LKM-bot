@@ -3,16 +3,16 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.star import command_management as management
-from astrbot.core.star import star_manager
-from astrbot.core.star.filter.command import CommandFilter
-from astrbot.core.star.filter.permission import (
+from bot.core.star import command_management as management
+from bot.core.star import star_manager
+from bot.core.star.filter.command import CommandFilter
+from bot.core.star.filter.permission import (
     COMMAND_PERMISSION_TYPES,
     PermissionType,
     PermissionTypeFilter,
 )
-from astrbot.core.star.star import StarMetadata
-from astrbot.core.star.star_handler import (
+from bot.core.star.star import StarMetadata
+from bot.core.star.star_handler import (
     EventType,
     StarHandlerMetadata,
     StarHandlerRegistry,

@@ -6,7 +6,7 @@ outline: deep
 
 # API Scope 与接口对照
 
-本页由 `openspec/openapi-v1.yaml` 自动生成。每个接口的基础权限来自 `x-astrbot-scope`；敏感操作还会列出需要显式授予的子权限。
+本页由 `openspec/openapi-v1.yaml` 自动生成。每个接口的基础权限来自 `x-bot-scope`；敏感操作还会列出需要显式授予的子权限。
 
 ## `bot`
 

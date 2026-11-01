@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.tools import web_search_tools as tools
-from astrbot.core.tools.web_search_tools import (
+from bot.core.tools import web_search_tools as tools
+from bot.core.tools.web_search_tools import (
     AnySearchWebSearchTool,
     _anysearch_search,
 )
@@ -1430,7 +1430,7 @@ async def test_deepseek_search_request_and_result_mapping(deepseek_session):
             json_data={
                 "results": [
                     {
-                        "title": "AstrBot",
+                        "title": "LKMBot",
                         "url": "https://example.com",
                         "snippet": "Short summary",
                         "summary": "Detailed summary for the model",
@@ -1453,12 +1453,12 @@ async def test_deepseek_search_request_and_result_mapping(deepseek_session):
         {"websearch_deepseek_key": ["deepseek-key"]}
     )
 
-    result = await tools.DeepSeekWebSearchTool().call(context, query="AstrBot")
+    result = await tools.DeepSeekWebSearchTool().call(context, query="LKMBot")
 
     assert deepseek_session.calls == [
         {
             "url": "https://api.deepseek.com/v1/tools/search",
-            "json": {"query": "AstrBot", "count": 10, "need_content": False},
+            "json": {"query": "LKMBot", "count": 10, "need_content": False},
             "headers": {
                 "Authorization": "Bearer deepseek-key",
                 "Content-Type": "application/json",
@@ -1473,7 +1473,7 @@ async def test_deepseek_search_request_and_result_mapping(deepseek_session):
     assert len(reference) == 4
     assert results == [
         {
-            "title": "AstrBot",
+            "title": "LKMBot",
             "url": "https://example.com",
             "snippet": "Detailed summary for the model",
             "index": f"{reference}.1",
@@ -1573,7 +1573,7 @@ async def test_deepseek_search_rejects_invalid_parameters(
 ):
     context = _context_with_provider_settings({"websearch_deepseek_key": ["key"]})
     if field != "query":
-        kwargs = {"query": "AstrBot", **kwargs}
+        kwargs = {"query": "LKMBot", **kwargs}
 
     result = await tools.DeepSeekWebSearchTool().call(context, **kwargs)
 
@@ -1589,10 +1589,10 @@ async def test_deepseek_tools_require_api_key(deepseek_session, tool_class):
     context = _context_with_provider_settings({})
 
     result = await tool_class().call(
-        context, query="AstrBot", url="https://example.com"
+        context, query="LKMBot", url="https://example.com"
     )
 
-    assert result == "Error: DeepSeek API key is not configured in AstrBot."
+    assert result == "Error: DeepSeek API key is not configured in LKMBot."
     assert deepseek_session.calls == []
 
 
@@ -1720,7 +1720,7 @@ async def test_deepseek_http_errors_do_not_retry(
         RuntimeError,
         match=f"DeepSeek {operation} failed: API failure, status: {status}",
     ):
-        await tool_class().call(context, query="AstrBot", url="https://example.com")
+        await tool_class().call(context, query="LKMBot", url="https://example.com")
 
     assert len(deepseek_session.calls) == 1
     assert deepseek_session.calls[0]["headers"]["Authorization"] == "Bearer first-key"
@@ -1733,9 +1733,9 @@ async def test_deepseek_search_and_fetch_share_round_robin_keys(deepseek_session
         {"websearch_deepseek_key": ["first-key", "second-key"]}
     )
 
-    await tools.DeepSeekWebSearchTool().call(context, query="AstrBot")
+    await tools.DeepSeekWebSearchTool().call(context, query="LKMBot")
     await tools.DeepSeekFetchWebPageTool().call(context, url="https://example.com")
-    await tools.DeepSeekWebSearchTool().call(context, query="AstrBot")
+    await tools.DeepSeekWebSearchTool().call(context, query="LKMBot")
 
     assert [call["headers"]["Authorization"] for call in deepseek_session.calls] == [
         "Bearer first-key",

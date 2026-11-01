@@ -56,7 +56,7 @@ class TestKBNameUUIDLookup:
         """Create a mock KnowledgeBaseManager with one KB"""
         from unittest.mock import MagicMock
 
-        from astrbot.core.knowledge_base.models import KnowledgeBase
+        from bot.core.knowledge_base.models import KnowledgeBase
 
         kb_id = "bb47bf6f-3315-49bd-9c9a-7cc4aa9abbac"
         kb_name = "测试"
@@ -94,7 +94,7 @@ class TestKBNameUUIDLookup:
         """Create a mock manager where kb2's name equals kb1's UUID"""
         from unittest.mock import MagicMock
 
-        from astrbot.core.knowledge_base.models import KnowledgeBase
+        from bot.core.knowledge_base.models import KnowledgeBase
 
         kb1_id = "test-uuid-123"
         kb1_name = "KB One"
@@ -147,8 +147,8 @@ class TestCheckAllKB:
         """Should return False when KB has documents"""
         from unittest.mock import MagicMock
 
-        from astrbot.core.knowledge_base.models import KnowledgeBase
-        from astrbot.core.tools.knowledge_base_tools import check_all_kb
+        from bot.core.knowledge_base.models import KnowledgeBase
+        from bot.core.tools.knowledge_base_tools import check_all_kb
 
         mock_kb = KnowledgeBase(
             kb_id="kb-1",
@@ -170,8 +170,8 @@ class TestCheckAllKB:
         """Should return True when KB is empty"""
         from unittest.mock import MagicMock
 
-        from astrbot.core.knowledge_base.models import KnowledgeBase
-        from astrbot.core.tools.knowledge_base_tools import check_all_kb
+        from bot.core.knowledge_base.models import KnowledgeBase
+        from bot.core.tools.knowledge_base_tools import check_all_kb
 
         mock_kb = KnowledgeBase(
             kb_id="kb-2",
@@ -193,9 +193,9 @@ class TestCheckAllKB:
         """Should return True and log warning when KB is None"""
         from unittest.mock import patch
 
-        from astrbot.core.tools.knowledge_base_tools import check_all_kb
+        from bot.core.tools.knowledge_base_tools import check_all_kb
 
-        with patch("astrbot.core.tools.knowledge_base_tools.logger") as mock_logger:
+        with patch("bot.core.tools.knowledge_base_tools.logger") as mock_logger:
             kb_list = [None]
             result = check_all_kb(kb_list)
 
@@ -209,8 +209,8 @@ class TestCheckAllKB:
         """Should return False when at least one KB has documents"""
         from unittest.mock import MagicMock, patch
 
-        from astrbot.core.knowledge_base.models import KnowledgeBase
-        from astrbot.core.tools.knowledge_base_tools import check_all_kb
+        from bot.core.knowledge_base.models import KnowledgeBase
+        from bot.core.tools.knowledge_base_tools import check_all_kb
 
         mock_kb_empty = KnowledgeBase(
             kb_id="kb-2",
@@ -234,7 +234,7 @@ class TestCheckAllKB:
         mock_helper_non_empty = MagicMock()
         mock_helper_non_empty.kb = mock_kb_non_empty
 
-        with patch("astrbot.core.tools.knowledge_base_tools.logger") as mock_logger:
+        with patch("bot.core.tools.knowledge_base_tools.logger") as mock_logger:
             kb_list = [None, mock_helper_empty, mock_helper_non_empty]
             result = check_all_kb(kb_list)
 
@@ -247,9 +247,9 @@ class TestCheckAllKB:
         """Should return True and log warning when all KBs are None"""
         from unittest.mock import patch
 
-        from astrbot.core.tools.knowledge_base_tools import check_all_kb
+        from bot.core.tools.knowledge_base_tools import check_all_kb
 
-        with patch("astrbot.core.tools.knowledge_base_tools.logger") as mock_logger:
+        with patch("bot.core.tools.knowledge_base_tools.logger") as mock_logger:
             kb_list = [None, None, None]
             result = check_all_kb(kb_list)
 

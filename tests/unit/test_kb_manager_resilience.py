@@ -7,7 +7,7 @@ Tests the following scenarios:
 3. _ensure_vec_db clears stale init_error after successful initialization
 
 These tests use lazy imports and mocks to avoid circular import issues
-in the astrbot core module chain.
+in the bot core module chain.
 """
 
 import sys
@@ -21,21 +21,21 @@ import pytest
 @pytest.fixture
 def stub_provider_manager_module():
     """Stub provider manager module to avoid circular imports in unit tests."""
-    original_module = sys.modules.get("astrbot.core.provider.manager")
-    stub_module = types.ModuleType("astrbot.core.provider.manager")
+    original_module = sys.modules.get("bot.core.provider.manager")
+    stub_module = types.ModuleType("bot.core.provider.manager")
 
     class ProviderManager: ...
 
     setattr(stub_module, "ProviderManager", ProviderManager)
-    sys.modules["astrbot.core.provider.manager"] = stub_module
+    sys.modules["bot.core.provider.manager"] = stub_module
 
     try:
         yield
     finally:
         if original_module is not None:
-            sys.modules["astrbot.core.provider.manager"] = original_module
+            sys.modules["bot.core.provider.manager"] = original_module
         else:
-            sys.modules.pop("astrbot.core.provider.manager", None)
+            sys.modules.pop("bot.core.provider.manager", None)
 
 
 @pytest.fixture
@@ -62,7 +62,7 @@ def mock_kb_db():
 def mock_knowledge_base():
     """Create a mock KnowledgeBase instance."""
     # Use lazy import to avoid circular import
-    from astrbot.core.knowledge_base.models import KnowledgeBase
+    from bot.core.knowledge_base.models import KnowledgeBase
 
     kb = KnowledgeBase(
         kb_name="test_kb",
@@ -100,8 +100,8 @@ async def test_update_kb_preserves_old_instance_when_reinit_fails(
     re-initialization fails, ensuring the knowledge base remains available.
     """
     # Lazy import to avoid circular import
-    from astrbot.core.knowledge_base.kb_helper import KBHelper
-    from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
+    from bot.core.knowledge_base.kb_helper import KBHelper
+    from bot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
 
     # Setup: create an existing KBHelper with working vec_db
     mock_provider_manager.get_provider_by_id.return_value = mock_embedding_provider
@@ -164,8 +164,8 @@ async def test_update_kb_switches_instance_only_after_new_reinit_success(
     after the new instance successfully initializes.
     """
     # Lazy import to avoid circular import
-    from astrbot.core.knowledge_base.kb_helper import KBHelper
-    from astrbot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
+    from bot.core.knowledge_base.kb_helper import KBHelper
+    from bot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
 
     # Setup: create an existing KBHelper
     mock_provider_manager.get_provider_by_id.return_value = mock_embedding_provider
@@ -231,7 +231,7 @@ async def test_ensure_vec_db_clears_stale_init_error(
     after successful initialization, removing stale error state.
     """
     # Lazy import to avoid circular import
-    from astrbot.core.knowledge_base.kb_helper import KBHelper
+    from bot.core.knowledge_base.kb_helper import KBHelper
 
     # Setup: create KBHelper with stale init_error
     mock_provider_manager.get_provider_by_id.return_value = mock_embedding_provider
@@ -253,7 +253,7 @@ async def test_ensure_vec_db_clears_stale_init_error(
     mock_vec_db.close = AsyncMock()
 
     with patch(
-        "astrbot.core.db.vec_db.faiss_impl.vec_db.FaissVecDB",
+        "bot.core.db.vec_db.faiss_impl.vec_db.FaissVecDB",
         return_value=mock_vec_db,
     ):
         # Execute _ensure_vec_db
@@ -276,7 +276,7 @@ async def test_ensure_vec_db_sets_init_error_on_failure(
     initialization fails, preserving the error state.
     """
     # Lazy import to avoid circular import
-    from astrbot.core.knowledge_base.kb_helper import KBHelper
+    from bot.core.knowledge_base.kb_helper import KBHelper
 
     # Setup: provider unavailable
     mock_provider_manager.get_provider_by_id.return_value = None

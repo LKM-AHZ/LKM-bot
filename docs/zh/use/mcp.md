@@ -32,18 +32,18 @@ LKMBot 支持以下三种连接方式。**如果服务商提供远程地址，�
 
 依赖必须装在 **LKMBot 所在的运行环境**中。源码部署时，使用运行 LKMBot 的账户和环境；Docker 部署时，装在容器里，仅安装到宿主机不够。
 
-当前仓库的官方 Docker 镜像构建包含 Node.js 和 uv。旧镜像或第三方镜像可能不同，可以先检查（将 `astrbot` 换成你的容器名称）：
+当前仓库的官方 Docker 镜像构建包含 Node.js 和 uv。旧镜像或第三方镜像可能不同，可以先检查（将 `bot` 换成你的容器名称）：
 
 ```bash
-docker exec astrbot uv --version
-docker exec astrbot node --version
-docker exec astrbot npx --version
+docker exec bot uv --version
+docker exec bot node --version
+docker exec bot npx --version
 ```
 
 缺少 uv 时，可以在 `数据与日志 → 日志` 中点击 `安装 pip 库` 安装 `uv`，或在容器中执行：
 
 ```bash
-docker exec astrbot python -m pip install uv
+docker exec bot python -m pip install uv
 ```
 
 缺少 Node.js 时，源码部署可参考 [Node.js 下载说明](https://nodejs.org/en/download)。Docker 部署建议更新到包含所需依赖的镜像，或把依赖写入自己的 Dockerfile；手动安装到容器里的程序可能在重建容器后丢失。
@@ -127,7 +127,7 @@ docker exec astrbot python -m pip install uv
 
 默认人格使用全部可用能力；需要限制工具范围时，请创建或编辑自定义人格。如果工具已在全局管理中停用，仅在人格中选择它不会重新启用工具。
 
-**已连接只代表服务可达，不代表模型一定会调用工具。** 是否调用取决于模型的工具调用能力、当前人格、用户任务和工具说明。MCP 查询等外部工具不要求你开启「使用电脑能力」；只有需要 LKMBot 自己执行代码或操作文件时，才需要配置[运行环境和权限](/use/astrbot-agent-sandbox)。
+**已连接只代表服务可达，不代表模型一定会调用工具。** 是否调用取决于模型的工具调用能力、当前人格、用户任务和工具说明。MCP 查询等外部工具不要求你开启「使用电脑能力」；只有需要 LKMBot 自己执行代码或操作文件时，才需要配置[运行环境和权限](/use/bot-agent-sandbox)。
 
 ## 管理和同步服务器
 

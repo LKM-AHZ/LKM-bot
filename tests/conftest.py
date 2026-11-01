@@ -23,7 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 # 设置测试环境变量
 os.environ.setdefault("TESTING", "true")
-os.environ.setdefault("ASTRBOT_TEST_MODE", "true")
+os.environ.setdefault("BOT_TEST_MODE", "true")
 
 
 # ============================================================
@@ -37,7 +37,7 @@ def pytest_collection_modifyitems(session, config, items):  # noqa: ARG001
     integration_tests = []
     deselected = []
     profile = config.getoption("--test-profile") or os.environ.get(
-        "ASTRBOT_TEST_PROFILE", "all"
+        "BOT_TEST_PROFILE", "all"
     )
 
     for item in items:
@@ -108,21 +108,21 @@ def pytest_configure(config):
 def _isolate_star_registry():
     """每测后把 star_registry / star_map 复原到本测开始前的样子。
 
-    两者是 ``astrbot.core.star.star`` 的模块级可变全局（``star_manager`` 经
+    两者是 ``bot.core.star.star`` 的模块级可变全局（``star_manager`` 经
     ``from .star import star_registry`` 共享同一对象），而不少测试会 append/clear 它们。
     串行时测试顺序固定、尚能自洽；xdist 并行下分发顺序变化，残留会漂到别的用例上——
     典型症状是 ``test_skill_metadata_enrichment`` 里 ``len(skills) == 1`` 偶发多出内置
     star 的技能（SkillManager 会按 star_registry 里 reserved 的插件去扫
-    ``astrbot/builtin_stars/*/skills``）。进程启动时该注册表为空，故复原即隔离。
+    ``bot/builtin_stars/*/skills``）。进程启动时该注册表为空，故复原即隔离。
     """
-    from astrbot.core.star.star import star_map, star_registry
+    from bot.core.star.star import star_map, star_registry
 
     registry_snapshot = list(star_registry)
     map_snapshot = dict(star_map)
     # 测试前也清空：内置 star 的注册来自 import/加载副作用，一旦发生过就永久留在模块级
     # 全局里。串行时靠 test_plugin_manager 的 clear() 顺带擦干净、恰好赶在 skill 用例之前，
     # 并行下分发顺序一变就漏出来（SkillManager 会按 reserved 插件去扫
-    # astrbot/builtin_stars/*/skills，令 ``len(skills) == 1`` 断言多出内置技能）。
+    # bot/builtin_stars/*/skills，令 ``len(skills) == 1`` 断言多出内置技能）。
     # 清空使每个用例都从与进程启动一致的干净态开始；测后再还原现场。
     star_registry.clear()
     star_map.clear()
@@ -247,7 +247,7 @@ def mock_platform():
 @pytest.fixture
 def mock_conversation():
     """创建模拟的 Conversation。"""
-    from astrbot.core.db.po import ConversationV2
+    from bot.core.db.po import ConversationV2
 
     return ConversationV2(
         conversation_id="test-conv-id",
@@ -260,7 +260,7 @@ def mock_conversation():
 
 @pytest.fixture
 def mock_event():
-    """创建模拟的 AstrMessageEvent。"""
+    """创建模拟的 BotMessageEvent。"""
     event = MagicMock()
     event.unified_msg_origin = "test_umo"
     event.session_id = "test_session"
@@ -288,11 +288,11 @@ def mock_event():
 
 
 @pytest.fixture
-def astrbot_config(temp_config_file: Path):
-    """创建 AstrBotConfig 实例。"""
-    from astrbot.core.config.astrbot_config import AstrBotConfig
+def bot_config(temp_config_file: Path):
+    """创建 BotConfig 实例。"""
+    from bot.core.config.bot_config import BotConfig
 
-    config = AstrBotConfig()
+    config = BotConfig()
     config._config_path = str(temp_config_file)  # noqa: SLF001
     return config
 
@@ -300,7 +300,7 @@ def astrbot_config(temp_config_file: Path):
 @pytest.fixture
 def main_agent_build_config():
     """创建 MainAgentBuildConfig 实例。"""
-    from astrbot.core.astr_main_agent import MainAgentBuildConfig
+    from bot.core.bot_main_agent import MainAgentBuildConfig
 
     return MainAgentBuildConfig(
         tool_call_timeout=60,
@@ -325,7 +325,7 @@ def main_agent_build_config():
 @pytest_asyncio.fixture
 async def temp_db(temp_db_file: Path):
     """创建临时数据库实例。"""
-    from astrbot.core.db.sqlite import SQLiteDatabase
+    from bot.core.db.sqlite import SQLiteDatabase
 
     db = SQLiteDatabase(str(temp_db_file))
     try:
@@ -343,7 +343,7 @@ async def temp_db(temp_db_file: Path):
 
 @pytest_asyncio.fixture
 async def mock_context(
-    astrbot_config,
+    bot_config,
     temp_db,
     mock_provider,
     mock_platform,
@@ -351,7 +351,7 @@ async def mock_context(
     """创建模拟的插件上下文。"""
     from asyncio import Queue
 
-    from astrbot.core.star.context import Context
+    from bot.core.star.context import Context
 
     event_queue = Queue()
 
@@ -370,20 +370,20 @@ async def mock_context(
     message_history_manager = MagicMock()
     persona_manager = MagicMock()
     persona_manager.personas_v3 = []
-    astrbot_config_mgr = MagicMock()
+    bot_config_mgr = MagicMock()
     knowledge_base_manager = MagicMock()
     cron_manager = MagicMock()
 
     context = Context(
         event_queue,
-        astrbot_config,
+        bot_config,
         temp_db,
         provider_manager,
         platform_manager,
         conversation_manager,
         message_history_manager,
         persona_manager,
-        astrbot_config_mgr,
+        bot_config_mgr,
         knowledge_base_manager,
         cron_manager,
     )
@@ -399,7 +399,7 @@ async def mock_context(
 @pytest.fixture
 def provider_request():
     """创建 ProviderRequest 实例。"""
-    from astrbot.core.provider.entities import ProviderRequest
+    from bot.core.provider.entities import ProviderRequest
 
     return ProviderRequest(
         prompt="Hello",

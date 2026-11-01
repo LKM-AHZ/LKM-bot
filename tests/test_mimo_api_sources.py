@@ -4,14 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
-from astrbot.core.provider.sources.mimo_api_common import (
+from bot.core.provider.sources.mimo_api_common import (
     MiMoAPIError,
     _validate_wav_payload,
     build_headers,
     prepare_audio_input,
 )
-from astrbot.core.provider.sources.mimo_stt_api_source import ProviderMiMoSTTAPI
-from astrbot.core.provider.sources.mimo_tts_api_source import ProviderMiMoTTSAPI
+from bot.core.provider.sources.mimo_stt_api_source import ProviderMiMoSTTAPI
+from bot.core.provider.sources.mimo_tts_api_source import ProviderMiMoTTSAPI
 
 MIMO_STT_TEST_WAV_HEADER = b"RIFF\x24\x08\x00\x00WAVEfmt "
 MIMO_STT_TEST_AUDIO_BASE64 = base64.b64encode(MIMO_STT_TEST_WAV_HEADER).decode()
@@ -230,7 +230,7 @@ async def test_mimo_stt_asr_model_payload_includes_audio_only(monkeypatch):
         return _Response()
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
+        "bot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
         fake_prepare_audio_input,
     )
     provider.client = SimpleNamespace(post=fake_post)
@@ -296,7 +296,7 @@ async def test_mimo_stt_multimodal_model_payload_includes_transcription_prompts(
         return _Response()
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
+        "bot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
         fake_prepare_audio_input,
     )
     provider.client = SimpleNamespace(post=fake_post)
@@ -360,7 +360,7 @@ async def test_mimo_stt_prepare_audio_input_returns_data_url(monkeypatch):
             return _ResolvedAudio()
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_api_common.MediaResolver",
+        "bot.core.provider.sources.mimo_api_common.MediaResolver",
         _Resolver,
     )
 
@@ -391,7 +391,7 @@ async def test_mimo_stt_prepare_audio_input_rejects_non_wav_payload(monkeypatch)
             return _ResolvedAudio()
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_api_common.MediaResolver",
+        "bot.core.provider.sources.mimo_api_common.MediaResolver",
         _Resolver,
     )
 
@@ -427,7 +427,7 @@ async def test_mimo_stt_get_text_uses_reasoning_content(monkeypatch):
             }
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
+        "bot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
         fake_prepare_audio_input,
     )
     provider.client = SimpleNamespace(post=_fake_post(_Response()))
@@ -453,7 +453,7 @@ async def test_mimo_stt_get_text_handles_empty_choices(monkeypatch):
             return {"choices": []}
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
+        "bot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
         fake_prepare_audio_input,
     )
     provider.client = SimpleNamespace(post=_fake_post(_Response()))
@@ -480,7 +480,7 @@ async def test_mimo_stt_get_text_handles_null_message(monkeypatch):
             return {"choices": [{"message": None}]}
 
     monkeypatch.setattr(
-        "astrbot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
+        "bot.core.provider.sources.mimo_stt_api_source.prepare_audio_input",
         fake_prepare_audio_input,
     )
     provider.client = SimpleNamespace(post=_fake_post(_Response()))

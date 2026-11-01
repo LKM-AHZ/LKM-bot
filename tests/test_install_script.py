@@ -113,7 +113,7 @@ wget() {
 @unittest.skipUnless(pty is not None, "Bash installer tests require a POSIX terminal")
 class ShellInstallerTests(unittest.TestCase):
     def setUp(self):
-        self.temporary = tempfile.TemporaryDirectory(prefix="astrbot-shell-test-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="bot-shell-test-")
         self.addCleanup(self.temporary.cleanup)
         self.root = Path(self.temporary.name)
         (self.root / "fake-uv").write_bytes(FAKE_UV)
@@ -211,7 +211,7 @@ class ShellInstallerTests(unittest.TestCase):
                 _, wait_status = os.waitpid(pid, 0)
             status = os.WEXITSTATUS(wait_status)
             output = output_bytes.decode().replace("\r\n", "\n")
-        self.assertEqual(list(self.root.glob("astrbot-install.*")), [])
+        self.assertEqual(list(self.root.glob("bot-install.*")), [])
         return status, output
 
     def assert_install(self, index, mirrors):

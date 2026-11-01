@@ -9,13 +9,13 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from astrbot.core.agent.runners.base import AgentState
-from astrbot.core.cron.manager import (
+from bot.core.agent.runners.base import AgentState
+from bot.core.cron.manager import (
     CronJobManager,
     CronJobSchedulingError,
     _normalize_crontab_day_of_week,
 )
-from astrbot.core.db.po import CronJob
+from bot.core.db.po import CronJob
 
 
 @pytest.fixture
@@ -496,7 +496,7 @@ class TestSyncFromDb:
         """Test that sync warns for basic jobs without handlers."""
         mock_db.list_cron_jobs.return_value = [sample_cron_job]
 
-        with patch("astrbot.core.cron.manager.logger") as mock_logger:
+        with patch("bot.core.cron.manager.logger") as mock_logger:
             await cron_manager.sync_from_db()
 
         mock_logger.warning.assert_called()
@@ -606,7 +606,7 @@ class TestScheduleJob:
         mock_db.list_cron_jobs = AsyncMock(return_value=[])
         mock_db.update_cron_job = AsyncMock()
 
-        with patch("astrbot.core.cron.manager.logger") as mock_logger:
+        with patch("bot.core.cron.manager.logger") as mock_logger:
             await cron_manager.start(mock_context)
             cron_manager._schedule_job(sample_cron_job)
 
@@ -679,12 +679,12 @@ class TestRunActiveAgentJob:
         self, cron_manager, monkeypatch, session_config, expected_plugins
     ):
         """Apply the session plugin policy to cron response hooks and tools."""
-        from astrbot.core.agent.tool import FunctionTool, ToolSet
-        from astrbot.core.astr_agent_hooks import MAIN_AGENT_HOOKS
-        from astrbot.core.astr_main_agent import _plugin_tool_fix
-        from astrbot.core.pipeline import context_utils
-        from astrbot.core.star.star import StarMetadata, star_map
-        from astrbot.core.star.star_handler import (
+        from bot.core.agent.tool import FunctionTool, ToolSet
+        from bot.core.bot_agent_hooks import MAIN_AGENT_HOOKS
+        from bot.core.bot_main_agent import _plugin_tool_fix
+        from bot.core.pipeline import context_utils
+        from bot.core.star.star import StarMetadata, star_map
+        from bot.core.star.star_handler import (
             EventType,
             StarHandlerMetadata,
             StarHandlerRegistry,
@@ -731,14 +731,14 @@ class TestRunActiveAgentJob:
         runner.get_final_llm_resp.return_value = None
         with (
             patch(
-                "astrbot.core.astr_main_agent._get_session_conv",
+                "bot.core.bot_main_agent._get_session_conv",
                 AsyncMock(return_value=SimpleNamespace(history="[]")),
             ),
             patch(
-                "astrbot.core.astr_main_agent.build_main_agent",
+                "bot.core.bot_main_agent.build_main_agent",
                 AsyncMock(return_value=SimpleNamespace(agent_runner=runner)),
             ) as build_agent,
-            patch("astrbot.core.cron.manager.persist_agent_history", AsyncMock()),
+            patch("bot.core.cron.manager.persist_agent_history", AsyncMock()),
         ):
             await cron_manager._woke_main_agent(
                 message="run scheduled task",
@@ -816,15 +816,15 @@ class TestRunActiveAgentJob:
 
         with (
             patch(
-                "astrbot.core.astr_main_agent._get_session_conv",
+                "bot.core.bot_main_agent._get_session_conv",
                 AsyncMock(return_value=conv),
             ),
             patch(
-                "astrbot.core.astr_main_agent.build_main_agent",
+                "bot.core.bot_main_agent.build_main_agent",
                 side_effect=fake_build_main_agent,
             ),
             patch(
-                "astrbot.core.cron.manager.persist_agent_history",
+                "bot.core.cron.manager.persist_agent_history",
                 side_effect=fake_persist_agent_history,
             ),
         ):
@@ -925,15 +925,15 @@ class TestRunActiveAgentJob:
 
         with (
             patch(
-                "astrbot.core.astr_main_agent._get_session_conv",
+                "bot.core.bot_main_agent._get_session_conv",
                 AsyncMock(return_value=conv),
             ),
             patch(
-                "astrbot.core.astr_main_agent.build_main_agent",
+                "bot.core.bot_main_agent.build_main_agent",
                 side_effect=fake_build_main_agent,
             ),
             patch(
-                "astrbot.core.cron.manager.persist_agent_history",
+                "bot.core.cron.manager.persist_agent_history",
                 AsyncMock(),
             ),
         ):
@@ -978,11 +978,11 @@ class TestRunActiveAgentJob:
         fake_result = SimpleNamespace(agent_runner=FakeRunner())
         with (
             patch(
-                "astrbot.core.astr_main_agent.build_main_agent",
+                "bot.core.bot_main_agent.build_main_agent",
                 new=AsyncMock(return_value=fake_result),
             ),
             patch(
-                "astrbot.core.astr_main_agent._get_session_conv",
+                "bot.core.bot_main_agent._get_session_conv",
                 new=AsyncMock(return_value=SimpleNamespace(history="[]")),
             ),
         ):
@@ -1010,11 +1010,11 @@ class TestRunActiveAgentJob:
         cron_manager.ctx = mock_context
         with (
             patch(
-                "astrbot.core.astr_main_agent.build_main_agent",
+                "bot.core.bot_main_agent.build_main_agent",
                 new=AsyncMock(return_value=None),
             ),
             patch(
-                "astrbot.core.astr_main_agent._get_session_conv",
+                "bot.core.bot_main_agent._get_session_conv",
                 new=AsyncMock(return_value=SimpleNamespace(history="[]")),
             ),
         ):

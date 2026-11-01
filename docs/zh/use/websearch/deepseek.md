@@ -10,9 +10,9 @@
 2. 进入 [API Keys 页面](https://platform.deepseek.com/api_keys)，创建并复制 API Key。
 3. 确认账号余额和服务可用状态。搜索与正文提取按请求计费，当前价格及计费规则以 [官方文档](https://api-docs.deepseek.com/zh-cn/guides/search) 为准。
 
-## 在 AstrBot 中配置
+## 在 LKMBot 中配置
 
-开始前，请确认聊天使用 AstrBot 内置 AI，且对话模型及其 API 支持工具调用。AstrBot 所在的服务器或容器需要能访问 `https://api.deepseek.com`。
+开始前，请确认聊天使用 LKMBot 内置 AI，且对话模型及其 API 支持工具调用。LKMBot 所在的服务器或容器需要能访问 `https://api.deepseek.com`。
 
 1. 打开侧边栏的 `配置文件`，选择聊天实际使用的配置文件。
 2. 进入 `AI → 能力 → 网页搜索`，打开 `启用网页搜索`。
@@ -24,7 +24,7 @@
 
 ## 支持的能力
 
-| 能力 | AstrBot 返回的内容 |
+| 能力 | LKMBot 返回的内容 |
 | --- | --- |
 | 网页搜索（Search） | 标题、来源链接和摘要，默认请求 10 条，可请求 1～50 条；模型请求附带正文时，也会包含可用的网页正文 |
 | 正文提取（Fetch） | 指定网页的 URL、标题和 Markdown 正文；可读取用户提供的链接，也可继续阅读搜索结果中的页面 |
@@ -38,7 +38,7 @@
 ### 网页搜索
 
 ```text
-请先搜索 AstrBot 的最新发布信息，再说明版本号和主要变化，并附上来源链接。
+请先搜索 LKMBot 的最新发布信息，再说明版本号和主要变化，并附上来源链接。
 ```
 
 ### 限定搜索范围
@@ -46,13 +46,13 @@
 搜索支持站点、语言、日期和排除条件，可以直接在聊天请求中说明：
 
 ```text
-请搜索 AstrBot 在 GitHub 上的发布信息，仅查找 2026 年以来的内容，最多返回 5 条，并附上来源链接。
+请搜索 LKMBot 在 GitHub 上的发布信息，仅查找 2026 年以来的内容，最多返回 5 条，并附上来源链接。
 ```
 
 也可以明确提供搜索表达式，要求模型按该表达式搜索：
 
 ```text
-请使用 DeepSeek Search API 搜索：AstrBot site:github.com lang:zh,en after:2026-01-01
+请使用 DeepSeek Search API 搜索：LKMBot site:github.com lang:zh,en after:2026-01-01
 ```
 
 可组合使用 `site:`、`-site:`、`lang:`、`after:`、`before:`、精确短语（双引号）和排除词（`-关键词`）。日期支持 `YYYY` 或 `YYYY-MM-DD`。搜索表达式连同筛选条件总长不能超过 128 个字符。
@@ -75,7 +75,7 @@ Fetch 每次读取一个 HTTP 或 HTTPS 链接。登录限制、付费内容、�
 
 `402` 表示账号余额不足，`429` 表示触发限速。Search 与 Fetch 各自按账号限速，配置多个同账号 Key 不会提高限额；Fetch 还受到目标域名限速约束。当前限额以 [官方限速说明](https://api-docs.deepseek.com/zh-cn/guides/search#限速) 为准。
 
-多个 Key 用于请求间轮询。单次请求失败时，AstrBot 不会立即换 Key 重试；遇到限速应降低请求频率后再试。
+多个 Key 用于请求间轮询。单次请求失败时，LKMBot 不会立即换 Key 重试；遇到限速应降低请求频率后再试。
 
 ### 搜索有结果，但正文提取失败
 

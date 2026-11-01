@@ -3,17 +3,17 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from astrbot.core.agent.tool import FunctionTool, ToolSet
-from astrbot.core.provider.func_tool_manager import FunctionToolManager
-from astrbot.core.provider.provider import Provider
-from astrbot.core.star.context import Context
-from astrbot.core.star.star import StarMetadata, star_registry
-from astrbot.core.tools.computer_tools.python import LocalPythonTool
-from astrbot.core.tools.computer_tools.shell import (
+from bot.core.agent.tool import FunctionTool, ToolSet
+from bot.core.provider.func_tool_manager import FunctionToolManager
+from bot.core.provider.provider import Provider
+from bot.core.star.context import Context
+from bot.core.star.star import StarMetadata, star_registry
+from bot.core.tools.computer_tools.python import LocalPythonTool
+from bot.core.tools.computer_tools.shell import (
     LocalExecuteShellTool,
     ShellSessionTool,
 )
-from astrbot.core.tools.computer_tools.util import LOCAL_NETWORK_POLICY_NOTICE
+from bot.core.tools.computer_tools.util import LOCAL_NETWORK_POLICY_NOTICE
 
 
 @pytest.mark.asyncio
@@ -36,7 +36,7 @@ async def test_tool_loop_agent_adds_network_policy_to_system_prompt(
     tool_class, isolation_status,
 ):
     monkeypatch.setattr(
-        "astrbot.core.tools.computer_tools.util.get_process_sandbox_status",
+        "bot.core.tools.computer_tools.util.get_process_sandbox_status",
         lambda: {"status": isolation_status},
     )
 
@@ -48,7 +48,7 @@ async def test_tool_loop_agent_adds_network_policy_to_system_prompt(
     runner.reset = AsyncMock()
     runner.step_until_done = finished_steps
     monkeypatch.setattr(
-        "astrbot.core.star.context.ToolLoopAgentRunner", lambda: runner
+        "bot.core.star.context.ToolLoopAgentRunner", lambda: runner
     )
     context = SimpleNamespace(
         provider_manager=SimpleNamespace(

@@ -11,17 +11,17 @@ import pytest
 # 将项目根目录添加到 sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from astrbot.core.agent.hooks import BaseAgentRunHooks
-from astrbot.core.agent.message import ImageURLPart, Message, TextPart
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
-from astrbot.core.agent.tool import FunctionTool, ToolSet
-from astrbot.core.astr_agent_run_util import run_agent
-from astrbot.core.astr_agent_tool_exec import FunctionToolExecutor
-from astrbot.core.exceptions import EmptyModelOutputError
-from astrbot.core.message.message_event_result import MessageChain
-from astrbot.core.provider.entities import LLMResponse, ProviderRequest, TokenUsage
-from astrbot.core.provider.provider import Provider
+from bot.core.agent.hooks import BaseAgentRunHooks
+from bot.core.agent.message import ImageURLPart, Message, TextPart
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
+from bot.core.agent.tool import FunctionTool, ToolSet
+from bot.core.bot_agent_run_util import run_agent
+from bot.core.bot_agent_tool_exec import FunctionToolExecutor
+from bot.core.exceptions import EmptyModelOutputError
+from bot.core.message.message_event_result import MessageChain
+from bot.core.provider.entities import LLMResponse, ProviderRequest, TokenUsage
+from bot.core.provider.provider import Provider
 
 
 class MockProvider(Provider):
@@ -891,7 +891,7 @@ async def test_tool_result_includes_all_calltoolresult_content(
 ):
     """工具返回多个 content 项时，tool result 应包含全部内容。"""
 
-    from astrbot.core.agent.tool_image_cache import tool_image_cache
+    from bot.core.agent.tool_image_cache import tool_image_cache
 
     mock_provider.should_call_tools = True
     mock_provider.max_calls_before_normal_response = 1
@@ -1574,7 +1574,7 @@ async def test_follow_up_ticket_not_consumed_when_no_next_tool_call(
 @pytest.mark.parametrize("streaming", [False, True])
 async def test_skills_like_requery_passes_extra_user_content_parts(streaming):
     """skills-like 模式 re-query 时应传递 extra_user_content_parts（如 image_caption）"""
-    from astrbot.core.agent.message import TextPart
+    from bot.core.agent.message import TextPart
 
     captured_kwargs = {}
 
@@ -1830,7 +1830,7 @@ async def test_large_tool_result_is_spilled_to_file_and_replaced_with_read_notic
         handler=AsyncMock(),
     )
     read_tool = FunctionTool(
-        name="astrbot_file_read_tool",
+        name="bot_file_read_tool",
         description="read file",
         parameters={"type": "object", "properties": {"path": {"type": "string"}}},
         handler=AsyncMock(),
@@ -1864,8 +1864,8 @@ async def test_large_tool_result_is_spilled_to_file_and_replaced_with_read_notic
     assert "xxxxxxxxxx" in tool_message_content
     assert "Truncated tool output preview shown above." in tool_message_content
     assert "The tool output was too large to include directly" in tool_message_content
-    assert "`astrbot_file_read_tool`" in tool_message_content
-    assert "Use `astrbot_file_read_tool` to inspect it." in tool_message_content
+    assert "`bot_file_read_tool`" in tool_message_content
+    assert "Use `bot_file_read_tool` to inspect it." in tool_message_content
 
     overflow_files = list(Path(tmp_path).glob("call_large_result_*.txt"))
     assert len(overflow_files) == 1
@@ -1890,7 +1890,7 @@ async def test_large_tool_result_keeps_preview_when_spill_fails(
         handler=AsyncMock(),
     )
     read_tool = FunctionTool(
-        name="astrbot_file_read_tool",
+        name="bot_file_read_tool",
         description="read file",
         parameters={"type": "object", "properties": {"path": {"type": "string"}}},
         handler=AsyncMock(),
@@ -2246,8 +2246,8 @@ async def test_step_notices_reach_model_once_per_threshold(
         responses = runner.step_until_done(128)
     else:
         # Bootstrap the public API first, as the application does, to avoid import cycles.
-        import astrbot.api  # noqa: F401
-        from astrbot.core.astr_agent_run_util import run_agent
+        import bot.api  # noqa: F401
+        from bot.core.bot_agent_run_util import run_agent
 
         responses = run_agent(runner, max_step=128)
     async for _ in responses:

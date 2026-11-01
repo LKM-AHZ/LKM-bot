@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
-from astrbot.core.agent.mcp_client import MCPTool, _normalize_mcp_input_schema
+from bot.core.agent.mcp_client import MCPTool, _normalize_mcp_input_schema
 
 
 class TestNormalizeMcpInputSchema:

@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 
-from astrbot.core.agent.run_context import ContextWrapper
-from astrbot.core.tools.computer_tools.shipyard_neo.neo_skills import (
+from bot.core.agent.run_context import ContextWrapper
+from bot.core.tools.computer_tools.shipyard_neo.neo_skills import (
     PromoteSkillCandidateTool,
 )
 
@@ -48,11 +48,11 @@ def test_promote_stable_sync_failure_auto_rolls_back(monkeypatch):
         raise ValueError("sync failed")
 
     monkeypatch.setattr(
-        "astrbot.core.tools.computer_tools.shipyard_neo.neo_skills.get_booter",
+        "bot.core.tools.computer_tools.shipyard_neo.neo_skills.get_booter",
         _fake_get_booter,
     )
     monkeypatch.setattr(
-        "astrbot.core.tools.computer_tools.shipyard_neo.neo_skills.NeoSkillSyncManager.sync_release",
+        "bot.core.tools.computer_tools.shipyard_neo.neo_skills.NeoSkillSyncManager.sync_release",
         _fake_sync_release,
     )
 
@@ -61,7 +61,7 @@ def test_promote_stable_sync_failure_auto_rolls_back(monkeypatch):
         unified_msg_origin="session-1",
         get_sender_id=lambda: "admin-user",
     )
-    astr_ctx = SimpleNamespace(
+    bot_ctx = SimpleNamespace(
         context=SimpleNamespace(
             get_config=lambda umo: {  # noqa: ARG005
                 "provider_settings": {
@@ -71,7 +71,7 @@ def test_promote_stable_sync_failure_auto_rolls_back(monkeypatch):
         ),
         event=event,
     )
-    run_ctx = ContextWrapper(context=astr_ctx)
+    run_ctx = ContextWrapper(context=bot_ctx)
 
     tool = PromoteSkillCandidateTool()
     result = asyncio.run(
