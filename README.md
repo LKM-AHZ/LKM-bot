@@ -13,15 +13,17 @@ Python 包名为 `bot`。
 | `bot/core/pipeline/`、`bot/core/platform/`、`bot/core/provider/`、`bot/core/star/` | 消息阶段、平台适配、模型与插件生命周期 |
 | `bot/api/`、`bot/builtin_stars/` | 插件公共 API 与内置插件 |
 | `bot/dashboard/api/`、`bot/dashboard/services/`、`bot/dashboard/server.py` | FastAPI 路由、服务逻辑、Hypercorn 与静态资源 |
-| `bot/lkm/` | 社区 SSO 与面板子路径集成 |
-| `dashboard/src/` | Vue WebUI，开发命令见 [Dashboard 指南](./dashboard/README.md) |
+| `bot/lkm/` | 社区集成：面板 SSO、面板子路径、后端服务通道（媒体/文件库）与账号统一 |
+| `LKM-official-website/bot-panel/`（前端仓库） | Vue WebUI，构建产物由 Astro 托管在 `/bot/`；本仓库只提供面板 API |
 | `openspec/`、`tests/`、`docs/` | API 规格、回归测试与中英文使用/开发文档 |
 | `scripts/` | 构建、发布和 API 文档工具 |
 
-先在仓库根目录执行 `uv sync`、`uv run main.py`；另开终端进入 `dashboard/` 执行
-`pnpm install`、`pnpm dev`。社区集成优先放在 `bot/lkm/`，沿用 `bot` 命名空间。
-`dashboard/src/api/generated/` 和打包后的 `bot/dashboard/dist/` 不直接编辑；API 变更后
-在 `dashboard/` 运行 `pnpm generate:api`，同步相应测试和文档。
+先在仓库根目录执行 `uv sync`、`uv run main.py`。面板前端已迁到前端仓库
+`LKM-official-website/bot-panel/`：本地开发在那里执行 `pnpm dev`，构建用
+`pnpm run build:bot-panel`（产物由 Astro 托管在 `/bot/`）。社区集成优先放在 `bot/lkm/`，
+沿用 `bot` 命名空间。
+`bot-panel/src/api/generated/` 不直接编辑；API 变更后在 `LKM-official-website/bot-panel/`
+运行 `pnpm generate:api`，同步相应测试和文档。
 
 Dashboard 配置服务按职责归属文件：`config_profile_service.py` 管理配置档和系统设置，
 `config_routing_service.py` 管理会话配置路由，`config_display_service.py` 构造编辑器元数据，

@@ -6,6 +6,7 @@ from bot.core.agent.tool import FunctionTool, ToolSet
 from bot.core.agent.tool_executor import BaseFunctionToolExecutor
 from bot.core.config.bot_config import BotConfig
 from bot.core.star.register import register_llm_tool as llm_tool
+from bot.lkm.backend_client import BackendUnavailable, get_backend_client
 
 _fallback_logger = logging.getLogger("bot")
 _logger_cache: dict[
@@ -70,10 +71,12 @@ logger (``bot.plugin.<plugin_name>``) so each plugin's log level can be
 tuned independently; non-plugin callers fall back to the global logger."""
 
 __all__ = [
+    "BackendUnavailable",
     "BotConfig",
     "BaseFunctionToolExecutor",
     "FunctionTool",
     "ToolSet",
+    "get_backend_client",
     "html_renderer",
     "llm_tool",
     "logger",

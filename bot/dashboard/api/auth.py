@@ -315,6 +315,8 @@ async def _login(
             TOTP_TRUSTED_DEVICE_COOKIE_NAME,
             "",
         ).strip(),
+        # Forwarded to AUTH for its login-failure audit when community delegation is enabled.
+        ip_address=request.client.host if request.client else "",
     )
     return _auth_service_response(
         request,

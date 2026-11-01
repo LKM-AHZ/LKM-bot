@@ -55,7 +55,8 @@ else:
         StrictStr,
     )
 
-from bot.core import bot_config, file_token_service, logger
+from bot.core import logger
+from bot.core.media_storage import public_media_url, require_media_url
 from bot.core.utils.bot_path import get_bot_temp_path
 from bot.core.utils.io import download_file
 from bot.core.utils.media_utils import MediaResolver, file_uri_to_path, is_file_uri
@@ -403,21 +404,12 @@ class Record(BaseMessageComponent):
             str: 注册后的URL
 
         Raises:
-            Exception: 如果未配置 callback_api_base
+            Exception: 既无后端接入也未配置 callback_api_base 时
 
         """
-        callback_host = bot_config.get("callback_api_base")
-
-        if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
-
         file_path = await self.convert_to_file_path()
 
-        token = await file_token_service.register_file(file_path)
-
-        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
-
-        return f"{callback_host}/api/v1/files/tokens/{token}"
+        return await require_media_url(file_path, source="attachment")
 
 
 class Video(BaseMessageComponent):
@@ -506,34 +498,22 @@ class Video(BaseMessageComponent):
             str: 注册后的URL
 
         Raises:
-            Exception: 如果未配置 callback_api_base
+            Exception: 既无后端接入也未配置 callback_api_base 时
 
         """
-        callback_host = bot_config.get("callback_api_base")
-
-        if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
-
         file_path = await self.convert_to_file_path()
 
-        token = await file_token_service.register_file(file_path)
-
-        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
-
-        return f"{callback_host}/api/v1/files/tokens/{token}"
+        return await require_media_url(file_path, source="attachment")
 
     async def to_dict(self):
         """需要和 toDict 区分开，toDict 是同步方法"""
         url_or_path = self.file
         if url_or_path.startswith("http"):
             payload_file = url_or_path
-        elif callback_host := bot_config.get("callback_api_base"):
-            callback_host = str(callback_host).removesuffix("/")
-            token = await file_token_service.register_file(url_or_path)
-            payload_file = f"{callback_host}/api/v1/files/tokens/{token}"
-            logger.debug(f"Generated video file callback link: {payload_file}")
         else:
-            payload_file = url_or_path
+            payload_file = (
+                await public_media_url(url_or_path, source="attachment")
+            ) or url_or_path
         return {
             "type": "video",
             "data": {
@@ -705,21 +685,12 @@ class Image(BaseMessageComponent):
             str: 注册后的URL
 
         Raises:
-            Exception: 如果未配置 callback_api_base
+            Exception: 既无后端接入也未配置 callback_api_base 时
 
         """
-        callback_host = bot_config.get("callback_api_base")
-
-        if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
-
         file_path = await self.convert_to_file_path()
 
-        token = await file_token_service.register_file(file_path)
-
-        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
-
-        return f"{callback_host}/api/v1/files/tokens/{token}"
+        return await require_media_url(file_path, source="attachment")
 
 
 class Reply(BaseMessageComponent):
@@ -1007,34 +978,22 @@ class File(BaseMessageComponent):
             str: 注册后的URL
 
         Raises:
-            Exception: 如果未配置 callback_api_base
+            Exception: 既无后端接入也未配置 callback_api_base 时
 
         """
-        callback_host = bot_config.get("callback_api_base")
-
-        if not callback_host:
-            raise Exception("未配置 callback_api_base，文件服务不可用")
-
         file_path = await self.get_file()
 
-        token = await file_token_service.register_file(file_path)
-
-        logger.debug(f"已注册：{callback_host}/api/v1/files/tokens/{token}")
-
-        return f"{callback_host}/api/v1/files/tokens/{token}"
+        return await require_media_url(file_path, source="attachment")
 
     async def to_dict(self):
         """需要和 toDict 区分开，toDict 是同步方法"""
         url_or_path = await self.get_file(allow_return_url=True)
         if url_or_path.startswith("http"):
             payload_file = url_or_path
-        elif callback_host := bot_config.get("callback_api_base"):
-            callback_host = str(callback_host).removesuffix("/")
-            token = await file_token_service.register_file(url_or_path)
-            payload_file = f"{callback_host}/api/v1/files/tokens/{token}"
-            logger.debug(f"Generated file callback link: {payload_file}")
         else:
-            payload_file = url_or_path
+            payload_file = (
+                await public_media_url(url_or_path, source="attachment")
+            ) or url_or_path
         return {
             "type": "file",
             "data": {

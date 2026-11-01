@@ -254,6 +254,9 @@ DEFAULT_CONFIG = {
         "password_storage_upgraded": False,
         "password_change_required": False,
         "jwt_secret": "",
+        # 登录凭据来源：local（面板密码，默认）| both（面板密码或社区管理员账号）|
+        # backend（仅社区管理员账号，AUTH 不可用即失败）。见 bot/lkm/account_auth.py。
+        "auth_mode": "local",
         "host": "0.0.0.0",
         "port": 6185,
         "disable_access_log": True,
@@ -302,6 +305,9 @@ DEFAULT_CONFIG = {
     "pypi_index_url": "https://mirrors.aliyun.com/pypi/simple/",
     "timezone": "Asia/Shanghai",
     "callback_api_base": "",
+    # 媒体发布方式：auto（后端优先、失败回落本地 token 服务，默认）| local | backend。
+    # 见 bot/core/media_storage.py；后端地址/令牌仍走环境变量（服务凭据不进配置文件）。
+    "media_storage_mode": "auto",
     "default_kb_collection": "",  # 默认知识库名称, 已经过时
     "plugin_set": ["*"],  # "*" 表示使用所有可用的插件, 空列表表示不使用任何插件
     "kb_names": [],  # 默认知识库名称列表
@@ -3267,6 +3273,10 @@ CONFIG_METADATA_2 = {
             "callback_api_base": {
                 "type": "string",
             },
+            "media_storage_mode": {
+                "type": "string",
+                "options": ["auto", "local", "backend"],
+            },
             "disable_metrics": {
                 "description": "禁用匿名使用统计",
                 "type": "bool",
@@ -3278,6 +3288,10 @@ CONFIG_METADATA_2 = {
             },
             "dashboard.ssl.enable": {"type": "bool"},
             "dashboard.trust_proxy_headers": {"type": "bool"},
+            "dashboard.auth_mode": {
+                "type": "string",
+                "options": ["local", "both", "backend"],
+            },
             "dashboard.auth_rate_limit.enable": {"type": "bool"},
             "dashboard.auth_rate_limit.average_interval": {"type": "float"},
             "dashboard.auth_rate_limit.max_burst": {"type": "int"},
@@ -4891,6 +4905,12 @@ CONFIG_METADATA_3_SYSTEM = {
                         "type": "bool",
                         "hint": "关闭时忽略 X-Forwarded-For/X-Real-IP，仅使用连接地址。",
                     },
+                    "dashboard.auth_mode": {
+                        "description": "面板登录方式",
+                        "type": "string",
+                        "options": ["local", "both", "backend"],
+                        "hint": "local：使用面板自己的账号密码；both：面板账号密码或社区管理员账号均可登录；backend：仅接受社区管理员账号（社区账号服务不可用时会直接登录失败，不会回退到面板密码）。",
+                    },
                     "dashboard.auth_rate_limit.enable": {
                         "description": "启用登录验证速率限制",
                         "type": "bool",
@@ -4986,6 +5006,12 @@ CONFIG_METADATA_3_SYSTEM = {
                         "description": "对外可达的回调接口地址",
                         "type": "string",
                         "hint": "外部服务可能会通过 LKMBot 生成的回调链接（如文件下载链接）访问 LKMBot 后端。由于 LKMBot 无法自动判断部署环境中对外可达的主机地址（host），因此需要通过此配置项显式指定 “外部服务如何访问 LKMBot” 的地址。如 http://localhost:6185，https://example.com 等。",
+                    },
+                    "media_storage_mode": {
+                        "description": "媒体存储方式",
+                        "type": "string",
+                        "options": ["auto", "local", "backend"],
+                        "hint": "auto：优先存入社区后端对象存储，失败或未接入时回落到本地文件服务；local：只用本地文件服务（需要配置上面的回调接口地址）；backend：只用后端，未接入时媒体无法发送。",
                     },
                     "timezone": {
                         "description": "时区",

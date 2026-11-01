@@ -51,6 +51,12 @@ from bot.dashboard.password_state import (
     set_password_change_required,
     set_password_storage_upgraded,
 )
+from bot.lkm.account_auth import (
+    REQUIRED_ACCOUNT_LEVEL,
+    AccountAuthUnavailable,
+    auth_mode,
+    verify_community_account,
+)
 
 CHAT_ADMIN_SCOPE = "chat:admin"
 CONFIG_EDIT_ADMIN_SCOPE = "config:edit_admin"
@@ -285,6 +291,7 @@ class AuthService:
         post_data: object,
         *,
         trusted_device_cookie_token: str,
+        ip_address: str = "",
     ) -> AuthServiceResult:
         username = self.config["dashboard"]["username"]
         storage_upgraded = await is_password_storage_upgraded(self.db, self.config)
@@ -305,10 +312,37 @@ class AuthService:
         if not isinstance(req_username, str) or not isinstance(req_password, str):
             return self.error("Invalid request payload")
 
-        login_verified = req_username == username and verify_dashboard_password(
-            password,
-            req_password,
-        )
+        mode = auth_mode(self.config)
+        auth_source = "password"
+        login_verified = False
+        if mode in {"local", "both"}:
+            login_verified = req_username == username and verify_dashboard_password(
+                password,
+                req_password,
+            )
+        if not login_verified and mode in {"both", "backend"}:
+            try:
+                identity = await verify_community_account(
+                    req_username,
+                    req_password,
+                    ip_address=ip_address,
+                )
+            except AccountAuthUnavailable as exc:
+                if mode == "backend":
+                    # Delegated mode never falls back to the panel password: letting an AUTH
+                    # outage downgrade the credential set would silently undo the unification.
+                    logger.error(f"社区账号校验不可用：{exc}")
+                    return self.error(
+                        "社区账号服务不可用，请稍后重试",
+                        status_code=503,
+                    )
+                identity = None
+            if identity is not None:
+                if identity.get("account_level") != REQUIRED_ACCOUNT_LEVEL:
+                    await asyncio.sleep(3)
+                    return self.error("需要社区管理员权限", status_code=403)
+                login_verified = True
+                auth_source = "community"
 
         if not login_verified:
             await asyncio.sleep(3)
@@ -369,11 +403,12 @@ class AuthService:
             logger.warning("为了保证安全，请尽快修改默认密码。")
         if password_change_required and not self.demo_mode:
             change_pwd_hint = True
-        token = self.generate_jwt(username)
+        token = self.generate_jwt(username, auth_source=auth_source)
         result = AuthServiceResult(
             data={
                 "token": token,
                 "username": username,
+                "auth_source": auth_source,
                 "change_pwd_hint": change_pwd_hint,
                 "md5_pwd_hint": md5_pwd_hint,
                 "password_upgrade_required": not storage_upgraded,

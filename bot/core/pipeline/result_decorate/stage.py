@@ -4,7 +4,8 @@ import time
 import traceback
 from collections.abc import AsyncGenerator
 
-from bot.core import file_token_service, html_renderer, logger
+from bot.core import html_renderer, logger
+from bot.core.media_storage import public_media_url
 from bot.core.message.components import At, Image, Json, Node, Plain, Record, Reply
 from bot.core.message.message_event_result import ResultContentType
 from bot.core.pipeline.content_safety_check.stage import ContentSafetyCheckStage
@@ -331,18 +332,15 @@ class ResultDecorateStage(Stage):
                             use_file_service = self.ctx.bot_config[
                                 "provider_tts_settings"
                             ]["use_file_service"]
-                            callback_api_base = self.ctx.bot_config["callback_api_base"]
                             dual_output = self.ctx.bot_config["provider_tts_settings"][
                                 "dual_output"
                             ]
 
                             url = None
-                            if use_file_service and callback_api_base:
-                                token = await file_token_service.register_file(
-                                    audio_path,
-                                )
-                                url = f"{callback_api_base}/api/v1/files/tokens/{token}"
-                                logger.debug(f"Registered: {url}")
+                            if use_file_service:
+                                url = await public_media_url(audio_path, source="tts")
+                                if url:
+                                    logger.debug(f"Registered media: {url}")
 
                             new_chain.append(
                                 Record(
@@ -395,14 +393,11 @@ class ResultDecorateStage(Stage):
                     if url:
                         if url.startswith("http"):
                             result.chain = [Image.fromURL(url)]
-                        elif (
-                            self.ctx.bot_config["t2i_use_file_service"]
-                            and self.ctx.bot_config["callback_api_base"]
+                        elif self.ctx.bot_config["t2i_use_file_service"] and (
+                            media_url := await public_media_url(url, source="t2i")
                         ):
-                            token = await file_token_service.register_file(url)
-                            url = f"{self.ctx.bot_config['callback_api_base']}/api/v1/files/tokens/{token}"
-                            logger.debug(f"Registered: {url}")
-                            result.chain = [Image.fromURL(url)]
+                            logger.debug(f"Registered media: {media_url}")
+                            result.chain = [Image.fromURL(media_url)]
                         else:
                             result.chain = [Image.fromFileSystem(url)]
 
