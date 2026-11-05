@@ -18,6 +18,7 @@ from .cron import router as cron_router
 from .extensions import router as extensions_router
 from .files import router as files_router
 from .knowledge_bases import router as knowledge_bases_router
+from .life import router as life_router
 from .live_chat import router as live_chat_router
 from .logs import router as logs_router
 from .open_api import router as open_api_router
@@ -52,6 +53,7 @@ def build_api_router() -> APIRouter:
         cron_router,
         files_router,
         knowledge_bases_router,
+        life_router,
         extensions_router,
         skills_router,
         sessions_router,

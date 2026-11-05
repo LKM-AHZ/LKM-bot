@@ -67,6 +67,7 @@ class BotCoreLifecycle:
 
         self.cron_manager: CronJobManager | None = None
         self.temp_dir_cleaner: TempDirCleaner | None = None
+        self.life_service = None
         self._default_chat_provider_warning_emitted = False
 
         # 设置代理
@@ -227,6 +228,16 @@ class BotCoreLifecycle:
         )
         self.star_context.html_renderer = html_renderer
 
+        # The Life layer is optional and stays a no-op unless enabled.
+        from bot.life.service import LifeService
+
+        self.life_service = LifeService(
+            db_helper=self.db,
+            platform_manager=self.platform_manager,
+            star_context=self.star_context,
+        )
+        await self.life_service.initialize()
+
         # 初始化插件管理器
         self.plugin_manager = PluginManager(self.star_context, self.bot_config)
 
@@ -356,6 +367,9 @@ class BotCoreLifecycle:
         """停止 LKMBot 核心生命周期管理类, 取消所有当前任务并终止各个管理器."""
         if self.temp_dir_cleaner:
             await self.temp_dir_cleaner.stop()
+
+        if self.life_service:
+            await self.life_service.stop()
 
         # 请求停止所有正在运行的异步任务
         for task in self.curr_tasks:

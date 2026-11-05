@@ -5,6 +5,7 @@ from importlib import import_module
 from .stage import registered_stages
 
 _BUILTIN_STAGE_MODULES = (
+    "bot.life.pipeline",
     "bot.core.pipeline.waking_check.stage",
     "bot.core.pipeline.whitelist_check.stage",
     "bot.core.pipeline.session_status_check.stage",
@@ -17,6 +18,7 @@ _BUILTIN_STAGE_MODULES = (
 )
 
 _EXPECTED_STAGE_NAMES = {
+    "LifeIngestStage",
     "WakingCheckStage",
     "WhitelistCheckStage",
     "SessionStatusCheckStage",
