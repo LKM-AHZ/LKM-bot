@@ -7,6 +7,7 @@ from typing import Any
 
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
@@ -151,6 +152,62 @@ class LifeStore:
                 select(LifeMessage).order_by(desc(LifeMessage.ts)).limit(limit)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
             )
             return [row.model_dump() for row in result.scalars().all()]
+
+    async def fetch_range(
+        self,
+        session_key: str,
+        since_ts: int = 0,
+        until_ts: int | None = None,
+        limit: int = 200,
+    ) -> list[dict[str, Any]]:
+        """Return archived messages of one session inside a time range.
+
+        Args:
+            session_key: Session scope.
+            since_ts: Inclusive lower timestamp bound.
+            until_ts: Inclusive upper timestamp bound; None means now.
+            limit: Maximum number of rows.
+
+        Returns:
+            Message rows ordered by timestamp ascending.
+        """
+        query = select(LifeMessage).where(
+            LifeMessage.session_key == session_key  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+        )
+        if since_ts:
+            query = query.where(LifeMessage.ts > since_ts)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+        if until_ts:
+            query = query.where(LifeMessage.ts <= until_ts)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+        async with self.db.get_db() as session:
+            result = await session.execute(
+                query.order_by(LifeMessage.ts).limit(max(limit, 1))  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+            )
+            return [row.model_dump() for row in result.scalars().all()]
+
+    async def active_sessions(
+        self,
+        since_ts: int = 0,
+        limit: int = 20,
+    ) -> list[str]:
+        """Return sessions that archived messages after a timestamp.
+
+        Args:
+            since_ts: Inclusive lower timestamp bound.
+            limit: Maximum number of sessions.
+
+        Returns:
+            Session keys ordered by most recent activity.
+        """
+        query = select(col(LifeMessage.session_key)).where(
+            col(LifeMessage.ts) >= since_ts
+        )
+        async with self.db.get_db() as session:
+            result = await session.execute(
+                query.group_by(col(LifeMessage.session_key))
+                .order_by(desc(func.max(col(LifeMessage.ts))))
+                .limit(max(limit, 1))
+            )
+            return [str(row[0]) for row in result.all()]
 
     async def cleanup(self) -> int:
         """Delete messages older than the configured retention window.

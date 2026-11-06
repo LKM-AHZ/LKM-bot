@@ -23,6 +23,8 @@ from bot.life.config import (
     save_life_config,
 )
 from bot.life.ingest import IngestedMessage, normalize_event
+from bot.life.memory.adapter import MemoryAdapter
+from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
@@ -81,11 +83,13 @@ class LifeService:
         self.data_dir: Path | None = None
         self.store: LifeStore | None = None
         self.sender: LifeSender | None = None
+        self.memory: MemoryAdapter | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
         self._worker: asyncio.Task | None = None
         self._maintenance: asyncio.Task | None = None
+        self._memory_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -131,6 +135,25 @@ class LifeService:
                 timeout_seconds=self.config.sender.timeout_seconds,
             )
 
+        if self.config.memory.enabled:
+            self.memory = MemoryAdapter(
+                context=self.star_context,
+                config=self.config.memory,
+                db_helper=self.db,
+                data_dir=self.data_dir,
+                life_store=self.store,
+                scope_check=self.config.session_enabled,
+            )
+            await self.memory.initialize()
+            if self.star_context is not None:
+                manager = getattr(
+                    getattr(self.star_context, "provider_manager", None),
+                    "llm_tools",
+                    None,
+                )
+                if manager is not None:
+                    register_memory_tools(manager, self)
+
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
         self.started_at = int(time.time())
@@ -139,11 +162,17 @@ class LifeService:
             self._maintenance_loop(),
             name="life_maintenance",
         )
+        if self.memory is not None and self.config.memory.digest.enabled:
+            self._memory_task = asyncio.create_task(
+                self._memory_loop(),
+                name="life_memory",
+            )
         set_life_service(self)
         logger.info(
-            "[life] enabled; data_dir=%s scope_mode=%s",
+            "[life] enabled; data_dir=%s scope_mode=%s memory=%s",
             self.data_dir,
             self.config.scope.mode,
+            self.memory.engine_name if self.memory else "off",
         )
 
     async def stop(self) -> None:
@@ -165,6 +194,20 @@ class LifeService:
             self._maintenance.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._maintenance
+        if self._memory_task is not None:
+            self._memory_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._memory_task
+        if self.memory is not None:
+            if self.star_context is not None:
+                manager = getattr(
+                    getattr(self.star_context, "provider_manager", None),
+                    "llm_tools",
+                    None,
+                )
+                if manager is not None:
+                    unregister_memory_tools(manager)
+            await self.memory.close()
         if get_life_service() is self:
             set_life_service(None)
         logger.info("[life] stopped; counters=%s", self._counters)
@@ -257,6 +300,21 @@ class LifeService:
             except Exception:
                 logger.exception("[life] retention cleanup failed")
 
+    async def _memory_loop(self) -> None:
+        """Digest archived chat into memory and refresh vectors periodically."""
+        if self.memory is None:
+            return
+        interval = max(self.config.memory.digest.interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.memory.digest_round()
+                await self.memory.store.cleanup()
+            except Exception:
+                logger.exception("[life] memory digest round failed")
+
     async def send_text(self, umo: str, text: str) -> SendResult:
         """Send a plain-text proactive message and record the attempt.
 
@@ -298,6 +356,12 @@ class LifeService:
                 storage = await self.store.stats()
             except Exception as exc:
                 storage = {"error": str(exc)}
+        memory: dict[str, Any] = {"enabled": False}
+        if self.memory is not None:
+            try:
+                memory = await self.memory.status()
+            except Exception as exc:
+                memory = {"enabled": True, "error": str(exc)}
         return {
             "enabled": self._running,
             "configured": self.config.enabled,
@@ -314,6 +378,7 @@ class LifeService:
             },
             "counters": dict(self._counters),
             "storage": storage,
+            "memory": memory,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

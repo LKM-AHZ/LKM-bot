@@ -75,6 +75,111 @@ class SenderConfig(BaseModel):
     timeout_seconds: float = 30.0
 
 
+class MemoryEmbeddingConfig(BaseModel):
+    """Embedding bridge to the LKM provider layer."""
+
+    enabled: bool = True
+    """Whether vectors are produced; disabled keeps keyword-only retrieval."""
+
+    provider_id: str = ""
+    """Explicit embedding provider id; empty uses the active embedding provider."""
+
+    batch_size: int = 16
+    timeout_seconds: float = 8.0
+    failure_threshold: int = 3
+    """Consecutive failures tolerated before the circuit breaker opens."""
+
+    cooldown_seconds: float = 60.0
+    """How long the breaker stays open before one half-open trial is allowed."""
+
+    max_concurrency: int = 2
+
+
+class MemoryInjectConfig(BaseModel):
+    """Prompt injection of retrieved memories."""
+
+    enabled: bool = True
+    top_k: int = 5
+    max_chars: int = 1200
+    """Character budget of the injected block."""
+
+    min_score: float = 0.12
+    kinds: list[str] = Field(
+        default_factory=lambda: ["summary", "fact", "episode", "note"]
+    )
+    max_age_days: int = 0
+    """Ignore memories older than this; 0 disables the age filter."""
+
+
+class MemoryDigestConfig(BaseModel):
+    """Background digest pipeline: messages -> summaries, facts, episodes."""
+
+    enabled: bool = True
+    interval_minutes: int = 30
+    min_messages: int = 8
+    max_messages: int = 120
+    gap_minutes: int = 10
+    """Idle gap that closes a conversation window."""
+
+    use_llm: bool = True
+    llm_timeout_seconds: float = 30.0
+    max_sessions_per_round: int = 20
+
+
+class MemoryUpstreamConfig(BaseModel):
+    """Optional A_memorix engine bridge."""
+
+    engine: Literal["local", "a_memorix"] = "local"
+    """``local`` uses the built-in SQLite engine; ``a_memorix`` prefers upstream."""
+
+    data_dir: str = ""
+    """Engine data directory; empty means ``<life>/memory/upstream``."""
+
+    namespace_prefix: str = "lkm"
+
+
+class MemoryConfig(BaseModel):
+    """Long-term memory settings."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    retention_days: int = 0
+    embedding: MemoryEmbeddingConfig = Field(default_factory=MemoryEmbeddingConfig)
+    inject: MemoryInjectConfig = Field(default_factory=MemoryInjectConfig)
+    digest: MemoryDigestConfig = Field(default_factory=MemoryDigestConfig)
+    upstream: MemoryUpstreamConfig = Field(default_factory=MemoryUpstreamConfig)
+
+
+class PersonConfig(BaseModel):
+    """People, facts and relationship tracking (S3)."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    relation_increment: float = 1.0
+    """Relationship score added per observed message."""
+
+    relation_max: float = 100.0
+    """Upper bound of the relationship score."""
+
+    relation_half_life_days: float = 30.0
+    """Idle days after which the relationship score halves."""
+
+    confidence_half_life_days: float = 21.0
+    """Days after which a fact's confidence halves."""
+
+    min_confidence: float = 0.2
+    """Facts whose effective confidence falls below this stop being used."""
+
+    conflict_similarity: float = 0.85
+    """Token overlap above which a new fact conflicts with an existing one."""
+
+    profile_max_facts: int = 12
+    profile_ttl_minutes: int = 360
+    use_llm_profile: bool = True
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -86,6 +191,8 @@ class LifeConfig(BaseModel):
     ingest: IngestConfig = Field(default_factory=IngestConfig)
     scope: ScopeConfig = Field(default_factory=ScopeConfig)
     sender: SenderConfig = Field(default_factory=SenderConfig)
+    memory: MemoryConfig = Field(default_factory=MemoryConfig)
+    person: PersonConfig = Field(default_factory=PersonConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:
         """Return the resolved Life data directory.

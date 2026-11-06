@@ -62,6 +62,111 @@ async def life_messages(
     return ok(await service.store.recent(limit))
 
 
+@router.get("/life/memory")
+async def life_memory(
+    limit: int = Query(default=20, ge=1, le=200),
+    kind: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return memory status and the newest memory rows.
+
+    Args:
+        limit: Maximum number of rows.
+        kind: Optional kind filter (summary, fact, episode, note).
+
+    Returns:
+        Wrapped memory payload.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.memory is None:
+        return ok({"enabled": False, "items": []})
+    status = await service.memory.status()
+    items = await service.memory.store.list_recent(limit=limit, kind=kind)
+    return ok({**status, "items": items})
+
+
+@router.get("/life/memory/search")
+async def life_memory_search(
+    q: str = Query(min_length=1),
+    umo: str = Query(min_length=1),
+    mode: str = Query(default="hybrid"),
+    limit: int = Query(default=10, ge=1, le=50),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Search one session's memories, used by the panel preview.
+
+    Args:
+        q: Query text.
+        umo: Session scope.
+        mode: One of search, time, hybrid, episode or aggregate.
+        limit: Maximum number of hits.
+
+    Returns:
+        Wrapped hit list.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.memory is None:
+        return ok([])
+    if mode not in ("search", "time", "hybrid", "episode", "aggregate"):
+        raise ApiError(f"unsupported memory mode: {mode}")
+    return ok(await service.memory.search(q, umo, mode=mode, limit=limit))
+
+
+@router.delete("/life/memory")
+async def delete_life_memory(
+    umo: str | None = Query(default=None),
+    ids: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Delete memories for user-level erasure.
+
+    Args:
+        umo: Delete every memory of one session.
+        ids: Comma-separated memory ids.
+
+    Returns:
+        Wrapped deletion result.
+
+    Raises:
+        ApiError: When neither filter is provided.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.memory is None:
+        return ok({"deleted": 0})
+    memory_ids = [int(item) for item in ids.split(",") if item.strip()] if ids else None
+    if not memory_ids and not umo:
+        raise ApiError("either umo or ids is required")
+    deleted = await service.memory.delete(memory_ids=memory_ids, session_key=umo)
+    return ok({"deleted": deleted})
+
+
+@router.get("/life/memory/export")
+async def export_life_memory(
+    umo: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Export memories as JSON for backup or migration.
+
+    Args:
+        umo: Restrict to one session.
+
+    Returns:
+        Wrapped export payload.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.memory is None:
+        return ok([])
+    return ok(await service.memory.export(umo))
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),
