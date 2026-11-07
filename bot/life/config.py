@@ -180,6 +180,34 @@ class PersonConfig(BaseModel):
     use_llm_profile: bool = True
 
 
+class ExpressionConfig(BaseModel):
+    """Learned expressions (S3b)."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    learn_interval_minutes: int = 60
+    max_learn_messages: int = 200
+    min_frequency: int = 2
+    """How often a heuristic candidate must appear before it is learned."""
+
+    min_style_chars: int = 2
+    max_style_chars: int = 16
+    use_llm: bool = True
+    """Ask the chat model for (situation, style) pairs when available."""
+
+    use_vector: bool = True
+    """Reuse the FAISS index for candidate retrieval; keyword scoring otherwise."""
+
+    top_k: int = 3
+    min_score: float = 0.2
+    weight_half_life_days: float = 30.0
+    """Days after which an expression's weight halves without reuse."""
+
+    scene: Literal["any", "group", "private"] = "any"
+    """Restrict injection to one kind of session."""
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -193,6 +221,7 @@ class LifeConfig(BaseModel):
     sender: SenderConfig = Field(default_factory=SenderConfig)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     person: PersonConfig = Field(default_factory=PersonConfig)
+    expression: ExpressionConfig = Field(default_factory=ExpressionConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:
         """Return the resolved Life data directory.

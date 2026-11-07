@@ -275,6 +275,64 @@ async def resolve_life_person_fact(
     return ok({"changed": changed})
 
 
+@router.get("/life/expressions")
+async def life_expressions(
+    umo: str = Query(min_length=1),
+    limit: int = Query(default=50, ge=1, le=200),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return learned expressions of one session.
+
+    Args:
+        umo: Session scope.
+        limit: Maximum number of rows.
+
+    Returns:
+        Wrapped expression list ordered by weight.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.expression is None:
+        return ok([])
+    return ok(await service.expression.list_expressions(umo, limit=limit))
+
+
+@router.delete("/life/expressions")
+async def delete_life_expressions(
+    umo: str | None = Query(default=None),
+    ids: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Delete learned expressions.
+
+    Args:
+        umo: Delete every expression of one session.
+        ids: Comma-separated expression ids.
+
+    Returns:
+        Wrapped deletion counter.
+
+    Raises:
+        ApiError: When neither filter is provided.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.expression is None:
+        return ok({"deleted": 0})
+    expression_ids = (
+        [int(item) for item in ids.split(",") if item.strip()] if ids else None
+    )
+    if not expression_ids and not umo:
+        raise ApiError("either umo or ids is required")
+    deleted = await service.expression.forget(
+        expression_ids=expression_ids,
+        session_key=umo,
+    )
+    return ok({"deleted": deleted})
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),

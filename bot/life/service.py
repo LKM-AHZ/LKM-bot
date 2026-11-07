@@ -22,6 +22,7 @@ from bot.life.config import (
     load_life_config,
     save_life_config,
 )
+from bot.life.expression.service import ExpressionService
 from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.memory.adapter import MemoryAdapter
 from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
@@ -86,12 +87,14 @@ class LifeService:
         self.sender: LifeSender | None = None
         self.memory: MemoryAdapter | None = None
         self.person: PersonService | None = None
+        self.expression: ExpressionService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
         self._worker: asyncio.Task | None = None
         self._maintenance: asyncio.Task | None = None
         self._memory_task: asyncio.Task | None = None
+        self._expression_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -166,6 +169,18 @@ class LifeService:
                 if manager is not None:
                     register_memory_tools(manager, self)
 
+        if self.config.expression.enabled:
+            self.expression = ExpressionService(
+                context=self.star_context,
+                config=self.config.expression,
+                db_helper=self.db,
+                data_dir=self.data_dir,
+                life_store=self.store,
+                life_config=self.config,
+                embedding_config=self.config.memory.embedding,
+            )
+            await self.expression.initialize()
+
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
         self.started_at = int(time.time())
@@ -178,6 +193,11 @@ class LifeService:
             self._memory_task = asyncio.create_task(
                 self._memory_loop(),
                 name="life_memory",
+            )
+        if self.expression is not None:
+            self._expression_task = asyncio.create_task(
+                self._expression_loop(),
+                name="life_expression",
             )
         set_life_service(self)
         logger.info(
@@ -210,6 +230,12 @@ class LifeService:
             self._memory_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._memory_task
+        if self._expression_task is not None:
+            self._expression_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._expression_task
+        if self.expression is not None:
+            await self.expression.close()
         if self.person is not None:
             await self.person.close()
         if self.memory is not None:
@@ -324,6 +350,20 @@ class LifeService:
                 except Exception:
                     logger.exception("[life] person decay failed")
 
+    async def _expression_loop(self) -> None:
+        """Learn expressions from the archive on a fixed interval."""
+        if self.expression is None:
+            return
+        interval = max(self.config.expression.learn_interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.expression.learn_round()
+            except Exception:
+                logger.exception("[life] expression learning round failed")
+
     async def _ingest_person_facts(self, session_key: str, facts: list[dict]) -> None:
         """Attach digest facts to people.
 
@@ -403,6 +443,12 @@ class LifeService:
                 person = await self.person.status()
             except Exception as exc:
                 person = {"enabled": True, "error": str(exc)}
+        expression: dict[str, Any] = {"enabled": False}
+        if self.expression is not None:
+            try:
+                expression = await self.expression.status()
+            except Exception as exc:
+                expression = {"enabled": True, "error": str(exc)}
         return {
             "enabled": self._running,
             "configured": self.config.enabled,
@@ -421,6 +467,7 @@ class LifeService:
             "storage": storage,
             "memory": memory,
             "person": person,
+            "expression": expression,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

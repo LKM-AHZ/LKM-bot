@@ -269,3 +269,49 @@ curl -H "Authorization: Bearer <token>" \
 curl -H "Authorization: Bearer <token>" \
   "http://127.0.0.1:6185/api/v1/life/people/profile?umo=<umo>&person=Alice"
 ```
+## S3b — learned expressions
+
+Implemented in `bot/life/expression/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `models.py` | `life_expression`, `life_expression_cursor` |
+| `store.py` | Dedupe upsert, weight reinforcement, scene filter, delete |
+| `learn.py` | Heuristic mining + LLM extraction, cursor per session |
+| `index.py` | FAISS index over expressions, reusing `vec_db/faiss_impl` |
+| `select.py` | Similarity + decayed weight + scene scoring, prompt block |
+| `service.py` | Learn round, index sync, injection, status |
+
+```json
+{
+  "enabled": true,
+  "expression": { "enabled": true, "use_llm": false }
+}
+```
+
+`use_llm=false` learns from message punctuation and repeated emphatic phrases
+only, so it works with no model budget. `use_llm=true` adds a batched extraction
+call that produces richer `(situation, style)` pairs. `use_vector=true` keeps a
+FAISS index under `data/life/expression/`; when embeddings are unavailable the
+selector falls back to keyword scoring and nothing breaks.
+
+### Lifecycle
+
+- **学习**: every `learn_interval_minutes` the learner reads the archive from its
+  cursor. Heuristic candidates need 2–16 characters, a tone marker and
+  `min_frequency` repetition; the surrounding sentence becomes the situation.
+- **入库**: `(session_key, checksum)` dedupes; a repeated sighting adds weight
+  instead of a new row.
+- **命中**: `0.7 * similarity + 0.3 * decayed_weight`, filtered by `min_score`
+  and scene, capped at `top_k`, appended to the prompt as `<life_expression>`.
+- **可解释 / 可删除**: `GET /api/v1/life/expressions?umo=...` lists every learned
+  phrase with weight, usage count and source; `DELETE` removes by session or id,
+  and drops the rows from the index.
+
+### Verify
+
+```bash
+pytest tests/life -q
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/expressions?umo=<umo>"
+```

@@ -44,7 +44,7 @@ from bot.core.utils.image_input import prepare_request_images
 from bot.core.utils.media_utils import normalize_model_image_max_size
 from bot.core.utils.metrics import Metric
 from bot.core.utils.session_lock import session_lock_manager
-from bot.life.memory.inject import inject_memory_context
+from bot.life.memory.inject import inject_life_context
 
 from .....bot_agent_run_util import AgentRunner, run_agent, run_live_agent
 from ....context import PipelineContext, call_event_hook
@@ -307,9 +307,9 @@ class InternalAgentSubStage(Stage):
                     if await call_event_hook(event, EventType.OnLLMRequestEvent, req):
                         return
 
-                    # Life memory runs after plugin hooks so the injected
-                    # memories are not overwritten by a system prompt rewrite.
-                    await inject_memory_context(event, req)
+                    # Life context runs after plugin hooks so injected memories
+                    # and expressions are not overwritten by a prompt rewrite.
+                    await inject_life_context(event, req)
 
                     options = build_cfg.provider_settings.get(
                         "image_compress_options", {}

@@ -148,6 +148,35 @@ async def test_person_layer_serves_the_profile_tool(db, tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_expression_layer_initializes_and_stops(db, tmp_path):
+    context = FakeContext()
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.expression.enabled = True
+    config.expression.use_vector = False
+    config.expression.learn_interval_minutes = 60
+    service = LifeService(
+        db,
+        star_context=context,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await service.initialize()
+    try:
+        assert service.expression is not None
+        status = await service.status()
+        assert status["expression"]["enabled"] is True
+        assert status["expression"]["index"] is None
+        assert service._expression_task is not None
+    finally:
+        await service.stop()
+        set_life_service(None)
+
+    assert service._expression_task is None or service._expression_task.done()
+
+
+@pytest.mark.asyncio
 async def test_memory_initializes_registers_tools_and_stops(db, tmp_path):
     context = FakeContext()
     service = _service(db, tmp_path, context)
