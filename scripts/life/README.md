@@ -407,9 +407,10 @@ Implemented in `bot/life/heartflow/`:
 }
 ```
 
-Nothing in the live pipeline changes yet: S4a ships the decision path and its
-offline evaluation, while the session state machine and planner loop follow in
-S4b/S4c. `heartflow.enabled` therefore only affects the replay tooling for now.
+The reply path is untouched: S4a ships the decision path and its offline
+evaluation, S4b adds the focus timeline to the archive and injection path, and
+the session state machine plus planner loop follow in S4c. `heartflow.enabled`
+alone changes nothing; `heartflow.focus.enabled` turns the timeline on.
 
 ### Rules
 
@@ -442,3 +443,49 @@ python scripts/life/life_metrics.py --corpus data/life/replay/replay.jsonl \
 Tuning knobs on the runner: `--gate-threshold` (likelihood bar), `--no-debounce`
 (decide every message immediately), `--bot-ids` (which `at` targets are the bot;
 empty treats every `at` as addressing the bot) and `--wake-words`.
+
+## S4b — focus timeline, compression and checkpoints
+
+Implemented in `bot/life/heartflow/focus/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `timeline.py` | Pure model: turns by idle gap, reply closes a turn, folding into a digest, checkpoint/restore |
+| `models.py` | `life_focus` (digest + counters) and `life_focus_turn` (one row per turn) |
+| `store.py` | Upsert turns, save the digest, prune, list, delete, stats |
+| `service.py` | Archive hook, reply hook, checkpoint loop, prompt block, status |
+
+```json
+{
+  "heartflow": {
+    "enabled": true,
+    "focus": {
+      "enabled": true,
+      "keep_turns": 12,
+      "gap_seconds": 300,
+      "digest_max_chars": 1500
+    }
+  }
+}
+```
+
+### Rules
+
+- **回合化**：连续消息按 `gap_seconds`（默认 300 秒）归为一个回合；机器人回复（`send_text` 成功后）
+  立即收尾回合。归档里没有机器人消息，所以普通回复要等 S4c 通过 `note_reply()` 回写。
+- **有界**：内存里只留最后 `keep_turns` 个回合原文；更旧的折进摘要。摘要按行累积，超过
+  `digest_max_chars` 先丢最旧的行并加“更早的内容已省略”标记，长度永远有界。
+- **可恢复**：`(session_key, turn_index)` 唯一，回合按索引 upsert；`_focus_loop` 每
+  `checkpoint_interval_minutes` 把脏时间线写回库，重启后直接重建，不重放归档。
+- **注入只给折叠摘要**：最近的对话已经在模型上下文里，`<life_focus>` 只补充更早的压缩摘要，
+  不重复占 token；没有折叠过就完全不注入。
+- **可删除**：`DELETE /api/v1/life/focus?umo=...` 清掉一个会话的时间线与摘要。
+
+### Verify
+
+```bash
+pytest tests/life -q
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:6185/api/v1/life/focus
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/focus?umo=<umo>"
+```

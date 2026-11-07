@@ -23,8 +23,13 @@ class FakeInjector:
         return self.result
 
 
-def _service(memory=None, expression=None, jargon=None):
-    return SimpleNamespace(memory=memory, expression=expression, jargon=jargon)
+def _service(memory=None, expression=None, jargon=None, focus=None):
+    return SimpleNamespace(
+        memory=memory,
+        expression=expression,
+        jargon=jargon,
+        focus=focus,
+    )
 
 
 @pytest.mark.asyncio
@@ -98,3 +103,20 @@ async def test_skips_disabled_injectors(monkeypatch):
     req = SimpleNamespace(prompt="hi", system_prompt="sys")
 
     assert await inject_module.inject_life_context(None, req) is False
+
+
+@pytest.mark.asyncio
+async def test_runs_the_focus_injector_last(monkeypatch):
+    focus = FakeInjector()
+    monkeypatch.setattr(
+        inject_module,
+        "get_life_service",
+        lambda: _service(jargon=FakeInjector(), focus=focus),
+    )
+    req = SimpleNamespace(prompt="hi", system_prompt="sys")
+
+    changed = await inject_module.inject_life_context(None, req)
+
+    assert changed is True
+    assert focus.calls == 1
+    assert req.system_prompt == "sys<x><x>"

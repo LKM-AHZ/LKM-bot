@@ -527,6 +527,50 @@ async def delete_life_emojis(
     return ok({"deleted": deleted})
 
 
+@router.get("/life/focus")
+async def life_focus(
+    umo: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return the focus timeline of one session or the session overview.
+
+    Args:
+        umo: Session scope; omitted lists the sessions that have a timeline.
+
+    Returns:
+        Wrapped timeline detail or session summaries.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.focus is None:
+        return ok({"enabled": False, "turns": [], "digest": ""})
+    if not umo:
+        return ok(await service.focus.store.list_sessions())
+    return ok(await service.focus.session_detail(umo))
+
+
+@router.delete("/life/focus")
+async def life_focus_delete(
+    umo: str = Query(min_length=1),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Forget the timeline of one session.
+
+    Args:
+        umo: Session scope.
+
+    Returns:
+        Wrapped deleted row count.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.focus is None:
+        return ok({"deleted": 0})
+    return ok({"deleted": await service.focus.delete(umo)})
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),

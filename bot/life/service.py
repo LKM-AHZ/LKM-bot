@@ -25,6 +25,7 @@ from bot.life.config import (
 from bot.life.emoji.service import EmojiService
 from bot.life.emoji.tools import register_emoji_tools, unregister_emoji_tools
 from bot.life.expression.service import ExpressionService
+from bot.life.heartflow.focus.service import FocusService
 from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.jargon.service import JargonService
 from bot.life.memory.adapter import MemoryAdapter
@@ -93,6 +94,7 @@ class LifeService:
         self.expression: ExpressionService | None = None
         self.jargon: JargonService | None = None
         self.emoji: EmojiService | None = None
+        self.focus: FocusService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -102,6 +104,7 @@ class LifeService:
         self._expression_task: asyncio.Task | None = None
         self._jargon_task: asyncio.Task | None = None
         self._emoji_task: asyncio.Task | None = None
+        self._focus_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -193,6 +196,14 @@ class LifeService:
             )
             await self.expression.initialize()
 
+        if self.config.heartflow.enabled and self.config.heartflow.focus.enabled:
+            self.focus = FocusService(
+                db_helper=self.db,
+                config=self.config.heartflow.focus,
+                life_config=self.config,
+            )
+            await self.focus.initialize()
+
         if self.config.jargon.enabled:
             self.jargon = JargonService(
                 context=self.star_context,
@@ -245,6 +256,11 @@ class LifeService:
                 self._emoji_loop(),
                 name="life_emoji",
             )
+        if self.focus is not None:
+            self._focus_task = asyncio.create_task(
+                self._focus_loop(),
+                name="life_focus",
+            )
         set_life_service(self)
         logger.info(
             "[life] enabled; data_dir=%s scope_mode=%s memory=%s",
@@ -288,6 +304,12 @@ class LifeService:
             self._emoji_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._emoji_task
+        if self._focus_task is not None:
+            self._focus_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._focus_task
+        if self.focus is not None:
+            await self.focus.close()
         if self.expression is not None:
             await self.expression.close()
         if self.jargon is not None:
@@ -394,6 +416,11 @@ class LifeService:
                 await self.person.observe_messages(batch)
             except Exception:
                 logger.exception("[life] person observe failed")
+        if self.focus is not None:
+            try:
+                await self.focus.observe_messages(batch)
+            except Exception:
+                logger.exception("[life] focus observe failed")
 
     async def _maintenance_loop(self) -> None:
         """Run retention cleanup periodically."""
@@ -412,6 +439,11 @@ class LifeService:
                     await self.person.store.decay()
                 except Exception:
                     logger.exception("[life] person decay failed")
+            if self.focus is not None:
+                try:
+                    await self.focus.compress_round()
+                except Exception:
+                    logger.exception("[life] focus compression failed")
 
     async def _expression_loop(self) -> None:
         """Learn expressions from the archive on a fixed interval."""
@@ -454,6 +486,20 @@ class LifeService:
                 await self.emoji.collect_round()
             except Exception:
                 logger.exception("[life] emoji collection round failed")
+
+    async def _focus_loop(self) -> None:
+        """Checkpoint dirty timelines on a fixed interval."""
+        if self.focus is None:
+            return
+        interval = max(self.config.heartflow.focus.checkpoint_interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.focus.checkpoint_all()
+            except Exception:
+                logger.exception("[life] focus checkpoint failed")
 
     async def _ingest_person_facts(self, session_key: str, facts: list[dict]) -> None:
         """Attach digest facts to people.
@@ -508,6 +554,11 @@ class LifeService:
                 )
             except Exception:
                 logger.exception("[life] failed to record outbound message")
+        if result.ok and self.focus is not None:
+            try:
+                await self.focus.note_reply(umo, text)
+            except Exception:
+                logger.exception("[life] focus reply record failed")
         return result
 
     async def status(self) -> dict[str, Any]:
@@ -546,6 +597,12 @@ class LifeService:
                 jargon = await self.jargon.status()
             except Exception as exc:
                 jargon = {"enabled": True, "error": str(exc)}
+        focus: dict[str, Any] = {"enabled": False}
+        if self.focus is not None:
+            try:
+                focus = await self.focus.status()
+            except Exception as exc:
+                focus = {"enabled": True, "error": str(exc)}
         emoji: dict[str, Any] = {"enabled": False}
         if self.emoji is not None:
             try:
@@ -573,6 +630,7 @@ class LifeService:
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,
+            "focus": focus,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

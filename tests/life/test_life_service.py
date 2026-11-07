@@ -171,3 +171,35 @@ async def test_stage_is_noop_without_service(monkeypatch):
 
     await stage.initialize(None)
     await stage.process(FakeEvent("m1"))
+
+
+@pytest.mark.asyncio
+async def test_focus_layer_tracks_the_archive(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.heartflow.enabled = True
+    config.heartflow.focus.enabled = True
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert instance.focus is not None
+        await instance.ingest(FakeEvent("m1"))
+        await _wait_for_written(instance, 1)
+        detail: dict = {"turns": []}
+        for _ in range(100):
+            detail = await instance.focus.session_detail("aiocqhttp:GroupMessage:1")
+            if detail["turns"]:
+                break
+            await asyncio.sleep(0.02)
+        assert detail["turns"][0]["messages"][0]["text"] == "hi"
+        status = await instance.status()
+        assert status["focus"]["enabled"] is True
+        assert status["focus"]["storage"]["turns"] == 1
+    finally:
+        await instance.stop()
+        set_life_service(None)

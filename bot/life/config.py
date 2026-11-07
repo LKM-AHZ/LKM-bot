@@ -329,6 +329,40 @@ class GateConfig(BaseModel):
     """Cap of the consecutive-wait penalty."""
 
 
+class FocusConfig(BaseModel):
+    """Session timeline, turn compression and checkpoints (S4)."""
+
+    enabled: bool = False
+    """Master switch; also requires ``heartflow.enabled``."""
+
+    keep_turns: int = 12
+    """Turns kept verbatim in memory before the oldest are folded."""
+
+    max_turns: int = 60
+    """Hard cap of turns kept per session in the database."""
+
+    gap_seconds: int = 300
+    """Idle gap that closes the current turn and starts a new one."""
+
+    turn_max_chars: int = 400
+    """Cap of one folded turn inside the digest."""
+
+    digest_max_chars: int = 1500
+    """Cap of the digest; the oldest lines are dropped first."""
+
+    block_max_chars: int = 1200
+    """Cap of the injected ``<life_focus>`` block."""
+
+    inject: bool = True
+    """Append the folded digest to the system prompt when it is non-empty."""
+
+    max_sessions: int = 500
+    """Timelines kept in memory; the rest are reloaded from the database."""
+
+    checkpoint_interval_minutes: int = 5
+    """How often dirty timelines are flushed back to the database."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
@@ -337,6 +371,7 @@ class HeartFlowConfig(BaseModel):
 
     debounce: DebounceConfig = Field(default_factory=DebounceConfig)
     gate: GateConfig = Field(default_factory=GateConfig)
+    focus: FocusConfig = Field(default_factory=FocusConfig)
 
 
 class LifeConfig(BaseModel):
