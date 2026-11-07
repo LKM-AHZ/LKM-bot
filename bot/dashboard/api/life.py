@@ -430,6 +430,103 @@ async def delete_life_jargon(
     return ok({"deleted": deleted})
 
 
+@router.get("/life/emojis")
+async def life_emojis(
+    umo: str = Query(min_length=1),
+    status: str = Query(default="active"),
+    limit: int = Query(default=100, ge=1, le=500),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return the sticker library of one session.
+
+    Args:
+        umo: Session scope.
+        status: Lifecycle status filter.
+        limit: Maximum number of rows.
+
+    Returns:
+        Wrapped sticker list ordered by usage.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.emoji is None:
+        return ok([])
+    return ok(await service.emoji.list_emojis(umo, status=status, limit=limit))
+
+
+@router.patch("/life/emojis")
+async def update_life_emoji(
+    payload: dict[str, Any] = Body(...),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Update tags or status of one sticker.
+
+    Args:
+        payload: ``{"id": int, "tags": [...], "status": "active"|"rejected"}``.
+
+    Returns:
+        Wrapped update result.
+
+    Raises:
+        ApiError: When the payload is incomplete or the sticker is unknown.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.emoji is None:
+        raise ApiError("sticker library is not enabled")
+    emoji_id = payload.get("id")
+    if not isinstance(emoji_id, int):
+        raise ApiError("id must be an integer")
+    tags = payload.get("tags")
+    if tags is not None and not isinstance(tags, list):
+        raise ApiError("tags must be a list of strings")
+    updated = await service.emoji.update(
+        emoji_id,
+        tags=[str(tag) for tag in tags] if tags is not None else None,
+        status=payload.get("status")
+        if isinstance(payload.get("status"), str)
+        else None,
+        caption=payload.get("caption")
+        if isinstance(payload.get("caption"), str)
+        else None,
+    )
+    if not updated:
+        raise ApiError(f"unknown emoji id: {emoji_id}")
+    return ok({"updated": updated})
+
+
+@router.delete("/life/emojis")
+async def delete_life_emojis(
+    umo: str | None = Query(default=None),
+    ids: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Delete stickers and their files.
+
+    Args:
+        umo: Delete the whole library of one session.
+        ids: Comma-separated sticker ids.
+
+    Returns:
+        Wrapped deletion counter.
+
+    Raises:
+        ApiError: When neither filter is provided.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.emoji is None:
+        return ok({"deleted": 0})
+    emoji_ids = [int(item) for item in ids.split(",") if item.strip()] if ids else None
+    if not emoji_ids and not umo:
+        raise ApiError("either umo or ids is required")
+    deleted = await service.emoji.forget(emoji_ids=emoji_ids, session_key=umo)
+    return ok({"deleted": deleted})
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),

@@ -350,3 +350,37 @@ pytest tests/life -q
 curl -H "Authorization: Bearer <token>" \
   "http://127.0.0.1:6185/api/v1/life/jargon?umo=<umo>&status=pending"
 ```
+## S3d — stickers
+
+Implemented in `bot/life/emoji/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `models.py` | `life_emoji`, `life_emoji_cursor` |
+| `store.py` | Content-hash dedupe, usage, tags, prune, delete |
+| `collect.py` | Archive images → files on disk (http(s) / local path) |
+| `select.py` | Tag or vector similarity + popularity + send budget |
+| `service.py` | Collection round, pick, send via `LifeSender`, status |
+| `tools.py` | `send_meme` agent tool |
+
+```json
+{
+  "enabled": true,
+  "emoji": { "enabled": true, "max_per_hour": 3, "cooldown_seconds": 300 }
+}
+```
+
+- **采集**：从归档图片组件取 http(s) 或本地路径，SHA-256 去重后存到
+  `data/life/emoji/<session>/<hash>.<ext>`；`base64://` 形式的图片归档时已被折叠，无法恢复，直接跳过。
+- **标签**：取自图片所在消息的文本（可 `PATCH` 改），向量可选（与记忆共用 embedding 配置）。
+- **发送**：模型调用 `send_meme` 工具；服务端按 `0.8×相似度 + 0.2×热度` 选图，再受
+  `cooldown_seconds` 与 `max_per_hour` 两道进程内闸门限制，经 `LifeSender` 发出并记录 `life_outbound`。
+- **可删除**：`DELETE /api/v1/life/emojis` 会同时删库行与磁盘文件。
+
+### Verify
+
+```bash
+pytest tests/life -q
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/emojis?umo=<umo>"
+```

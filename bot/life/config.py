@@ -226,6 +226,30 @@ class JargonConfig(BaseModel):
     max_meaning_chars: int = 80
 
 
+class EmojiConfig(BaseModel):
+    """Sticker library and send policy (S3d)."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    collect_interval_minutes: int = 60
+    max_collect_messages: int = 300
+    allow_remote: bool = True
+    """Download http(s) images; ``False`` keeps only local file paths."""
+
+    download_timeout_seconds: float = 10.0
+    max_bytes: int = 4 * 1024 * 1024
+    max_tags: int = 6
+    max_label_chars: int = 40
+    use_llm_tags: bool = True
+    """Ask the chat model to label an image when a reference is available."""
+
+    min_score: float = 0.25
+    cooldown_seconds: int = 300
+    max_per_hour: int = 3
+    max_storage_files: int = 2000
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -241,6 +265,7 @@ class LifeConfig(BaseModel):
     person: PersonConfig = Field(default_factory=PersonConfig)
     expression: ExpressionConfig = Field(default_factory=ExpressionConfig)
     jargon: JargonConfig = Field(default_factory=JargonConfig)
+    emoji: EmojiConfig = Field(default_factory=EmojiConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:
         """Return the resolved Life data directory.

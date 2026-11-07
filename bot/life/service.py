@@ -22,6 +22,8 @@ from bot.life.config import (
     load_life_config,
     save_life_config,
 )
+from bot.life.emoji.service import EmojiService
+from bot.life.emoji.tools import register_emoji_tools, unregister_emoji_tools
 from bot.life.expression.service import ExpressionService
 from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.jargon.service import JargonService
@@ -90,6 +92,7 @@ class LifeService:
         self.person: PersonService | None = None
         self.expression: ExpressionService | None = None
         self.jargon: JargonService | None = None
+        self.emoji: EmojiService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -98,6 +101,7 @@ class LifeService:
         self._memory_task: asyncio.Task | None = None
         self._expression_task: asyncio.Task | None = None
         self._jargon_task: asyncio.Task | None = None
+        self._emoji_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -143,6 +147,19 @@ class LifeService:
                 timeout_seconds=self.config.sender.timeout_seconds,
             )
 
+        if self.config.emoji.enabled:
+            self.emoji = EmojiService(
+                context=self.star_context,
+                config=self.config.emoji,
+                db_helper=self.db,
+                data_dir=self.data_dir,
+                life_store=self.store,
+                life_config=self.config,
+                sender=self.sender,
+                embedding_config=self.config.memory.embedding,
+            )
+            await self.emoji.initialize()
+
         if self.config.person.enabled:
             self.person = PersonService(
                 context=self.star_context,
@@ -163,14 +180,6 @@ class LifeService:
                 on_facts=self._ingest_person_facts,
             )
             await self.memory.initialize()
-            if self.star_context is not None:
-                manager = getattr(
-                    getattr(self.star_context, "provider_manager", None),
-                    "llm_tools",
-                    None,
-                )
-                if manager is not None:
-                    register_memory_tools(manager, self)
 
         if self.config.expression.enabled:
             self.expression = ExpressionService(
@@ -194,6 +203,20 @@ class LifeService:
             )
             await self.jargon.initialize()
 
+        if self.star_context is not None and (
+            self.memory is not None or self.emoji is not None
+        ):
+            manager = getattr(
+                getattr(self.star_context, "provider_manager", None),
+                "llm_tools",
+                None,
+            )
+            if manager is not None:
+                if self.memory is not None:
+                    register_memory_tools(manager, self)
+                if self.emoji is not None:
+                    register_emoji_tools(manager, self.emoji)
+
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
         self.started_at = int(time.time())
@@ -216,6 +239,11 @@ class LifeService:
             self._jargon_task = asyncio.create_task(
                 self._jargon_loop(),
                 name="life_jargon",
+            )
+        if self.emoji is not None:
+            self._emoji_task = asyncio.create_task(
+                self._emoji_loop(),
+                name="life_emoji",
             )
         set_life_service(self)
         logger.info(
@@ -256,21 +284,32 @@ class LifeService:
             self._jargon_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._jargon_task
+        if self._emoji_task is not None:
+            self._emoji_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._emoji_task
         if self.expression is not None:
             await self.expression.close()
         if self.jargon is not None:
             await self.jargon.close()
+        if self.emoji is not None:
+            await self.emoji.close()
         if self.person is not None:
             await self.person.close()
-        if self.memory is not None:
-            if self.star_context is not None:
-                manager = getattr(
-                    getattr(self.star_context, "provider_manager", None),
-                    "llm_tools",
-                    None,
-                )
-                if manager is not None:
+        if self.star_context is not None and (
+            self.memory is not None or self.emoji is not None
+        ):
+            manager = getattr(
+                getattr(self.star_context, "provider_manager", None),
+                "llm_tools",
+                None,
+            )
+            if manager is not None:
+                if self.memory is not None:
                     unregister_memory_tools(manager)
+                if self.emoji is not None:
+                    unregister_emoji_tools(manager)
+        if self.memory is not None:
             await self.memory.close()
         if get_life_service() is self:
             set_life_service(None)
@@ -402,6 +441,20 @@ class LifeService:
             except Exception:
                 logger.exception("[life] jargon learning round failed")
 
+    async def _emoji_loop(self) -> None:
+        """Collect stickers from the archive on a fixed interval."""
+        if self.emoji is None:
+            return
+        interval = max(self.config.emoji.collect_interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.emoji.collect_round()
+            except Exception:
+                logger.exception("[life] emoji collection round failed")
+
     async def _ingest_person_facts(self, session_key: str, facts: list[dict]) -> None:
         """Attach digest facts to people.
 
@@ -493,6 +546,12 @@ class LifeService:
                 jargon = await self.jargon.status()
             except Exception as exc:
                 jargon = {"enabled": True, "error": str(exc)}
+        emoji: dict[str, Any] = {"enabled": False}
+        if self.emoji is not None:
+            try:
+                emoji = await self.emoji.status()
+            except Exception as exc:
+                emoji = {"enabled": True, "error": str(exc)}
         return {
             "enabled": self._running,
             "configured": self.config.enabled,
@@ -513,6 +572,7 @@ class LifeService:
             "person": person,
             "expression": expression,
             "jargon": jargon,
+            "emoji": emoji,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

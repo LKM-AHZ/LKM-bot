@@ -205,6 +205,34 @@ async def test_jargon_layer_initializes_and_stops(db, tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_emoji_layer_registers_tool_and_stops(db, tmp_path):
+    context = FakeContext()
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.emoji.enabled = True
+    config.emoji.collect_interval_minutes = 60
+    service = LifeService(
+        db,
+        star_context=context,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await service.initialize()
+    try:
+        assert service.emoji is not None
+        status = await service.status()
+        assert status["emoji"]["enabled"] is True
+        assert "send_meme" in context.provider_manager.llm_tools.registered
+        assert service._emoji_task is not None
+    finally:
+        await service.stop()
+        set_life_service(None)
+
+    assert "send_meme" not in context.provider_manager.llm_tools.registered
+
+
+@pytest.mark.asyncio
 async def test_memory_initializes_registers_tools_and_stops(db, tmp_path):
     context = FakeContext()
     service = _service(db, tmp_path, context)
