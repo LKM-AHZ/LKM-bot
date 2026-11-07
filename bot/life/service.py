@@ -28,6 +28,8 @@ from bot.life.config import (
 from bot.life.emoji.service import EmojiService
 from bot.life.emoji.tools import register_emoji_tools, unregister_emoji_tools
 from bot.life.expression.service import ExpressionService
+from bot.life.files.service import FileService
+from bot.life.files.tools import register_file_tools, unregister_file_tools
 from bot.life.heartflow.attention import AttentionRegistry
 from bot.life.heartflow.focus.service import FocusService
 from bot.life.heartflow.proactive import ProactiveService
@@ -133,6 +135,7 @@ class LifeService:
         self.monitor: PlannerMonitor | None = None
         self.reactions: ReactionService | None = None
         self.acp: AcpService | None = None
+        self.files: FileService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -144,6 +147,7 @@ class LifeService:
         self._emoji_task: asyncio.Task | None = None
         self._focus_task: asyncio.Task | None = None
         self._proactive_task: asyncio.Task | None = None
+        self._files_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -222,6 +226,9 @@ class LifeService:
             self.reactions = ReactionService(self.config.reaction, self.send_text)
         if self.config.acp.enabled:
             self.acp = AcpService(self.config.acp, self.data_dir)
+        if self.config.files.enabled:
+            self.files = FileService(self.config.files, self.data_dir, self.send_chain)
+            self.files.store.ensure_dirs()
         if self.config.sender.enabled:
             self.sender = LifeSender(
                 platform_manager=self.platform_manager,
@@ -344,6 +351,7 @@ class LifeService:
             or self.tool_results is not None
             or self.subagents is not None
             or self.acp is not None
+            or self.files is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -361,6 +369,8 @@ class LifeService:
                     register_subagent_tools(manager, self)
                 if self.acp is not None:
                     register_acp_tools(manager, self)
+                if self.files is not None:
+                    register_file_tools(manager, self)
 
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
@@ -399,6 +409,11 @@ class LifeService:
             self._proactive_task = asyncio.create_task(
                 self._proactive_loop(),
                 name="life_proactive",
+            )
+        if self.files is not None:
+            self._files_task = asyncio.create_task(
+                self._files_loop(),
+                name="life_files",
             )
         set_life_service(self)
         logger.info(
@@ -473,6 +488,7 @@ class LifeService:
             or self.tool_results is not None
             or self.subagents is not None
             or self.acp is not None
+            or self.files is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -490,10 +506,17 @@ class LifeService:
                     unregister_subagent_tools(manager)
                 if self.acp is not None:
                     unregister_acp_tools(manager)
+                if self.files is not None:
+                    unregister_file_tools(manager)
         if self.memory is not None:
             await self.memory.close()
         if self.subagents is not None:
             await self.subagents.cancel_all()
+        if self._files_task is not None:
+            self._files_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._files_task
+            self._files_task = None
         if self.acp is not None:
             await self.acp.close()
         if get_life_service() is self:
@@ -654,6 +677,20 @@ class LifeService:
                 await self.emoji.collect_round()
             except Exception:
                 logger.exception("[life] emoji collection round failed")
+
+    async def _files_loop(self) -> None:
+        """Remove expired files on a fixed interval."""
+        if self.files is None:
+            return
+        interval = max(self.config.files.cleanup_interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.files.cleanup()
+            except Exception:
+                logger.exception("[life] file cleanup failed")
 
     async def _proactive_loop(self) -> None:
         """Speak first only when the idle rules allow it."""
@@ -985,19 +1022,25 @@ class LifeService:
         )
         return (response.completion_text or "").strip() or None
 
-    async def send_text(self, umo: str, text: str) -> SendResult:
-        """Send a plain-text proactive message and record the attempt.
+    async def send_chain(
+        self,
+        umo: str,
+        chain: MessageChain,
+        *,
+        note_text: str = "",
+    ) -> SendResult:
+        """Send one message chain and record the attempt.
 
         Args:
             umo: Target unified_msg_origin.
-            text: Message text.
+            chain: Message chain to send.
+            note_text: Text handed to the focus timeline when the send succeeds.
 
         Returns:
             Send outcome.
         """
         if self.sender is None or not self.config.sender.enabled:
             return SendResult(ok=False, error="sender disabled")
-        chain = MessageChain(chain=[Plain(text)])
         message_id = LifeSender.new_message_id()
         result = await self.sender.send_chain(umo, chain)
         if self.store is not None:
@@ -1012,12 +1055,28 @@ class LifeService:
                 )
             except Exception:
                 logger.exception("[life] failed to record outbound message")
-        if result.ok and self.focus is not None:
+        if result.ok and self.focus is not None and note_text:
             try:
-                await self.focus.note_reply(umo, text)
+                await self.focus.note_reply(umo, note_text)
             except Exception:
                 logger.exception("[life] focus reply record failed")
         return result
+
+    async def send_text(self, umo: str, text: str) -> SendResult:
+        """Send a plain-text message and record the attempt.
+
+        Args:
+            umo: Target unified_msg_origin.
+            text: Message text.
+
+        Returns:
+            Send outcome.
+        """
+        return await self.send_chain(
+            umo,
+            MessageChain(chain=[Plain(text)]),
+            note_text=text,
+        )
 
     async def status(self) -> dict[str, Any]:
         """Return a serializable runtime status snapshot.
@@ -1064,6 +1123,9 @@ class LifeService:
         reaction: dict[str, Any] = {"enabled": False}
         if self.reactions is not None:
             reaction = self.reactions.status()
+        files: dict[str, Any] = {"enabled": False}
+        if self.files is not None:
+            files = self.files.status()
         acp: dict[str, Any] = {"enabled": False}
         if self.acp is not None:
             acp = self.acp.status()
@@ -1152,6 +1214,7 @@ class LifeService:
             "monitor": monitor,
             "reaction": reaction,
             "acp": acp,
+            "files": files,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,

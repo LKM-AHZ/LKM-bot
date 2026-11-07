@@ -703,6 +703,59 @@ class AcpConfig(BaseModel):
     """Answer in-scope messages directly instead of only exposing the tool."""
 
 
+class FilesConfig(BaseModel):
+    """Group file service: documents, downloads and temp cleanup (S6e).
+
+    Files live under ``<life>/files``: ``out/`` holds generated documents the
+    bot may send, ``tmp/`` holds scratch files that expire quickly. Only the
+    extensions below may be written or downloaded.
+    """
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    root: str = ""
+    """Storage directory; empty means ``<life>/files``."""
+
+    max_file_bytes: int = 2 * 1024 * 1024
+    """Cap of one generated file."""
+
+    max_send_bytes: int = 5 * 1024 * 1024
+    """Cap of one file handed to the platform."""
+
+    allowed_extensions: list[str] = Field(
+        default_factory=lambda: [
+            ".txt",
+            ".md",
+            ".json",
+            ".csv",
+            ".log",
+            ".pdf",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".zip",
+        ]
+    )
+    """Extensions allowed in the store."""
+
+    max_files: int = 500
+    """Files kept in ``out/``; the oldest are removed first."""
+
+    keep_days: int = 7
+    """Generated documents older than this are removed."""
+
+    tmp_ttl_hours: int = 24
+    """Scratch files older than this are removed."""
+
+    cleanup_interval_minutes: int = 60
+    """How often expired files are removed."""
+
+    download_timeout_seconds: float = 15.0
+    """Timeout of one ``download_file`` fetch."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
@@ -744,6 +797,7 @@ class LifeConfig(BaseModel):
     monitor: MonitorConfig = Field(default_factory=MonitorConfig)
     reaction: ReactionConfig = Field(default_factory=ReactionConfig)
     acp: AcpConfig = Field(default_factory=AcpConfig)
+    files: FilesConfig = Field(default_factory=FilesConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

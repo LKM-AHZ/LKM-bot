@@ -1209,3 +1209,79 @@ real external agent.
   every chat starts a fresh ACP session on the next prompt.
 - Takeover bypasses the Life persona, memory injection, reply post-processing
   and the heart-flow gate: the external agent owns the conversation.
+
+## S6e — group file service
+
+Implemented in `bot/life/files/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `store.py` | Sandboxed `files/out` + `files/tmp`: sanitize, extension allowlist, size caps, TTL cleanup |
+| `service.py` | Write-and-send, send existing file, http(s) download, periodic cleanup |
+| `tools.py` | `send_document`, `send_file`, `download_file` |
+
+```json
+{
+  "files": {
+    "enabled": false,
+    "root": "",
+    "max_file_bytes": 2097152,
+    "max_send_bytes": 5242880,
+    "allowed_extensions": [".txt", ".md", ".json", ".csv", ".log", ".pdf", ".png", ".jpg", ".jpeg", ".gif", ".zip"],
+    "max_files": 500,
+    "keep_days": 7,
+    "tmp_ttl_hours": 24,
+    "cleanup_interval_minutes": 60,
+    "download_timeout_seconds": 15.0
+  }
+}
+```
+
+Files live under `<life>/files`: generated documents in `out/`, scratch files in
+`tmp/`. Nothing goes into the database; the cleanup loop removes expired files
+every `cleanup_interval_minutes` and keeps at most `max_files` documents.
+
+### Tools
+
+- `send_document(name, content)` — write a text/Markdown document into `out/`
+  and send it as a file message. This is the deferred "document reply" from S5c:
+  the model produces the content, the tool turns it into an attachment.
+- `send_file(name)` — send a file that already exists in `out/` (for example the
+  result of `download_file`).
+- `download_file(url, name="")` — fetch an http(s) URL into `out/` with
+  `download_timeout_seconds` and `max_file_bytes`; it is **not** sent
+  automatically.
+
+All three re-check the Life scope, so a gray release never exposes files to a
+session outside the allowlist.
+
+### Safety rules
+
+- Names are reduced to a base name, unsafe characters become `_`, reserved
+  Windows device names are rejected, and the resolved path must stay under the
+  sandbox.
+- Only `allowed_extensions` may be written or downloaded; anything else gets an
+  `error:` string instead of a silent failure.
+- Writes are capped by `max_file_bytes`; sends are capped again by
+  `max_send_bytes` (platform limit).
+- Downloads only accept `http`/`https`, follow redirects, and abort as soon as
+  the body exceeds `max_file_bytes`.
+
+### Verify
+
+```bash
+pytest tests/life/test_life_files.py -q
+pytest tests/life -q
+
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status | jq .data.files
+```
+
+### Limits
+
+- Sending relies on the platform's `File` message segment (aiocqhttp converts a
+  local path to a `file://` segment). A protocol end that only implements
+  `upload_group_file` will reject it; the tool then returns an `error:` line.
+- Only plain text/Markdown is generated. PDF/Word conversion is out of scope.
+- The store is a plain directory: no quota accounting beyond `max_files`, and
+  deleting a file while it is queued for sending makes that send fail.
