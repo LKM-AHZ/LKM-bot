@@ -369,11 +369,18 @@ async def _plan_reply_supplement(
     if plan is None:
         return None
     emoji = getattr(service, "emoji", None)
+    pick_emoji = None
+    if emoji is not None:
+        pick_emoji = (
+            emoji.pick_semantic
+            if getattr(emoji.config, "semantic_enabled", False)
+            else emoji.pick
+        )
     try:
         resolved = await resolve_supplement(
             plan,
             resources,
-            pick_emoji=emoji.pick if emoji is not None else None,
+            pick_emoji=pick_emoji,
             emoji_context=guidance,
             max_parts=reply_config.supplement_max_parts,
         )

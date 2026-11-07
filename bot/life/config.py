@@ -338,6 +338,18 @@ class EmojiConfig(BaseModel):
     max_per_hour: int = 3
     max_storage_files: int = 2000
 
+    semantic_enabled: bool = False
+    """Match stickers by intent through per-axis tag vectors (MaiBot 1.4)."""
+
+    semantic_min_score: float = 0.30
+    """Below this the semantic match is ignored and the classic pick is used."""
+
+    semantic_timeout_seconds: float = 15.0
+    """Hard timeout for one vision labelling call."""
+
+    semantic_backfill_limit: int = 8
+    """Stickers labelled per collection round."""
+
 
 DEFAULT_GATE_WEIGHTS: dict[str, float] = {
     "bias": -1.2,

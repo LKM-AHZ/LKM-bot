@@ -12,7 +12,7 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
-from bot.life.emoji.models import LifeEmoji, LifeEmojiCursor
+from bot.life.emoji.models import LifeEmoji, LifeEmojiAxis, LifeEmojiCursor
 
 
 class EmojiStore:
@@ -30,7 +30,7 @@ class EmojiStore:
         """Create the emoji tables when missing."""
         async with self.db.get_db() as session:
             connection = await session.connection()
-            for model in (LifeEmoji, LifeEmojiCursor):
+            for model in (LifeEmoji, LifeEmojiAxis, LifeEmojiCursor):
                 await connection.run_sync(
                     lambda sync_connection, model=model: model.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
                         sync_connection,
@@ -361,3 +361,107 @@ class EmojiStore:
             except OSError as exc:
                 logger.warning(f"[life] failed to prune emoji file {path}: {exc}")
         return removed
+
+    async def pending_axes(self, limit: int = 12) -> list[dict[str, Any]]:
+        """Return active stickers that still need tag-axis vectors.
+
+        Args:
+            limit: Maximum rows.
+
+        Returns:
+            Row dictionaries of stickers without any axis row.
+        """
+        async with self.db.get_db() as session:
+            has_axis = (
+                select(col(LifeEmojiAxis.id))
+                .where(
+                    col(LifeEmojiAxis.session_key) == col(LifeEmoji.session_key),
+                    col(LifeEmojiAxis.sha256) == col(LifeEmoji.sha256),
+                )
+                .exists()
+            )
+            result = await session.execute(
+                select(LifeEmoji)
+                .where(col(LifeEmoji.status) == "active", ~has_axis)
+                .order_by(col(LifeEmoji.id))
+                .limit(max(limit, 1))
+            )
+            return [row.model_dump() for row in result.scalars().all()]
+
+    async def upsert_axis(
+        self,
+        session_key: str,
+        sha256: str,
+        axis: str,
+        text: str,
+        vector: bytes,
+        model: str,
+        dimensions: int,
+    ) -> None:
+        """Insert or replace one embedded tag axis.
+
+        Args:
+            session_key: Session owning the sticker.
+            sha256: Sticker content hash.
+            axis: ``emotion`` or ``content``.
+            text: Tag text that produced the vector.
+            vector: Packed float vector.
+            model: Embedding model identifier.
+            dimensions: Vector size.
+        """
+        async with self.db.get_db() as session:
+            await session.execute(
+                sqlite_insert(LifeEmojiAxis)
+                .values(
+                    session_key=session_key,
+                    sha256=sha256,
+                    axis=axis,
+                    text=text,
+                    vector=vector,
+                    dim=dimensions,
+                    model=model,
+                    updated_at=int(time.time()),
+                )
+                .on_conflict_do_update(
+                    index_elements=["session_key", "sha256", "axis"],
+                    set_={
+                        "text": text,
+                        "vector": vector,
+                        "dim": dimensions,
+                        "model": model,
+                        "updated_at": int(time.time()),
+                    },
+                )
+            )
+            await session.commit()
+
+    async def active_axes(self, session_key: str) -> list[dict[str, Any]]:
+        """Return axis vectors joined with their active stickers.
+
+        Args:
+            session_key: Session scope.
+
+        Returns:
+            Sticker rows enriched with ``axis`` / ``axis_vector`` / ``axis_text``.
+        """
+        async with self.db.get_db() as session:
+            result = await session.execute(
+                select(LifeEmoji, LifeEmojiAxis)
+                .join(
+                    LifeEmojiAxis,
+                    (col(LifeEmojiAxis.session_key) == col(LifeEmoji.session_key))
+                    & (col(LifeEmojiAxis.sha256) == col(LifeEmoji.sha256)),
+                )
+                .where(
+                    col(LifeEmoji.session_key) == session_key,
+                    col(LifeEmoji.status) == "active",
+                )
+            )
+            rows: list[dict[str, Any]] = []
+            for emoji, axis in result.all():
+                row = emoji.model_dump()
+                row["axis"] = axis.axis
+                row["axis_vector"] = axis.vector
+                row["axis_text"] = axis.text
+                rows.append(row)
+            return rows

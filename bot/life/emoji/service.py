@@ -7,15 +7,18 @@ of the session's send budget.
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 from typing import Any, Sequence
 
 from bot import logger
 from bot.core.message.components import Image
 from bot.core.message.message_event_result import MessageChain
+from bot.core.provider.entities import ProviderType
 from bot.life.config import EmojiConfig, MemoryEmbeddingConfig
 from bot.life.emoji.collect import EmojiCollector
 from bot.life.emoji.select import EmojiSelector
+from bot.life.emoji.semantic import extract_tags, score_axes
 from bot.life.emoji.store import EmojiStore
 from bot.life.memory.embedding import EmbeddingClient
 from bot.life.memory.store import pack_vector
@@ -65,6 +68,7 @@ class EmojiService:
             "picks": 0,
             "sent": 0,
             "send_failures": 0,
+            "tagged": 0,
         }
 
     @property
@@ -124,6 +128,7 @@ class EmojiService:
         result = await self.collector.run(session_keys)
         self._counters["collected"] += int(result.get("stored") or 0)
         await self.embed_pending()
+        await self.index_tag_axes()
         return result
 
     async def embed_pending(self, limit: int = 30) -> int:
@@ -159,6 +164,113 @@ class EmojiService:
             indexed += 1
         self._counters["embedded"] += indexed
         return indexed
+
+    async def index_tag_axes(self, limit: int | None = None) -> int:
+        """Label stickers with the vision model and embed each tag axis.
+
+        Only runs when ``emoji.semantic_enabled`` is on and an embedding client
+        is available; rows are processed in id order so a slow model simply
+        spreads the backfill over several rounds.
+
+        Args:
+            limit: Stickers to label this round; defaults to the configured
+                backfill limit.
+
+        Returns:
+            Number of stickers that received tag axes.
+        """
+        if not self.config.semantic_enabled:
+            return 0
+        if self.embedding is None or not self.embedding.available:
+            return 0
+        manager = getattr(self.context, "provider_manager", None)
+        provider = None
+        if manager is not None:
+            try:
+                provider = await manager.get_using_provider_async(
+                    ProviderType.CHAT_COMPLETION
+                )
+            except Exception:
+                provider = None
+        if provider is None:
+            return 0
+        rows = await self.store.pending_axes(
+            limit=limit or self.config.semantic_backfill_limit
+        )
+        model = str(self.embedding.snapshot().get("model") or "")
+        indexed = 0
+        for row in rows:
+            tags = await extract_tags(
+                provider,
+                str(row.get("file_path") or ""),
+                timeout_seconds=self.config.semantic_timeout_seconds,
+            )
+            if tags is None:
+                continue
+            for axis, text in tags.axis_texts().items():
+                vector = await self.embedding.embed_one(text)
+                if not vector:
+                    continue
+                await self.store.upsert_axis(
+                    str(row["session_key"]),
+                    str(row["sha256"]),
+                    axis,
+                    text,
+                    pack_vector(vector),
+                    model,
+                    len(vector),
+                )
+            indexed += 1
+        self._counters["tagged"] += indexed
+        return indexed
+
+    async def pick_semantic(
+        self,
+        session_key: str,
+        context: str,
+        require_budget: bool = True,
+    ) -> dict[str, Any] | None:
+        """Pick a sticker by matching the intent against tag axes.
+
+        Falls back to :meth:`pick` when semantics are disabled, no axis vectors
+        exist yet or nothing reaches ``semantic_min_score``.
+
+        Args:
+            session_key: Session scope.
+            context: Query text describing the desired sticker.
+            require_budget: Respect the cooldown and hourly cap.
+
+        Returns:
+            Sticker row with ``score`` and ``similarity``, or None.
+        """
+        if (
+            not self.config.semantic_enabled
+            or self.embedding is None
+            or not self.embedding.available
+            or not (context or "").strip()
+        ):
+            return await self.pick(session_key, context, require_budget=require_budget)
+        if self.selector is None:
+            return None
+        if require_budget and not self.selector.budget.can_send(session_key):
+            return None
+        rows = await self.store.active_axes(session_key)
+        if not rows:
+            return await self.pick(session_key, context, require_budget=require_budget)
+        recent = int(time.time()) - max(self.config.cooldown_seconds, 0)
+        rows = [row for row in rows if int(row.get("last_used_ts") or 0) <= recent]
+        vector = await self.embedding.embed_one((context or "").strip()[:200])
+        if not vector:
+            return None
+        scored = score_axes(vector, rows)
+        if not scored or scored[0][0] < float(self.config.semantic_min_score):
+            return await self.pick(session_key, context, require_budget=require_budget)
+        best_score, row = scored[0]
+        picked = dict(row)
+        picked["score"] = best_score
+        picked["similarity"] = best_score
+        self._counters["picks"] += 1
+        return picked
 
     async def pick(
         self,
@@ -342,5 +454,7 @@ class EmojiService:
                 "min_score": self.config.min_score,
                 "cooldown_seconds": self.config.cooldown_seconds,
                 "max_per_hour": self.config.max_per_hour,
+                "semantic_enabled": self.config.semantic_enabled,
+                "semantic_min_score": self.config.semantic_min_score,
             },
         }
