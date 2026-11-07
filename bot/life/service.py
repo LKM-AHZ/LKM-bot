@@ -17,6 +17,8 @@ from bot import logger
 from bot.core.message.components import Plain
 from bot.core.message.message_event_result import MessageChain
 from bot.core.provider.entities import ProviderType
+from bot.life.acp.service import AcpService
+from bot.life.acp.tools import register_acp_tools, unregister_acp_tools
 from bot.life.config import (
     LifeConfig,
     default_config_path,
@@ -130,6 +132,7 @@ class LifeService:
         self.subagent: SubAgentNotifier | None = None
         self.monitor: PlannerMonitor | None = None
         self.reactions: ReactionService | None = None
+        self.acp: AcpService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -217,6 +220,8 @@ class LifeService:
             self.monitor = PlannerMonitor(self.config.monitor)
         if self.config.reaction.enabled:
             self.reactions = ReactionService(self.config.reaction, self.send_text)
+        if self.config.acp.enabled:
+            self.acp = AcpService(self.config.acp, self.data_dir)
         if self.config.sender.enabled:
             self.sender = LifeSender(
                 platform_manager=self.platform_manager,
@@ -338,6 +343,7 @@ class LifeService:
             or self.emoji is not None
             or self.tool_results is not None
             or self.subagents is not None
+            or self.acp is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -353,6 +359,8 @@ class LifeService:
                     register_tool_result_tools(manager, self)
                 if self.subagents is not None:
                     register_subagent_tools(manager, self)
+                if self.acp is not None:
+                    register_acp_tools(manager, self)
 
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
@@ -464,6 +472,7 @@ class LifeService:
             or self.emoji is not None
             or self.tool_results is not None
             or self.subagents is not None
+            or self.acp is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -479,10 +488,14 @@ class LifeService:
                     unregister_tool_result_tools(manager)
                 if self.subagents is not None:
                     unregister_subagent_tools(manager)
+                if self.acp is not None:
+                    unregister_acp_tools(manager)
         if self.memory is not None:
             await self.memory.close()
         if self.subagents is not None:
             await self.subagents.cancel_all()
+        if self.acp is not None:
+            await self.acp.close()
         if get_life_service() is self:
             set_life_service(None)
         logger.info("[life] stopped; counters=%s", self._counters)
@@ -1051,6 +1064,9 @@ class LifeService:
         reaction: dict[str, Any] = {"enabled": False}
         if self.reactions is not None:
             reaction = self.reactions.status()
+        acp: dict[str, Any] = {"enabled": False}
+        if self.acp is not None:
+            acp = self.acp.status()
         subagent: dict[str, Any] = {"enabled": False}
         if self.subagents is not None:
             subagent = {
@@ -1135,6 +1151,7 @@ class LifeService:
             "subagent": subagent,
             "monitor": monitor,
             "reaction": reaction,
+            "acp": acp,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,

@@ -1133,3 +1133,79 @@ pytest tests/life -q
   both, and a multi-worker deployment shows each worker only its own records.
 - Reasoning excerpts may still contain user text; they are capped but not
   redacted, so the panel must stay behind the system-scope auth.
+
+## S6d — ACP external agent
+
+Implemented in `bot/life/acp/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `protocol.py` | NDJSON JSON-RPC framing, request/response matching, peer requests |
+| `client.py` | Subprocess transport, `initialize` handshake, sessions, prompts |
+| `service.py` | One agent process, one ACP session per chat, counters, reset on failure |
+| `tools.py` | `ask_external_agent` tool for the local model |
+| `pipeline.py` (`LifeAcpStage`) | `takeover` mode: the external agent answers instead of the model |
+
+```json
+{
+  "acp": {
+    "enabled": false,
+    "command": "",
+    "args": [],
+    "env": {},
+    "cwd": "",
+    "timeout_seconds": 120.0,
+    "max_output_chars": 4000,
+    "takeover": false
+  }
+}
+```
+
+`command` empty keeps the adapter inert even with `enabled: true`.
+
+### Protocol surface
+
+- ACP v1 over newline-delimited JSON-RPC on the child's stdio.
+- Handshake: `initialize` (client capabilities: no fs, no terminal) → the peer
+  must answer `protocolVersion: 1`, otherwise the client refuses to use it.
+- One `session/new` per chat (`cwd` = `<life>/acp` by default); the text comes
+  from `session/update` → `agent_message_chunk` notifications.
+- `session/request_permission` is answered `cancelled`; any other peer request
+  is answered with `-32601`. The bot never lets the external agent call back
+  into its tools.
+- Failures (timeout, crash, empty answer) close the process and return None, so
+  the caller can fall back to the local pipeline.
+
+### Two usage modes
+
+1. **Tool** — when `takeover` is false, the local model can call
+   `ask_external_agent(question)`: one prompt to the external agent, its answer
+   comes back as a tool result. The local persona, memory and post-processing
+   still apply to the final reply.
+2. **Takeover** — when `takeover` is true, `LifeAcpStage` sends every in-scope
+   plain-text message to the external agent (commands `/...` excluded), sends
+   its answer through the normal sender and stops the event. A failure falls
+   through to the local model instead of silencing the chat.
+
+### Verify
+
+```bash
+pytest tests/life/test_life_acp.py -q
+pytest tests/life -q
+
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status | jq .data.acp
+```
+
+The test suite uses `tests/life/acp_fake_server.py`, a 60-line fake ACP server,
+so the handshake, chunk collection, timeout and restart paths run without any
+real external agent.
+
+### Limits
+
+- Prompts are serialized: one process, one prompt at a time. A slow agent
+  delays other chats until its `timeout_seconds` expires.
+- The session id is kept in memory; a timeout or crash resets the process and
+  every chat starts a fresh ACP session on the next prompt.
+- Takeover bypasses the Life persona, memory injection, reply post-processing
+  and the heart-flow gate: the external agent owns the conversation.

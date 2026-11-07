@@ -669,6 +669,40 @@ class ReactionConfig(BaseModel):
     """Cap of the fixed reply."""
 
 
+class AcpConfig(BaseModel):
+    """ACP external agent (S6d).
+
+    The bot launches one external agent process speaking ACP v1 over stdio.
+    It can answer in-scope messages directly (``takeover``) or only be reachable
+    through the ``ask_external_agent`` tool. Off by default; no command means no
+    launch at all.
+    """
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    command: str = ""
+    """Executable of the ACP agent; empty keeps the adapter inert."""
+
+    args: list[str] = Field(default_factory=list)
+    """Command-line arguments."""
+
+    env: dict[str, str] = Field(default_factory=dict)
+    """Extra environment variables layered over the current environment."""
+
+    cwd: str = ""
+    """Working directory; empty means ``<life>/acp``."""
+
+    timeout_seconds: float = 120.0
+    """Hard timeout of one ACP request (handshake, session, prompt)."""
+
+    max_output_chars: int = 4000
+    """Cap of the text returned by one prompt."""
+
+    takeover: bool = False
+    """Answer in-scope messages directly instead of only exposing the tool."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
@@ -709,6 +743,7 @@ class LifeConfig(BaseModel):
     subagent: SubAgentConfig = Field(default_factory=SubAgentConfig)
     monitor: MonitorConfig = Field(default_factory=MonitorConfig)
     reaction: ReactionConfig = Field(default_factory=ReactionConfig)
+    acp: AcpConfig = Field(default_factory=AcpConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

@@ -120,6 +120,67 @@ class LifeReactionStage(Stage):
 
 
 @register_stage
+class LifeAcpStage(Stage):
+    """Let an external ACP agent answer instead of the local model.
+
+    Only active when ``life.acp.takeover`` is on. A missing answer, a failed
+    send or a disabled adapter all fall through to the local pipeline, so the
+    external agent can never silence a chat.
+    """
+
+    def __init__(self) -> None:
+        self.service = None
+
+    async def initialize(self, ctx: PipelineContext) -> None:
+        """Resolve the Life service.
+
+        Args:
+            ctx: Pipeline context.
+        """
+        from bot.life.service import get_life_service
+
+        self.service = get_life_service()
+
+    async def process(self, event: BotMessageEvent) -> None:
+        """Ask the ACP agent and stop the event when it answered.
+
+        Args:
+            event: Inbound message event.
+        """
+        service = self.service
+        if service is None:
+            from bot.life.service import get_life_service
+
+            service = get_life_service()
+            self.service = service
+        if service is None:
+            return
+        acp = getattr(service, "acp", None)
+        if acp is None or not acp.enabled or not acp.config.takeover:
+            return
+        text = (event.message_str or "").strip()
+        if not text or text.startswith("/"):
+            return
+        umo = str(event.unified_msg_origin)
+        if not service.config.session_enabled(umo, event.get_group_id() or None):
+            return
+        try:
+            answer = await acp.ask(umo, text)
+        except Exception:
+            logger.exception("[life] ACP stage failed; falling back to the local model")
+            return
+        if not answer:
+            return
+        try:
+            sent = await service.send_text(umo, answer)
+        except Exception:
+            logger.exception("[life] ACP reply send failed")
+            return
+        if getattr(sent, "ok", False):
+            event.stop_event()
+
+
+@register_stage
 class LifeTurnStage(Stage):
     """Hold ambient group messages for the heart-flow decision."""
 
