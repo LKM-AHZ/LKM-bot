@@ -180,6 +180,31 @@ class PersonConfig(BaseModel):
     use_llm_profile: bool = True
 
 
+class PersonaConfig(BaseModel):
+    """Persona extensions and reply style (S5a)."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    default_quote_rate: float = 0.2
+    """Fallback quote-reply probability for profiles that do not set one."""
+
+    default_multi_segment_prob: float = 0.15
+    """Fallback probability of splitting a reply into several messages."""
+
+    default_typo_rate: float = 0.02
+    """Fallback probability of nudging a character into a typo."""
+
+    reply_max_chars: int = 120
+    """Default hard length hint handed to the model."""
+
+    block_max_chars: int = 600
+    """Upper bound of the rendered persona block."""
+
+    cache_ttl_seconds: int = 300
+    """How long a resolved profile is cached before it is re-read."""
+
+
 class ExpressionConfig(BaseModel):
     """Learned expressions (S3b)."""
 
@@ -494,6 +519,7 @@ class LifeConfig(BaseModel):
     expression: ExpressionConfig = Field(default_factory=ExpressionConfig)
     jargon: JargonConfig = Field(default_factory=JargonConfig)
     emoji: EmojiConfig = Field(default_factory=EmojiConfig)
+    persona: PersonaConfig = Field(default_factory=PersonaConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

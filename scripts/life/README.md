@@ -622,3 +622,84 @@ curl -H "Authorization: Bearer <token>" \
 
 `/api/v1/life/attention` returns the attention snapshot, the proactive status
 and, with `umo`, that session's talk value.
+
+## S5a — persona profiles
+
+Implemented in `bot/life/persona/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `models.py` | `life_persona_profile`: one row per upstream `persona_id`, empty id = default profile |
+| `store.py` | Upsert with rate clamping, read, delete, list, stats |
+| `service.py` | Profile resolution + cache, `<life_persona>` rendering, prompt injection, panel CRUD |
+
+```json
+{
+  "persona": {
+    "enabled": true,
+    "default_quote_rate": 0.2,
+    "default_multi_segment_prob": 0.15,
+    "default_typo_rate": 0.02,
+    "reply_max_chars": 120,
+    "block_max_chars": 600,
+    "cache_ttl_seconds": 300
+  }
+}
+```
+
+The profile itself lives in the Life database, keyed by the same `persona_id` the
+upstream persona manager resolves; the upstream `Persona` table is never read or
+written. With no row for the active persona the service falls back to the row
+with an empty `persona_id`, so a deployment that never configured a persona still
+gets one.
+
+### Block shapes
+
+The block is **prepended** to the system prompt (persona is the base stance;
+memory, expressions, slang, focus and attention then read as supporting material):
+
+```text
+<life_persona>
+你的人设补充（优先于一般风格要求，但不要复述这份说明）：
+<base_prompt>
+<group_prompt | private_prompt>
+- 长度：单条回复不超过 N 字，能一句话说完就别展开。
+- 分段：约 X% 的回复拆成两三条短消息，其余一次说完。
+- 引用：约 Y% 的回复引用你要回的那条消息，其余直接说话。
+- 口吻：口语，允许偶尔打错字（约 Z%），但不影响理解。
+- 格式：不要输出 Markdown（标题、列表、表格、代码块、加粗）。
+</life_persona>
+```
+
+Rules with a zero rate are dropped (an explicit `0.0` means "never", it does not
+fall back to the default); `allow_markdown=true` drops the format line; the three
+prompt sections share `block_max_chars`.
+
+### Rules
+
+- Scene picks the prompt: a group message uses `group_prompt`, a private message
+  uses `private_prompt`; `base_prompt` always applies.
+- Resolution is cached for `cache_ttl_seconds`; any write or delete clears the
+  whole cache, so a panel edit takes effect on the next turn.
+- The block is skipped for sessions outside the Life allowlist and when the tag
+  is already present in the prompt.
+- S5a only *tells* the model how to talk. Honouring the quote/segment/typo rates
+  in the actual outbound text is S5c's post-processing; Markdown stripping is
+  S5c too.
+
+### Verify
+
+```bash
+pytest tests/life -q
+
+# list, read, upsert and delete one profile (``default`` = empty persona_id)
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/persona
+curl -H "Authorization: Bearer <token>" -H "Content-Type: application/json" \
+  -X PUT http://127.0.0.1:6185/api/v1/life/persona/default \
+  -d '{"base_prompt":"说话短一点。","quote_rate":0.3,"reply_max_chars":60}'
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/persona/default
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status  # persona block
+```

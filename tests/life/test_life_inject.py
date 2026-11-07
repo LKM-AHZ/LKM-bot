@@ -23,13 +23,21 @@ class FakeInjector:
         return self.result
 
 
-def _service(memory=None, expression=None, jargon=None, focus=None, attention=None):
+def _service(
+    memory=None,
+    expression=None,
+    jargon=None,
+    focus=None,
+    attention=None,
+    persona=None,
+):
     return SimpleNamespace(
         memory=memory,
         expression=expression,
         jargon=jargon,
         focus=focus,
         attention=attention,
+        persona=persona,
     )
 
 
@@ -121,6 +129,53 @@ async def test_runs_the_focus_injector_last(monkeypatch):
     assert changed is True
     assert focus.calls == 1
     assert req.system_prompt == "sys<x><x>"
+
+
+@pytest.mark.asyncio
+async def test_persona_runs_before_every_other_block(monkeypatch):
+    order: list[str] = []
+
+    class Ordered(FakeInjector):
+        def __init__(self, name: str) -> None:
+            super().__init__()
+            self.name = name
+
+        async def inject(self, event, req) -> bool:
+            order.append(self.name)
+            return await super().inject(event, req)
+
+    monkeypatch.setattr(
+        inject_module,
+        "get_life_service",
+        lambda: _service(
+            memory=Ordered("memory"),
+            expression=Ordered("expression"),
+            jargon=Ordered("jargon"),
+            focus=Ordered("focus"),
+            attention=Ordered("attention"),
+            persona=Ordered("persona"),
+        ),
+    )
+    req = SimpleNamespace(prompt="hi", system_prompt="sys")
+
+    assert await inject_module.inject_life_context(None, req) is True
+
+    assert order == list(inject_module.INJECTOR_ORDER)
+    assert order[0] == "persona"
+
+
+@pytest.mark.asyncio
+async def test_missing_persona_attribute_is_tolerated(monkeypatch):
+    memory = FakeInjector()
+    monkeypatch.setattr(
+        inject_module,
+        "get_life_service",
+        lambda: SimpleNamespace(memory=memory),
+    )
+    req = SimpleNamespace(prompt="hi", system_prompt="sys")
+
+    assert await inject_module.inject_life_context(None, req) is True
+    assert memory.calls == 1
 
 
 @pytest.mark.asyncio

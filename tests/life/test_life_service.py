@@ -267,3 +267,34 @@ async def test_proactive_stays_off_without_the_idle_switch(service):
     assert service.proactive is None
     status = await service.status()
     assert status["proactive"]["enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_persona_is_wired_when_enabled(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.persona.enabled = True
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert instance.persona is not None
+        status = await instance.status()
+        assert status["persona"]["enabled"] is True
+        assert status["persona"]["profiles"] == 0
+        await instance.persona.upsert({"persona_id": "", "base_prompt": "默认人设"})
+        assert (await instance.status())["persona"]["profiles"] == 1
+    finally:
+        await instance.stop()
+        set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_persona_stays_off_by_default(service):
+    assert service.persona is None
+    status = await service.status()
+    assert status["persona"]["enabled"] is False

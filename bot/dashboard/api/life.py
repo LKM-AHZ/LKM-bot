@@ -602,6 +602,124 @@ async def life_attention(
     return ok(payload)
 
 
+def _persona_key(value: str) -> str:
+    """Map a dashboard path segment to a stored persona id.
+
+    Args:
+        value: Path segment; ``default`` addresses the fallback profile.
+
+    Returns:
+        Persona id, empty for the fallback profile.
+    """
+    return "" if value in ("default", "_") else value
+
+
+@router.get("/life/persona")
+async def list_life_persona(
+    limit: int = Query(default=100, ge=1, le=500),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return persona profiles and counters.
+
+    Args:
+        limit: Maximum number of profiles.
+
+    Returns:
+        Wrapped profile list with stats.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.persona is None:
+        return ok({"profiles": [], "stats": {"total": 0}})
+    return ok(
+        {
+            "profiles": await service.persona.list_profiles(limit),
+            "stats": await service.persona.store.stats(),
+        }
+    )
+
+
+@router.get("/life/persona/{persona_id}")
+async def get_life_persona(
+    persona_id: str,
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return one persona profile.
+
+    Args:
+        persona_id: Upstream persona id; ``default`` for the fallback profile.
+
+    Returns:
+        Wrapped profile payload.
+
+    Raises:
+        ApiError: When the profile is unknown.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.persona is None:
+        raise ApiError("persona layer is not enabled")
+    profile = await service.persona.store.get(_persona_key(persona_id))
+    if profile is None:
+        raise ApiError("persona profile not found")
+    return ok(profile)
+
+
+@router.put("/life/persona/{persona_id}")
+async def save_life_persona(
+    persona_id: str,
+    payload: dict[str, Any] = Body(...),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Create or replace one persona profile.
+
+    Args:
+        persona_id: Upstream persona id; ``default`` for the fallback profile.
+        payload: Profile fields to store.
+
+    Returns:
+        Wrapped stored profile.
+
+    Raises:
+        ApiError: When the persona layer is disabled.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.persona is None:
+        raise ApiError("persona layer is not enabled")
+    row = await service.persona.upsert(
+        {**payload, "persona_id": _persona_key(persona_id)}
+    )
+    return ok(row)
+
+
+@router.delete("/life/persona/{persona_id}")
+async def delete_life_persona(
+    persona_id: str,
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Delete one persona profile.
+
+    Args:
+        persona_id: Upstream persona id; ``default`` for the fallback profile.
+
+    Returns:
+        Wrapped delete result.
+
+    Raises:
+        ApiError: When the persona layer is disabled.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.persona is None:
+        raise ApiError("persona layer is not enabled")
+    return ok({"deleted": await service.persona.delete(_persona_key(persona_id))})
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),

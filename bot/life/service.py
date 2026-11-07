@@ -35,6 +35,7 @@ from bot.life.jargon.service import JargonService
 from bot.life.memory.adapter import MemoryAdapter
 from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
 from bot.life.person.service import PersonService
+from bot.life.persona.service import PersonaService
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
@@ -95,6 +96,7 @@ class LifeService:
         self.sender: LifeSender | None = None
         self.memory: MemoryAdapter | None = None
         self.person: PersonService | None = None
+        self.persona: PersonaService | None = None
         self.expression: ExpressionService | None = None
         self.jargon: JargonService | None = None
         self.emoji: EmojiService | None = None
@@ -179,6 +181,14 @@ class LifeService:
                 life_config=self.config,
             )
             await self.person.initialize()
+
+        if self.config.persona.enabled:
+            self.persona = PersonaService(
+                config=self.config.persona,
+                db_helper=self.db,
+                life_config=self.config,
+            )
+            await self.persona.initialize()
 
         if self.config.memory.enabled:
             self.memory = MemoryAdapter(
@@ -369,6 +379,8 @@ class LifeService:
             await self.emoji.close()
         if self.person is not None:
             await self.person.close()
+        if self.persona is not None:
+            await self.persona.close()
         if self.star_context is not None and (
             self.memory is not None or self.emoji is not None
         ):
@@ -699,6 +711,12 @@ class LifeService:
                 person = await self.person.status()
             except Exception as exc:
                 person = {"enabled": True, "error": str(exc)}
+        persona: dict[str, Any] = {"enabled": False}
+        if self.persona is not None:
+            try:
+                persona = await self.persona.status()
+            except Exception as exc:
+                persona = {"enabled": True, "error": str(exc)}
         expression: dict[str, Any] = {"enabled": False}
         if self.expression is not None:
             try:
@@ -759,6 +777,7 @@ class LifeService:
             "storage": storage,
             "memory": memory,
             "person": person,
+            "persona": persona,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,
