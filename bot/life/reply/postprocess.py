@@ -48,6 +48,8 @@ class ReplyPostProcessor:
         life_config: LifeConfig | None = None,
         persona: Any = None,
         rng: random.Random | None = None,
+        creative: Any = None,
+        translator: Any = None,
     ) -> None:
         """Initialize the processor.
 
@@ -56,10 +58,14 @@ class ReplyPostProcessor:
             life_config: Root Life configuration used for the allowlist.
             persona: Owner of the per-persona style profile, or None.
             rng: Random source; tests pass a seeded instance.
+            creative: Super creative mode config, or None.
+            translator: Async callable rewriting one reply body back to Chinese.
         """
         self.config = config
         self.life_config = life_config
         self.persona = persona
+        self.creative = creative
+        self.translator = translator
         self.rng = rng or random.Random()
         self._tasks: set[asyncio.Task] = set()
         self._recent: deque[dict[str, Any]] = deque(maxlen=50)
@@ -71,6 +77,7 @@ class ReplyPostProcessor:
             "split": 0,
             "quoted": 0,
             "supplemented": 0,
+            "translated": 0,
             "skipped": 0,
         }
 
@@ -234,6 +241,11 @@ class ReplyPostProcessor:
         stripped_any = typo_any = capped_any = False
         for comp in plain_texts:
             text = comp.text
+            if self.translator is not None:
+                translated = await self.translator(text)
+                if translated:
+                    text = translated
+                    self._counters["translated"] += 1
             if not allow_markdown and self.config.strip_markdown:
                 stripped = self.strip_markdown(text)
                 if stripped != text:

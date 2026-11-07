@@ -43,6 +43,7 @@ from bot.life.person.service import PersonService
 from bot.life.persona.service import PersonaService
 from bot.life.prompt import PromptAssembler
 from bot.life.reaction.service import ReactionService
+from bot.life.reply.creative import translate_reply
 from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.rollout.service import RolloutService
 from bot.life.sender import LifeSender, SendResult
@@ -275,6 +276,10 @@ class LifeService:
                 self.config.reply,
                 life_config=self.config,
                 persona=self.persona,
+                creative=self.config.creative,
+                translator=self._creative_translator()
+                if self.config.creative.enabled
+                else None,
             )
 
         if self.config.memory.enabled:
@@ -1263,3 +1268,31 @@ class LifeService:
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }
+
+    def _creative_translator(self) -> Any:
+        """Build the callback that translates super-creative replies.
+
+        Returns:
+            Async callable taking one reply body and returning its Chinese
+            translation, or None when no provider can be resolved.
+        """
+        config = self.config.creative
+
+        async def translate(text: str) -> str | None:
+            manager = getattr(self.star_context, "provider_manager", None)
+            if manager is None:
+                return None
+            try:
+                provider = await manager.get_using_provider_async(
+                    ProviderType.CHAT_COMPLETION
+                )
+            except Exception:
+                return None
+            return await translate_reply(
+                provider,
+                text,
+                language=config.language,
+                timeout_seconds=config.translate_timeout_seconds,
+            )
+
+        return translate

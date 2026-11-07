@@ -814,6 +814,19 @@ class HeartFlowConfig(BaseModel):
     idle: IdleConfig = Field(default_factory=IdleConfig)
 
 
+class CreativeConfig(BaseModel):
+    """Super creative reply mode (MaiBot 1.4 experimental)."""
+
+    enabled: bool = False
+    """Generate the reply in another language, then translate it back."""
+
+    language: Literal["ja-JP", "ru-RU", "fr-FR", "zh-classical"] = "ja-JP"
+    """Generation language; Chinese material stays as-is and is translated back."""
+
+    translate_timeout_seconds: float = 20.0
+    """Hard timeout for the translation request."""
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -833,6 +846,7 @@ class LifeConfig(BaseModel):
     persona: PersonaConfig = Field(default_factory=PersonaConfig)
     prompt: PromptConfig = Field(default_factory=PromptConfig)
     reply: ReplyConfig = Field(default_factory=ReplyConfig)
+    creative: CreativeConfig = Field(default_factory=CreativeConfig)
     tool_result: ToolResultConfig = Field(default_factory=ToolResultConfig)
     subagent: SubAgentConfig = Field(default_factory=SubAgentConfig)
     monitor: MonitorConfig = Field(default_factory=MonitorConfig)

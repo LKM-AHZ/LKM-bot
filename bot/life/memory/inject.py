@@ -55,4 +55,19 @@ async def inject_life_context(event: Any, req: Any) -> bool:
     if assembler is not None and getattr(req, "system_prompt", ""):
         umo = getattr(event, "unified_msg_origin", "") or ""
         req.system_prompt = assembler.assemble(req.system_prompt, umo)
+    config = getattr(service, "config", None)
+    creative = getattr(config, "creative", None)
+    # Translation lives in the reply layer; without it the foreign-language
+    # instruction would leak straight to the user.
+    if (
+        creative is not None
+        and getattr(creative, "enabled", False)
+        and getattr(service, "reply", None) is not None
+    ):
+        from bot.life.reply.creative import creative_instruction
+
+        instruction = creative_instruction(creative.language)
+        if instruction and instruction not in (req.system_prompt or ""):
+            req.system_prompt = f"{req.system_prompt}\n{instruction}\n"
+            changed = True
     return changed
