@@ -811,3 +811,66 @@ The counters (`processed`, `markdown_stripped`, `typos`, `capped`, `split`,
 a Markdown leak would show up as a non-zero `markdown_stripped` after the fact,
 and a split/quote rate far from the profile value means the profile or the seed
 is wrong.
+
+## S5d — style metrics and acceptance gates
+
+Implemented in `bot/life/reply/style.py`; the CLI is
+[`style_metrics.py`](style_metrics.py).
+
+```bash
+# 1. from a sample of outbound messages (one JSON object per line)
+python scripts/life/style_metrics.py --sample data/life/style/sample.jsonl \
+  --out data/life/style/report.json
+
+# 2. from a saved /api/v1/life/status payload (reply.recent ring, no text stored)
+python scripts/life/style_metrics.py --status data/life/style/status.json
+
+# 3. against the reference corpus, with the quote-rate gate
+python scripts/life/style_metrics.py --sample data/life/style/sample.jsonl \
+  --reference data/life/style/mai_bot.jsonl \
+  --expected-quote-rate 0.2 --quote-tolerance 0.1 \
+  --out data/life/style/report.json
+```
+
+Sample line: `{"text": "...", "segments": 1, "quoted": false, "umo": "..."}`.
+The length is taken from `text` when present, otherwise from `chars` (the ring
+only keeps `chars`).
+
+### What it reports
+
+- **长度**：均值 / 中位 / P90 / 最大（字符数）。
+- **段数**：均值 / P90 / 多段占比（`segments > 1`）。
+- **引用率**：`quoted` 为真的比例。
+- **Markdown 泄漏**：没有 `leak` 标记时按正文重新扫一遍（标题、`**`、围栏、表格、链接）。
+- **KS**：`--reference` 存在时对长度做两样本 Kolmogorov-Smirnov（纯 Python，含
+  `sqrt(ne) + 0.12 + 0.11/sqrt(ne)` 小样本修正），输出 `D`、`p` 与是否显著。
+
+### Gates (exit codes)
+
+| 退出码 | 含义 |
+| --- | --- |
+| 0 | 通过 |
+| 2 | 长度分布与对照显著不同（`p < --alpha`，默认 0.05） |
+| 3 | 存在 Markdown 泄漏（一条也算失败） |
+| 4 | 引用率超出 `--expected-quote-rate ± --quote-tolerance` |
+
+优先级 2 > 3 > 4：先看分布，再看泄漏，最后看引用率。报告同时写进 `--out` 指定的 JSON。
+
+### Generate a sample from the live ring
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status > data/life/style/status.json
+python scripts/life/style_metrics.py --status data/life/style/status.json
+```
+
+The ring keeps the last 50 replies with `chars`, `segments`, `quoted`,
+`markdown`, `leak`, `typo` and `capped` - no reply text, so the check can run
+against production without turning the status endpoint into a chat log.
+
+### Status of the reference side
+
+The gate is only as honest as the reference file. Until the S0 corpus and a
+MaiBot same-model run exist, `--reference` is fed a hand-built sample; that
+proves the test catches a shifted distribution, not that S5 matches MaiBot.
+Once the corpus lands, the command line does not change.

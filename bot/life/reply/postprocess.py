@@ -1,4 +1,4 @@
-"""Reply post-processing (S5c).
+"""Reply post-processing (S5c + S5d).
 
 This is the first place where the Life layer changes what actually leaves the
 bot. The transforms are ordered on purpose:
@@ -11,7 +11,9 @@ bot. The transforms are ordered on purpose:
 5. quote the triggering message by probability, on platforms that support it.
 
 None of this invents content: every step only removes characters, swaps a pair,
-cuts a tail or moves the same text into another message.
+cuts a tail or moves the same text into another message. The recent ring keeps
+the last replies' sizes and flags so S5d can check the distribution without
+storing text.
 """
 
 from __future__ import annotations
@@ -19,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import random
 import re
+from collections import deque
 from typing import Any
 
 from bot import logger
@@ -27,6 +30,13 @@ from bot.life.config import LifeConfig, ReplyConfig
 
 _SENTENCE_END = "。！？!?…~"
 _CHINESE = re.compile(r"[\u4e00-\u9fff]")
+_MARKDOWN = (
+    re.compile(r"^\s*#{1,6}\s", re.M),
+    re.compile(r"\*\*"),
+    re.compile(r"```"),
+    re.compile(r"^\s*\|.*\|\s*$", re.M),
+    re.compile(r"\[[^\]]+\]\([^)]+\)"),
+)
 
 
 class ReplyPostProcessor:
@@ -52,6 +62,7 @@ class ReplyPostProcessor:
         self.persona = persona
         self.rng = rng or random.Random()
         self._tasks: set[asyncio.Task] = set()
+        self._recent: deque[dict[str, Any]] = deque(maxlen=50)
         self._counters = {
             "processed": 0,
             "markdown_stripped": 0,
@@ -219,25 +230,30 @@ class ReplyPostProcessor:
         plain_texts = [
             comp for comp in chain if isinstance(comp, Plain) and comp.text.strip()
         ]
+        stripped_any = typo_any = capped_any = False
         for comp in plain_texts:
             text = comp.text
             if not allow_markdown and self.config.strip_markdown:
                 stripped = self.strip_markdown(text)
                 if stripped != text:
                     self._counters["markdown_stripped"] += 1
+                    stripped_any = True
                 text = stripped or text
             if self.config.nudge_typos and typo_rate > 0:
                 nudged = self.nudge_typos(text, typo_rate)
                 if nudged != text:
                     self._counters["typos"] += 1
+                    typo_any = True
                 text = nudged
             if self.config.cap_length and max_chars > 0:
                 capped = self.cap_length(text, max_chars)
                 if capped != text:
                     self._counters["capped"] += 1
+                    capped_any = True
                 text = capped
             comp.text = text
 
+        delivered = 0
         if (
             self.config.split_segments
             and not upstream_segmented
@@ -248,6 +264,7 @@ class ReplyPostProcessor:
             segments = self.split_segments(plain_texts[0].text, segment_prob)
             if len(segments) > 1:
                 self._counters["split"] += 1
+                delivered = len(segments) - 1
                 # The responder sends the first segment; the rest follow with a
                 # delay, because component boundaries alone never become separate
                 # messages without the upstream segmented-reply switch.
@@ -270,6 +287,21 @@ class ReplyPostProcessor:
             chain.insert(0, Reply(id=message_id))
             result.chain = chain
             self._counters["quoted"] += 1
+
+        texts = [comp.text for comp in result.chain if isinstance(comp, Plain)]
+        final = "".join(texts)
+        self._recent.append(
+            {
+                "umo": umo,
+                "chars": len(final),
+                "segments": 1 + delivered,
+                "quoted": any(isinstance(comp, Reply) for comp in result.chain),
+                "markdown": stripped_any,
+                "leak": any(pattern.search(final) for pattern in _MARKDOWN),
+                "typo": typo_any,
+                "capped": capped_any,
+            }
+        )
 
     def _deliver_rest(self, event: Any, result: Any, segments: list[str]) -> None:
         """Send the trailing reply segments after a short pause each.
@@ -310,7 +342,7 @@ class ReplyPostProcessor:
         return await self.persona.profile_for(persona_id)
 
     def status(self) -> dict[str, Any]:
-        """Return switches and counters.
+        """Return switches, counters and the recent reply ring.
 
         Returns:
             Status mapping used by the dashboard API.
@@ -325,6 +357,7 @@ class ReplyPostProcessor:
             "quote_platforms": list(self.config.quote_platforms),
             "segment_delay_seconds": self.config.segment_delay_seconds,
             "counters": dict(self._counters),
+            "recent": [dict(entry) for entry in self._recent],
         }
 
 

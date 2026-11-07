@@ -297,6 +297,30 @@ async def test_quote_is_not_added_twice():
 
 
 @pytest.mark.asyncio
+async def test_recent_ring_records_the_last_replies():
+    processor = _processor()
+    result = FakeResult("**好的**，我这就去。")
+
+    await processor.process(FakeEvent(), result)
+
+    recent = processor.status()["recent"]
+    assert len(recent) == 1
+    assert recent[0]["chars"] == len("好的，我这就去。")
+    assert recent[0]["segments"] == 1
+    assert recent[0]["markdown"] is True
+    assert recent[0]["leak"] is False
+
+
+@pytest.mark.asyncio
+async def test_recent_ring_is_bounded():
+    processor = _processor()
+    for _ in range(60):
+        await processor.process(FakeEvent(), FakeResult("好的。"))
+
+    assert len(processor.status()["recent"]) == 50
+
+
+@pytest.mark.asyncio
 async def test_sessions_outside_the_allowlist_are_skipped():
     life = LifeConfig(enabled=True)
     life.scope.mode = "allowlist"
