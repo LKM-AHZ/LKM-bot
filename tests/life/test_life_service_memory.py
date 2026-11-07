@@ -39,13 +39,16 @@ class FakeProviderManager:
 class FakeToolManager:
     def __init__(self) -> None:
         self.registered: list[str] = []
+        self.handlers: dict[str, object] = {}
 
     def add_func(self, name, func_args, desc, handler) -> None:
         self.registered.append(name)
+        self.handlers[name] = handler
 
     def remove_func(self, name) -> None:
         if name in self.registered:
             self.registered.remove(name)
+        self.handlers.pop(name, None)
 
 
 class FakeContext:
@@ -85,6 +88,60 @@ async def test_memory_disabled_by_default(db, tmp_path):
         status = await service.status()
         assert status["memory"] == {"enabled": False}
         assert context.provider_manager.llm_tools.registered == []
+    finally:
+        await service.stop()
+        set_life_service(None)
+
+
+class FakeEvent:
+    unified_msg_origin = "aiocqhttp:GroupMessage:1"
+
+    def get_group_id(self):
+        return "1"
+
+
+class FakeMessage:
+    def __init__(self, sender_id: str, name: str) -> None:
+        self.session_key = FakeEvent.unified_msg_origin
+        self.platform_id = "aiocqhttp"
+        self.sender_id = sender_id
+        self.sender_name = name
+        self.group_id = "1"
+        self.ts = 1_700_000_000
+
+
+@pytest.mark.asyncio
+async def test_person_layer_serves_the_profile_tool(db, tmp_path):
+    context = FakeContext()
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.memory.enabled = True
+    config.memory.digest.enabled = False
+    config.person.enabled = True
+    service = LifeService(
+        db,
+        star_context=context,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await service.initialize()
+    try:
+        assert service.person is not None
+        status = await service.status()
+        assert status["person"]["enabled"] is True
+
+        await service.person.observe_messages([FakeMessage("42", "Alice")])
+        await service.person.ingest_facts(
+            FakeEvent.unified_msg_origin,
+            [{"person_id": "Alice", "content": "Alice 喜欢猫", "importance": 0.8}],
+        )
+
+        handler = context.provider_manager.llm_tools.handlers["get_person_profile"]
+        payload = await handler(FakeEvent(), person="Alice")
+
+        assert "Alice" in payload
+        assert "喜欢猫" in payload
     finally:
         await service.stop()
         set_life_service(None)

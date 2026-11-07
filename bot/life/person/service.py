@@ -20,7 +20,7 @@ from bot.life.person.names import clean_name, derive_person_id, normalize_name
 from bot.life.person.store import PersonStore
 
 _PREFERENCE_HINTS = ("喜欢", "讨厌", "爱吃", "爱喝", "偏好", "不喜欢", "习惯")
-_IDENTITY_HINTS = ("是", "叫", "来自", "住在", "职业", "在做", "负责")
+_IDENTITY_HINTS = ("是", "叫", "来自", "住在", "职业")
 _RELATION_HINTS = ("朋友", "同事", "同学", "家人", "认识", "关系")
 
 
@@ -167,7 +167,9 @@ class PersonService:
                 continue
             person = await self.store.find(session_key, name)
             if person is None:
-                platform = session_key.split(":")[0] if ":" in session_key else "unknown"
+                platform = (
+                    session_key.split(":")[0] if ":" in session_key else "unknown"
+                )
                 person_id = derive_person_id(platform, None, name)
                 await self.store.observe_batch(
                     [
@@ -189,7 +191,9 @@ class PersonService:
                     "person_id": person_id,
                     "content": content,
                     "category": infer_category(content),
-                    "confidence": float(fact.get("importance") or fact.get("confidence") or 0.6),
+                    "confidence": float(
+                        fact.get("importance") or fact.get("confidence") or 0.6
+                    ),
                     "source_memory_id": fact.get("memory_id"),
                 }
             )
@@ -428,6 +432,20 @@ class PersonService:
             str(found["session_key"]),
             str(found["person_id"]),
         )
+
+    async def resolve_fact(self, fact_id: int, keep: bool) -> int:
+        """Resolve one conflicted fact as a reviewer.
+
+        Args:
+            fact_id: Fact the reviewer decided on.
+            keep: Keep the fact and supersede its rivals, or reject it.
+
+        Returns:
+            Number of facts whose status changed.
+        """
+        if not self._started:
+            return 0
+        return await self.store.resolve_fact(fact_id, keep)
 
     async def status(self) -> dict[str, Any]:
         """Return a serializable status snapshot.

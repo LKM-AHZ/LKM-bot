@@ -66,7 +66,9 @@ class LifePersonFact(SQLModel, table=True):
             "fact_hash",
             name="uix_life_person_fact_hash",
         ),
-        Index("ix_life_person_fact_person_status", "session_key", "person_id", "status"),
+        Index(
+            "ix_life_person_fact_person_status", "session_key", "person_id", "status"
+        ),
     )
 
 

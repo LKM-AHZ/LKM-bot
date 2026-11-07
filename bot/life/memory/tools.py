@@ -85,8 +85,34 @@ def register_memory_tools(manager: Any, service: Any) -> None:
 
     async def get_person_profile(event: Any, person: str) -> str:
         """Return what the bot remembers about one person."""
-        if service.memory is None or not _session_enabled(service, event):
+        if not _session_enabled(service, event):
             return "error: long-term memory is not enabled for this session"
+        if service.person is not None:
+            profile = await service.person.profile(
+                event.unified_msg_origin,
+                person,
+            )
+            if profile is not None:
+                return json.dumps(
+                    {
+                        "person_id": profile["person_id"],
+                        "display_name": profile["display_name"],
+                        "aliases": profile["aliases"],
+                        "relation_score": profile["relation_score"],
+                        "summary": profile["summary"],
+                        "facts": [
+                            {
+                                "content": fact["content"],
+                                "category": fact["category"],
+                                "confidence": fact["confidence"],
+                            }
+                            for fact in profile["facts"]
+                        ],
+                    },
+                    ensure_ascii=False,
+                )
+        if service.memory is None:
+            return f"No profile is available for {person} yet."
         hits = await service.memory.search(
             query=person,
             session_key=event.unified_msg_origin,
@@ -94,9 +120,7 @@ def register_memory_tools(manager: Any, service: Any) -> None:
             limit=8,
             kinds=["fact"],
         )
-        facts = [hit for hit in hits if hit.get("person_id") == person]
-        if not facts:
-            facts = hits[:3]
+        facts = [hit for hit in hits if hit.get("person_id") == person] or hits[:3]
         if not facts:
             return f"No profile is available for {person} yet."
         return json.dumps(

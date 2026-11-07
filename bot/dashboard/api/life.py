@@ -167,6 +167,114 @@ async def export_life_memory(
     return ok(await service.memory.export(umo))
 
 
+@router.get("/life/people")
+async def life_people(
+    umo: str = Query(min_length=1),
+    limit: int = Query(default=20, ge=1, le=200),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return the people known in one session.
+
+    Args:
+        umo: Session scope.
+        limit: Maximum number of rows.
+
+    Returns:
+        Wrapped list ordered by relationship score.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.person is None:
+        return ok([])
+    return ok(await service.person.store.list_people(umo, limit=limit))
+
+
+@router.get("/life/people/profile")
+async def life_person_profile(
+    umo: str = Query(min_length=1),
+    person: str = Query(min_length=1),
+    refresh: bool = Query(default=False),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return the profile of one person.
+
+    Args:
+        umo: Session scope.
+        person: Person id, display name or alias.
+        refresh: Rebuild the cached profile.
+
+    Returns:
+        Wrapped profile payload.
+
+    Raises:
+        ApiError: When the person is unknown.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.person is None:
+        raise ApiError("person layer is not enabled")
+    profile = await service.person.profile(umo, person, refresh=refresh)
+    if profile is None:
+        raise ApiError(f"unknown person: {person}")
+    return ok(profile)
+
+
+@router.delete("/life/people")
+async def delete_life_person(
+    umo: str = Query(min_length=1),
+    person: str = Query(min_length=1),
+    fact_id: int | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Forget one person or one fact.
+
+    Args:
+        umo: Session scope.
+        person: Person id, display name or alias.
+        fact_id: Delete only this fact when given.
+
+    Returns:
+        Wrapped deletion counters.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.person is None:
+        raise ApiError("person layer is not enabled")
+    deleted = await service.person.forget(umo, person, fact_id=fact_id)
+    return ok(deleted)
+
+
+@router.patch("/life/people/fact")
+async def resolve_life_person_fact(
+    payload: dict[str, Any] = Body(...),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Resolve a conflicted fact during review.
+
+    Args:
+        payload: ``{"fact_id": int, "keep": bool}``.
+
+    Returns:
+        Wrapped change counter.
+
+    Raises:
+        ApiError: When the payload is incomplete.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.person is None:
+        raise ApiError("person layer is not enabled")
+    fact_id = payload.get("fact_id")
+    if not isinstance(fact_id, int):
+        raise ApiError("fact_id must be an integer")
+    changed = await service.person.resolve_fact(fact_id, bool(payload.get("keep")))
+    return ok({"changed": changed})
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),

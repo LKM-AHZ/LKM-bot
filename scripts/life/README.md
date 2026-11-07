@@ -219,3 +219,53 @@ curl -H "Authorization: Bearer <token>" \
   "http://127.0.0.1:6185/api/v1/life/memory/search?umo=<umo>&q=迁移"
 ```
 
+## S3a — people, facts and profiles
+
+Implemented in `bot/life/person/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `names.py` | Name cleaning, alias normalization, person id derivation |
+| `models.py` | `life_person`, `life_person_fact`, `life_person_profile` |
+| `store.py` | Observe/upsert, relationship decay, fact conflicts, decay, delete |
+| `service.py` | Batch observation, fact ingest, profile build/cache, review, forget |
+
+Enable it together with the Life layer:
+
+```json
+{
+  "enabled": true,
+  "person": { "enabled": true }
+}
+```
+
+Facts arrive from the memory digest (`memory.enabled` + `memory.digest.enabled`):
+each extracted fact is attached to a person, classified as `preference` /
+`identity` / `relation` / `other`, and stored with its confidence.
+
+### Lifecycle
+
+- **学习**: archive flush → `observe` (aliases, relationship score, interaction
+  count); digest → facts per person.
+- **冲突**: two facts of the same category whose token overlap reaches
+  `conflict_similarity` (default 0.6) are both marked `conflicted` and share a
+  group id, waiting for review.
+- **复审**: `PATCH /api/v1/life/people/fact` with `{"fact_id": N, "keep": true}`
+  keeps one fact and supersedes its rivals; `keep: false` rejects it.
+- **可解释**: every profile returns `fact_ids`, and each fact carries its
+  category, effective confidence and status.
+- **可删除**: `DELETE /api/v1/life/people?umo=...&person=...` removes the person
+  with facts and profile; `&fact_id=N` removes a single fact.
+- **衰减**: effective confidence halves every `confidence_half_life_days`
+  (21 by default); the 6-hour maintenance task marks facts below
+  `min_confidence` as `expired`.
+
+### Verify
+
+```bash
+pytest tests/life -q
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/people?umo=<umo>"
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/people/profile?umo=<umo>&person=Alice"
+```

@@ -25,6 +25,7 @@ from bot.life.config import (
 from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.memory.adapter import MemoryAdapter
 from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
+from bot.life.person.service import PersonService
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
@@ -84,6 +85,7 @@ class LifeService:
         self.store: LifeStore | None = None
         self.sender: LifeSender | None = None
         self.memory: MemoryAdapter | None = None
+        self.person: PersonService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -135,6 +137,15 @@ class LifeService:
                 timeout_seconds=self.config.sender.timeout_seconds,
             )
 
+        if self.config.person.enabled:
+            self.person = PersonService(
+                context=self.star_context,
+                config=self.config.person,
+                db_helper=self.db,
+                life_config=self.config,
+            )
+            await self.person.initialize()
+
         if self.config.memory.enabled:
             self.memory = MemoryAdapter(
                 context=self.star_context,
@@ -143,6 +154,7 @@ class LifeService:
                 data_dir=self.data_dir,
                 life_store=self.store,
                 scope_check=self.config.session_enabled,
+                on_facts=self._ingest_person_facts,
             )
             await self.memory.initialize()
             if self.star_context is not None:
@@ -198,6 +210,8 @@ class LifeService:
             self._memory_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._memory_task
+        if self.person is not None:
+            await self.person.close()
         if self.memory is not None:
             if self.star_context is not None:
                 manager = getattr(
@@ -286,6 +300,11 @@ class LifeService:
             return
         self._counters["written"] += inserted
         self._counters["duplicates"] += len(batch) - inserted
+        if self.person is not None:
+            try:
+                await self.person.observe_messages(batch)
+            except Exception:
+                logger.exception("[life] person observe failed")
 
     async def _maintenance_loop(self) -> None:
         """Run retention cleanup periodically."""
@@ -299,6 +318,22 @@ class LifeService:
                 await self.store.cleanup()
             except Exception:
                 logger.exception("[life] retention cleanup failed")
+            if self.person is not None:
+                try:
+                    await self.person.store.decay()
+                except Exception:
+                    logger.exception("[life] person decay failed")
+
+    async def _ingest_person_facts(self, session_key: str, facts: list[dict]) -> None:
+        """Attach digest facts to people.
+
+        Args:
+            session_key: Session the facts belong to.
+            facts: Fact rows produced by the memory digest.
+        """
+        if self.person is None:
+            return
+        await self.person.ingest_facts(session_key, facts)
 
     async def _memory_loop(self) -> None:
         """Digest archived chat into memory and refresh vectors periodically."""
@@ -362,6 +397,12 @@ class LifeService:
                 memory = await self.memory.status()
             except Exception as exc:
                 memory = {"enabled": True, "error": str(exc)}
+        person: dict[str, Any] = {"enabled": False}
+        if self.person is not None:
+            try:
+                person = await self.person.status()
+            except Exception as exc:
+                person = {"enabled": True, "error": str(exc)}
         return {
             "enabled": self._running,
             "configured": self.config.enabled,
@@ -379,6 +420,7 @@ class LifeService:
             "counters": dict(self._counters),
             "storage": storage,
             "memory": memory,
+            "person": person,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

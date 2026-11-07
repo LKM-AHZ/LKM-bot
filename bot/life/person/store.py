@@ -54,7 +54,9 @@ def decay_factor(age_days: float, half_life_days: float) -> float:
 class PersonStore:
     """Async SQLite store for people, facts and profiles."""
 
-    def __init__(self, db_helper: BaseDatabase, config: PersonConfig | None = None) -> None:
+    def __init__(
+        self, db_helper: BaseDatabase, config: PersonConfig | None = None
+    ) -> None:
         """Initialize the store.
 
         Args:
@@ -222,7 +224,7 @@ class PersonStore:
             result = await session.execute(
                 select(LifePerson)
                 .where(col(LifePerson.session_key) == session_key)
-                .order_by(desc(col(LifePerson.relation_score)))  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+                .order_by(desc(col(LifePerson.relation_score)))
                 .limit(max(limit, 1))
             )
             return [row.model_dump() for row in result.scalars().all()]
@@ -376,6 +378,52 @@ class PersonStore:
             fact.updated_at = int(time.time())
             await session.commit()
 
+    async def resolve_fact(self, fact_id: int, keep: bool) -> int:
+        """Resolve a conflict group by keeping or rejecting one fact.
+
+        Args:
+            fact_id: Fact the reviewer decided on.
+            keep: True keeps this fact and supersedes its rivals; False rejects it.
+
+        Returns:
+            Number of facts whose status changed.
+        """
+        async with self.db.get_db() as session:
+            fact = await session.get(LifePersonFact, fact_id)
+            if fact is None:
+                return 0
+            now = int(time.time())
+            changed = 0
+            group = fact.conflict_group
+            rivals: list[LifePersonFact] = []
+            if group:
+                result = await session.execute(
+                    select(LifePersonFact).where(
+                        col(LifePersonFact.session_key) == fact.session_key,
+                        col(LifePersonFact.person_id) == fact.person_id,
+                        col(LifePersonFact.conflict_group) == group,
+                    )
+                )
+                rivals = list(result.scalars().all())
+            if keep:
+                fact.status = _ACTIVE
+                fact.conflict_group = ""
+                fact.verified_at = now
+                fact.updated_at = now
+                changed = 1
+                for rival in rivals:
+                    if rival.id == fact.id:
+                        continue
+                    rival.status = "superseded"
+                    rival.updated_at = now
+                    changed += 1
+            else:
+                fact.status = "rejected"
+                fact.updated_at = now
+                changed = 1
+            await session.commit()
+            return changed
+
     async def list_facts(
         self,
         session_key: str,
@@ -404,7 +452,7 @@ class PersonStore:
                     col(LifePersonFact.person_id) == person_id,
                     col(LifePersonFact.status).in_(wanted),
                 )
-                .order_by(desc(col(LifePersonFact.confidence)))  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+                .order_by(desc(col(LifePersonFact.confidence)))
                 .limit(max(limit, 1))
             )
             facts = [row.model_dump() for row in result.scalars().all()]
@@ -413,7 +461,8 @@ class PersonStore:
             fact["effective_confidence"] = round(
                 float(fact["confidence"])
                 * decay_factor(
-                    (now - int(fact["verified_at"] or fact["created_at"] or now)) / 86400.0,
+                    (now - int(fact["verified_at"] or fact["created_at"] or now))
+                    / 86400.0,
                     float(self.config.confidence_half_life_days),
                 ),
                 4,
@@ -473,7 +522,9 @@ class PersonStore:
             "profiles": max(int(profiles.rowcount or 0), 0),  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
         }
 
-    async def get_profile(self, session_key: str, person_id: str) -> dict[str, Any] | None:
+    async def get_profile(
+        self, session_key: str, person_id: str
+    ) -> dict[str, Any] | None:
         """Return the cached profile row.
 
         Args:
@@ -584,10 +635,12 @@ class PersonStore:
                 await session.execute(select(func.count()).select_from(LifePersonFact))
             ).scalar_one()
             profiles = (
-                await session.execute(select(func.count()).select_from(LifePersonProfile))
+                await session.execute(
+                    select(func.count()).select_from(LifePersonProfile)
+                )
             ).scalar_one()
             by_status = await session.execute(
-                select(col(LifePersonFact.status), func.count()).group_by(  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+                select(col(LifePersonFact.status), func.count()).group_by(
                     col(LifePersonFact.status)
                 )
             )
@@ -603,5 +656,7 @@ class PersonStore:
             "facts": int(facts or 0),
             "profiles": int(profiles or 0),
             "conflicts": int(conflicts or 0),
-            "facts_by_status": {status: int(count) for status, count in by_status.all()},
+            "facts_by_status": {
+                status: int(count) for status, count in by_status.all()
+            },
         }

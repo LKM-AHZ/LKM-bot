@@ -172,7 +172,7 @@ class PersonConfig(BaseModel):
     min_confidence: float = 0.2
     """Facts whose effective confidence falls below this stop being used."""
 
-    conflict_similarity: float = 0.85
+    conflict_similarity: float = 0.6
     """Token overlap above which a new fact conflicts with an existing one."""
 
     profile_max_facts: int = 12

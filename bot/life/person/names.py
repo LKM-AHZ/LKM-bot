@@ -77,5 +77,7 @@ def name_tokens(text: str) -> set[str]:
         Token set used for conflict detection.
     """
     normalized = normalize_name(text)
-    tokens = {normalized[index : index + 2] for index in range(max(len(normalized) - 1, 1))}
+    tokens = {
+        normalized[index : index + 2] for index in range(max(len(normalized) - 1, 1))
+    }
     return {token for token in tokens if token}
