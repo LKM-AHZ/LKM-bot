@@ -43,6 +43,7 @@ from bot.life.person.service import PersonService
 from bot.life.persona.service import PersonaService
 from bot.life.prompt import PromptAssembler
 from bot.life.reaction.service import ReactionService
+from bot.life.reasoning import ReasoningRecorder
 from bot.life.reply.creative import translate_reply
 from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.rollout.service import RolloutService
@@ -138,6 +139,7 @@ class LifeService:
         self.subagent_inbox: SubAgentInbox | None = None
         self.subagent: SubAgentNotifier | None = None
         self.monitor: PlannerMonitor | None = None
+        self.reasoning: ReasoningRecorder | None = None
         self.reactions: ReactionService | None = None
         self.acp: AcpService | None = None
         self.files: FileService | None = None
@@ -225,6 +227,9 @@ class LifeService:
                 max_age_minutes=self.config.subagent.notice_max_age_minutes,
             )
             self.subagent = SubAgentNotifier(self.config.subagent, self.subagent_inbox)
+        if self.config.reasoning.enabled:
+            self.reasoning = ReasoningRecorder(self.db, self.config.reasoning)
+            await self.reasoning.ensure_schema()
         if self.config.monitor.enabled:
             self.monitor = PlannerMonitor(self.config.monitor)
         if self.config.reaction.enabled:
@@ -281,6 +286,7 @@ class LifeService:
                 if self.config.creative.enabled
                 else None,
                 scenes=self.config.scenes,
+                reasoning=self.reasoning,
             )
 
         if self.config.memory.enabled:
@@ -653,6 +659,11 @@ class LifeService:
                     await self.rollout.prune()
                 except Exception:
                     logger.exception("[life] rollout prune failed")
+            if self.reasoning is not None:
+                try:
+                    await self.reasoning.prune()
+                except Exception:
+                    logger.exception("[life] reasoning prune failed")
 
     async def _expression_loop(self) -> None:
         """Learn expressions from the archive on a fixed interval."""

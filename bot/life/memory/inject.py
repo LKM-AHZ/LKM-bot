@@ -55,6 +55,12 @@ async def inject_life_context(event: Any, req: Any) -> bool:
     if assembler is not None and getattr(req, "system_prompt", ""):
         umo = getattr(event, "unified_msg_origin", "") or ""
         req.system_prompt = assembler.assemble(req.system_prompt, umo)
+    recorder = getattr(service, "reasoning", None)
+    if recorder is not None:
+        try:
+            await recorder.remember_request(event, req)
+        except Exception:
+            logger.exception("[life] reasoning record failed")
     config = getattr(service, "config", None)
     creative = getattr(config, "creative", None)
     # Translation lives in the reply layer; without it the foreign-language
