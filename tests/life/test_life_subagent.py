@@ -621,3 +621,13 @@ async def test_subagent_tools_respect_allowlist() -> None:
 
     denied = LifeService.subagent_tools(service, "send_meme")
     assert denied == []
+
+
+def test_subagent_defaults_match_the_unified_background_model() -> None:
+    """MaiBot 1.4 runs sub-agents only in the background with a larger budget."""
+    from bot.life.config import SubAgentConfig
+
+    config = SubAgentConfig()
+
+    assert config.max_turns == 20
+    assert config.max_running == 3

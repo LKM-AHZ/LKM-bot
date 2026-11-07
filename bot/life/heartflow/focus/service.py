@@ -103,6 +103,27 @@ class FocusService:
             return True
         return bool(self.life_config.session_enabled(umo, group_id))
 
+    def focus_key(self, umo: str) -> str:
+        """Return the timeline key a session belongs to.
+
+        Sessions listed together in ``focus.share_groups`` share one timeline;
+        every other session keeps its own. The key is derived from the sorted
+        member list so any member maps to the same timeline regardless of which
+        one spoke first.
+
+        Args:
+            umo: Unified message origin.
+
+        Returns:
+            Stable timeline key.
+        """
+        text = str(umo or "")
+        for group in self.config.share_groups:
+            members = [str(item).strip() for item in group if str(item).strip()]
+            if text in members:
+                return "shared:" + "|".join(sorted(members))
+        return text
+
     async def timeline(self, session_key: str) -> FocusTimeline:
         """Return the cached timeline, loading it from storage when needed.
 
@@ -116,7 +137,9 @@ class FocusService:
         if cached is not None:
             self._timelines.move_to_end(session_key)
             return cached
-        payload = await self.store.load(session_key, limit=self.config.max_turns)
+        payload = await self.store.load(
+            self.focus_key(session_key), limit=self.config.max_turns
+        )
         timeline = FocusTimeline.from_checkpoint(
             payload,
             keep_turns=self.config.keep_turns,
@@ -157,6 +180,7 @@ class FocusService:
                     getattr(message, "group_id", None),
                 ):
                     continue
+                session_key = self.focus_key(session_key)
                 text = self._message_text(message)
                 if not text:
                     continue
@@ -200,6 +224,7 @@ class FocusService:
         """
         if not self._started or not self.config.enabled:
             return False
+        session_key = self.focus_key(session_key)
         if not session_key or not text.strip():
             return False
         async with self._lock:
@@ -278,7 +303,7 @@ class FocusService:
         system_prompt = getattr(req, "system_prompt", "") or ""
         if f"<{_BLOCK_TAG}" in system_prompt:
             return False
-        timeline = await self.timeline(umo)
+        timeline = await self.timeline(self.focus_key(umo))
         block = timeline.render_digest_block()
         if not block:
             return False
@@ -295,7 +320,9 @@ class FocusService:
         Returns:
             Mapping with the digest and the recent turns.
         """
-        payload = await self.store.load(session_key, limit=self.config.max_turns)
+        payload = await self.store.load(
+            self.focus_key(session_key), limit=self.config.max_turns
+        )
         payload["enabled"] = self._started
         return payload
 
@@ -308,13 +335,12 @@ class FocusService:
         Returns:
             Number of turn rows deleted.
         """
+        key = self.focus_key(session_key)
         async with self._lock:
-            self._timelines.pop(session_key, None)
-            self._dirty_sessions.discard(session_key)
-            self._dirty_turns = {
-                item for item in self._dirty_turns if item[0] != session_key
-            }
-            return await self.store.delete(session_key)
+            self._timelines.pop(key, None)
+            self._dirty_sessions.discard(key)
+            self._dirty_turns = {item for item in self._dirty_turns if item[0] != key}
+            return await self.store.delete(key)
 
     async def status(self) -> dict[str, Any]:
         """Return a serializable status snapshot.

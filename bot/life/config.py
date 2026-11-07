@@ -463,6 +463,14 @@ class FocusConfig(BaseModel):
     checkpoint_interval_minutes: int = 5
     """How often dirty timelines are flushed back to the database."""
 
+    share_groups: list[list[str]] = Field(default_factory=list)
+    """Sessions that share one focus timeline (MaiBot 1.4 focus groups).
+
+    Each inner list holds unified message origins: their archived messages feed
+    one timeline and every member sees the same folded digest. Empty keeps one
+    timeline per session.
+    """
+
 
 class RuntimeConfig(BaseModel):
     """Turn runtime that actually answers ambient messages (S4c)."""
@@ -633,8 +641,12 @@ class SubAgentConfig(BaseModel):
     timeout_seconds: float = 120.0
     """Hard timeout of one task; a timed-out task is marked failed."""
 
-    max_turns: int = 6
-    """Upper bound of model turns inside one sub-agent run."""
+    max_turns: int = 20
+    """Upper bound of model turns inside one sub-agent run.
+
+    MaiBot 1.4 dropped the synchronous mode and raised the budget to 20 because
+    a background task no longer blocks the planner.
+    """
 
     tool_timeout_seconds: float = 30.0
     """Hard timeout of one tool call inside the sub-agent."""
