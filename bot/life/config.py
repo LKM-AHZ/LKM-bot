@@ -254,6 +254,20 @@ class ReplyConfig(BaseModel):
     segment_delay_seconds: float = 1.2
     """Pause before each follow-up segment; 0 sends them immediately."""
 
+    supplement_enabled: bool = False
+    """Plan-driven send order: ``@`` / pictures / stickers around one reply."""
+
+    supplement_max_parts: int = 8
+    """Ceiling of actions one supplement plan may contain."""
+
+    supplement_allow_at: bool = True
+    supplement_allow_quote: bool = True
+    supplement_timeout_seconds: float = 8.0
+    """Hard timeout for one supplement planning call."""
+
+    supplement_retry_once: bool = True
+    """Retry the planning call once with the validation error appended."""
+
 
 class ExpressionConfig(BaseModel):
     """Learned expressions (S3b)."""

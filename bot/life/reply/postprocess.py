@@ -70,6 +70,7 @@ class ReplyPostProcessor:
             "capped": 0,
             "split": 0,
             "quoted": 0,
+            "supplemented": 0,
             "skipped": 0,
         }
 
@@ -288,6 +289,42 @@ class ReplyPostProcessor:
             result.chain = chain
             self._counters["quoted"] += 1
 
+        supplement_payload = None
+        extra_getter = getattr(event, "get_extra", None)
+        if callable(extra_getter):
+            supplement_payload = extra_getter("_life_reply_supplement")
+            pending = extra_getter("_life_reply_supplement_task")
+            if (
+                supplement_payload is None
+                and self.config.supplement_enabled
+                and isinstance(pending, asyncio.Task)
+            ):
+                try:
+                    supplement_payload = await asyncio.wait_for(
+                        pending,
+                        timeout=max(self.config.supplement_timeout_seconds, 0.0)
+                        or None,
+                    )
+                except Exception:
+                    supplement_payload = None
+        if self.config.supplement_enabled and supplement_payload:
+            from bot.life.reply.supplement import (
+                ResolvedSupplement,
+                compose_supplement,
+            )
+
+            resolved = ResolvedSupplement.from_extra(supplement_payload)
+            if resolved is not None and resolved.parts:
+                try:
+                    chains = compose_supplement(resolved, result)
+                except ValueError:
+                    logger.warning("[life] dropped invalid reply supplement")
+                else:
+                    result.chain = list(chains[0].chain)
+                    if len(chains) > 1:
+                        self._deliver_chains(event, result, chains[1:])
+                    self._counters["supplemented"] += 1
+
         texts = [comp.text for comp in result.chain if isinstance(comp, Plain)]
         final = "".join(texts)
         self._recent.append(
@@ -319,6 +356,27 @@ class ReplyPostProcessor:
                     await event.send(result.derive([Plain(text)]))
                 except Exception:
                     logger.exception("[life] failed to send a follow-up segment")
+
+        task = asyncio.create_task(deliver())
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    def _deliver_chains(self, event: Any, result: Any, chains: list[Any]) -> None:
+        """Send supplement messages after the main reply.
+
+        Args:
+            event: Bot message event used as the send channel.
+            result: Decorated result; only its metadata is inherited.
+            chains: Message chains produced by the supplement plan.
+        """
+
+        async def deliver() -> None:
+            for chain in chains:
+                await asyncio.sleep(self.config.segment_delay_seconds)
+                try:
+                    await event.send(result.derive(list(chain.chain)))
+                except Exception:
+                    logger.exception("[life] failed to send a supplement message")
 
         task = asyncio.create_task(deliver())
         self._tasks.add(task)

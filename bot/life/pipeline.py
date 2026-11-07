@@ -16,7 +16,9 @@ wake). Addressed messages, commands and private chats bypass it untouched.
 
 from __future__ import annotations
 
+import asyncio
 import time
+from typing import TYPE_CHECKING
 
 from bot import logger
 from bot.core.message.components import At, AtAll, Reply
@@ -24,6 +26,9 @@ from bot.core.pipeline.context import PipelineContext
 from bot.core.pipeline.stage import Stage, register_stage
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.life.heartflow.runtime import ACTION_CONTINUE, TurnEntry, TurnRuntime
+
+if TYPE_CHECKING:
+    from bot.life.service import LifeService
 
 
 @register_stage
@@ -257,6 +262,20 @@ class LifeTurnStage(Stage):
         if outcome.merged_text:
             event.message_str = outcome.merged_text
         event.set_extra("_life_force_wake", True)
+        if service.config.reply.supplement_enabled:
+            # Plan the send order in parallel with the agent; post-processing
+            # picks the finished payload up and sends the extra messages.
+            try:
+                task = asyncio.create_task(
+                    _plan_reply_supplement(
+                        service,
+                        event,
+                        outcome.merged_text or event.message_str or "",
+                    )
+                )
+            except RuntimeError:
+                return
+            event.set_extra("_life_reply_supplement_task", task)
 
     def is_ambient(self, event: BotMessageEvent) -> bool:
         """Return whether the event may be merged into an ambient turn.
@@ -288,3 +307,77 @@ class LifeTurnStage(Stage):
             if isinstance(component, At | AtAll | Reply):
                 return False
         return not event.get_extra("_life_force_wake")
+
+
+async def _plan_reply_supplement(
+    service: LifeService, event: BotMessageEvent, guidance: str
+) -> dict | None:
+    """Resolve one reply supplement plan for an ambient turn.
+
+    Args:
+        service: Life service holding the store, provider context and stickers.
+        event: Event that will carry the agent's reply.
+        guidance: Merged conversation text used as sticker context.
+
+    Returns:
+        Payload for ``_life_reply_supplement``, or None when planning is off,
+        unavailable or invalid.
+    """
+    from bot.core.provider.entities import ProviderType
+    from bot.life.reply.supplement import (
+        SupplementResources,
+        generate_reply_supplement,
+        resolve_supplement,
+    )
+
+    reply_config = service.config.reply
+    store = getattr(service, "store", None)
+    context = getattr(service, "star_context", None)
+    if store is None or context is None:
+        return None
+    umo = str(event.unified_msg_origin)
+    try:
+        rows = await store.fetch_range(umo, limit=24)
+    except Exception:
+        logger.exception("[life] supplement resource capture failed")
+        return None
+    resources = SupplementResources.from_rows(
+        rows,
+        allow_at=reply_config.supplement_allow_at,
+        allow_quote=reply_config.supplement_allow_quote,
+        session_key=umo,
+    )
+    if not resources.messages:
+        return None
+    manager = getattr(context, "provider_manager", None)
+    provider = None
+    if manager is not None:
+        try:
+            provider = await manager.get_using_provider_async(
+                ProviderType.CHAT_COMPLETION
+            )
+        except Exception:
+            provider = None
+    plan = await generate_reply_supplement(
+        provider,
+        resources,
+        guidance=guidance,
+        timeout_seconds=reply_config.supplement_timeout_seconds,
+        max_parts=reply_config.supplement_max_parts,
+        retry_once=reply_config.supplement_retry_once,
+    )
+    if plan is None:
+        return None
+    emoji = getattr(service, "emoji", None)
+    try:
+        resolved = await resolve_supplement(
+            plan,
+            resources,
+            pick_emoji=emoji.pick if emoji is not None else None,
+            emoji_context=guidance,
+            max_parts=reply_config.supplement_max_parts,
+        )
+    except ValueError:
+        logger.warning("[life] reply supplement failed validation")
+        return None
+    return resolved.to_extra()
