@@ -27,6 +27,8 @@ from typing import Any
 from bot import logger
 from bot.core.message.components import Plain, Reply
 from bot.life.config import LifeConfig, ReplyConfig
+from bot.life.scenes import policy_for as scene_policy_for
+from bot.life.scenes import quote_rate as scale_quote_rate
 
 _SENTENCE_END = "。！？!?…~"
 _CHINESE = re.compile(r"[\u4e00-\u9fff]")
@@ -50,6 +52,7 @@ class ReplyPostProcessor:
         rng: random.Random | None = None,
         creative: Any = None,
         translator: Any = None,
+        scenes: Any = None,
     ) -> None:
         """Initialize the processor.
 
@@ -60,12 +63,14 @@ class ReplyPostProcessor:
             rng: Random source; tests pass a seeded instance.
             creative: Super creative mode config, or None.
             translator: Async callable rewriting one reply body back to Chinese.
+            scenes: Scene policy config, or None.
         """
         self.config = config
         self.life_config = life_config
         self.persona = persona
         self.creative = creative
         self.translator = translator
+        self.scenes = scenes
         self.rng = rng or random.Random()
         self._tasks: set[asyncio.Task] = set()
         self._recent: deque[dict[str, Any]] = deque(maxlen=50)
@@ -234,6 +239,14 @@ class ReplyPostProcessor:
         typo_rate = float(profile.get("typo_rate") or 0.0)
         segment_prob = float(profile.get("multi_segment_prob") or 0.0)
         quote_rate = float(profile.get("quote_rate") or 0.0)
+        if self.scenes is not None:
+            scene = scene_policy_for(self.scenes, umo, group_id)
+            if scene is not None:
+                quote_rate = (
+                    scale_quote_rate(quote_rate, scene.quote_frequency)
+                    if scene.allow_quote
+                    else 0.0
+                )
 
         plain_texts = [
             comp for comp in chain if isinstance(comp, Plain) and comp.text.strip()

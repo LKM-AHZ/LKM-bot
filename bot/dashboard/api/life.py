@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, Query, Request
@@ -239,6 +240,45 @@ async def life_messages(
     if service is None or service.store is None:
         return ok([])
     return ok(await service.store.recent(limit))
+
+
+@router.get("/life/sessions")
+async def life_sessions(
+    limit: int = Query(default=20, ge=1, le=200),
+    since_minutes: int = Query(default=180, ge=1, le=10080),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return recently active sessions and whether replies are paused.
+
+    Args:
+        limit: Maximum number of sessions.
+        since_minutes: Only sessions with activity in this window.
+
+    Returns:
+        Wrapped session list plus the pause rules currently in force.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.store is None:
+        return ok({"sessions": [], "pause": {}})
+    rows = await service.store.session_last_ts(
+        since_ts=int(time.time()) - since_minutes * 60,
+        limit=limit,
+    )
+    pause = service.config.pause
+    return ok(
+        {
+            "sessions": [
+                {
+                    **row,
+                    "paused": pause.is_paused(str(row.get("session_key") or ""), None),
+                }
+                for row in rows
+            ],
+            "pause": pause.model_dump(mode="json"),
+        }
+    )
 
 
 @router.get("/life/memory")

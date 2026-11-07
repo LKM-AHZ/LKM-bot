@@ -26,6 +26,7 @@ from bot.core.pipeline.context import PipelineContext
 from bot.core.pipeline.stage import Stage, register_stage
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.life.heartflow.runtime import ACTION_CONTINUE, TurnEntry, TurnRuntime
+from bot.life.scenes import policy_for, reply_blocked
 
 if TYPE_CHECKING:
     from bot.life.service import LifeService
@@ -114,7 +115,10 @@ class LifeReactionStage(Stage):
         if not text or text.startswith("/"):
             return
         umo = str(event.unified_msg_origin)
-        if not service.config.session_enabled(umo, event.get_group_id() or None):
+        group_id = event.get_group_id() or None
+        if not service.config.session_enabled(umo, group_id):
+            return
+        if reply_blocked(service.config, umo, group_id):
             return
         try:
             if await reactions.try_react(umo, text):
@@ -167,7 +171,10 @@ class LifeAcpStage(Stage):
         if not text or text.startswith("/"):
             return
         umo = str(event.unified_msg_origin)
-        if not service.config.session_enabled(umo, event.get_group_id() or None):
+        group_id = event.get_group_id() or None
+        if not service.config.session_enabled(umo, group_id):
+            return
+        if reply_blocked(service.config, umo, group_id):
             return
         try:
             answer = await acp.ask(umo, text)
@@ -222,9 +229,15 @@ class LifeTurnStage(Stage):
         runtime = getattr(service, "heartflow", None)
         if not isinstance(runtime, TurnRuntime):
             return
+        umo = str(event.unified_msg_origin)
+        group_id = event.get_group_id() or None
+        if not self.is_command(event) and reply_blocked(service.config, umo, group_id):
+            # Messages are archived by the ingest stage; pausing only stops the
+            # answer, matching upstream's "record but do not think".
+            event.stop_event()
+            return
         if not self.is_ambient(event):
             return
-        umo = str(event.unified_msg_origin)
         if not service.config.session_enabled(umo, event.get_group_id() or None):
             return
         entry = TurnEntry(
@@ -276,6 +289,22 @@ class LifeTurnStage(Stage):
             except RuntimeError:
                 return
             event.set_extra("_life_reply_supplement_task", task)
+
+    def is_command(self, event: BotMessageEvent) -> bool:
+        """Return whether the event is a command that bypasses pause.
+
+        Args:
+            event: Inbound message event.
+
+        Returns:
+            True for ``/`` commands and wake-prefixed messages.
+        """
+        text = (event.message_str or "").strip()
+        if not text:
+            return False
+        if text.startswith("/"):
+            return True
+        return any(text.startswith(prefix) for prefix in self.wake_prefixes)
 
     def is_ambient(self, event: BotMessageEvent) -> bool:
         """Return whether the event may be merged into an ambient turn.
@@ -341,10 +370,20 @@ async def _plan_reply_supplement(
     except Exception:
         logger.exception("[life] supplement resource capture failed")
         return None
+    allow_at = reply_config.supplement_allow_at
+    allow_quote = reply_config.supplement_allow_quote
+    scene = policy_for(
+        getattr(service.config, "scenes", None),
+        umo,
+        event.get_group_id() or None,
+    )
+    if scene is not None:
+        allow_at = allow_at and scene.allow_at
+        allow_quote = allow_quote and scene.allow_quote
     resources = SupplementResources.from_rows(
         rows,
-        allow_at=reply_config.supplement_allow_at,
-        allow_quote=reply_config.supplement_allow_quote,
+        allow_at=allow_at,
+        allow_quote=allow_quote,
         session_key=umo,
     )
     if not resources.messages:

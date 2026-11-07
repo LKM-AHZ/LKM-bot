@@ -827,6 +827,80 @@ class CreativeConfig(BaseModel):
     """Hard timeout for the translation request."""
 
 
+class ScenePolicyConfig(BaseModel):
+    """Reply policy of one chat scene."""
+
+    reply_enabled: bool = True
+    """When False the scene is recorded but the bot never answers it."""
+
+    allow_at: bool = True
+    """Whether supplements may @ participants in this scene."""
+
+    allow_quote: bool = True
+    """Whether replies may quote a message in this scene."""
+
+    quote_frequency: Literal["never", "occasionally", "often"] = "occasionally"
+    """Multiplier applied to the persona quote rate."""
+
+
+class ScenesConfig(BaseModel):
+    """Scene-aware reply policy (MaiBot 1.4 chat scenes)."""
+
+    enabled: bool = False
+
+    group: ScenePolicyConfig = Field(default_factory=ScenePolicyConfig)
+    private: ScenePolicyConfig = Field(default_factory=ScenePolicyConfig)
+    other: ScenePolicyConfig = Field(default_factory=ScenePolicyConfig)
+
+
+class PauseConfig(BaseModel):
+    """Pause replies for a chat type or specific sessions."""
+
+    enabled: bool = False
+
+    group: bool = False
+    """Pause every group scene; messages are still archived."""
+
+    private: bool = False
+    """Pause every private scene; messages are still archived."""
+
+    sessions: list[str] = Field(default_factory=list)
+    """Session keys or group ids to pause; a trailing ``*`` is a prefix match."""
+
+    def is_paused(self, umo: str, group_id: str | None = None) -> bool:
+        """Return whether replies are paused for one session.
+
+        Args:
+            umo: Session key.
+            group_id: Optional group id from the event.
+
+        Returns:
+            True when the session is paused by list, prefix or chat type.
+        """
+        if not self.enabled:
+            return False
+        from bot.life.scenes import scene_kind
+
+        text = (umo or "").strip()
+        if text:
+            for item in self.sessions:
+                rule = item.strip()
+                if not rule:
+                    continue
+                if rule.endswith("*") and text.startswith(rule[:-1]):
+                    return True
+                if text == rule or text.endswith(f":{rule}"):
+                    return True
+        if group_id and str(group_id) in {item.strip() for item in self.sessions}:
+            return True
+        kind = scene_kind(text, group_id)
+        if kind == "group":
+            return self.group
+        if kind == "private":
+            return self.private
+        return False
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -854,6 +928,8 @@ class LifeConfig(BaseModel):
     acp: AcpConfig = Field(default_factory=AcpConfig)
     files: FilesConfig = Field(default_factory=FilesConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
+    scenes: ScenesConfig = Field(default_factory=ScenesConfig)
+    pause: PauseConfig = Field(default_factory=PauseConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:
         """Return the resolved Life data directory.

@@ -280,6 +280,7 @@ class LifeService:
                 translator=self._creative_translator()
                 if self.config.creative.enabled
                 else None,
+                scenes=self.config.scenes,
             )
 
         if self.config.memory.enabled:
