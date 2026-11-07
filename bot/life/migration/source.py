@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 PLATFORM_ALIASES = {
     "qq": "aiocqhttp",
@@ -41,18 +42,25 @@ _REQUIRED_TABLES = {
 }
 
 
-def to_ts(value: Any) -> int:
+def to_ts(value: Any, timezone: str | None = None) -> int:
     """Convert a MaiBot timestamp-like value to Unix seconds.
+
+    MaiBot stores naive datetimes, so the zone of the *source* deployment has to
+    be supplied explicitly; without it the host's local zone is assumed.
 
     Args:
         value: Datetime, ISO text, integer/float seconds or milliseconds.
+        timezone: IANA zone applied to naive values.
 
     Returns:
         Unix timestamp in seconds; 0 when the value cannot be parsed.
     """
     if value in (None, ""):
         return 0
+    zone = ZoneInfo(timezone) if timezone else None
     if isinstance(value, datetime):
+        if value.tzinfo is None and zone is not None:
+            value = value.replace(tzinfo=zone)
         return int(value.timestamp())
     if isinstance(value, int | float):
         number = float(value)
@@ -61,16 +69,23 @@ def to_ts(value: Any) -> int:
         return int(number)
     text = str(value).strip()
     if text.isdigit():
-        return to_ts(int(text))
+        return to_ts(int(text), timezone)
     try:
-        return int(datetime.fromisoformat(text).timestamp())
+        parsed = datetime.fromisoformat(text)
     except ValueError:
-        pass
+        parsed = None
+    if parsed is not None:
+        if parsed.tzinfo is None and zone is not None:
+            parsed = parsed.replace(tzinfo=zone)
+        return int(parsed.timestamp())
     for pattern in ("%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d"):
         try:
-            return int(time.mktime(time.strptime(text[:19], pattern)))
+            parsed = datetime.strptime(text[:19], pattern)
         except ValueError:
             continue
+        if zone is not None:
+            return int(parsed.replace(tzinfo=zone).timestamp())
+        return int(time.mktime(parsed.timetuple()))
     return 0
 
 

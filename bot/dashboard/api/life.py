@@ -149,7 +149,8 @@ async def life_migration_preview(
 
     Args:
         payload: ``source`` plus optional ``memory_source``, ``datasets``,
-            ``umos`` and ``limit`` (messages previewed, default 500).
+            ``umos``, ``include_unknown`` and ``limit`` (messages previewed,
+            default 500).
 
     Returns:
         Wrapped inspection and dry-run report.
@@ -166,7 +167,7 @@ async def life_migration_preview(
     if not source:
         raise ApiError("source is required")
     migration = service.migration_service()
-    await migration.ensure_schema()
+    # The preview is read-only: it must not create Life tables just to count.
     try:
         inspection = await migration.preflight(
             source,
@@ -180,6 +181,7 @@ async def life_migration_preview(
             dry_run=True,
             limit=int(payload.get("limit") or 500),
             memory_source=payload.get("memory_source") or None,
+            include_unknown=bool(payload.get("include_unknown")),
         )
     except (FileNotFoundError, ValueError) as exc:
         raise ApiError(str(exc)) from exc

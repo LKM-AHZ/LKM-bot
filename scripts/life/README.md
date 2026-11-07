@@ -1476,21 +1476,36 @@ python scripts/life/migrate.py rollback --batch <batch_id>
 ```
 
 Global data (stickers, global slang, expressions without a session, people
-without a group card) needs at least one `--umo` target; sticker import refuses
-to run without one. `--datasets messages,people` narrows a run, `--since-days`
+without a group card) needs at least one `--umo` target; a real sticker import
+refuses to run without one, while `preview` simply drops the sticker dataset and
+says so in `warnings`. `--datasets messages,people` narrows a run, `--since-days`
 and `--limit` trim the message history, `--memory-source` overrides the
-A_memorix directory, and `--json` switches every subcommand to raw JSON.
+A_memorix directory, `--timezone Asia/Shanghai` tells the importer which zone
+the source's naive timestamps are in (otherwise the host zone is assumed),
+`--include-unknown` also imports people the source never identified, and
+`--json` switches every subcommand to raw JSON. `--db`, `--data-dir` and
+`--timezone` are global flags, so they go *before* the subcommand:
+`migrate.py --db data/data_v4.db --timezone Asia/Shanghai inspect --source ...`.
+Opening the target database materializes the Life tables on first use (the core
+initializer creates every registered model), so even `inspect` leaves empty Life
+tables behind — it never writes rows.
 
 ### What maps where
 
 | MaiBot | Life | Notes |
 | --- | --- | --- |
-| `mai_messages` | `life_messages` | bot accounts skipped, text/flags/components rebuilt |
-| `person_info` | `life_person` + `life_person_fact` | one row per group card; `memory_points` become facts |
-| `expressions` | `life_expression` | each `content_list` variant becomes one style |
-| `jargons` | `life_jargon` | `is_jargon=0` skipped; global rows go to every `--umo` |
-| `images` (emoji) | `life_emoji` | files copied to `<life data>/emoji/<session>/<sha256>` |
-| A_memorix `paragraphs` | `life_memory` (global) | `is_deleted=1` skipped |
+| `mai_messages` | `life_messages` | bot accounts and `is_notify` notices skipped; text/flags/components rebuilt from the flat columns |
+| `person_info` | `life_person` + `life_person_fact` | one row per group card; `memory_points` become facts; `is_known=0` skipped unless `--include-unknown` |
+| `expressions` | `life_expression` | each `content_list` variant becomes one style; `checked=0` lands as `pending` |
+| `jargons` | `life_jargon` | `is_jargon=0` skipped; global rows go to every `--umo`; `term` is capped at 64 chars and the checksum hashes the stored value |
+| `images` (emoji) | `life_emoji` | `image_type != emoji` and banned rows skipped; files copied to `<life data>/emoji/<session>/<sha256>` |
+| A_memorix `paragraphs` | `life_memory` (global) | `is_deleted=1` skipped; `knowledge_type` decides the kind (see below) |
+
+A_memorix `knowledge_type` is one of `structured`/`narrative`/`factual`/`quote`/
+`mixed`, mapped to `note`/`episode`/`fact`/`note`/`note`: factual memories reach
+the person-fact and recall paths, narratives become episodes, the rest stay
+notes. Paragraphs without any timestamp are imported undated (`ts = 0`) instead
+of pretending they happened at migration time.
 
 Session keys use the same `unified_msg_origin` format as the runtime:
 `qq*` maps to `aiocqhttp`, `telegram`/`discord`/`lark`/`wecom`/`webchat` keep
@@ -1508,6 +1523,13 @@ their ids, group chats become `GroupMessage:<group_id>` and private chats
   `life_migration_run`. `rollback` deletes exactly `before < id <= after`: rows
   created after the import are untouched, and a failed run whose watermark was
   never taken is a no-op.
+- Re-running a batch reports the conflicts as `skipped_reasons.duplicate`, so
+  `written + duplicate == ready` per dataset; `truncated` counts values dropped
+  by a column cap (expression variants beyond 20, more than 8 sticker tags, more
+  than 20 slang evidence refs, more than 12 aliases).
+- `rollback` also deletes the sticker files of the batch (only the ones no
+  surviving row references) and prunes the directory they leave empty; the
+  manifest reports the count as `files`.
 - `runs` shows `completed` / `failed` / `rolled_back` and the per-dataset
   counters of each batch.
 
@@ -1537,7 +1559,17 @@ lists. A known skipped count is worth reading in the report: `bot_message`,
 - Imported memories are keyword-searchable immediately, but vectors fill at 40
   rows per digest round; a large A_memorix import can take days to reach full
   vector coverage. Watch `memory_vector_coverage` in the diagnostics report.
-- There is no panel entry yet: the migration page gets wired to this CLI in S7c.
+- Only the text/flags of a message survive: `raw_content` (msgpack) is not
+  decoded, so image URLs, QQ face ids and at-targets never reach
+  `life_messages.components` — they are rebuilt as `image`/`at`/`reply` type
+  markers without payload.
+- A_memorix is migrated at the `paragraphs` level only: `entities`, `relations`,
+  `person_identities` and the summary checkpoints are not imported, so the old
+  knowledge graph is lost and memories are keyword/vector searchable text.
+- A sticker is copied once per target session, mirroring the runtime layout
+  (`<session>/<sha256>`); N target groups means N copies of the same bytes.
+- The panel migration page is read-only: it previews, lists batches and rolls a
+  batch back, but a real import still has to run through this CLI.
 
 ## S7c — rollback drill, handoff and the exit gate
 

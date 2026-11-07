@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
+from zoneinfo import ZoneInfo
 
 import pytest
 import pytest_asyncio
@@ -15,8 +17,9 @@ from bot.core.db.sqlite import SQLiteDatabase
 from bot.life.emoji.models import LifeEmoji
 from bot.life.expression.models import LifeExpression
 from bot.life.jargon.models import LifeJargon
+from bot.life.jargon.store import term_checksum
 from bot.life.memory.models import LifeMemory
-from bot.life.migration.service import MigrationService
+from bot.life.migration.service import MigrationService, _memory_kind
 from bot.life.migration.source import MaiBotSource, build_session_key, to_ts
 from bot.life.models import LifeMessage
 from bot.life.person.models import LifePerson, LifePersonFact
@@ -53,10 +56,12 @@ def _source(tmp_path: Path) -> Path:
             is_emoji INTEGER DEFAULT 0,
             is_picture INTEGER DEFAULT 0,
             is_command INTEGER DEFAULT 0,
+            is_notify INTEGER DEFAULT 0,
             processed_plain_text TEXT
         );
         CREATE TABLE person_info (
             id INTEGER PRIMARY KEY,
+            is_known INTEGER DEFAULT 1,
             person_id TEXT,
             person_name TEXT,
             platform TEXT,
@@ -125,31 +130,35 @@ def _source(tmp_path: Path) -> Path:
     connection.executemany(
         "INSERT INTO mai_messages (message_id, timestamp, platform, user_id, "
         "user_nickname, user_cardname, group_id, session_id, is_at, is_picture, "
-        "is_command, processed_plain_text) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        "is_command, is_notify, processed_plain_text) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
         [
             ("m1", "2026-11-01 09:00:00", "qq", "u1", "阿一", "一群的一号", "1001",
-             "qq_group_1001", 1, 0, 0, "早上好"),
+             "qq_group_1001", 1, 0, 0, 0, "早上好"),
             ("m2", "2026-11-01 09:05:00", "qq", "u2", "阿二", None, None,
-             "qq_private_u2", 0, 1, 0, "在吗"),
+             "qq_private_u2", 0, 1, 0, 0, "在吗"),
             ("m3", "2026-11-01 09:06:00", "qq", "u9", "机器人", None, "1001",
-             "qq_group_1001", 0, 0, 0, "（出站）"),
+             "qq_group_1001", 0, 0, 0, 0, "（出站）"),
             ("m4", "2026-11-01 09:07:00", "telegram", "u3", "Tele", None, "2002",
-             "tg_group_2002", 0, 0, 0, "hi"),
+             "tg_group_2002", 0, 0, 0, 0, "hi"),
             ("m5", "2026-11-01 09:08:00", "matrix", "u4", "Mat", None, "3003",
-             "mx_group_3003", 0, 0, 0, "hi"),
+             "mx_group_3003", 0, 0, 0, 0, "hi"),
             ("", "2026-11-01 09:09:00", "qq", "u5", "无名", None, "1001",
-             "qq_group_1001", 0, 0, 0, "没有 id"),
+             "qq_group_1001", 0, 0, 0, 0, "没有 id"),
+            ("m7", "2026-11-01 09:10:00", "qq", "system", "系统", None, "1001",
+             "qq_group_1001", 0, 0, 0, 1, "阿三 加入了群聊"),
         ],
     )
     connection.execute(
         "INSERT INTO bot_platform_accounts (platform, account_id) VALUES ('qq', 'u9')"
     )
     connection.executemany(
-        "INSERT INTO person_info (person_id, person_name, platform, user_id, "
-        "user_nickname, group_cardname, memory_points, know_counts, last_known_time) "
-        "VALUES (?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO person_info (is_known, person_id, person_name, platform, "
+        "user_id, user_nickname, group_cardname, memory_points, know_counts, "
+        "last_known_time) VALUES (?,?,?,?,?,?,?,?,?,?)",
         [
             (
+                1,
                 "p1",
                 "一号",
                 "qq",
@@ -160,17 +169,19 @@ def _source(tmp_path: Path) -> Path:
                 5,
                 "2026-11-02 10:00:00",
             ),
-            ("p2", "二号", "qq", "u2", "阿二", None, None, 0, None),
+            # Seen in a group but never identified: skipped unless asked for.
+            (0, "p2", None, "qq", "u2", "阿二", None, None, 0, None),
         ],
     )
     connection.executemany(
         "INSERT INTO expressions (situation, style, content_list, count, "
-        "last_active_time, create_time, session_id) VALUES (?,?,?,?,?,?,?)",
+        "last_active_time, create_time, session_id, checked) "
+        "VALUES (?,?,?,?,?,?,?,?)",
         [
             ("被叫到", "卖萌", json.dumps(["好的呀", "好哒"]), 7,
-             "2026-11-02 10:00:00", "2026-11-01 10:00:00", "qq_group_1001"),
+             "2026-11-02 10:00:00", "2026-11-01 10:00:00", "qq_group_1001", 1),
             ("被拒绝", "撒娇", json.dumps(["行吧"]), 2,
-             "2026-11-02 10:00:00", "2026-11-01 10:00:00", None),
+             "2026-11-02 10:00:00", "2026-11-01 10:00:00", None, 0),
         ],
     )
     connection.executemany(
@@ -226,9 +237,11 @@ def _source(tmp_path: Path) -> Path:
         "INSERT INTO paragraphs (hash, content, knowledge_type, created_at, "
         "event_time, is_deleted) VALUES (?,?,?,?,?,?)",
         [
-            ("k1", "用户喜欢在周五晚上打游戏", "fact", 1700000000.0, 1700000000.0, 0),
-            ("k2", "某次活动是在春天举办的", "episode", 1700000100.0, 1700000100.0, 0),
-            ("k3", "已删除的记忆", "note", 1700000200.0, 1700000200.0, 1),
+            ("k1", "用户喜欢在周五晚上打游戏", "factual", 1700000000.0,
+             1700000000.0, 0),
+            ("k2", "某次活动是在春天举办的", "narrative", 1700000100.0,
+             1700000100.0, 0),
+            ("k3", "已删除的记忆", "mixed", 1700000200.0, 1700000200.0, 1),
         ],
     )
     memory.commit()
@@ -273,6 +286,153 @@ def test_build_session_key_maps_platforms():
     assert build_session_key("qq") is None
 
 
+def test_to_ts_honours_the_source_timezone():
+    expected = int(
+        datetime(2026, 11, 1, 9, 0, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp()
+    )
+
+    assert to_ts("2026-11-01 09:00:00", "Asia/Shanghai") == expected
+    assert to_ts(datetime(2026, 11, 1, 9, 0), "Asia/Shanghai") == expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "kind"),
+    [
+        ("factual", "fact"),
+        ("narrative", "episode"),
+        ("structured", "note"),
+        ("quote", "note"),
+        ("mixed", "note"),
+        ("FACTUAL", "fact"),
+        ("", "note"),
+        (None, "note"),
+    ],
+)
+def test_memory_kind_maps_a_memorix_knowledge_types(raw, kind):
+    assert _memory_kind(raw) == kind
+
+
+@pytest.mark.asyncio
+async def test_unknown_timezone_is_rejected(life_db, tmp_path):
+    with pytest.raises(ValueError, match="timezone"):
+        MigrationService(life_db, tmp_path / "life", timezone="Mars/Olympus")
+
+
+@pytest.mark.asyncio
+async def test_dry_run_without_target_drops_emoji(service, tmp_path):
+    root = _source(tmp_path)
+
+    report = await service.run(root, dry_run=True)
+
+    assert "emoji" not in report["datasets"]
+    assert report["warnings"] == ["emoji skipped: no target session (--umo)"]
+    assert report["datasets"]["messages"]["ready"] == 3
+
+
+@pytest.mark.asyncio
+async def test_notify_messages_are_skipped(service, life_db, tmp_path):
+    root = _source(tmp_path)
+
+    await service.run(root, umos=[UMO], datasets=["messages"], dry_run=False)
+
+    async with life_db.get_db() as session:
+        ids = {
+            row.message_id
+            for row in (await session.execute(select(LifeMessage))).scalars().all()
+        }
+    assert "m7" not in ids
+    assert ids == {"m1", "m2", "m4"}
+
+
+@pytest.mark.asyncio
+async def test_include_unknown_imports_unconfirmed_people(service, life_db, tmp_path):
+    root = _source(tmp_path)
+
+    report = await service.run(
+        root,
+        umos=[UMO],
+        datasets=["people"],
+        dry_run=False,
+        include_unknown=True,
+    )
+
+    assert report["datasets"]["people"]["detail"] == {"people": 2, "facts": 2}
+    async with life_db.get_db() as session:
+        people = (await session.execute(select(LifePerson))).scalars().all()
+    assert {row.person_id for row in people} == {"p1", "p2"}
+
+
+@pytest.mark.asyncio
+async def test_second_run_reports_duplicates(service, life_db, tmp_path):
+    root = _source(tmp_path)
+    await service.run(root, umos=[UMO], dry_run=False)
+
+    second = await service.run(root, umos=[UMO], dry_run=False)
+
+    assert second["totals"]["written"] == 0
+    for name, block in second["datasets"].items():
+        duplicates = block["skipped_reasons"].get("duplicate", 0)
+        assert block["written"] + duplicates == block["ready"], name
+        assert duplicates == block["ready"], name
+
+
+@pytest.mark.asyncio
+async def test_rollback_removes_emoji_files(service, life_db, tmp_path):
+    root = _source(tmp_path)
+    report = await service.run(root, umos=[UMO], datasets=["emoji"], dry_run=False)
+    async with life_db.get_db() as session:
+        row = (await session.execute(select(LifeEmoji))).scalars().first()
+    path = Path(row.file_path)
+    assert path.is_file()  # noqa: ASYNC240  # one-off path probe
+
+    rolled = await service.rollback(report["batch_id"])
+
+    assert rolled["files"] == 1
+    assert not path.exists()  # noqa: ASYNC240  # one-off path probe
+
+
+@pytest.mark.asyncio
+async def test_sticker_tags_beyond_the_cap_are_counted(service, life_db, tmp_path):
+    root = _source(tmp_path)
+    (root / "data" / "emoji" / "b.png").write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 32)
+    connection = sqlite3.connect(root / "data" / "MaiBot.db")
+    connection.execute(
+        "INSERT INTO images (image_hash, description, full_path, image_type, "
+        "query_count, is_banned, no_file_flag) VALUES (?,?,?,?,?,?,?)",
+        ("h9", ",".join(f"t{i}" for i in range(11)), "data/emoji/b.png", "emoji", 0, 0, 0),
+    )
+    connection.commit()
+    connection.close()
+
+    report = await service.run(root, umos=[UMO], datasets=["emoji"], dry_run=False)
+
+    async with life_db.get_db() as session:
+        rows = (await session.execute(select(LifeEmoji))).scalars().all()
+    assert report["datasets"]["emoji"]["truncated"] == 3
+    assert any(len(row.tags) == 8 for row in rows)
+
+
+@pytest.mark.asyncio
+async def test_long_jargon_term_stays_consistent(service, life_db, tmp_path):
+    root = _source(tmp_path)
+    connection = sqlite3.connect(root / "data" / "MaiBot.db")
+    connection.execute(
+        "INSERT INTO jargons (content, meaning, session_id_dict, count, is_jargon, "
+        "is_complete, is_global, created_by) VALUES (?,?,?,?,?,?,?,?)",
+        ("梗" * 90, "长词", "{}", 1, 1, 0, 0, "AI"),
+    )
+    connection.commit()
+    connection.close()
+
+    await service.run(root, umos=[UMO], datasets=["jargon"], dry_run=False)
+
+    async with life_db.get_db() as session:
+        rows = (await session.execute(select(LifeJargon))).scalars().all()
+    row = next(item for item in rows if item.term.startswith("梗"))
+    assert len(row.term) == 64
+    assert row.checksum == term_checksum(row.term)
+
+
 @pytest.mark.asyncio
 async def test_preflight_reports_layout(service, tmp_path):
     root = _source(tmp_path)
@@ -281,8 +441,9 @@ async def test_preflight_reports_layout(service, tmp_path):
 
     names = {item["name"]: item for item in report["datasets"]}
     assert set(names) == {"messages", "people", "expressions", "jargon", "emoji", "memory"}
-    assert names["messages"]["rows"] == 6
-    assert names["memory"]["rows"] == 3
+    assert names["messages"]["rows"] == 7
+    # Soft-deleted paragraphs are not importable, so they are not counted.
+    assert names["memory"]["rows"] == 2
     assert report["memory_db"] is not None
     assert report["sessions"]["mapped"] == 2
     assert report["sessions"]["unmapped_platforms"] == ["matrix"]
@@ -299,14 +460,16 @@ async def test_dry_run_counts_without_writing(service, life_db, tmp_path):
     assert report["batch_id"] is None
     assert report["totals"]["written"] == 0
     messages = report["datasets"]["messages"]
-    assert messages["seen"] == 6
+    assert messages["seen"] == 7
     assert messages["ready"] == 3
     assert messages["skipped_reasons"] == {
         "bot_message": 1,
         "missing_id": 1,
+        "notify": 1,
         "unknown_platform": 1,
     }
-    assert report["datasets"]["people"]["detail"] == {"people": 2, "facts": 2}
+    assert report["datasets"]["people"]["detail"] == {"people": 1, "facts": 2}
+    assert report["datasets"]["people"]["skipped_reasons"] == {"not_known": 1}
     assert report["datasets"]["expressions"]["ready"] == 3
     assert report["datasets"]["jargon"]["skipped_reasons"] == {"not_jargon": 1}
     assert report["datasets"]["emoji"]["ready"] == 1
@@ -327,9 +490,9 @@ async def test_import_writes_every_dataset(service, life_db, tmp_path):
     report = await service.run(root, umos=[UMO], dry_run=False)
 
     assert report["batch_id"] is not None
-    assert report["totals"]["written"] == 3 + 4 + 3 + 2 + 1 + 2
+    assert report["totals"]["written"] == 3 + 3 + 3 + 2 + 1 + 2
     assert await _count(life_db, LifeMessage) == 3
-    assert await _count(life_db, LifePerson) == 2
+    assert await _count(life_db, LifePerson) == 1
     assert await _count(life_db, LifePersonFact) == 2
     assert await _count(life_db, LifeExpression) == 3
     assert await _count(life_db, LifeJargon) == 2
@@ -353,13 +516,22 @@ async def test_import_writes_every_dataset(service, life_db, tmp_path):
     assert by_id["m2"].session_key == "aiocqhttp:FriendMessage:u2"
     assert by_id["m2"].flags["image"] is True
     assert by_id["m4"].session_key == "telegram:GroupMessage:2002"
-    assert {row.person_id for row in people} == {"p1", "p2"}
+    assert {row.person_id for row in people} == {"p1"}
     assert {row.content for row in facts} == {"喜欢咖啡", "经常熬夜"}
     assert {row.category for row in facts} == {"喜好", "习惯"}
     assert {row.style for row in expressions} == {"好的呀", "好哒", "行吧"}
+    # MaiBot only replies with human-approved expressions; unchecked ones stay
+    # in the archive but start pending.
+    assert {row.style: row.status for row in expressions} == {
+        "好的呀": "active",
+        "好哒": "active",
+        "行吧": "pending",
+    }
     assert {row.term for row in jargon} == {"吃瓜", "全局梗"}
     assert all(row.scope == "global" for row in memories)
     assert all(row.meta["source"] == "a_memorix" for row in memories)
+    # A_memorix ``knowledge_type`` decides the Life kind.
+    assert {row.kind for row in memories} == {"fact", "episode"}
     assert emoji[0].session_key == UMO
     assert Path(emoji[0].file_path).read_bytes() == JPEG
     assert emoji[0].tags == ["开心", "点赞"]

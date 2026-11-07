@@ -37,6 +37,11 @@ def _parse_args() -> argparse.Namespace:
         default="data/life",
         help="Life data directory (sticker files are copied below it)",
     )
+    parser.add_argument(
+        "--timezone",
+        default=None,
+        help="IANA zone of the source deployment for naive timestamps",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
     json_parent = argparse.ArgumentParser(add_help=False)
     json_parent.add_argument("--json", action="store_true", help="Print raw JSON")
@@ -64,6 +69,11 @@ def _parse_args() -> argparse.Namespace:
         command.add_argument("--since-days", type=int, default=0)
         command.add_argument("--limit", type=int, default=0)
         command.add_argument("--memory-source", default=None)
+        command.add_argument(
+            "--include-unknown",
+            action="store_true",
+            help="Also import people the source never confirmed",
+        )
 
     rollback = sub.add_parser(
         "rollback", parents=[json_parent], help="Delete the rows of one batch"
@@ -122,16 +132,18 @@ def _print_run(report: dict) -> None:
     print(f"dry run: {'yes' if report['dry_run'] else 'no'}")
     batch = report.get("batch_id") or "-"
     print(f"batch: {batch}")
-    print("dataset      seen   ready  written  skipped  errors")
+    print("dataset      seen   ready  written  skipped  truncated  errors")
     for name, block in report["datasets"].items():
         print(
             f"{name:<12} {block['seen']:>6} {block['ready']:>7} "
-            f"{block['written']:>8} {block['skipped']:>8} {block['errors']:>7}"
+            f"{block['written']:>8} {block['skipped']:>8} "
+            f"{block['truncated']:>10} {block['errors']:>7}"
         )
     totals = report["totals"]
     print(
         f"{'total':<12} {totals['seen']:>6} {totals['ready']:>7} "
-        f"{totals['written']:>8} {totals['skipped']:>8} {totals['errors']:>7}"
+        f"{totals['written']:>8} {totals['skipped']:>8} "
+        f"{totals['truncated']:>10} {totals['errors']:>7}"
     )
     for name, block in report["datasets"].items():
         reasons = block.get("skipped_reasons") or {}
@@ -145,6 +157,8 @@ def _print_run(report: dict) -> None:
     unmapped = report["sessions"]["unmapped_platforms"]
     if unmapped:
         print("unmapped platforms: " + ", ".join(unmapped))
+    for warning in report.get("warnings") or []:
+        print(f"warning: {warning}")
 
 
 async def _run(args: argparse.Namespace) -> int:
@@ -159,8 +173,7 @@ async def _run(args: argparse.Namespace) -> int:
     database = SQLiteDatabase(str(args.db))
     await database.initialize()
     try:
-        service = MigrationService(database, args.data_dir)
-        await service.ensure_schema()
+        service = MigrationService(database, args.data_dir, timezone=args.timezone)
         if args.command == "inspect":
             report = await service.preflight(
                 args.source,
@@ -173,6 +186,10 @@ async def _run(args: argparse.Namespace) -> int:
                 _print_inspect(report)
             return 0
         if args.command in ("preview", "import"):
+            if args.command == "import":
+                # A real import writes Life tables, so create them first; the
+                # preview never touches them.
+                await service.ensure_schema()
             report = await service.run(
                 args.source,
                 umos=args.umo,
@@ -181,6 +198,7 @@ async def _run(args: argparse.Namespace) -> int:
                 since_days=args.since_days,
                 limit=args.limit,
                 memory_source=args.memory_source,
+                include_unknown=args.include_unknown,
             )
             if args.json:
                 print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -188,6 +206,7 @@ async def _run(args: argparse.Namespace) -> int:
                 _print_run(report)
             return 0
         if args.command == "rollback":
+            await service.ensure_schema()
             report = await service.rollback(args.batch)
             if args.json:
                 print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -195,8 +214,10 @@ async def _run(args: argparse.Namespace) -> int:
                 print(f"batch: {report['batch_id']}")
                 for table, deleted in report["deleted"].items():
                     print(f"deleted {table}: {deleted}")
+                print(f"deleted files: {report['files']}")
             return 0
         if args.command == "runs":
+            await service.ensure_schema()
             rows = await service.runs(args.limit)
             if args.json:
                 print(json.dumps(rows, ensure_ascii=False, indent=2))

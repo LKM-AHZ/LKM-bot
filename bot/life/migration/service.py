@@ -3,19 +3,23 @@
 The service reads MaiBot read-only, converts six datasets and writes only Life
 tables:
 
-- ``messages``: ``mai_messages`` to ``life_messages`` (bot accounts skipped),
+- ``messages``: ``mai_messages`` to ``life_messages`` (bot accounts and
+  ``is_notify`` system notices skipped),
 - ``people``: ``person_info`` plus its ``memory_points`` to ``life_person`` and
-  ``life_person_fact``,
-- ``expressions``: ``expressions`` to ``life_expression``,
+  ``life_person_fact`` (rows the source never confirmed are skipped unless
+  ``include_unknown`` is set),
+- ``expressions``: ``expressions`` to ``life_expression`` (``checked`` decides
+  whether a row starts ``active`` or ``pending``),
 - ``jargon``: ``jargons`` to ``life_jargon``,
 - ``emoji``: ``images`` plus ``data/emoji`` files to ``life_emoji``,
 - ``memory``: A_memorix ``paragraphs`` to global ``life_memory`` rows.
 
 Every write is an ``INSERT ... ON CONFLICT DO NOTHING``, so re-running a batch
-only fills gaps. A real run records the row-id watermark of each touched table;
-:meth:`MigrationService.rollback` deletes exactly the rows between the
-watermarks. Use a dry run first: it reads and converts everything but writes
-nothing.
+only fills gaps; conflicts are reported as ``skipped_reasons["duplicate"]`` so
+the counters always add up. A real run records the row-id watermark of each
+touched table; :meth:`MigrationService.rollback` deletes exactly the rows
+between the watermarks, plus the sticker files they referenced. Use a dry run
+first: it reads and converts everything but writes nothing.
 """
 
 from __future__ import annotations
@@ -28,6 +32,7 @@ import time
 import uuid
 from pathlib import Path
 from typing import Any, Sequence
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import delete, desc, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -83,6 +88,13 @@ _ALL_MODELS: tuple[type[SQLModel], ...] = (
 )
 
 _MEMORY_KINDS = {
+    # A_memorix writes the ``KnowledgeType`` values below; ``fact``/``episode``
+    # are kept for older exports that already used the canonical names.
+    "factual": "fact",
+    "narrative": "episode",
+    "structured": "note",
+    "quote": "note",
+    "mixed": "note",
     "fact": "fact",
     "episode": "episode",
     "summary": "summary",
@@ -131,13 +143,14 @@ def _counters() -> dict[str, Any]:
     """Return an empty counter block for one dataset.
 
     Returns:
-        Mutable counters with seen/ready/written/skipped/errors.
+        Mutable counters with seen/ready/written/skipped/truncated/errors.
     """
     return {
         "seen": 0,
         "ready": 0,
         "written": 0,
         "skipped": 0,
+        "truncated": 0,
         "errors": 0,
         "skipped_reasons": {},
     }
@@ -166,6 +179,11 @@ def _sniff_image(data: bytes) -> tuple[str, str]:
 def _memory_kind(raw: Any) -> str:
     """Map an A_memorix knowledge type to a Life memory kind.
 
+    A_memorix stores ``structured`` / ``narrative`` / ``factual`` / ``quote`` /
+    ``mixed``; factual memories become ``fact`` rows so the person-fact and
+    recall paths see them, narrative ones become ``episode`` and the rest fall
+    back to ``note``.
+
     Args:
         raw: ``knowledge_type`` column value.
 
@@ -178,15 +196,31 @@ def _memory_kind(raw: Any) -> str:
 class MigrationService:
     """Convert a MaiBot deployment into Life tables."""
 
-    def __init__(self, db_helper: BaseDatabase, data_dir: str | Path) -> None:
+    def __init__(
+        self,
+        db_helper: BaseDatabase,
+        data_dir: str | Path,
+        timezone: str | None = None,
+    ) -> None:
         """Initialize the service.
 
         Args:
             db_helper: Core async database helper.
             data_dir: Life data directory; sticker files are copied below it.
+            timezone: IANA zone of the source deployment; naive timestamps are
+                read in this zone instead of the host's local one.
+
+        Raises:
+            ValueError: When ``timezone`` is not a known IANA zone.
         """
         self.db = db_helper
         self.data_dir = Path(data_dir).expanduser().resolve()
+        self.timezone = timezone
+        if timezone is not None:
+            try:
+                ZoneInfo(timezone)  # fail fast on an unknown zone
+            except (KeyError, ValueError) as exc:
+                raise ValueError(f"unknown timezone: {timezone}") from exc
         self.memory_store = MemoryStore(db_helper)
         self.importer = MemoryImporter(self.memory_store)
 
@@ -303,6 +337,7 @@ class MigrationService:
         since_days: int = 0,
         limit: int = 0,
         memory_source: str | Path | None = None,
+        include_unknown: bool = False,
     ) -> dict[str, Any]:
         """Import one MaiBot deployment.
 
@@ -316,19 +351,27 @@ class MigrationService:
                 the whole history.
             limit: Maximum messages to import; 0 keeps all.
             memory_source: Explicit A_memorix directory or database.
+            include_unknown: Also import people the source never confirmed.
 
         Returns:
-            Report with per-dataset counters and the rollback watermark.
+            Report with per-dataset counters, warnings and the rollback
+            watermark.
 
         Raises:
             ValueError: When a dataset is unknown, a required table is missing
-                or the sticker import has no target session.
+                or a real sticker import has no target session.
         """
         selected = self._select(datasets)
-        if "emoji" in selected and not [umo for umo in umos if umo]:
-            raise ValueError("importing emoji needs at least one --umo target")
-        source = MaiBotSource.open(source_path)
         targets = [str(umo) for umo in umos if umo]
+        warnings: list[str] = []
+        if "emoji" in selected and not targets:
+            if datasets is not None or not dry_run:
+                raise ValueError("importing emoji needs at least one --umo target")
+            # The panel preview uses the default dataset set; drop stickers
+            # instead of failing the whole inspection.
+            selected = tuple(name for name in selected if name != "emoji")
+            warnings.append("emoji skipped: no target session (--umo)")
+        source = MaiBotSource.open(source_path)
         started = int(time.time())
         counts = {dataset: _counters() for dataset in selected}
         marks: dict[str, dict[str, int]] = {}
@@ -362,6 +405,7 @@ class MigrationService:
                     counts["people"],
                     targets,
                     dry_run,
+                    include_unknown,
                 )
             if "expressions" in selected:
                 await self._import_expressions(
@@ -410,6 +454,7 @@ class MigrationService:
                     status="failed",
                     error=f"{type(exc).__name__}: {exc}"[:500],
                     started=started,
+                    include_unknown=include_unknown,
                 )
             connection.close()
             raise
@@ -429,6 +474,7 @@ class MigrationService:
                 limit=limit,
                 status="completed",
                 started=started,
+                include_unknown=include_unknown,
             )
         return {
             "batch_id": None if dry_run else batch_id,
@@ -441,19 +487,20 @@ class MigrationService:
                 "source_sessions": len(session_index),
                 "unmapped_platforms": unmapped,
             },
+            "warnings": warnings,
             "marks": marks,
             "started_at": started,
             "finished_at": int(time.time()),
         }
 
     async def rollback(self, batch_id: str) -> dict[str, Any]:
-        """Delete the rows written by one batch.
+        """Delete the rows written by one batch and its sticker files.
 
         Args:
             batch_id: Identifier returned by :meth:`run`.
 
         Returns:
-            Deleted row counts per table.
+            Deleted row counts per table plus the removed file count.
 
         Raises:
             ValueError: When the batch does not exist.
@@ -462,8 +509,20 @@ class MigrationService:
         if run is None:
             raise ValueError(f"migration batch not found: {batch_id}")
         deleted: dict[str, int] = {}
+        files = 0
         if run.status != "rolled_back":
+            emoji_table = LifeEmoji.__table__  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
+            paths: set[str] = set()
             async with self.db.get_db() as session:
+                span = (run.marks or {}).get("life_emoji") or {}
+                if span.get("before") is not None and span.get("after") is not None:
+                    rows = await session.execute(
+                        select(emoji_table.c.file_path).where(
+                            emoji_table.c.id > int(span["before"]),
+                            emoji_table.c.id <= int(span["after"]),
+                        )
+                    )
+                    paths = {str(path) for path in rows.scalars().all() if path}
                 for table, span in (run.marks or {}).items():
                     model = _MODEL_BY_TABLE.get(table)
                     if (
@@ -484,12 +543,50 @@ class MigrationService:
                         0,
                     )
                 await session.commit()
+                # Files are only dropped once no surviving row references them.
+                if paths:
+                    remaining: set[str] = set()
+                    listed = sorted(paths)
+                    for start in range(0, len(listed), 200):
+                        rows = await session.execute(
+                            select(emoji_table.c.file_path).where(
+                                emoji_table.c.file_path.in_(listed[start : start + 200])
+                            )
+                        )
+                        remaining.update(str(path) for path in rows.scalars().all())
+                    files = self._remove_files(sorted(paths - remaining))
             await self._mark_rolled_back(batch_id)
         return {
             "batch_id": batch_id,
             "status": "rolled_back",
             "deleted": deleted,
+            "files": files,
         }
+
+    @staticmethod
+    def _remove_files(paths: Sequence[str]) -> int:
+        """Delete sticker files and the session directory they leave empty.
+
+        Args:
+            paths: Files that no ``life_emoji`` row references anymore.
+
+        Returns:
+            Number of files removed.
+        """
+        removed = 0
+        for raw in paths:
+            path = Path(raw)
+            try:
+                path.unlink()
+                removed += 1
+            except OSError as exc:
+                logger.warning(f"[life] emoji rollback could not remove {path}: {exc}")
+                continue
+            try:
+                path.parent.rmdir()
+            except OSError:
+                continue
+        return removed
 
     async def runs(self, limit: int = 20) -> list[dict[str, Any]]:
         """Return recent migration batches, newest first.
@@ -567,7 +664,7 @@ class MigrationService:
         """
         return {
             key: sum(int(block.get(key, 0)) for block in counts.values())
-            for key in ("seen", "ready", "written", "skipped", "errors")
+            for key in ("seen", "ready", "written", "skipped", "truncated", "errors")
         }
 
     @staticmethod
@@ -582,7 +679,29 @@ class MigrationService:
         reasons = counters["skipped_reasons"]
         reasons[reason] = int(reasons.get(reason, 0)) + 1
 
-    async def _insert(self, model: type[SQLModel], rows: list[dict[str, Any]]) -> int:
+    @staticmethod
+    def _record_writes(
+        counters: dict[str, Any],
+        written: int,
+        duplicates: int,
+    ) -> None:
+        """Account an insert so written plus skipped always equals ready.
+
+        Args:
+            counters: Dataset counters.
+            written: Rows actually inserted.
+            duplicates: Rows dropped by the natural-key conflict.
+        """
+        counters["written"] += written
+        if duplicates <= 0:
+            return
+        counters["skipped"] += duplicates
+        reasons = counters["skipped_reasons"]
+        reasons["duplicate"] = int(reasons.get("duplicate", 0)) + duplicates
+
+    async def _insert(
+        self, model: type[SQLModel], rows: list[dict[str, Any]]
+    ) -> tuple[int, int]:
         """Insert rows, ignoring duplicates.
 
         Args:
@@ -590,16 +709,17 @@ class MigrationService:
             rows: Row payloads; every row must use the same columns.
 
         Returns:
-            Number of rows actually inserted.
+            ``(written, duplicates)`` so the caller can report conflicts.
         """
         if not rows:
-            return 0
+            return 0, 0
         async with self.db.get_db() as session:
             result = await session.execute(
                 sqlite_insert(model).values(rows).on_conflict_do_nothing()
             )
             await session.commit()
-            return max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
+            written = max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
+            return written, max(len(rows) - written, 0)
 
     async def _watermarks(
         self,
@@ -664,12 +784,14 @@ class MigrationService:
             if not dry_run:
                 rows.append(row)
                 if len(rows) >= _INSERT_BATCH:
-                    counters["written"] += await self._insert(LifeMessage, rows)
+                    written, duplicates = await self._insert(LifeMessage, rows)
+                    self._record_writes(counters, written, duplicates)
                     rows = []
             if limit and counters["ready"] >= limit:
                 break
         if rows and not dry_run:
-            counters["written"] += await self._insert(LifeMessage, rows)
+            written, duplicates = await self._insert(LifeMessage, rows)
+            self._record_writes(counters, written, duplicates)
 
     def _message_row(
         self,
@@ -690,6 +812,8 @@ class MigrationService:
         message_id = str(_value(record, "message_id") or "").strip()
         if not message_id:
             return None, "missing_id"
+        if bool(_value(record, "is_notify", False)):
+            return None, "notify"
         platform = str(_value(record, "platform") or "").strip()
         user_id = str(_value(record, "user_id") or "").strip()
         if (platform, user_id) in bot_accounts:
@@ -699,7 +823,9 @@ class MigrationService:
         canonical = map_platform(platform)
         if session_key is None or canonical is None:
             return None, "unknown_platform"
-        ts = to_ts(_value(record, "timestamp")) or to_ts(_value(record, "received_at"))
+        ts = to_ts(_value(record, "timestamp"), self.timezone) or to_ts(
+            _value(record, "received_at"), self.timezone
+        )
         if ts <= 0:
             return None, "missing_timestamp"
         if since_ts and ts < since_ts:
@@ -757,6 +883,7 @@ class MigrationService:
         counters: dict[str, Any],
         umos: Sequence[str],
         dry_run: bool,
+        include_unknown: bool = False,
     ) -> None:
         """Convert ``person_info`` rows and their memory points.
 
@@ -765,6 +892,7 @@ class MigrationService:
             counters: Dataset counters.
             umos: Fallback target sessions for people without a group card.
             dry_run: Count only when True.
+            include_unknown: Also import people the source never confirmed.
         """
         people: list[dict[str, Any]] = []
         facts: list[dict[str, Any]] = []
@@ -772,11 +900,14 @@ class MigrationService:
         ready_facts = 0
         for record in connection.execute("SELECT * FROM person_info ORDER BY id"):
             counters["seen"] += 1
-            person_rows, fact_rows, reason = self._person_rows(record, umos)
+            person_rows, fact_rows, reason, truncated = self._person_rows(
+                record, umos, include_unknown
+            )
             if not person_rows:
                 self._skip(counters, reason)
                 continue
             counters["ready"] += len(person_rows) + len(fact_rows)
+            counters["truncated"] += truncated
             ready_people += len(person_rows)
             ready_facts += len(fact_rows)
             if not dry_run:
@@ -785,28 +916,38 @@ class MigrationService:
         if dry_run:
             counters["detail"] = {"people": ready_people, "facts": ready_facts}
             return
-        written_people = await self._insert(LifePerson, people)
-        written_facts = await self._insert(LifePersonFact, facts)
-        counters["written"] += written_people + written_facts
+        written_people, duplicate_people = await self._insert(LifePerson, people)
+        written_facts, duplicate_facts = await self._insert(LifePersonFact, facts)
+        self._record_writes(
+            counters,
+            written_people + written_facts,
+            duplicate_people + duplicate_facts,
+        )
         counters["detail"] = {"people": written_people, "facts": written_facts}
 
     def _person_rows(
         self,
         record: sqlite3.Row,
         umos: Sequence[str],
-    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str]:
+        include_unknown: bool = False,
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], str, int]:
         """Convert one person and their memory points.
 
         Args:
             record: ``person_info`` row.
             umos: Fallback target sessions.
+            include_unknown: Also import people the source never confirmed.
 
         Returns:
-            ``(people, facts, "")`` or ``([], [], reason)`` when skipped.
+            ``(people, facts, "", truncated)``, or ``([], [], reason, 0)`` when
+            skipped.
         """
         person_id = str(_value(record, "person_id") or "").strip()
         if not person_id:
-            return [], [], "missing_id"
+            return [], [], "missing_id", 0
+        # Older sources have no ``is_known`` column; treat them as confirmed.
+        if not include_unknown and not bool(_value(record, "is_known", True)):
+            return [], [], "not_known", 0
         platform = str(_value(record, "platform") or "")
         person_name = str(_value(record, "person_name") or "").strip()
         nickname = str(_value(record, "user_nickname") or "").strip()
@@ -826,9 +967,9 @@ class MigrationService:
         if not targets:
             targets = [(umo, None, "") for umo in umos]
         if not targets:
-            return [], [], "no_session"
+            return [], [], "no_session", 0
         know_counts = max(int(_value(record, "know_counts") or 0), 0)
-        last_seen = to_ts(_value(record, "last_known_time"))
+        last_seen = to_ts(_value(record, "last_known_time"), self.timezone)
         now = int(time.time())
         points = _json_value(_value(record, "memory_points"), [])
         fact_specs: list[tuple[str, str, float]] = []
@@ -844,11 +985,13 @@ class MigrationService:
                 aliases.append(cleaned)
         person_rows: list[dict[str, Any]] = []
         fact_rows: list[dict[str, Any]] = []
+        truncated = 0
         for session_key, group_id, card in targets:
             display = clean_name(card or person_name or nickname)
             session_aliases = list(aliases)
             if display and display not in session_aliases:
                 session_aliases.append(display)
+            truncated += max(len(session_aliases) - 12, 0)
             person_rows.append(
                 {
                     "session_key": session_key,
@@ -881,7 +1024,7 @@ class MigrationService:
                         "updated_at": now,
                     }
                 )
-        return person_rows, fact_rows, ""
+        return person_rows, fact_rows, "", truncated
 
     @staticmethod
     def _memory_point(raw: Any) -> tuple[str, str, float] | None:
@@ -935,15 +1078,19 @@ class MigrationService:
         seen: set[tuple[str, str]] = set()
         for record in connection.execute("SELECT * FROM expressions ORDER BY id"):
             counters["seen"] += 1
-            converted, reason = self._expression_rows(record, session_index, umos, seen)
+            converted, reason, truncated = self._expression_rows(
+                record, session_index, umos, seen
+            )
             if not converted:
                 self._skip(counters, reason)
                 continue
             counters["ready"] += len(converted)
+            counters["truncated"] += truncated
             if not dry_run:
                 rows.extend(converted)
         if rows and not dry_run:
-            counters["written"] += await self._insert(LifeExpression, rows)
+            written, duplicates = await self._insert(LifeExpression, rows)
+            self._record_writes(counters, written, duplicates)
 
     def _expression_rows(
         self,
@@ -951,7 +1098,7 @@ class MigrationService:
         session_index: dict[str, dict[str, Any]],
         umos: Sequence[str],
         seen: set[tuple[str, str]],
-    ) -> tuple[list[dict[str, Any]], str]:
+    ) -> tuple[list[dict[str, Any]], str, int]:
         """Convert one MaiBot expression.
 
         Args:
@@ -961,7 +1108,7 @@ class MigrationService:
             seen: ``(session_key, checksum)`` pairs already converted.
 
         Returns:
-            ``(rows, "")`` or ``([], reason)`` when skipped.
+            ``(rows, "", truncated)``, or ``([], reason, 0)`` when skipped.
         """
         style = str(_value(record, "style") or "").strip()
         session_id = str(_value(record, "session_id") or "").strip()
@@ -979,7 +1126,7 @@ class MigrationService:
         if not session_keys:
             session_keys = [str(umo) for umo in umos if umo]
         if not session_keys:
-            return [], "no_session"
+            return [], "no_session", 0
         contents = _json_value(_value(record, "content_list"), [])
         if isinstance(contents, str):
             contents = [contents]
@@ -991,13 +1138,17 @@ class MigrationService:
         if not texts and style:
             texts = [style]
         if not texts:
-            return [], "empty"
+            return [], "empty", 0
         situation = str(_value(record, "situation") or "").strip()
         tags = [style] if style else []
         now = int(time.time())
-        created = to_ts(_value(record, "create_time")) or now
-        last_used = to_ts(_value(record, "last_active_time"))
+        created = to_ts(_value(record, "create_time"), self.timezone) or now
+        last_used = to_ts(_value(record, "last_active_time"), self.timezone)
         usage = max(int(_value(record, "count") or 0), 0)
+        # MaiBot only replies with expressions a human approved; keep the rest as
+        # pending so the archive still has them without using them.
+        approved = bool(_value(record, "checked", True))
+        truncated = max(len(texts) - 20, 0)
         rows: list[dict[str, Any]] = []
         for text in texts[:20]:
             checksum = expression_checksum(situation, text)
@@ -1017,13 +1168,13 @@ class MigrationService:
                         "usage_count": usage,
                         "last_used_ts": last_used,
                         "source": "maibot",
-                        "status": "active",
+                        "status": "active" if approved else "pending",
                         "vector_state": "pending",
                         "created_at": created,
                         "updated_at": now,
                     }
                 )
-        return rows, "" if rows else "duplicate"
+        return rows, "" if rows else "duplicate", truncated
 
     async def _import_jargon(
         self,
@@ -1046,15 +1197,19 @@ class MigrationService:
         seen: set[tuple[str, str]] = set()
         for record in connection.execute("SELECT * FROM jargons ORDER BY id"):
             counters["seen"] += 1
-            converted, reason = self._jargon_rows(record, session_index, umos, seen)
+            converted, reason, truncated = self._jargon_rows(
+                record, session_index, umos, seen
+            )
             if not converted:
                 self._skip(counters, reason)
                 continue
             counters["ready"] += len(converted)
+            counters["truncated"] += truncated
             if not dry_run:
                 rows.extend(converted)
         if rows and not dry_run:
-            counters["written"] += await self._insert(LifeJargon, rows)
+            written, duplicates = await self._insert(LifeJargon, rows)
+            self._record_writes(counters, written, duplicates)
 
     def _jargon_rows(
         self,
@@ -1062,7 +1217,7 @@ class MigrationService:
         session_index: dict[str, dict[str, Any]],
         umos: Sequence[str],
         seen: set[tuple[str, str]],
-    ) -> tuple[list[dict[str, Any]], str]:
+    ) -> tuple[list[dict[str, Any]], str, int]:
         """Convert one MaiBot slang entry.
 
         Args:
@@ -1072,13 +1227,15 @@ class MigrationService:
             seen: ``(session_key, checksum)`` pairs already converted.
 
         Returns:
-            ``(rows, "")`` or ``([], reason)`` when skipped.
+            ``(rows, "", truncated)``, or ``([], reason, 0)`` when skipped.
         """
         if not bool(_value(record, "is_jargon", False)):
-            return [], "not_jargon"
-        term = str(_value(record, "content") or "").strip()
+            return [], "not_jargon", 0
+        # ``life_jargon.term`` is capped at 64 characters; hash the value that is
+        # actually stored so the checksum and the row stay consistent.
+        term = str(_value(record, "content") or "").strip()[:64]
         if not term:
-            return [], "missing_term"
+            return [], "missing_term", 0
         meaning = str(_value(record, "meaning") or "").strip()
         session_keys: list[str] = []
         if bool(_value(record, "is_global", False)):
@@ -1100,7 +1257,7 @@ class MigrationService:
         if not session_keys:
             session_keys = [str(umo) for umo in umos if umo]
         if not session_keys:
-            return [], "no_session"
+            return [], "no_session", 0
         evidence: list[dict[str, Any]] = []
         raw_evidence = _json_value(_value(record, "evidence_messages"), [])
         if isinstance(raw_evidence, list):
@@ -1117,11 +1274,12 @@ class MigrationService:
                     )
         created_by = str(_value(record, "created_by") or "")
         confidence = 0.8 if bool(_value(record, "is_complete", False)) else 0.6
-        created = to_ts(_value(record, "created_timestamp"))
-        updated = to_ts(_value(record, "updated_timestamp"))
+        created = to_ts(_value(record, "created_timestamp"), self.timezone)
+        updated = to_ts(_value(record, "updated_timestamp"), self.timezone)
         usage = max(int(_value(record, "count") or 0), 0)
         now = int(time.time())
         checksum = term_checksum(term)
+        truncated = max(len(evidence) - 20, 0)
         rows: list[dict[str, Any]] = []
         for session_key in dict.fromkeys(session_keys):
             if (session_key, checksum) in seen:
@@ -1130,7 +1288,7 @@ class MigrationService:
             rows.append(
                 {
                     "session_key": session_key,
-                    "term": term[:64],
+                    "term": term,
                     "meaning": meaning[:2000],
                     "confidence": confidence,
                     "status": "active",
@@ -1143,7 +1301,7 @@ class MigrationService:
                     "updated_at": now,
                 }
             )
-        return rows, "" if rows else "duplicate"
+        return rows, "" if rows else "duplicate", truncated
 
     async def _import_emoji(
         self,
@@ -1188,9 +1346,11 @@ class MigrationService:
                 continue
             digest = hashlib.sha256(data).hexdigest()
             description = str(_value(record, "description") or "").strip()
-            tags = [part for part in re.split(r"[,，、\s]+", description) if part][:8]
+            words = [part for part in re.split(r"[,，、\s]+", description) if part]
+            tags = words[:8]
+            counters["truncated"] += max(len(words) - 8, 0)
             usage = max(int(_value(record, "query_count") or 0), 0)
-            last_used = to_ts(_value(record, "last_used_time"))
+            last_used = to_ts(_value(record, "last_used_time"), self.timezone)
             for umo in umos:
                 if (umo, digest) in seen:
                     continue
@@ -1230,7 +1390,8 @@ class MigrationService:
                     }
                 )
         if rows and not dry_run:
-            counters["written"] += await self._insert(LifeEmoji, rows)
+            written, duplicates = await self._insert(LifeEmoji, rows)
+            self._record_writes(counters, written, duplicates)
 
     @staticmethod
     def _emoji_path(root: Path, raw: Any) -> Path | None:
@@ -1310,8 +1471,8 @@ class MigrationService:
                     {
                         "content": content,
                         "kind": _memory_kind(_value(record, "knowledge_type")),
-                        "ts": to_ts(_value(record, "event_time"))
-                        or to_ts(_value(record, "created_at")),
+                        "ts": to_ts(_value(record, "event_time"), self.timezone)
+                        or to_ts(_value(record, "created_at"), self.timezone),
                     }
                 )
                 if len(batch) >= _MEMORY_BATCH:
@@ -1343,26 +1504,47 @@ class MigrationService:
             scope="global",
             source="a_memorix",
         )
-        counters["written"] += int(result["imported"])
-        counters["skipped"] += int(result["skipped"])
-        counters["errors"] += int(result["errors"])
+        written = int(result["imported"])
+        skipped = int(result["skipped"])
+        errors = int(result["errors"])
+        counters["written"] += written
+        counters["skipped"] += skipped
+        counters["errors"] += errors
+        if dry_run:
+            return
+        # Paragraphs dropped by the natural key on a re-run, so a second pass
+        # reads as duplicates instead of silently writing nothing.
+        duplicates = len(batch) - skipped - written - errors
+        if duplicates > 0:
+            counters["skipped"] += duplicates
+            reasons = counters["skipped_reasons"]
+            reasons["duplicate"] = int(reasons.get("duplicate", 0)) + duplicates
 
     @staticmethod
     def _count_paragraphs(path: Path) -> int:
-        """Count A_memorix paragraphs, or 0 when the table is absent.
+        """Count the paragraphs an import would consider, or 0.
 
         Args:
             path: A_memorix ``metadata.db``.
 
         Returns:
-            Row count.
+            Row count without the soft-deleted paragraphs, so the inspection
+            matches what :meth:`run` can actually import.
         """
         connection = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True)
         try:
             if "paragraphs" not in MaiBotSource.table_names(connection):
                 return 0
+            columns = {
+                str(row[1])
+                for row in connection.execute("PRAGMA table_info(paragraphs)")
+            }
+            clause = " WHERE is_deleted = 0" if "is_deleted" in columns else ""
             return int(
-                connection.execute("SELECT COUNT(*) FROM paragraphs").fetchone()[0] or 0
+                connection.execute(
+                    f"SELECT COUNT(*) FROM paragraphs{clause}"
+                ).fetchone()[0]
+                or 0
             )
         finally:
             connection.close()
@@ -1424,6 +1606,7 @@ class MigrationService:
         status: str,
         started: int,
         error: str = "",
+        include_unknown: bool = False,
     ) -> None:
         """Persist one batch manifest.
 
@@ -1440,6 +1623,7 @@ class MigrationService:
             status: Manifest status.
             started: Start timestamp.
             error: Failure detail for a failed batch.
+            include_unknown: Whether unconfirmed people were imported.
         """
         async with self.db.get_db() as session:
             session.add(
@@ -1455,6 +1639,8 @@ class MigrationService:
                         "umos": list(umos),
                         "since_days": since_days,
                         "limit": limit,
+                        "include_unknown": include_unknown,
+                        "timezone": self.timezone,
                     },
                     error=error,
                     created_at=started,

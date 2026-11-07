@@ -164,7 +164,7 @@ class MemoryImporter:
             source: Provenance stored in the row metadata.
 
         Returns:
-            Counters for this batch.
+            Counters for this batch; rows without a timestamp keep ``ts = 0``.
         """
         counters = {"rows_seen": 0, "imported": 0, "skipped": 0, "errors": 0}
         payload: list[dict[str, Any]] = []
@@ -195,8 +195,10 @@ class MemoryImporter:
                     "content": text[:4000],
                     "person_id": str(person)[:255] if person else None,
                     "importance": 0.5,
-                    "ts": _normalize_ts(_first_value(row, _TS_KEYS))
-                    or int(time.time()),
+                    # Rows without a timestamp stay undated (0) instead of
+                    # pretending they happened at import time: recall then
+                    # treats them as "no date" rather than as fresh memory.
+                    "ts": _normalize_ts(_first_value(row, _TS_KEYS)),
                     "meta": {"imported": True, "source": source},
                     "keywords": " ".join(tokenize(text)[:64]),
                 }
