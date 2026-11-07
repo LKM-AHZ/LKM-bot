@@ -1450,3 +1450,91 @@ minute. The diagnostics report adds two checks:
 - Changing `rollout_salt` reshuffles the assignment; keep it fixed for the whole
   window.
 - There is no panel page for the rollout yet (planned with S7c).
+
+## S7b — migrate a MaiBot deployment
+
+The importer reads a MaiBot 1.4 instance (`data/MaiBot.db` plus the
+`data/emoji` and `data/a-memorix` trees) strictly read-only and writes Life
+tables only. It is offline: **stop the bot before a real import**, because the
+rollback watermark assumes no other writer touches those tables during the run.
+
+```bash
+# 1. what is in the source?
+python scripts/life/migrate.py inspect --source /srv/maibot
+
+# 2. convert and count without writing
+python scripts/life/migrate.py preview --source /srv/maibot \
+  --umo aiocqhttp:GroupMessage:1001
+
+# 3. stop the bot, then import
+python scripts/life/migrate.py import --source /srv/maibot \
+  --umo aiocqhttp:GroupMessage:1001
+
+# 4. batches and rollback
+python scripts/life/migrate.py runs
+python scripts/life/migrate.py rollback --batch <batch_id>
+```
+
+Global data (stickers, global slang, expressions without a session, people
+without a group card) needs at least one `--umo` target; sticker import refuses
+to run without one. `--datasets messages,people` narrows a run, `--since-days`
+and `--limit` trim the message history, `--memory-source` overrides the
+A_memorix directory, and `--json` switches every subcommand to raw JSON.
+
+### What maps where
+
+| MaiBot | Life | Notes |
+| --- | --- | --- |
+| `mai_messages` | `life_messages` | bot accounts skipped, text/flags/components rebuilt |
+| `person_info` | `life_person` + `life_person_fact` | one row per group card; `memory_points` become facts |
+| `expressions` | `life_expression` | each `content_list` variant becomes one style |
+| `jargons` | `life_jargon` | `is_jargon=0` skipped; global rows go to every `--umo` |
+| `images` (emoji) | `life_emoji` | files copied to `<life data>/emoji/<session>/<sha256>` |
+| A_memorix `paragraphs` | `life_memory` (global) | `is_deleted=1` skipped |
+
+Session keys use the same `unified_msg_origin` format as the runtime:
+`qq*` maps to `aiocqhttp`, `telegram`/`discord`/`lark`/`wecom`/`webchat` keep
+their ids, group chats become `GroupMessage:<group_id>` and private chats
+`FriendMessage:<user_id>`. Rows from an unknown platform are counted under
+`unknown_platform` and reported by `inspect`.
+
+### Idempotent and reversible
+
+- Every insert is `ON CONFLICT DO NOTHING` against the natural key
+  (`(platform_id, message_id)`, `(session_key, person_id)`, `(session_key,
+  checksum)`, `(session_key, sha256)`, `(kind, session_key, content_hash)`), so
+  re-running a batch only fills gaps.
+- A real run records each table's maximum row id before and after in
+  `life_migration_run`. `rollback` deletes exactly `before < id <= after`: rows
+  created after the import are untouched, and a failed run whose watermark was
+  never taken is a no-op.
+- `runs` shows `completed` / `failed` / `rolled_back` and the per-dataset
+  counters of each batch.
+
+### Verify after import
+
+```bash
+python scripts/life/memory_tool.py stats --db data/data_v4.db
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status
+```
+
+Check `storage.messages`, `storage.people`, `storage.expressions`,
+`storage.jargon`, `storage.emojis`, `memory.storage.total` and the per-session
+lists. A known skipped count is worth reading in the report: `bot_message`,
+`missing_id`, `unknown_platform`, `not_emoji`, `not_jargon`, `deleted`.
+
+### Limits
+
+- The source schema is MaiBot 1.4 (`mai_messages`, `person_info`,
+  `expressions`, `jargons`, `images`, `chat_sessions`, `bot_platform_accounts`,
+  A_memorix `paragraphs`). Older own-format exports can
+  still go through `memory_tool.py import` for memories only.
+- People start with `relation_score = 0` and carry `know_counts` as
+  interactions; relationships grow from live traffic, not from history.
+- Expression variants share one situation; the MaiBot "style" label is kept in
+  `tags`, the phrasing itself becomes `style`.
+- Imported memories are keyword-searchable immediately, but vectors fill at 40
+  rows per digest round; a large A_memorix import can take days to reach full
+  vector coverage. Watch `memory_vector_coverage` in the diagnostics report.
+- There is no panel entry yet: the migration page gets wired to this CLI in S7c.

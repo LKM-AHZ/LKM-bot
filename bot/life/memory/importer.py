@@ -84,6 +84,8 @@ class MemoryImporter:
         session_key: str,
         default_kind: str = "summary",
         dry_run: bool = True,
+        scope: str = "session",
+        source: str = "maibot",
     ) -> dict[str, Any]:
         """Import one file or directory.
 
@@ -92,6 +94,9 @@ class MemoryImporter:
             session_key: Session the imported memories belong to.
             default_kind: Kind used when a row has no kind column.
             dry_run: When True, rows are counted but not written.
+            scope: ``session`` for per-chat rows, ``global`` for cross-session
+                rows such as the A_memorix knowledge base.
+            source: Provenance stored in the row metadata.
 
         Returns:
             Counters with per-file detail.
@@ -127,6 +132,8 @@ class MemoryImporter:
                 session_key=session_key,
                 default_kind=default_kind,
                 dry_run=dry_run,
+                scope=scope,
+                source=source,
             )
             totals["files"] += 1
             totals["rows_seen"] += result["rows_seen"]
@@ -142,6 +149,8 @@ class MemoryImporter:
         session_key: str,
         default_kind: str = "summary",
         dry_run: bool = True,
+        scope: str = "session",
+        source: str = "maibot",
     ) -> dict[str, int]:
         """Normalize and write a batch of foreign memory rows.
 
@@ -150,6 +159,9 @@ class MemoryImporter:
             session_key: Session the rows belong to.
             default_kind: Kind used when a row has no kind column.
             dry_run: When True, rows are counted but not written.
+            scope: ``session`` for per-chat rows, ``global`` for cross-session
+                rows such as the A_memorix knowledge base.
+            source: Provenance stored in the row metadata.
 
         Returns:
             Counters for this batch.
@@ -179,12 +191,13 @@ class MemoryImporter:
                 {
                     "kind": kind,
                     "session_key": session_key,
+                    "scope": scope if scope in ("session", "global") else "session",
                     "content": text[:4000],
                     "person_id": str(person)[:255] if person else None,
                     "importance": 0.5,
                     "ts": _normalize_ts(_first_value(row, _TS_KEYS))
                     or int(time.time()),
-                    "meta": {"imported": True, "source": "maibot"},
+                    "meta": {"imported": True, "source": source},
                     "keywords": " ".join(tokenize(text)[:64]),
                 }
             )
