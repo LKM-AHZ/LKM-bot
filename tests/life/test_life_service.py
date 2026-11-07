@@ -328,3 +328,34 @@ async def test_prompt_assembler_is_absent_before_initialize(db):
     assert instance.prompt is None
     status = await instance.status()
     assert status["prompt"]["enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_reply_post_processor_is_wired_when_enabled(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.persona.enabled = True
+    config.reply.enabled = True
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert instance.reply is not None
+        assert instance.reply.persona is instance.persona
+        status = (await instance.status())["reply"]
+        assert status["enabled"] is True
+        assert status["quote_platforms"] == ["aiocqhttp"]
+    finally:
+        await instance.stop()
+        set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_reply_post_processor_stays_off_by_default(service):
+    assert service.reply is None
+    status = await service.status()
+    assert status["reply"]["enabled"] is False

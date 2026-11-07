@@ -435,3 +435,8 @@ class ResultDecorateStage(Stage):
                 # 引用回复
                 if self.reply_with_quote:
                     result.chain.insert(0, Reply(id=event.message_obj.message_id))
+
+            # Life 回复后处理（S5c）：Markdown、错字、长度、分段与概率引用
+            from bot.life.reply.postprocess import postprocess_life_reply
+
+            await postprocess_life_reply(event, result, self.enable_segmented_reply)

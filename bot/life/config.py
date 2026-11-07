@@ -221,6 +221,28 @@ class PromptConfig(BaseModel):
     """Drop an exact line that an earlier block already carries."""
 
 
+class ReplyConfig(BaseModel):
+    """Reply post-processing switches (S5c)."""
+
+    enabled: bool = False
+    """Master switch: the only layer that rewrites outbound text."""
+
+    strip_markdown: bool = True
+    nudge_typos: bool = True
+    cap_length: bool = True
+    split_segments: bool = True
+    quote_replies: bool = True
+    quote_platforms: list[str] = Field(default_factory=lambda: ["aiocqhttp"])
+    min_split_chars: int = 24
+    """Short replies are never split, whatever the profile probability says."""
+
+    max_parts: int = 3
+    """Upper bound of messages one reply may become."""
+
+    segment_delay_seconds: float = 1.2
+    """Pause before each follow-up segment; 0 sends them immediately."""
+
+
 class ExpressionConfig(BaseModel):
     """Learned expressions (S3b)."""
 
@@ -537,6 +559,7 @@ class LifeConfig(BaseModel):
     emoji: EmojiConfig = Field(default_factory=EmojiConfig)
     persona: PersonaConfig = Field(default_factory=PersonaConfig)
     prompt: PromptConfig = Field(default_factory=PromptConfig)
+    reply: ReplyConfig = Field(default_factory=ReplyConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

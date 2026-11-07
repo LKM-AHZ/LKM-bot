@@ -749,3 +749,65 @@ pytest tests/life -q
 curl -H "Authorization: Bearer <token>" \
   http://127.0.0.1:6185/api/v1/life/status  # prompt.counters + prompt.last
 ```
+
+## S5c — reply post-processing
+
+Implemented in `bot/life/reply/postprocess.py` plus a 3-line call at the end of
+`ResultDecorateStage`:
+
+| Step | What it does | Switch |
+| --- | --- | --- |
+| Markdown | Fences, inline code, links, headings, bold/italic, bullets, tables → plain text | `strip_markdown` (skipped when the profile allows Markdown) |
+| Typo | At most one swap/doubling between adjacent Chinese characters | `nudge_typos` (rate from the profile) |
+| Length | Cut at the last sentence end inside `reply_max_chars` | `cap_length` (budget from the profile) |
+| Split | At most `max_parts` messages by `multi_segment_prob` | `split_segments`; skipped when upstream segmented reply is on |
+| Quote | Insert `Reply` to the triggering message with `quote_rate` | `quote_replies` + `quote_platforms` |
+
+```json
+{
+  "reply": {
+    "enabled": false,
+    "strip_markdown": true,
+    "nudge_typos": true,
+    "cap_length": true,
+    "split_segments": true,
+    "quote_replies": true,
+    "quote_platforms": ["aiocqhttp"],
+    "min_split_chars": 24,
+    "max_parts": 3,
+    "segment_delay_seconds": 1.2
+  }
+}
+```
+
+`reply.enabled` is off by default and does nothing without the persona layer
+(`life.persona.enabled`), because the rates and the length budget come from the
+persona profile. With `life.reply.enabled=false` the seam returns immediately and
+the outbound message is byte-for-byte the upstream one.
+
+### Rules
+
+- **只改已有文字**：不动模型没说的内容。剥掉的 Markdown 不补回来，截断的尾巴不加省略号，
+  错字只换/叠相邻汉字。写不出“补充一句”或“文档回复”，那需要一个模型回合，不在这一步。
+- **只处理非流式 LLM 结果**：命令、插件输出、流式增量、runner 错误一律跳过。
+- **分段优先级**：上游 `platform_settings.segmented_reply.enable=true` 时，S5c 只做文本变换、
+  不再拆段（否则两层切分会把一句话切碎）。上游关闭时，首段随管线发送，尾段由后台任务按
+  `segment_delay_seconds` 逐条发送。
+- **引用只放到支持平台**：默认 `aiocqhttp`；`reply_with_quote` 已经开启时不会再加一条。
+- **失败不阻断**：任何一步抛异常都只记日志，回复照常发出。
+
+### Verify
+
+```bash
+pytest tests/life -q
+pytest tests/life/test_life_reply.py -q   # 17 cases: transforms + processor + counters
+
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status  # reply.counters
+```
+
+The counters (`processed`, `markdown_stripped`, `typos`, `capped`, `split`,
+`quoted`, `skipped`) are the acceptance evidence for the S5d distribution check:
+a Markdown leak would show up as a non-zero `markdown_stripped` after the fact,
+and a split/quote rate far from the profile value means the profile or the seed
+is wrong.

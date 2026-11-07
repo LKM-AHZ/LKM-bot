@@ -37,6 +37,7 @@ from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
 from bot.life.person.service import PersonService
 from bot.life.persona.service import PersonaService
 from bot.life.prompt import PromptAssembler
+from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
@@ -99,6 +100,7 @@ class LifeService:
         self.person: PersonService | None = None
         self.persona: PersonaService | None = None
         self.prompt: PromptAssembler | None = None
+        self.reply: ReplyPostProcessor | None = None
         self.expression: ExpressionService | None = None
         self.jargon: JargonService | None = None
         self.emoji: EmojiService | None = None
@@ -192,6 +194,13 @@ class LifeService:
                 life_config=self.config,
             )
             await self.persona.initialize()
+
+        if self.config.reply.enabled:
+            self.reply = ReplyPostProcessor(
+                self.config.reply,
+                life_config=self.config,
+                persona=self.persona,
+            )
 
         if self.config.memory.enabled:
             self.memory = MemoryAdapter(
@@ -726,6 +735,9 @@ class LifeService:
                 prompt = self.prompt.status()
             except Exception as exc:
                 prompt = {"enabled": True, "error": str(exc)}
+        reply: dict[str, Any] = {"enabled": False}
+        if self.reply is not None:
+            reply = self.reply.status()
         expression: dict[str, Any] = {"enabled": False}
         if self.expression is not None:
             try:
@@ -788,6 +800,7 @@ class LifeService:
             "person": person,
             "persona": persona,
             "prompt": prompt,
+            "reply": reply,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,
