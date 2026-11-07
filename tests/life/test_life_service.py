@@ -11,6 +11,7 @@ import pytest_asyncio
 
 from bot.core.db.sqlite import SQLiteDatabase
 from bot.life.config import LifeConfig
+from bot.life.heartflow.runtime import TurnRuntime
 from bot.life.pipeline import LifeIngestStage
 from bot.life.service import LifeService, set_life_service
 
@@ -203,3 +204,34 @@ async def test_focus_layer_tracks_the_archive(db, tmp_path):
     finally:
         await instance.stop()
         set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_heartflow_runtime_is_wired_when_enabled(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.heartflow.enabled = True
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert isinstance(instance.heartflow, TurnRuntime)
+        status = await instance.status()
+        assert status["heartflow"]["enabled"] is True
+        assert status["heartflow"]["shadow"] is False
+        assert status["enabled"] is True
+    finally:
+        await instance.stop()
+        set_life_service(None)
+    assert instance.heartflow.closed is True
+
+
+@pytest.mark.asyncio
+async def test_heartflow_runtime_is_absent_by_default(service):
+    assert service.heartflow is None
+    status = await service.status()
+    assert status["heartflow"]["enabled"] is False

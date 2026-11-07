@@ -407,10 +407,9 @@ Implemented in `bot/life/heartflow/`:
 }
 ```
 
-The reply path is untouched: S4a ships the decision path and its offline
-evaluation, S4b adds the focus timeline to the archive and injection path, and
-the session state machine plus planner loop follow in S4c. `heartflow.enabled`
-alone changes nothing; `heartflow.focus.enabled` turns the timeline on.
+`heartflow.enabled` is the master switch: S4c turns the takeover on, S4b adds
+the focus timeline (`heartflow.focus.enabled`), and S4a provides the decision
+path the replay tooling uses.
 
 ### Rules
 
@@ -489,3 +488,67 @@ curl -H "Authorization: Bearer <token>" http://127.0.0.1:6185/api/v1/life/focus
 curl -H "Authorization: Bearer <token>" \
   "http://127.0.0.1:6185/api/v1/life/focus?umo=<umo>"
 ```
+
+## S4c — runtime takeover
+
+Implemented in `bot/life/heartflow/runtime.py` and `LifeTurnStage`:
+
+| Piece | Responsibility |
+| --- | --- |
+| `runtime.py` | Turn leader, merging, debounce wait, gate decision, shadow mode, capacity |
+| `LifeTurnStage` | Holds ambient group messages, passes the leader through with a forced wake |
+| `WakingCheckStage` seam | Honours `_life_force_wake` so an unaddressed group turn can reach the agent |
+
+```json
+{
+  "heartflow": {
+    "enabled": true,
+    "bot_names": ["小助手", "bot"],
+    "runtime": { "enabled": true, "shadow": false, "max_pending_turns": 32 }
+  }
+}
+```
+
+### What it takes over
+
+Only **ambient group messages** — a group message that is not `@`, not a reply to
+the bot, not wake-prefixed, not a `/` command and not a button interaction. Every
+addressed message keeps the upstream path, so plugins, commands, session control
+and private chats behave exactly as before.
+
+### How a turn is answered
+
+- The first message of a session becomes the **turn leader** and waits for the
+  debounce window (three tiers, 8s hard cap, plus `max_wait_seconds` as a guard
+  against odd timestamps).
+- New messages join the same turn and extend the window — that is the
+  "steering/interrupt" layer.
+- When the window closes the leader scores the merged turn with the **same gate
+  code the replay set uses**. `wait` stops its own event (the message is already
+  archived, nothing is sent). `reply` writes the merged text back to
+  `event.message_str`, sets `_life_force_wake`, and the pipeline continues into
+  the normal agent path.
+- Every other message of the turn is stopped: its text is already in the merged
+  message.
+
+### Shadow rollout
+
+`runtime.shadow=true` still merges turns, decides and records, but never forces a
+wake. Use it to compare `would_reply` against what the bot does today:
+
+```bash
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:6185/api/v1/life/status
+# heartflow.counters + heartflow.recent[].decide/reason/likelihood/threshold
+```
+
+### Verify
+
+```bash
+pytest tests/life -q
+
+# the stage itself, plus the forced-wake seam in both directions
+pytest tests/life/test_life_heartflow_stage.py -q
+```
+
+With `heartflow.runtime.enabled=false` or `heartflow.enabled=false` the stage
+returns immediately and the pipeline is byte-for-byte the upstream one.

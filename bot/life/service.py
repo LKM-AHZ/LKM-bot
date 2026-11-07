@@ -26,6 +26,7 @@ from bot.life.emoji.service import EmojiService
 from bot.life.emoji.tools import register_emoji_tools, unregister_emoji_tools
 from bot.life.expression.service import ExpressionService
 from bot.life.heartflow.focus.service import FocusService
+from bot.life.heartflow.runtime import TurnRuntime
 from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.jargon.service import JargonService
 from bot.life.memory.adapter import MemoryAdapter
@@ -95,6 +96,7 @@ class LifeService:
         self.jargon: JargonService | None = None
         self.emoji: EmojiService | None = None
         self.focus: FocusService | None = None
+        self.heartflow: TurnRuntime | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -195,6 +197,14 @@ class LifeService:
                 embedding_config=self.config.memory.embedding,
             )
             await self.expression.initialize()
+
+        if self.config.heartflow.enabled and self.config.heartflow.runtime.enabled:
+            self.heartflow = TurnRuntime(self.config.heartflow)
+            logger.info(
+                "[life] heart-flow runtime ready; shadow=%s bot_names=%s",
+                self.config.heartflow.runtime.shadow,
+                self.config.heartflow.bot_names,
+            )
 
         if self.config.heartflow.enabled and self.config.heartflow.focus.enabled:
             self.focus = FocusService(
@@ -308,6 +318,8 @@ class LifeService:
             self._focus_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._focus_task
+        if self.heartflow is not None:
+            await self.heartflow.close()
         if self.focus is not None:
             await self.focus.close()
         if self.expression is not None:
@@ -597,6 +609,12 @@ class LifeService:
                 jargon = await self.jargon.status()
             except Exception as exc:
                 jargon = {"enabled": True, "error": str(exc)}
+        heartflow: dict[str, Any] = {"enabled": False}
+        if self.heartflow is not None:
+            try:
+                heartflow = self.heartflow.status()
+            except Exception as exc:
+                heartflow = {"enabled": True, "error": str(exc)}
         focus: dict[str, Any] = {"enabled": False}
         if self.focus is not None:
             try:
@@ -631,6 +649,7 @@ class LifeService:
             "jargon": jargon,
             "emoji": emoji,
             "focus": focus,
+            "heartflow": heartflow,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

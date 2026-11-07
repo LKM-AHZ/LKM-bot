@@ -110,6 +110,12 @@ class WakingCheckStage(Stage):
         wake_prefixes = self.ctx.bot_config["wake_prefix"]
         messages = event.get_messages()
         is_wake = False
+        if event.get_extra("_life_force_wake"):
+            # The Life heart-flow already decided this ambient turn deserves an
+            # answer; without this seam the message would be dropped here.
+            is_wake = True
+            event.is_wake = True
+            event.is_at_or_wake_command = True
         for wake_prefix in wake_prefixes:
             if message_str.startswith(wake_prefix):
                 if (

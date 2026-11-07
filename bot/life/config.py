@@ -363,15 +363,38 @@ class FocusConfig(BaseModel):
     """How often dirty timelines are flushed back to the database."""
 
 
+class RuntimeConfig(BaseModel):
+    """Turn runtime that actually answers ambient messages (S4c)."""
+
+    enabled: bool = True
+    """Requires ``heartflow.enabled``; the stage is inert otherwise."""
+
+    shadow: bool = False
+    """Decide and record every turn but never force a wake (shadow rollout)."""
+
+    max_pending_turns: int = 32
+    """Sessions that may hold an event at the same time; beyond it a turn waits."""
+
+    max_wait_seconds: float = 12.0
+    """Hard ceiling of one debounce wait, independent of the message timestamps."""
+
+    recent_size: int = 50
+    """Decision records kept in memory for the dashboard and diagnostics."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
     enabled: bool = False
     """Master switch; also requires the Life layer itself to be enabled."""
 
+    bot_names: list[str] = Field(default_factory=list)
+    """Nicknames of the bot; a plain mention counts as addressing it."""
+
     debounce: DebounceConfig = Field(default_factory=DebounceConfig)
     gate: GateConfig = Field(default_factory=GateConfig)
     focus: FocusConfig = Field(default_factory=FocusConfig)
+    runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
 
 
 class LifeConfig(BaseModel):

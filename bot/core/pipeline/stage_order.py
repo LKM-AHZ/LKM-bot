@@ -2,6 +2,7 @@
 
 STAGES_ORDER = [
     "LifeIngestStage",  # Archive before wake checks to see every message
+    "LifeTurnStage",  # Heart-flow may hold an ambient turn before the wake check
     "WakingCheckStage",  # 检查是否需要唤醒
     "WhitelistCheckStage",  # 检查是否在群聊/私聊白名单
     "SessionStatusCheckStage",  # 检查会话是否整体启用
