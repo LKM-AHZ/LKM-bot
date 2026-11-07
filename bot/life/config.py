@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field, ValidationError
 
 from bot import logger
 from bot.core.utils.bot_path import get_bot_data_path, get_bot_root
+from bot.life.rollout.buckets import enabled_by_percent
 
 LIFE_DIR_NAME = "life"
 LIFE_CONFIG_FILE_NAME = "config.json"
@@ -66,6 +67,17 @@ class ScopeConfig(BaseModel):
 
     disabled_umos: list[str] = Field(default_factory=list)
     """Sessions explicitly excluded; takes precedence over enabled lists."""
+
+    rollout_percent: float = Field(default=0.0, ge=0.0, le=100.0)
+    """Share of sessions taken over by the percentage rollout, 0 to 100.
+
+    The bucket is a stable hash of the group (or the private session), so a
+    conversation never flips on random messages. Explicit ``enabled_umos`` and
+    ``enabled_group_ids`` entries always bypass the percentage.
+    """
+
+    rollout_salt: str = ""
+    """Salt of the bucket hash; change it to reshuffle the assignment."""
 
 
 class SenderConfig(BaseModel):
@@ -453,6 +465,9 @@ class RuntimeConfig(BaseModel):
     fast_max_chars: int = 8
     """Merged text of at most this many characters counts as a fast ping."""
 
+    decision_retention_days: int = 90
+    """Days of released-turn decisions kept for the gray report; 0 keeps all."""
+
 
 class AttentionConfig(BaseModel):
     """Attention drift and back-reference hints (S4d)."""
@@ -837,7 +852,16 @@ class LifeConfig(BaseModel):
             return True
         if umo in self.scope.enabled_umos:
             return True
-        return bool(group_id and group_id in self.scope.enabled_group_ids)
+        if group_id and group_id in self.scope.enabled_group_ids:
+            return True
+        if self.scope.rollout_percent <= 0:
+            return False
+        return enabled_by_percent(
+            self.scope.rollout_percent,
+            umo,
+            group_id,
+            self.scope.rollout_salt,
+        )
 
 
 def default_config_path() -> Path:

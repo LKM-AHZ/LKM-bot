@@ -44,6 +44,7 @@ from bot.life.persona.service import PersonaService
 from bot.life.prompt import PromptAssembler
 from bot.life.reaction.service import ReactionService
 from bot.life.reply.postprocess import ReplyPostProcessor
+from bot.life.rollout.service import RolloutService
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
@@ -126,6 +127,7 @@ class LifeService:
         self.emoji: EmojiService | None = None
         self.focus: FocusService | None = None
         self.heartflow: TurnRuntime | None = None
+        self.rollout: RolloutService | None = None
         self.attention: AttentionRegistry | None = None
         self.proactive: ProactiveService | None = None
         self.tool_results: ToolResultStore | None = None
@@ -298,9 +300,12 @@ class LifeService:
             await self.expression.initialize()
 
         if self.config.heartflow.enabled and self.config.heartflow.runtime.enabled:
+            self.rollout = RolloutService(self.db, self.config)
+            await self.rollout.initialize()
             self.heartflow = TurnRuntime(
                 self.config.heartflow,
                 on_reply=self._note_heartflow_reply,
+                on_turn=self.rollout.observe,
             )
             logger.info(
                 "[life] heart-flow runtime ready; shadow=%s bot_names=%s",
@@ -635,6 +640,11 @@ class LifeService:
                     await self.focus.compress_round()
                 except Exception:
                     logger.exception("[life] focus compression failed")
+            if self.rollout is not None:
+                try:
+                    await self.rollout.prune()
+                except Exception:
+                    logger.exception("[life] rollout prune failed")
 
     async def _expression_loop(self) -> None:
         """Learn expressions from the archive on a fixed interval."""
@@ -746,7 +756,7 @@ class LifeService:
             except Exception:
                 logger.exception("[life] memory digest round failed")
 
-    async def _note_heartflow_reply(
+    def _note_heartflow_reply(
         self,
         session_key: str,
         text: str,
@@ -1188,6 +1198,12 @@ class LifeService:
                 emoji = await self.emoji.status()
             except Exception as exc:
                 emoji = {"enabled": True, "error": str(exc)}
+        rollout: dict[str, Any] = {"enabled": False}
+        if self.rollout is not None:
+            try:
+                rollout = await self.rollout.status()
+            except Exception as exc:
+                rollout = {"enabled": True, "error": str(exc)}
         return {
             "enabled": self._running,
             "configured": self.config.enabled,
@@ -1197,6 +1213,8 @@ class LifeService:
                 "mode": self.config.scope.mode,
                 "enabled_umos": len(self.config.scope.enabled_umos),
                 "enabled_group_ids": len(self.config.scope.enabled_group_ids),
+                "rollout_percent": self.config.scope.rollout_percent,
+                "rollout_salt_set": bool(self.config.scope.rollout_salt),
             },
             "queue": {
                 "size": self._queue.qsize() if self._queue else 0,
@@ -1220,6 +1238,7 @@ class LifeService:
             "emoji": emoji,
             "focus": focus,
             "heartflow": heartflow,
+            "rollout": rollout,
             "attention": attention,
             "proactive": proactive,
             "sessions": len(self.registry.snapshot()),

@@ -1355,3 +1355,98 @@ runbook check. The endpoint returns the same report wrapped in `{"status": "ok"}
   been quiet for a week will warn even when nothing is wrong.
 - There is no dedicated panel page yet; the eight S6f pages cover the data, and
   the diagnostics endpoint is ready for a small health card later.
+
+## S7a — gray rollout and shadow observation
+
+The rollout has two halves: a stable percentage bucket decides *which*
+conversations the layer takes over, and a durable decision log records what
+each released turn decided. Both are off by default.
+
+### Ramp it
+
+```json
+{
+  "enabled": true,
+  "scope": {
+    "mode": "allowlist",
+    "enabled_group_ids": ["ops-test-group"],
+    "rollout_percent": 1,
+    "rollout_salt": "2026-11-w1"
+  },
+  "heartflow": {
+    "enabled": true,
+    "runtime": {"shadow": true}
+  }
+}
+```
+
+- `rollout_percent` is a share of **groups** (a private chat is a session of its
+  own). The bucket is `sha256(salt + key) % 100`, so a group never flips between
+  messages, restarts or workers.
+- Explicit `enabled_umos` / `enabled_group_ids` entries bypass the percentage;
+  `disabled_umos` always wins.
+- `heartflow.runtime.shadow=true` keeps the runtime deciding and recording but
+  never wakes the pipeline: nothing is sent. Use it for the first window, then
+  turn it off one percent at a time.
+
+Suggested ladder: shadow at `percent=100` for 3–7 days → `percent=1` → 10 → 50 →
+100, at least 48 h per step. Rollback is config-only: set `rollout_percent` to 0
+and/or `shadow` back to true; no data is touched.
+
+### What is recorded
+
+One row per released turn in `life_turn_decision`: timestamp, session, merged
+message count, `decision` (reply/wait), `action` (continue/hold), `shadow`,
+gate `reason` / `likelihood` / `threshold`, `latency_ms` and `text_chars`.
+
+The row has **no message and no reply text**. `latency_ms` is the debounce wait
+from the first merged message to the decision, not model generation time.
+
+Retention is `heartflow.runtime.decision_retention_days` (default 90, 0 keeps
+everything); the maintenance loop prunes it every 6 hours.
+
+### Read it
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/rollout?days=14"
+```
+
+```json
+{
+  "window_days": 14,
+  "turns": 812,
+  "reply": 301,
+  "wait": 511,
+  "shadowed": 301,
+  "live": 0,
+  "reply_rate": 0.371,
+  "latency_ms": {"p50": 1200, "p90": 2500, "max": 8000},
+  "sessions": [{"session_key": "...", "turns": 120, "reply": 44, "last_ts": 0}],
+  "recent": [{"decision": "reply", "shadow": true, "reason": "direct_address"}]
+}
+```
+
+`/life/status` embeds the same aggregates in its `rollout` block, cached for a
+minute. The diagnostics report adds two checks:
+
+| Check | Warns when |
+| --- | --- |
+| `rollout_observation` | ≥ 10 observation attempts and > 10% failed |
+| `rollout_activity` | shadow is on or `percent > 0`, but the 14-day window is empty |
+
+### Limits
+
+- Shadow is **decision-level**: a shadowed turn never calls the model, so there
+  is no draft to compare against MaiBot. Content quality still comes from the
+  S0 replay set.
+- Shadow advances the gate state as if the reply had been sent: cooldown and
+  wait backoff behave like a live turn, which is the right counterfactual but
+  means the would-reply rate is not "what would happen if nothing were sent".
+- The log stores no text on purpose; reviewing a specific reply needs the
+  platform-side logs.
+- Percent bucketing is stable but arbitrary: with few groups, "1%" may cover
+  zero groups. Check `turns` before treating a step as live.
+- Changing `rollout_salt` reshuffles the assignment; keep it fixed for the whole
+  window.
+- There is no panel page for the rollout yet (planned with S7c).

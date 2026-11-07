@@ -11,7 +11,7 @@ import pytest_asyncio
 
 from bot.core.db.sqlite import SQLiteDatabase
 from bot.life.config import LifeConfig
-from bot.life.heartflow.runtime import TurnRuntime
+from bot.life.heartflow.runtime import TurnEntry, TurnRuntime
 from bot.life.pipeline import LifeIngestStage
 from bot.life.service import LifeService, set_life_service
 
@@ -359,3 +359,77 @@ async def test_reply_post_processor_stays_off_by_default(service):
     assert service.reply is None
     status = await service.status()
     assert status["reply"]["enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_heartflow_enables_the_rollout_observer(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.scope.rollout_percent = 50
+    config.heartflow.enabled = True
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert instance.rollout is not None
+        assert instance.heartflow is not None
+        status = await instance.status()
+        assert status["scope"]["rollout_percent"] == 50.0
+        assert status["rollout"]["enabled"] is True
+        assert status["rollout"]["rollout"]["percent"] == 50.0
+        assert status["rollout"]["window"]["turns"] == 0
+    finally:
+        await instance.stop()
+        set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_heartflow_turn_updates_attention_and_rollout(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.heartflow.enabled = True
+    config.heartflow.bot_names = ["小助手"]
+    config.heartflow.debounce.quick_seconds = 0.01
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        entry = TurnEntry(
+            session_key=FakeEvent.unified_msg_origin,
+            text="小助手 在吗",
+            ts=time.time(),
+            sender_id="u1",
+            sender_name="Alice",
+            message_id="m1",
+        )
+        outcome = await instance.heartflow.handle(
+            FakeEvent.unified_msg_origin,
+            entry,
+        )
+        assert outcome.action == "continue"
+        assert instance.attention.status()["counters"]["observed"] == 1
+        for _ in range(50):
+            if (await instance.rollout.report(7))["turns"]:
+                break
+            await asyncio.sleep(0.02)
+        report = await instance.rollout.report(7)
+        assert report["turns"] == 1
+        assert report["reply"] == 1
+    finally:
+        await instance.stop()
+        set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_rollout_observer_stays_off_by_default(service):
+    assert service.rollout is None
+    status = await service.status()
+    assert status["rollout"]["enabled"] is False

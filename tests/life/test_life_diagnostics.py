@@ -47,6 +47,13 @@ def _status(**overrides) -> dict:
         "files": {"store": {"files": 10}, "max_files": 500, "counters": {"sent": 3}},
         "acp": {"enabled": False, "counters": {"asks": 0, "failed": 0, "timeouts": 0}},
         "reaction": {"counters": {"sent": 2, "failed": 0}},
+        "rollout": {
+            "enabled": False,
+            "shadow": False,
+            "rollout": {"percent": 0.0},
+            "window": {},
+            "counters": {},
+        },
     }
     base.update(overrides)
     return base
@@ -164,9 +171,43 @@ def test_disabled_features_stay_pass() -> None:
         memory={"enabled": False, "storage": {}, "embedding": {"enabled": False}},
         acp={"enabled": False, "counters": {"asks": 0, "failed": 0, "timeouts": 0}},
         reaction={"counters": {}},
+        rollout={"enabled": False, "window": {}, "counters": {}},
     )
     checks = evaluate_checks(derive_metrics(off))
     assert {check["status"] for check in checks} == {"pass"}
+    assert "rollout_activity" not in _checks_by_name(checks)
+
+
+def test_rollout_checks_warn_on_failures_and_silence() -> None:
+    broken = _status(
+        rollout={
+            "enabled": True,
+            "shadow": True,
+            "rollout": {"percent": 10.0},
+            "window": {"turns": 0},
+            "counters": {"observed": 5, "failed": 5},
+        }
+    )
+    checks = _checks_by_name(evaluate_checks(derive_metrics(broken)))
+    assert checks["rollout_observation"]["status"] == "warn"
+    assert checks["rollout_activity"]["status"] == "warn"
+
+    healthy = _status(
+        rollout={
+            "enabled": True,
+            "shadow": False,
+            "rollout": {"percent": 10.0},
+            "window": {"turns": 40, "reply_rate": 0.4, "latency_ms": {"p90": 2500}},
+            "counters": {"observed": 40, "failed": 0},
+        }
+    )
+    checks = _checks_by_name(evaluate_checks(derive_metrics(healthy)))
+    metrics = derive_metrics(healthy)
+
+    assert checks["rollout_observation"]["status"] == "pass"
+    assert checks["rollout_activity"]["status"] == "pass"
+    assert metrics["rollout"]["turns"] == 40
+    assert metrics["rollout"]["latency_p90_ms"] == 2500
 
 
 @pytest.mark.asyncio

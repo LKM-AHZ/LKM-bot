@@ -29,6 +29,9 @@ SUBAGENT_FAILURE_WARN = 0.3
 ACP_FAILURE_WARN = 0.3
 """Share of ACP requests that failed or timed out."""
 
+ROLLOUT_FAILURE_WARN = 0.1
+"""Share of turn observations that failed to persist during a gray window."""
+
 REPLY_RATE_MIN_WARN = 0.02
 """Below this the heart-flow gate may be too strict."""
 
@@ -69,6 +72,9 @@ def derive_metrics(status: dict[str, Any]) -> dict[str, Any]:
     turns = int(hf_counters.get("turns") or 0)
     replied = int(hf_counters.get("replied") or 0)
     merged = int(hf_counters.get("merged") or 0)
+    rollout = status.get("rollout") or {}
+    rollout_counters = rollout.get("counters") or {}
+    rollout_window = rollout.get("window") or {}
 
     memory = status.get("memory") or {}
     memory_storage = memory.get("storage") or {}
@@ -135,6 +141,18 @@ def derive_metrics(status: dict[str, Any]) -> dict[str, Any]:
             "completed": int(sub_counters.get("completed") or 0),
             "failed": int(sub_counters.get("failed") or 0),
         },
+        "rollout": {
+            "enabled": bool(rollout.get("enabled")),
+            "shadow": bool(rollout.get("shadow")),
+            "percent": float((rollout.get("rollout") or {}).get("percent") or 0.0),
+            "turns": int(rollout_window.get("turns") or 0),
+            "reply_rate": float(rollout_window.get("reply_rate") or 0.0),
+            "latency_p90_ms": int(
+                (rollout_window.get("latency_ms") or {}).get("p90") or 0
+            ),
+            "observed": int(rollout_counters.get("observed") or 0),
+            "failed": int(rollout_counters.get("failed") or 0),
+        },
         "monitor": {
             "records": int(monitor.get("records") or 0),
             "dropped": int((monitor.get("counters") or {}).get("dropped") or 0),
@@ -190,6 +208,7 @@ def evaluate_checks(metrics: dict[str, Any]) -> list[dict[str, Any]]:
     review = metrics["review"]
     tool_result = metrics["tool_result"]
     subagent = metrics["subagent"]
+    rollout = metrics["rollout"]
     monitor = metrics["monitor"]
     files = metrics["files"]
     acp = metrics["acp"]
@@ -311,6 +330,31 @@ def evaluate_checks(metrics: dict[str, Any]) -> list[dict[str, Any]]:
             warn=True,
         )
     )
+
+    if rollout["enabled"]:
+        total = rollout["observed"] + rollout["failed"]
+        checks.append(
+            _check(
+                "rollout_observation",
+                not (
+                    total >= 10
+                    and _ratio(rollout["failed"], total) > ROLLOUT_FAILURE_WARN
+                ),
+                f"{rollout['failed']}/{total} turn observation(s) failed",
+                warn=True,
+            )
+        )
+        if rollout["shadow"] or rollout["percent"] > 0:
+            checks.append(
+                _check(
+                    "rollout_activity",
+                    rollout["turns"] > 0,
+                    f"{rollout['turns']} turn(s) in the last window "
+                    f"(shadow={rollout['shadow']}, "
+                    f"percent={rollout['percent']:g})",
+                    warn=True,
+                )
+            )
 
     checks.append(
         _check(

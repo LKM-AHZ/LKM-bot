@@ -149,6 +149,7 @@ class TurnRuntime:
         clock: Callable[[], float] | None = None,
         sleeper: Callable[[float], Any] | None = None,
         on_reply: Callable[[str, str, float], Any] | None = None,
+        on_turn: Callable[[dict[str, Any]], Any] | None = None,
     ) -> None:
         """Initialize the runtime without starting any task.
 
@@ -158,12 +159,16 @@ class TurnRuntime:
             sleeper: Awaitable sleep; tests inject an instant one.
             on_reply: Called with ``(session_key, text, now)`` after an answered
                 turn, so attention and talk value can follow the conversation.
+            on_turn: Awaitable called with the decision payload of every
+                released turn; the gray rollout uses it to persist the log.
         """
         self.config = config
         self.runtime_config = config.runtime
         self._clock = clock or time.time
         self._sleep = sleeper or asyncio.sleep
         self._on_reply = on_reply
+        self._on_turn = on_turn
+        self._observe_tasks: set[asyncio.Task] = set()
         self._batches: dict[str, TurnBatch] = {}
         self._sessions: dict[str, SessionState] = {}
         self._recent: deque[dict] = deque(
@@ -242,6 +247,7 @@ class TurnRuntime:
             else:
                 self._counters["waited"] += 1
                 batch.action = ACTION_HOLD
+            self._observe(batch, decision, self._clock() - batch.entries[0].ts)
             return TurnOutcome(
                 batch.action,
                 decision.reason,
@@ -417,12 +423,65 @@ class TurnRuntime:
             }
         )
 
+    def _observe(
+        self, batch: TurnBatch, decision: GateDecision, elapsed: float
+    ) -> None:
+        """Hand one released turn to the observer without blocking the turn.
+
+        Args:
+            batch: Released batch.
+            decision: Gate decision of the turn.
+            elapsed: Seconds between the first merged message and the decision.
+        """
+        observer = self._on_turn
+        if observer is None:
+            return
+        payload = {
+            "ts": round(self._clock(), 2),
+            "session_key": batch.session_key,
+            "messages": len(batch.entries),
+            "decision": "reply" if decision.reply else "wait",
+            "action": batch.action,
+            "shadow": self.runtime_config.shadow,
+            "reason": decision.reason,
+            "likelihood": round(float(decision.likelihood), 4),
+            "threshold": round(float(decision.threshold), 4),
+            "latency_ms": int(max(elapsed, 0.0) * 1000),
+            "text_chars": len(batch.merged_text),
+        }
+        try:
+            task = asyncio.create_task(self._notify_turn(observer, payload))
+        except RuntimeError:
+            # No running loop (synchronous test harness); observation is
+            # best effort and must never break a turn.
+            return
+        self._observe_tasks.add(task)
+        task.add_done_callback(self._observe_tasks.discard)
+
+    async def _notify_turn(
+        self,
+        observer: Callable[[dict[str, Any]], Any],
+        payload: dict[str, Any],
+    ) -> None:
+        """Await the observation callback, logging failures.
+
+        Args:
+            observer: Callback supplied by the rollout service.
+            payload: Decision payload passed to the callback.
+        """
+        try:
+            await observer(payload)
+        except Exception:
+            logger.exception("[life] rollout observation callback failed")
+
     async def close(self) -> None:
         """Stop accepting turns and release every waiter."""
         self._closed = True
         for batch in list(self._batches.values()):
             batch.released.set()
         self._batches.clear()
+        if self._observe_tasks:
+            await asyncio.wait(list(self._observe_tasks), timeout=2.0)
 
     def status(self) -> dict[str, Any]:
         """Return a serializable status snapshot.

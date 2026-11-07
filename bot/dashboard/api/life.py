@@ -95,6 +95,28 @@ async def life_diagnostics(
     return ok({"enabled": True, **await build_report(service)})
 
 
+@router.get("/life/rollout")
+async def life_rollout(
+    days: int = Query(default=14, ge=1, le=90),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return the gray-rollout report of one window.
+
+    Args:
+        days: Window length in days.
+
+    Returns:
+        Wrapped report with counts, latency percentiles, busiest sessions and
+        the latest decisions.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.rollout is None:
+        return ok({"enabled": False, "window_days": days, "turns": 0})
+    return ok({"enabled": True, **await service.rollout.report(days)})
+
+
 @router.get("/life/messages")
 async def life_messages(
     limit: int = Query(default=20, ge=1, le=200),
