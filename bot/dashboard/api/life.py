@@ -41,6 +41,35 @@ async def life_status(
     return ok(await service.status())
 
 
+@router.get("/life/monitor")
+async def life_monitor(
+    session: str = Query(default="", description="Filter by unified_msg_origin."),
+    limit: int = Query(default=50, ge=1, le=200),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return recent planner decisions and deliveries.
+
+    Args:
+        session: Optional session filter.
+        limit: Maximum records returned.
+
+    Returns:
+        Wrapped records oldest-last plus the monitor block.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.monitor is None:
+        return ok({"enabled": False, "records": []})
+    return ok(
+        {
+            "enabled": True,
+            "status": service.monitor.status(),
+            "records": service.monitor.recent(session, limit),
+        }
+    )
+
+
 @router.get("/life/messages")
 async def life_messages(
     limit: int = Query(default=20, ge=1, le=200),

@@ -34,9 +34,11 @@ from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.jargon.service import JargonService
 from bot.life.memory.adapter import MemoryAdapter
 from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
+from bot.life.monitor.recorder import PlannerMonitor
 from bot.life.person.service import PersonService
 from bot.life.persona.service import PersonaService
 from bot.life.prompt import PromptAssembler
+from bot.life.reaction.service import ReactionService
 from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
@@ -126,6 +128,8 @@ class LifeService:
         self.subagents: SubAgentTaskManager | None = None
         self.subagent_inbox: SubAgentInbox | None = None
         self.subagent: SubAgentNotifier | None = None
+        self.monitor: PlannerMonitor | None = None
+        self.reactions: ReactionService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -209,6 +213,10 @@ class LifeService:
                 max_age_minutes=self.config.subagent.notice_max_age_minutes,
             )
             self.subagent = SubAgentNotifier(self.config.subagent, self.subagent_inbox)
+        if self.config.monitor.enabled:
+            self.monitor = PlannerMonitor(self.config.monitor)
+        if self.config.reaction.enabled:
+            self.reactions = ReactionService(self.config.reaction, self.send_text)
         if self.config.sender.enabled:
             self.sender = LifeSender(
                 platform_manager=self.platform_manager,
@@ -1037,6 +1045,12 @@ class LifeService:
         reply: dict[str, Any] = {"enabled": False}
         if self.reply is not None:
             reply = self.reply.status()
+        monitor: dict[str, Any] = {"enabled": False}
+        if self.monitor is not None:
+            monitor = self.monitor.status()
+        reaction: dict[str, Any] = {"enabled": False}
+        if self.reactions is not None:
+            reaction = self.reactions.status()
         subagent: dict[str, Any] = {"enabled": False}
         if self.subagents is not None:
             subagent = {
@@ -1119,6 +1133,8 @@ class LifeService:
             "reply": reply,
             "tool_result": tool_result,
             "subagent": subagent,
+            "monitor": monitor,
+            "reaction": reaction,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,

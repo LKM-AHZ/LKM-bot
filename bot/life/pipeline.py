@@ -4,6 +4,9 @@
 ``STAGES_ORDER``, so it sees messages that are never woken by
 ``WakingCheckStage``. It must never stop event propagation.
 
+``LifeReactionStage`` runs next: a matched keyword rule sends its canned reply
+and stops the event, so the model never sees that message.
+
 ``LifeTurnStage`` runs right after it and is the only stage the Life layer may
 use to hold an event: ambient group messages are merged into a turn, the
 heart-flow gate decides whether the turn deserves an answer, and only the
@@ -64,6 +67,59 @@ class LifeIngestStage(Stage):
 
 
 @register_stage
+class LifeReactionStage(Stage):
+    """Answer known keyword triggers with a fixed reply.
+
+    This is the only stage that may stop an inbound message without the model
+    seeing it: a rule matched, the canned reply was sent, and the rest of the
+    pipeline (including the planner) skips this event.
+    """
+
+    def __init__(self) -> None:
+        self.service = None
+
+    async def initialize(self, ctx: PipelineContext) -> None:
+        """Resolve the Life service.
+
+        Args:
+            ctx: Pipeline context.
+        """
+        from bot.life.service import get_life_service
+
+        self.service = get_life_service()
+
+    async def process(self, event: BotMessageEvent) -> None:
+        """Match a keyword rule, send its reply and stop the event.
+
+        Args:
+            event: Inbound message event.
+        """
+        service = self.service
+        if service is None:
+            from bot.life.service import get_life_service
+
+            service = get_life_service()
+            self.service = service
+        if service is None:
+            return
+        reactions = getattr(service, "reactions", None)
+        if reactions is None:
+            return
+        text = (event.message_str or "").strip()
+        if not text or text.startswith("/"):
+            return
+        umo = str(event.unified_msg_origin)
+        if not service.config.session_enabled(umo, event.get_group_id() or None):
+            return
+        try:
+            if await reactions.try_react(umo, text):
+                event.stop_event()
+        except Exception:
+            # A canned reply must never break message handling.
+            logger.exception("[life] keyword reaction failed")
+
+
+@register_stage
 class LifeTurnStage(Stage):
     """Hold ambient group messages for the heart-flow decision."""
 
@@ -120,6 +176,20 @@ class LifeTurnStage(Stage):
                 "[life] heart-flow turn failed; passing the message through"
             )
             return
+        monitor = getattr(service, "monitor", None)
+        if monitor is not None:
+            try:
+                decision = outcome.decision
+                monitor.record_decision(
+                    session_id=umo,
+                    action=outcome.action,
+                    reply=bool(decision.reply) if decision else False,
+                    likelihood=decision.likelihood if decision else 0.0,
+                    threshold=decision.threshold if decision else 0.0,
+                    reason=decision.reason if decision else outcome.reason,
+                )
+            except Exception:
+                logger.exception("[life] monitor decision record failed")
         if outcome.action != ACTION_CONTINUE:
             event.stop_event()
             return

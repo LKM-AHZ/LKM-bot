@@ -380,10 +380,19 @@ async def postprocess_life_reply(
     if service is None:
         return
     processor = getattr(service, "reply", None)
-    if processor is None:
-        return
-    try:
-        await processor.process(event, result, upstream_segmented=upstream_segmented)
-    except Exception:
-        # Post-processing is an enhancement: a failure must never block a reply.
-        logger.exception("[life] reply post-processing failed")
+    if processor is not None:
+        try:
+            await processor.process(
+                event,
+                result,
+                upstream_segmented=upstream_segmented,
+            )
+        except Exception:
+            # Post-processing is an enhancement: a failure must never block a reply.
+            logger.exception("[life] reply post-processing failed")
+    monitor = getattr(service, "monitor", None)
+    if monitor is not None:
+        try:
+            monitor.record_delivery(event, result)
+        except Exception:
+            logger.exception("[life] monitor delivery record failed")

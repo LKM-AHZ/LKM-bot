@@ -121,9 +121,12 @@ def _stage(service) -> LifeTurnStage:
     return stage
 
 
-def test_stage_runs_right_after_ingest():
-    assert STAGES_ORDER.index("LifeTurnStage") == (
+def test_stages_run_between_ingest_and_wake_check():
+    assert STAGES_ORDER.index("LifeReactionStage") == (
         STAGES_ORDER.index("LifeIngestStage") + 1
+    )
+    assert STAGES_ORDER.index("LifeTurnStage") == (
+        STAGES_ORDER.index("LifeReactionStage") + 1
     )
     assert STAGES_ORDER.index("LifeTurnStage") < STAGES_ORDER.index("WakingCheckStage")
 

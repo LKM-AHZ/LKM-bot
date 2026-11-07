@@ -620,6 +620,55 @@ class SubAgentConfig(BaseModel):
     """Undelivered conclusions kept per session; the oldest is dropped first."""
 
 
+class MonitorConfig(BaseModel):
+    """Planner monitoring and reasoning display (S6c).
+
+    Records why a turn was answered or held, and what the model was thinking
+    when it answered. Nothing is sent anywhere; the ring is read by the panel.
+    """
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    recent_size: int = 100
+    """Records kept in memory, oldest dropped first."""
+
+    capture_reasoning: bool = True
+    """Store a capped excerpt of the model's reasoning with each delivery."""
+
+    reasoning_max_chars: int = 200
+    """Cap of the stored reasoning excerpt; 0 stores none."""
+
+
+class ReactionRule(BaseModel):
+    """One keyword reaction: a fixed reply sent without calling the model."""
+
+    keywords: list[str]
+    """Texts to match; matched case-insensitively."""
+
+    reply: str
+    """Fixed reply sent when the rule matches."""
+
+    exact: bool = False
+    """Match the whole message instead of a substring."""
+
+    cooldown_seconds: int = 300
+    """Minimum gap between two replies of this rule in one session."""
+
+
+class ReactionConfig(BaseModel):
+    """Keyword reactions (S6c): deterministic replies to known triggers."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    rules: list[ReactionRule] = Field(default_factory=list)
+    """Rules evaluated in order; the first match wins."""
+
+    max_reply_chars: int = 200
+    """Cap of the fixed reply."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
@@ -658,6 +707,8 @@ class LifeConfig(BaseModel):
     reply: ReplyConfig = Field(default_factory=ReplyConfig)
     tool_result: ToolResultConfig = Field(default_factory=ToolResultConfig)
     subagent: SubAgentConfig = Field(default_factory=SubAgentConfig)
+    monitor: MonitorConfig = Field(default_factory=MonitorConfig)
+    reaction: ReactionConfig = Field(default_factory=ReactionConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

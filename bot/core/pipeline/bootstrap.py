@@ -19,6 +19,7 @@ _BUILTIN_STAGE_MODULES = (
 
 _EXPECTED_STAGE_NAMES = {
     "LifeIngestStage",
+    "LifeReactionStage",
     "LifeTurnStage",
     "WakingCheckStage",
     "WhitelistCheckStage",

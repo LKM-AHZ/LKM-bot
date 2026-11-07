@@ -1054,3 +1054,82 @@ curl -H "Authorization: Bearer <token>" \
   the next user message.
 - Inbox delivery is consumed on injection; if the provider call then fails, the
   conclusion is not retried.
+
+## S6c — planner monitoring, reasoning display and keyword reactions
+
+Two independent pieces, both default off:
+
+| Module | Responsibility |
+| --- | --- |
+| `bot/life/monitor/recorder.py` | Bounded ring of heart-flow decisions and delivered replies |
+| `bot/life/reaction/service.py` | Keyword matching, per-session cooldowns, fixed reply |
+| `bot/life/pipeline.py` (`LifeReactionStage`) | Answers a matched rule and stops the event |
+| `bot/dashboard/api/life.py` (`GET /life/monitor`) | Recent records for the panel |
+
+```json
+{
+  "monitor": {
+    "enabled": false,
+    "recent_size": 100,
+    "capture_reasoning": true,
+    "reasoning_max_chars": 200
+  },
+  "reaction": {
+    "enabled": false,
+    "rules": [
+      {"keywords": ["典"], "reply": "确实典", "exact": false, "cooldown_seconds": 300}
+    ],
+    "max_reply_chars": 200
+  }
+}
+```
+
+### What monitoring records
+
+The host is event-driven, so "the planner" is observed at two moments:
+
+- **decision** (`LifeTurnStage`): action (`continue` / `hold`), whether the gate
+  decided to answer, `likelihood`, `threshold`, reason string.
+- **delivery** (`postprocess_life_reply`): character count, part count and a
+  capped excerpt of `_llm_reasoning_content` (the model's own reasoning, when
+  the provider returns it). Recording happens even when reply post-processing is
+  disabled.
+
+No message text is stored. The ring keeps `recent_size` records in memory and
+counters (`decisions`, `replies`, `waits`, `deliveries`, `dropped`).
+
+### Read the records
+
+```bash
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/monitor?limit=20"
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/monitor?session=aiocqhttp:GroupMessage:1"
+```
+
+`/life/status` also carries a compact `monitor` block (counters + last record).
+
+### Keyword reactions
+
+- Rules are evaluated in order and the first match wins; matching is
+  case-insensitive, substring by default, whole-message with `exact: true`.
+- A match sends the fixed reply through the normal sender (so it is recorded as
+  an outbound message) and **stops the event**: the model never sees that
+  message. Commands (`/`) are never matched.
+- Cooldown is per rule per session; a failed send does not start the cooldown,
+  so the next message can retry.
+- Only plain text is supported; stickers/images are S6e (file service).
+
+### Verify
+
+```bash
+pytest tests/life/test_life_monitor.py tests/life/test_life_reaction.py -q
+pytest tests/life -q
+```
+
+### Limits
+
+- The monitor ring and the cooldown table are process memory: restart clears
+  both, and a multi-worker deployment shows each worker only its own records.
+- Reasoning excerpts may still contain user text; they are capped but not
+  redacted, so the panel must stay behind the system-scope auth.
