@@ -128,6 +128,8 @@ class LifeService:
         self.focus: FocusService | None = None
         self.heartflow: TurnRuntime | None = None
         self.rollout: RolloutService | None = None
+        self.migration: Any = None
+        """Lazily created ``MigrationService`` used by the migration endpoints."""
         self.attention: AttentionRegistry | None = None
         self.proactive: ProactiveService | None = None
         self.tool_results: ToolResultStore | None = None
@@ -755,6 +757,23 @@ class LifeService:
                 await self.memory.store.cleanup()
             except Exception:
                 logger.exception("[life] memory digest round failed")
+
+    def migration_service(self) -> Any:
+        """Return the offline migration service, creating it on first use.
+
+        Returns:
+            ``MigrationService`` bound to this service's database and data dir.
+
+        Raises:
+            RuntimeError: When the Life layer is not running.
+        """
+        if self.migration is None:
+            if self.data_dir is None:
+                raise RuntimeError("the Life layer is not running")
+            from bot.life.migration.service import MigrationService
+
+            self.migration = MigrationService(self.db, self.data_dir)
+        return self.migration
 
     def _note_heartflow_reply(
         self,

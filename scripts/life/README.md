@@ -1538,3 +1538,106 @@ lists. A known skipped count is worth reading in the report: `bot_message`,
   rows per digest round; a large A_memorix import can take days to reach full
   vector coverage. Watch `memory_vector_coverage` in the diagnostics report.
 - There is no panel entry yet: the migration page gets wired to this CLI in S7c.
+
+## S7c — rollback drill, handoff and the exit gate
+
+### Rollback drill
+
+The drill runs against a **copy** of the live database, so it is safe while the
+bot is running (the copy is opened read-only from the source):
+
+```bash
+python scripts/life/drill.py --db data/data_v4.db
+python scripts/life/drill.py --db data/data_v4.db --messages 1000 --keep
+```
+
+What it does: copy the database → generate a synthetic MaiBot source → import it
+→ insert one "live traffic" row → roll the batch back → verify that every
+imported row is gone, the live row survived and the table counts match the
+baseline again. Output:
+
+```text
+copy:     data/life/drill/20261107-215241/drill.db
+imported: 56 row(s) in 0.232s
+rollback: 56 row(s) in 0.028s (limit 600.0s)
+live row survived: True
+baseline restored: True
+record: PASS
+```
+
+Each run appends to `data/life/drill/history.jsonl` and writes
+`data/life/drill/last.json`; the exit code is 0 on pass, 1 on fail. The 600 s
+limit is the "rollback < 10 minutes" exit gate, measured end to end on a
+production-sized copy. Use `--messages 5000` before the final sign-off so the
+import side is representative too.
+
+### On-call handbook
+
+**P1 signals** (any of these: page the owner, do not wait for morning):
+
+- the bot answers twice to the same message, or answers messages it already
+  answered;
+- the bot answers every message in a group (gate stuck), or nothing for hours
+  while the group is active;
+- `life_turn_decision` grows but `heartflow` counters stay at zero (worker
+  stalled);
+- `database is locked` / `life` queue near `queue.maxsize` / process OOM;
+- users report the bot remembering something it should not, or wrong facts
+  attributed to a person.
+
+**First five minutes**
+
+1. `GET /api/v1/life/status` → `enabled`, `queue.size` vs `maxsize`,
+   `counters.dropped`, `heartflow.counters`, `rollout.window`.
+2. `GET /api/v1/life/diagnostics` → any `warn` is a hint, `fail` means the
+   report itself broke (usually the database).
+3. `grep "\[life\]" logs/` for the last 200 lines; the life logger prefixes
+   every line.
+4. Stop the bleeding with the **config rollback** below; investigate after.
+
+**Rollback ladder** (fastest first, none of them deletes data):
+
+| # | Action | Time | Effect |
+| --- | --- | --- | --- |
+| 1 | `scope.rollout_percent = 0` (or `heartflow.runtime.shadow = true`), restart | < 1 min | no new sessions are taken over; existing turns finish |
+| 2 | `life.enabled = false`, restart | < 2 min | the whole sidecar goes silent; archive stops |
+| 3 | `python scripts/life/migrate.py rollback --batch <id>` | drill-measured | removes the rows of one import batch only |
+| 4 | restore the last `data/data_v4.db` backup | minutes | last resort; loses everything after the backup |
+
+**Do not**: delete `data/life/` while the bot runs; run a migration import while
+the bot runs (the watermark window would include live rows); edit
+`life_turn_decision` by hand.
+
+**After the incident**: capture `diagnostics.json`, the failing `[life]` log
+lines, `migrate.py runs`, and the rollout report into the incident ticket;
+add a replay case if the trigger is reproducible.
+
+### User notice (send before the first 1% window)
+
+> 接下来一周，本群会试点新的回复引擎（MaiBot 的长期记忆、人物印象、表达习惯会
+> 逐步迁移过来）。试点期间回复节奏可能略有变化；如果出现重复回复、明显记错或
+> 不想被记录，直接 @我 说“关闭试点”，我会把本群移出灰度并删除对应记忆。聊天内容
+> 仅保存在本机 `data/life/`，可用于导出与删除。
+
+English variant for mixed groups:
+
+> We are trialling a new reply engine this week (MaiBot's long-term memory,
+> people profiles and phrasing habits are being migrated). Reply timing may
+> shift slightly; if the bot repeats itself, misremembers, or you do not want to
+> be recorded, say "opt out" and the group will be removed from the rollout and
+> its memories deleted. Data stays on this machine under `data/life/`.
+
+### Exit checklist
+
+Run these before declaring S7 done; paste the outputs into the release ticket.
+
+- [ ] `python scripts/life/diagnostics.py --status data/life/status.json` → exit 0
+- [ ] `python scripts/life/drill.py --db data/data_v4.db --messages 5000` → PASS,
+      `rollback_seconds < 600`
+- [ ] `python scripts/life/migrate.py runs` → the migration batch is `completed`,
+      not `rolled_back`
+- [ ] `heartflow` reply rate inside 2–80% for two consecutive weeks and no P1
+- [ ] `GET /life/rollout?days=14` → `turns > 0`, no unexplained drop
+- [ ] MaiBot instance switched to read-only and kept for three months (`D5`)
+- [ ] user notice sent; opt-out path tested once
+- [ ] on-call rotation named and this handbook linked in the ticket

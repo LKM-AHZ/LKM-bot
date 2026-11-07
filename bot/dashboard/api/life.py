@@ -117,6 +117,107 @@ async def life_rollout(
     return ok({"enabled": True, **await service.rollout.report(days)})
 
 
+@router.get("/life/migration/runs")
+async def life_migration_runs(
+    limit: int = Query(default=20, ge=1, le=100),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return recent migration batches.
+
+    Args:
+        limit: Maximum number of batches.
+
+    Returns:
+        Wrapped batch list.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None:
+        return ok({"enabled": False, "runs": []})
+    migration = service.migration_service()
+    await migration.ensure_schema()
+    return ok({"enabled": True, "runs": await migration.runs(limit)})
+
+
+@router.post("/life/migration/preview")
+async def life_migration_preview(
+    payload: dict[str, Any] = Body(...),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Inspect a MaiBot source and run a dry-run conversion.
+
+    Args:
+        payload: ``source`` plus optional ``memory_source``, ``datasets``,
+            ``umos`` and ``limit`` (messages previewed, default 500).
+
+    Returns:
+        Wrapped inspection and dry-run report.
+
+    Raises:
+        ApiError: When the source is missing or cannot be read.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None:
+        raise ApiError("the Life layer is not running")
+    source = str(payload.get("source") or "").strip()
+    if not source:
+        raise ApiError("source is required")
+    migration = service.migration_service()
+    await migration.ensure_schema()
+    try:
+        inspection = await migration.preflight(
+            source,
+            datasets=payload.get("datasets") or None,
+            memory_source=payload.get("memory_source") or None,
+        )
+        report = await migration.run(
+            source,
+            umos=payload.get("umos") or [],
+            datasets=payload.get("datasets") or None,
+            dry_run=True,
+            limit=int(payload.get("limit") or 500),
+            memory_source=payload.get("memory_source") or None,
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        raise ApiError(str(exc)) from exc
+    return ok({"inspection": inspection, "report": report})
+
+
+@router.post("/life/migration/rollback")
+async def life_migration_rollback(
+    payload: dict[str, Any] = Body(...),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Delete the rows written by one migration batch.
+
+    Args:
+        payload: ``batch`` identifier returned by an import.
+
+    Returns:
+        Wrapped rollback result.
+
+    Raises:
+        ApiError: When the batch is unknown.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None:
+        raise ApiError("the Life layer is not running")
+    batch = str(payload.get("batch") or "").strip()
+    if not batch:
+        raise ApiError("batch is required")
+    migration = service.migration_service()
+    await migration.ensure_schema()
+    try:
+        return ok(await migration.rollback(batch))
+    except ValueError as exc:
+        raise ApiError(str(exc)) from exc
+
+
 @router.get("/life/messages")
 async def life_messages(
     limit: int = Query(default=20, ge=1, le=200),

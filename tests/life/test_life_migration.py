@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
@@ -493,3 +494,107 @@ async def test_runs_lists_batches(service, tmp_path):
 
     assert {row["batch_id"] for row in runs} == {first["batch_id"], second["batch_id"]}
     assert all(row["status"] == "completed" for row in runs)
+
+
+class _FakeMigration:
+    """Stand-in for MigrationService in endpoint tests."""
+
+    def __init__(self, *, fail: bool = False) -> None:
+        self.fail = fail
+        self.rolled: list[str] = []
+
+    async def ensure_schema(self) -> None:
+        return None
+
+    async def runs(self, limit: int):
+        return [{"batch_id": "b1", "status": "completed"}][:limit]
+
+    async def preflight(self, source, **_kwargs):
+        if self.fail:
+            raise ValueError("source is not a MaiBot deployment")
+        return {"source": source, "warnings": []}
+
+    async def run(self, source, **_kwargs):
+        if self.fail:
+            raise ValueError("source is not a MaiBot deployment")
+        return {"source": source, "dry_run": True, "turns": 1}
+
+    async def rollback(self, batch: str):
+        self.rolled.append(batch)
+        return {"batch_id": batch, "status": "rolled_back", "deleted": {}}
+
+
+@pytest.mark.asyncio
+async def test_migration_runs_endpoint(monkeypatch):
+    from bot.dashboard.api import life as life_api
+    import bot.life.service as life_service_module
+
+    fake = _FakeMigration()
+    service = SimpleNamespace(migration_service=lambda: fake)
+    monkeypatch.setattr(life_service_module, "get_life_service", lambda: service)
+
+    payload = await life_api.life_migration_runs(limit=10, _auth=None)
+
+    assert payload["data"]["enabled"] is True
+    assert payload["data"]["runs"][0]["batch_id"] == "b1"
+
+
+@pytest.mark.asyncio
+async def test_migration_preview_endpoint(monkeypatch):
+    from bot.dashboard.api import life as life_api
+    import bot.life.service as life_service_module
+
+    fake = _FakeMigration()
+    service = SimpleNamespace(migration_service=lambda: fake)
+    monkeypatch.setattr(life_service_module, "get_life_service", lambda: service)
+
+    payload = await life_api.life_migration_preview(
+        payload={"source": "/srv/maibot", "umo": "x"},
+        _auth=None,
+    )
+
+    assert payload["data"]["inspection"]["source"] == "/srv/maibot"
+    assert payload["data"]["report"]["dry_run"] is True
+
+
+@pytest.mark.asyncio
+async def test_migration_preview_rejects_bad_source(monkeypatch):
+    from bot.dashboard.api import life as life_api
+    from bot.dashboard.responses import ApiError
+    import bot.life.service as life_service_module
+
+    fake = _FakeMigration(fail=True)
+    service = SimpleNamespace(migration_service=lambda: fake)
+    monkeypatch.setattr(life_service_module, "get_life_service", lambda: service)
+
+    with pytest.raises(ApiError):
+        await life_api.life_migration_preview(payload={"source": "/nope"}, _auth=None)
+
+
+@pytest.mark.asyncio
+async def test_migration_rollback_endpoint(monkeypatch):
+    from bot.dashboard.api import life as life_api
+    import bot.life.service as life_service_module
+
+    fake = _FakeMigration()
+    service = SimpleNamespace(migration_service=lambda: fake)
+    monkeypatch.setattr(life_service_module, "get_life_service", lambda: service)
+
+    payload = await life_api.life_migration_rollback(payload={"batch": "b1"}, _auth=None)
+
+    assert payload["data"]["status"] == "rolled_back"
+    assert fake.rolled == ["b1"]
+
+
+@pytest.mark.asyncio
+async def test_migration_endpoints_without_service(monkeypatch):
+    from bot.dashboard.api import life as life_api
+    from bot.dashboard.responses import ApiError
+    import bot.life.service as life_service_module
+
+    monkeypatch.setattr(life_service_module, "get_life_service", lambda: None)
+
+    payload = await life_api.life_migration_runs(limit=5, _auth=None)
+    assert payload["data"]["enabled"] is False
+    with pytest.raises(ApiError):
+        await life_api.life_migration_preview(payload={"source": "/x"}, _auth=None)
