@@ -2,6 +2,8 @@ from io import BytesIO
 from pathlib import Path
 from zipfile import ZipFile
 
+import pytest
+
 from bot.cli.utils.plugin import PluginStatus, build_plug_list, download_repository
 
 
@@ -108,15 +110,19 @@ def test_build_plug_list_merges_local_and_remote_plugins(monkeypatch, tmp_path):
     assert len(plugins) == 3
 
 
-def test_build_plug_list_treats_file_plugin_path_as_empty_local_set(
-    monkeypatch, tmp_path
+@pytest.mark.parametrize("path_kind", ["file", "missing"])
+def test_build_plug_list_treats_unusable_path_as_empty_local_set(
+    monkeypatch, tmp_path, path_kind
 ):
-    plugins_file = tmp_path / "plugins"
-    plugins_file.write_text("not a directory", encoding="utf-8")
+    plugins_path = tmp_path / "plugins"
+    if path_kind == "file":
+        plugins_path.write_text("not a directory", encoding="utf-8")
+    else:
+        plugins_path = tmp_path / "completely_non_existent_path"
 
     monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
 
-    plugins = build_plug_list(plugins_file)
+    plugins = build_plug_list(plugins_path)
 
     assert [plugin["name"] for plugin in plugins] == ["local-plugin", "remote-only"]
     assert all(plugin["status"] == PluginStatus.NOT_INSTALLED for plugin in plugins)

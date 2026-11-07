@@ -126,7 +126,7 @@ class LocalPythonTool(FunctionTool):
     name: str = "bot_execute_python"
     description: str = (
         f"Execute codes in a Python environment. Current OS: {_OS_NAME}. "
-        "Use system-compatible commands. Restricted Linux and macOS calls run "
+        "Use system-compatible commands. Restricted calls run "
         "inside an operating-system sandbox."
     )
 

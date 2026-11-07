@@ -98,7 +98,11 @@ class WakingCheckStage(Stage):
         if not preserve_whitespace:
             event.message_str = message_str
         api_key_allow_admin_role = event.get_extra("_api_key_allow_admin_role")
-        for admin_id in self.ctx.bot_config["admins_id"]:
+        for admin_id in (
+            []
+            if event.get_extra("_role_resolved", False)
+            else self.ctx.bot_config["admins_id"]
+        ):
             if (
                 api_key_allow_admin_role is not False
                 and str(event.get_sender_id()) == admin_id
@@ -109,14 +113,14 @@ class WakingCheckStage(Stage):
         # 检查 wake
         wake_prefixes = self.ctx.bot_config["wake_prefix"]
         messages = event.get_messages()
-        is_wake = False
+        is_wake = event.is_wake
         if event.get_extra("_life_force_wake"):
             # The Life heart-flow already decided this ambient turn deserves an
             # answer; without this seam the message would be dropped here.
             is_wake = True
             event.is_wake = True
             event.is_at_or_wake_command = True
-        for wake_prefix in wake_prefixes:
+        for wake_prefix in [] if is_wake else wake_prefixes:
             if message_str.startswith(wake_prefix):
                 if (
                     not event.is_private_chat()

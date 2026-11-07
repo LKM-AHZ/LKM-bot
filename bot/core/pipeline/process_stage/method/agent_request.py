@@ -6,7 +6,7 @@ from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.star.session_llm_manager import SessionServiceManager
 
 from ...context import PipelineContext
-from ..stage import Stage
+from ...stage import Stage
 from .agent_sub_stages.internal import InternalAgentSubStage
 from .agent_sub_stages.third_party import ThirdPartyAgentSubStage
 

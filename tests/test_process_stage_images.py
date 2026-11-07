@@ -17,9 +17,16 @@ from PIL import Image as PILImage
 from bot.core import bot_main_agent as main
 from bot.core.agent.message import (
     ImageURLPart,
+    Message,
     TextPart,
+    bind_checkpoint_messages,
     dump_messages_with_checkpoints,
 )
+from bot.core.agent.tool import FunctionTool, ToolSet
+from bot.core.bot_main_agent import builder as builder_build
+from bot.core.bot_main_agent import knowledge_base as knowledge_base_build
+from bot.core.bot_main_agent import providers as providers_build
+from bot.core.bot_main_agent import request as request_build
 from bot.core.config.default import DEFAULT_CONFIG
 from bot.core.message.components import Image, Plain, Reply
 from bot.core.pipeline.preprocess_stage import stage as preprocess
@@ -95,7 +102,7 @@ def harness(tmp_path, monkeypatch):
             "enable": True,
         }
     )
-    context = MagicMock(spec=main.Context)
+    context = MagicMock(spec=builder_build.Context)
     context.persona_manager = MagicMock()
     context.conversation_manager = MagicMock()
     context.get_config.return_value = config
@@ -143,10 +150,11 @@ def harness(tmp_path, monkeypatch):
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     monkeypatch.setattr(internal, "try_capture_follow_up", lambda event: None)
     monkeypatch.setattr(internal, "_record_internal_agent_stats", AsyncMock())
     monkeypatch.setattr(internal.Metric, "upload", AsyncMock())
-    monkeypatch.setattr(main, "retrieve_knowledge_base", AsyncMock(return_value=None))
+    monkeypatch.setattr(knowledge_base_build, "retrieve_knowledge_base", AsyncMock(return_value=None))
     from bot.core.pipeline.process_stage.method.agent_request import (
         SessionServiceManager,
     )
@@ -344,12 +352,40 @@ async def test_animation_montage_notice_reaches_model(harness, tmp_path):
         ]
         assert len(notices) == int(expected)
         if expected:
-            assert notices[0]._no_save
+            assert not notices[0]._no_save
             assert notices[0].text.startswith("<system_notice>\n")
             assert notices[0].text.endswith("\n</system_notice>")
             assert "contain frames in reading order" in notices[0].text
             assert "Treat them as animations" in notices[0].text
             assert "do not mention the conversion or frame layout" in notices[0].text
+
+
+@pytest.mark.asyncio
+async def test_persistent_animation_guidance_survives_history_reload(harness, tmp_path):
+    req = ProviderRequest(
+        prompt="describe",
+        image_urls=[str(source_image(tmp_path))],
+    )
+    await image_input.prepare_request_images(
+        req,
+        make_event(),
+        max_size=90,
+        output_dir=harness.work,
+        prepared={},
+    )
+
+    message = Message.model_validate(await req.assemble_context())
+    sent = Provider._ensure_message_to_dicts(harness.provider, [message])
+    saved = dump_messages_with_checkpoints([message])
+    replayed = Provider._ensure_message_to_dicts(
+        harness.provider, bind_checkpoint_messages(saved)
+    )
+
+    assert any(
+        "Images labeled as animation montages" in part.get("text", "")
+        for part in sent[0]["content"]
+    )
+    assert replayed == sent
 
 
 @pytest.mark.asyncio
@@ -448,6 +484,7 @@ async def test_plugin_request_extra_metadata_hook_and_history(
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event)
     assert seen == [EventType.OnWaitingLLMRequestEvent, EventType.OnLLMRequestEvent]
     assert convert.await_count == 2
@@ -541,6 +578,7 @@ async def test_provider_and_history_keep_bounded_previews_and_original_paths(
                 return False
 
             monkeypatch.setattr(internal, "call_event_hook", hook)
+            monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event, preprocess_first=True)
     req = harness.captured[0].req
     preview = Path(req.image_urls[0])
@@ -657,7 +695,7 @@ async def test_reply_fallback_limit_and_deduplication(harness, tmp_path, monkeyp
         PILImage.new("RGB", (12, 12), "red").save(path)
         paths.append(str(path))
     extract = AsyncMock(return_value=[paths[0], paths[0], paths[1], paths[2]])
-    monkeypatch.setattr(main, "extract_quoted_message_images", extract)
+    monkeypatch.setattr(request_build, "extract_quoted_message_images", extract)
     harness.config["provider_settings"]["max_quoted_fallback_images"] = 2
     event = make_event([Reply(id="one"), Reply(id="two")])
     await process_event(harness, event)
@@ -748,6 +786,7 @@ async def test_oversized_images_explain_omission_and_keep_original_path(
             return False
 
         monkeypatch.setattr(internal, "call_event_hook", hook)
+        monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event, preprocess_first=True)
     req = harness.captured[0].req
     assert len(req.image_urls) == int(with_valid_image)
@@ -847,7 +886,7 @@ async def test_stage_stream_and_fallback_reuse_prepared_input(
     if fallback:
         harness.provider.text_chat.side_effect = RuntimeError("primary unavailable")
         monkeypatch.setattr(
-            main, "_get_fallback_chat_providers", lambda *args: [secondary]
+            providers_build, "resolve_fallback_providers", lambda *args: [secondary]
         )
     event = make_event([Image(file=str(source))])
     await process_event(harness, event)
@@ -874,7 +913,9 @@ async def test_non_image_and_disabled_ai_do_not_prepare(harness, tmp_path, monke
 
 def test_image_preparation_stays_outside_agent_runner_and_providers():
     root = Path(__file__).parents[1] / "bot" / "core"
-    paths = [root / "bot_main_agent.py", root / "bot_agent_tool_exec.py"]
+    paths = list((root / "bot_main_agent").glob("*.py")) + [
+        root / "bot_agent_tool_exec.py",
+    ]
     paths += list((root / "agent").rglob("*.py")) + list(
         (root / "provider").rglob("*.py")
     )
@@ -1050,6 +1091,7 @@ async def test_plugin_and_hook_image_list_normalization(harness, tmp_path, monke
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event)
     assert len(harness.captured[0].req.image_urls) == 1
     assert original.image_urls[0] is None and original.image_urls[2].startswith("  ")
@@ -1100,6 +1142,7 @@ async def test_attachment_sources_survive_event_cleanup(
     monkeypatch.setattr(media, "download_file", download)
     if late:
         monkeypatch.setattr(internal, "call_event_hook", hook)
+        monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event, preprocess_first=True)
     req = harness.captured[0].req
     label = "Image 1 in quoted message" if quoted else "Image 1"
@@ -1150,6 +1193,7 @@ async def test_stage_failure_preserves_sources_and_cleans_working_files(
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     stage = ProcessStage()
     await stage.initialize(harness.ctx)
     expectation = (
@@ -1239,12 +1283,12 @@ async def test_materialized_sources_remain_owned_when_collection_fails(
         chain.append(failing_image)
     else:
         monkeypatch.setattr(
-            main,
+            request_build,
             "_get_session_conv",
             AsyncMock(side_effect=failure("unavailable")),
         )
     with pytest.raises(failure, match="unavailable"):
-        await main.collect_initial_request(
+        await request_build.collect_initial_request(
             event, harness.context, main.MainAgentBuildConfig(tool_call_timeout=60)
         )
     assert len(event._temporary_local_files) == 1
@@ -1297,6 +1341,7 @@ async def test_final_image_labels_follow_mixed_visuals_after_hook(
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event, preprocess_first=True)
     assert convert.await_count == 4
     req = harness.captured[0].req
@@ -1376,6 +1421,7 @@ async def test_captioned_quote_has_status_without_visual_index(
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event, preprocess_first=True)
     assert caption.text_chat.await_count == 1
     payload = harness.provider.text_chat.await_args.kwargs["contexts"][-1]["content"]
@@ -1493,6 +1539,7 @@ async def test_hook_only_new_refs_receive_full_image_policy(
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     event = make_event([Image(file=str(initial))])
     await process_event(harness, event, preprocess_first=True)
     assert [call.args[0] for call in convert.await_args_list] == [
@@ -1619,6 +1666,7 @@ async def test_only_actually_captioned_images_receive_caption_status(
         return False
 
     monkeypatch.setattr(internal, "call_event_hook", hook)
+    monkeypatch.setattr(builder_build, "call_event_hook", hook)
     await process_event(harness, event)
     assert caption.text_chat.await_count == 1
     assert caption.text_chat.await_args.kwargs["image_urls"] == [str(main_image)]

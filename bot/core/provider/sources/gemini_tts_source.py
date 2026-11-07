@@ -47,7 +47,7 @@ class ProviderGeminiTTSAPI(TTSProvider):
             _headers.pop("user-agent", None)
         self.model: str = provider_config.get(
             "gemini_tts_model",
-            "gemini-2.5-flash-preview-tts",
+            "gemini-3.8-flash-tts",
         )
         self.prefix: str | None = provider_config.get(
             "gemini_tts_prefix",

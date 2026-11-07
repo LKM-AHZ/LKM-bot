@@ -1940,7 +1940,7 @@ CONFIG_METADATA_2 = {
                         "gemini_tts_api_key": "",
                         "gemini_tts_api_base": "",
                         "gemini_tts_timeout": 20,
-                        "gemini_tts_model": "gemini-2.5-flash-preview-tts",
+                        "gemini_tts_model": "gemini-3.8-flash-tts",
                         "gemini_tts_prefix": "",
                         "gemini_tts_voice_name": "Leda",
                         "proxy": "",
@@ -2612,17 +2612,17 @@ CONFIG_METADATA_2 = {
                     "gm_native_search": {
                         "description": "启用原生搜索功能",
                         "type": "bool",
-                        "hint": "启用后所有函数工具将全部失效，免费次数限制请查阅官方文档",
+                        "hint": "仅 Gemini 3 及以上模型支持与函数工具同时使用；Gemini 3 及以上模型的原生搜索仅限付费层级，计费规则请查阅官方文档",
                     },
                     "gm_native_coderunner": {
                         "description": "启用原生代码执行器",
                         "type": "bool",
-                        "hint": "启用后所有函数工具将全部失效",
+                        "hint": "仅 Gemini 3 及以上模型支持与函数工具同时使用",
                     },
                     "gm_url_context": {
                         "description": "启用URL上下文功能",
                         "type": "bool",
-                        "hint": "启用后所有函数工具将全部失效",
+                        "hint": "仅 Gemini 3 及以上模型支持与函数工具同时使用",
                     },
                     "gm_safety_settings": {
                         "description": "安全过滤器",
@@ -4414,7 +4414,7 @@ CONFIG_METADATA_3 = {
                     },
                     "wake_prefix": {
                         "description": "唤醒词",
-                        "hint": "唤醒机器人的消息前缀的列表。也可以通过 @ 机器人来唤醒。",
+                        "hint": "唤醒机器人的消息前缀的列表，也可以通过 @ 机器人来唤醒。\n\n内置指令（如 `/help`、`/sid`）也依赖唤醒词：群聊中不带唤醒词直接输入将无法触发；私聊在未启用「私聊消息需要唤醒词」时无需前缀，可直接输入指令触发。",
                         "type": "list",
                         "items": {"type": "string"},
                     },

@@ -1028,6 +1028,7 @@ class PluginManager:
 
         # 导入插件模块，并尝试实例化插件类
         for plugin_module in plugin_modules:
+            plugin_logger = logger
             try:
                 module_str = plugin_module["module"]
                 # module_path = plugin_module['module_path']
@@ -1052,7 +1053,11 @@ class PluginManager:
                 if specified_dir_name and root_dir_name != specified_dir_name:
                     continue
 
-                logger.info("Loading plugin %s ...", root_dir_name)
+                # Use the directory name until plugin metadata is available.
+                plugin_logger = logging.LoggerAdapter(
+                    logger, {"plugin_name": root_dir_name}
+                )
+                plugin_logger.info("Loading plugin %s ...", root_dir_name)
 
                 # 尝试导入模块
                 try:
@@ -1065,8 +1070,10 @@ class PluginManager:
                     )
                 except Exception as e:
                     error_trace = traceback.format_exc()
-                    logger.error(error_trace)
-                    logger.error(f"Failed to import plugin {root_dir_name}: {e!s}")
+                    plugin_logger.error(error_trace)
+                    plugin_logger.error(
+                        f"Failed to import plugin {root_dir_name}: {e!s}"
+                    )
                     has_load_error = True
                     self.failed_plugin_dict[root_dir_name] = (
                         self._build_failed_plugin_record(
@@ -1119,10 +1126,14 @@ class PluginManager:
                             metadata.views = metadata_yaml.views
                             metadata.i18n = metadata_yaml.i18n
                     except Exception as e:
-                        logger.warning(
+                        plugin_logger.warning(
                             f"Failed to load metadata for plugin {root_dir_name}: "
                             f"{e!s}. Using default metadata.",
                         )
+
+                    plugin_logger = logging.LoggerAdapter(
+                        logger, {"plugin_name": metadata.name or root_dir_name}
+                    )
 
                     if not ignore_version_check:
                         is_valid, error_message = (
@@ -1136,7 +1147,7 @@ class PluginManager:
                                 or "The plugin does not support the current LKMBot version."
                             )
 
-                    logger.info(metadata)
+                    plugin_logger.info(metadata)
                     metadata.config = plugin_config
                     plugin_id = metadata.plugin_id
 
@@ -1170,7 +1181,7 @@ class PluginManager:
                             setattr(metadata.star_cls, "plugin_id", plugin_id)
                     else:
                         metadata.star_cls = None
-                        logger.info("Plugin %s is disabled.", metadata.name)
+                        plugin_logger.info("Plugin %s is disabled.", metadata.name)
 
                     metadata.module = module
                     metadata.root_dir_name = root_dir_name
@@ -1277,7 +1288,7 @@ class PluginManager:
                                 ),
                             )
 
-                        logger.debug(
+                        plugin_logger.debug(
                             f"Inserted permission filter {cmd_type} into "
                             f"{metadata.name}.{handler.handler_name}.",
                         )
@@ -1293,20 +1304,30 @@ class PluginManager:
                     EventType.OnPluginLoadedEvent,
                 )
                 for handler in handlers:
+                    handler_plugin = star_map.get(handler.handler_module_path)
+                    handler_plugin_name = (
+                        handler_plugin.name if handler_plugin else None
+                    ) or handler.handler_module_path
                     try:
                         logger.info(
-                            f"hook(on_plugin_loaded) -> {star_map[handler.handler_module_path].name} - {handler.handler_name}",
+                            f"hook(on_plugin_loaded) -> {handler_plugin_name} - {handler.handler_name}",
+                            extra={"plugin_name": handler_plugin_name},
                         )
                         await handler.handler(metadata)
                     except Exception:
-                        logger.error(traceback.format_exc())
+                        logger.error(
+                            traceback.format_exc(),
+                            extra={"plugin_name": handler_plugin_name},
+                        )
 
             except BaseException as e:
-                logger.error(f"----- Failed to load plugin {root_dir_name} -----")
+                plugin_logger.error(
+                    f"----- Failed to load plugin {root_dir_name} -----"
+                )
                 errors = traceback.format_exc()
                 for line in errors.split("\n"):
-                    logger.error(f"| {line}")
-                logger.error("----------------------------------")
+                    plugin_logger.error(f"| {line}")
+                plugin_logger.error("----------------------------------")
                 has_load_error = True
                 self.failed_plugin_dict[root_dir_name] = (
                     self._build_failed_plugin_record(

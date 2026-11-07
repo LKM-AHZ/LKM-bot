@@ -15,9 +15,10 @@ from bot.core.utils.bot_path import (
     get_bot_skills_path,
     get_bot_temp_path,
 )
+from bot.core.utils.runtime_env import resolve_windows_shell
 
 from .booters.base import ComputerBooter
-from .booters.local import LocalBooter, resolve_windows_shell
+from .booters.local import LocalBooter
 
 session_booter: dict[str, ComputerBooter] = {}
 local_booter: ComputerBooter | None = None

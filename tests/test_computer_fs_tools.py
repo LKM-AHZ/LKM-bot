@@ -15,7 +15,7 @@ from mcp.types import CallToolResult, ImageContent
 from PIL import Image
 
 from bot.core.agent.run_context import ContextWrapper
-from bot.core.computer import file_read_utils, local_file_security
+from bot.core.computer import file_read_utils
 from bot.core.computer.booters.local import LocalBooter
 from bot.core.tools.computer_tools import fs as fs_tools
 from bot.core.tools.computer_tools import util as computer_util

@@ -14,7 +14,7 @@ from bot.core.agent.runners.deerflow.deerflow_agent_runner import (
 )
 from bot.core.agent.runners.dify.dify_agent_runner import DifyAgentRunner
 from bot.core.bot_agent_hooks import MAIN_AGENT_HOOKS
-from bot.core.bot_main_agent import _matches_provider_wake_prefix
+from bot.core.bot_main_agent.request import matches_provider_wake_prefix
 from bot.core.message.components import Image, Record
 from bot.core.message.message_event_result import (
     MessageChain,
@@ -282,7 +282,7 @@ class ThirdPartyAgentSubStage(Stage):
     ) -> AsyncGenerator[None, None]:
         req: ProviderRequest | None = None
 
-        if not _matches_provider_wake_prefix(
+        if not matches_provider_wake_prefix(
             event,
             provider_wake_prefix,
         ):

@@ -14,6 +14,7 @@ from typing import IO, Any
 from urllib.parse import quote, quote_plus
 
 from bot import __version__
+from bot.core.log import LogManager
 from bot.core.utils.bot_path import get_bot_path
 
 REDACTED = "[REDACTED]"
@@ -412,6 +413,7 @@ def collect_diagnostics(
         "architecture": platform.machine(),
         "deployment": "docker" if Path("/.dockerenv").exists() else "unknown",
         "started_at": getattr(core, "start_time", None),
+        "console_logging": LogManager.get_console_status(),
         "collection_errors": errors,
     }
     redactor.collect(sections)
