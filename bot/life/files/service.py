@@ -156,6 +156,7 @@ class FileService:
             "enabled": True,
             "counters": dict(self._counters),
             "store": self.store.stats(),
+            "max_files": self.config.max_files,
             "keep_days": self.config.keep_days,
             "tmp_ttl_hours": self.config.tmp_ttl_hours,
             "max_send_bytes": self.config.max_send_bytes,

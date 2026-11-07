@@ -70,6 +70,31 @@ async def life_monitor(
     )
 
 
+@router.get("/life/diagnostics")
+async def life_diagnostics(
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return the Life health report (derived metrics and checks).
+
+    Returns:
+        Wrapped diagnostics report.
+    """
+    from bot.life.diagnostics import build_report
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None:
+        return ok(
+            {
+                "enabled": False,
+                "overall": "pass",
+                "metrics": {},
+                "checks": [],
+            }
+        )
+    return ok({"enabled": True, **await build_report(service)})
+
+
 @router.get("/life/messages")
 async def life_messages(
     limit: int = Query(default=20, ge=1, le=200),

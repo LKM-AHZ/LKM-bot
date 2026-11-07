@@ -1285,3 +1285,73 @@ curl -H "Authorization: Bearer <token>" \
 - Only plain text/Markdown is generated. PDF/Word conversion is out of scope.
 - The store is a plain directory: no quota accounting beyond `max_files`, and
   deleting a file while it is queued for sending makes that send fail.
+
+## S6g — statistics and diagnostics
+
+Implemented in `bot/life/diagnostics.py`; the CLI is
+[`diagnostics.py`](diagnostics.py), the endpoint is
+`GET /api/v1/life/diagnostics`.
+
+The report reuses the status snapshot every service already exposes, derives the
+ratios the runbook needs, and turns them into checks. It never changes config,
+sends a message or runs a learning round.
+
+```json
+{
+  "overall": "pass | warn | fail",
+  "metrics": {"heartflow": {...}, "memory": {...}, "review": {...}, ...},
+  "checks": [{"name": "...", "status": "pass|warn|fail", "detail": "..."}],
+  "generated_at": 1730000000.0
+}
+```
+
+### Derived metrics
+
+- **Heart-flow**: turns / replied / waited / merged / capacity drops and the
+  `reply_rate`, `wait_rate`, `merge_rate` ratios.
+- **Memory**: total, embedded, vector coverage, newest-memory age, per-kind
+  counts.
+- **Review backlog**: pending facts, conflicted facts, pending slang.
+- Per-feature counters: tool-result condense, sub-agents, monitor ring, files,
+  ACP, keyword reactions.
+
+### Checks
+
+| Check | Warns when |
+| --- | --- |
+| `heartflow_reply_rate` | ≥ 20 turns and reply rate < 2% or > 80% |
+| `heartflow_capacity` | any capacity drop |
+| `memory_vector_coverage` | embedding on, ≥ 10 memories, coverage < 50% |
+| `memory_freshness` | newest memory older than 7 days |
+| `memory_review_backlog` | pending + conflicted + slang > 20 |
+| `tool_result_condense` | ≥ 10 calls and > 30% failed |
+| `subagent_health` | ≥ 5 runs and > 30% failed |
+| `monitor_ring` | the record ring overflowed |
+| `files_store` | the store reached `max_files` |
+| `acp_health` | ≥ 5 asks and > 30% failed or timed out |
+| `reaction_health` | more than half of the reaction sends failed |
+
+`overall` is `fail` only when the report itself could not be built; every
+threshold violation is a `warn`, because a quiet group is not an outage.
+
+### Run it
+
+```bash
+# from a saved dashboard payload
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status > data/life/status.json
+python scripts/life/diagnostics.py --status data/life/status.json \
+  --out data/life/diagnostics.json
+```
+
+Exit codes: **0** pass, **1** warn, **2** fail — usable directly in a cron or
+runbook check. The endpoint returns the same report wrapped in `{"status": "ok"}`.
+
+### Limits
+
+- The thresholds are hand-set heuristics, not measured baselines; tune them once
+  the S0 corpus exists.
+- `memory_freshness` compares against wall-clock time, so a session that has
+  been quiet for a week will warn even when nothing is wrong.
+- There is no dedicated panel page yet; the eight S6f pages cover the data, and
+  the diagnostics endpoint is ready for a small health card later.
