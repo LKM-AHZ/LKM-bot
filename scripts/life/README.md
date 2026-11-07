@@ -874,3 +874,81 @@ The gate is only as honest as the reference file. Until the S0 corpus and a
 MaiBot same-model run exist, `--reference` is fed a hand-built sample; that
 proves the test catches a shifted distribution, not that S5 matches MaiBot.
 Once the corpus lands, the command line does not change.
+
+## S6a — tool-result condensation
+
+Implemented in `bot/life/toolresult/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `condense.py` | Threshold / exclusion rules, self-contained task text, the utility call, the condensed wrapper |
+| `store.py` | Bounded per-session stash of raw results (`r1`, `r2`, ...) |
+| `read.py` | `read_tool_result` tool plus the pure `render_read_view` formatter |
+
+```json
+{
+  "tool_result": {
+    "enabled": false,
+    "threshold_chars": 4000,
+    "max_input_chars": 20000,
+    "intent_max_chars": 800,
+    "keep_per_session": 20,
+    "max_sessions": 200,
+    "max_chars_per_session": 200000,
+    "read_max_chars": 4000,
+    "llm_timeout_seconds": 30.0,
+    "excluded_tool_names": ["read_tool_result", "send_message_to_user", "send_meme"]
+  }
+}
+```
+
+The seam sits at the end of `ToolLoopAgentRunner._materialize_large_tool_result`:
+when the Life layer is off the method behaves exactly as before, and when it is
+on but declines (short result, excluded tool, out-of-scope session, failed
+utility call) the upstream overflow-to-file path still applies.
+
+### What gets condensed
+
+- Only results at or above `threshold_chars`; shorter ones cost no model call.
+- The `send_*` control tools, `read_tool_result` itself and anything listed in
+  `excluded_tool_names` are never rewritten.
+- The utility call sees the head of the result (`max_input_chars`) and the tail
+  of the model's own reasoning before the call (`intent_max_chars`), nothing
+  else - it has no parent context.
+- A summary that is empty, not shorter than the raw text, or returned after
+  `llm_timeout_seconds` is discarded and the raw text is kept.
+
+### What the model sees
+
+```text
+<压缩后信息；原始结果已保存为 r3。需要上面没有的细节时，调用 read_tool_result(result_id="r3") 分段读取原文，或加 keyword 参数直接查找。>
+<summary>
+```
+
+### Raw stash and `read_tool_result`
+
+- Kept per session, in memory only: a restart clears it.
+- Bounds: `keep_per_session` results, `max_chars_per_session` characters, and
+  `max_sessions` sessions (least recently used session is dropped first).
+- `read_tool_result(result_id, keyword?, offset?, limit?)`:
+  - `keyword` returns matching lines as `L12: ...`;
+  - `offset` (1-based) + `limit` page through the original;
+  - unknown id returns the kept ids, and another session's id is invisible.
+
+### Verify
+
+```bash
+pytest tests/life/test_life_tool_result.py -q
+pytest tests/test_tool_loop_agent_runner.py -q -k large_tool_result
+
+# status block (counters + stash size)
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status | jq .data.tool_result
+```
+
+### Costs and limits
+
+- Condensing blocks the tool turn for one utility completion; a provider outage
+  turns it into `failed` counters with the raw text kept, not an error.
+- The stash lives in process memory, so a multi-process deployment condenses in
+  one worker and can only read that worker's stash.

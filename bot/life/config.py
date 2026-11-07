@@ -524,6 +524,50 @@ class IdleConfig(BaseModel):
     """Sessions inspected per scan."""
 
 
+class ToolResultConfig(BaseModel):
+    """Condensing oversized tool results before they enter the history (S6a).
+
+    The raw text is kept in a bounded in-memory stash and can be pulled back
+    through the ``read_tool_result`` tool, so condensing never loses data.
+    """
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    threshold_chars: int = 4000
+    """Successful results shorter than this are left untouched."""
+
+    max_input_chars: int = 20000
+    """Only the head of a longer result is handed to the utility call."""
+
+    intent_max_chars: int = 800
+    """Tail of the model's own reasoning kept as the condensing intent."""
+
+    keep_per_session: int = 20
+    """Raw results kept per session; the oldest is dropped first."""
+
+    max_sessions: int = 200
+    """Sessions with a stash; the least recently used one is dropped first."""
+
+    max_chars_per_session: int = 200_000
+    """Character budget of one session's stash."""
+
+    read_max_chars: int = 4000
+    """Cap of one ``read_tool_result`` reply."""
+
+    llm_timeout_seconds: float = 30.0
+    """Hard timeout of the utility completion; on expiry the raw text is kept."""
+
+    excluded_tool_names: list[str] = Field(
+        default_factory=lambda: [
+            "read_tool_result",
+            "send_message_to_user",
+            "send_meme",
+        ]
+    )
+    """Control-signal tools whose result must never be rewritten."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
@@ -560,6 +604,7 @@ class LifeConfig(BaseModel):
     persona: PersonaConfig = Field(default_factory=PersonaConfig)
     prompt: PromptConfig = Field(default_factory=PromptConfig)
     reply: ReplyConfig = Field(default_factory=ReplyConfig)
+    tool_result: ToolResultConfig = Field(default_factory=ToolResultConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

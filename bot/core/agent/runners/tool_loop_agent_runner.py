@@ -399,12 +399,68 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
 
         return await asyncio.to_thread(_run)
 
+    async def _condense_large_tool_result(
+        self,
+        *,
+        tool_name: str,
+        tool_args: dict[str, T.Any] | None,
+        content: str,
+        intent: str,
+    ) -> str | None:
+        """Ask the Life layer to condense an oversized tool result.
+
+        Args:
+            tool_name: Tool that produced the result.
+            tool_args: Arguments the model passed to the tool.
+            content: Raw result text.
+            intent: The model's own reasoning before the call.
+
+        Returns:
+            The condensed text, or None when the Life layer is off, declines,
+            or fails; the caller then keeps the upstream handling.
+        """
+        if not tool_name:
+            return None
+        try:
+            from bot.life.service import get_life_service
+        except Exception:
+            return None
+        service = get_life_service()
+        if service is None:
+            return None
+        try:
+            return await service.condense_tool_result(
+                tool_name=tool_name,
+                tool_args=tool_args or {},
+                content=content,
+                intent=intent,
+                session_id=str(self.req.session_id or ""),
+            )
+        except Exception:
+            logger.exception(
+                "Life tool-result condensation failed for %s; keeping raw result",
+                tool_name,
+            )
+            return None
+
     async def _materialize_large_tool_result(
         self,
         *,
         tool_call_id: str,
         content: str,
+        tool_name: str = "",
+        tool_args: dict[str, T.Any] | None = None,
+        intent: str = "",
     ) -> str:
+        condensed = await self._condense_large_tool_result(
+            tool_name=tool_name,
+            tool_args=tool_args,
+            content=content,
+            intent=intent,
+        )
+        if condensed is not None:
+            return condensed
+
         if self.tool_result_overflow_dir is None or self.read_tool is None:
             return content
 
@@ -1365,6 +1421,9 @@ class ToolLoopAgentRunner(BaseAgentRunner[TContext]):
                             inline_result = await self._materialize_large_tool_result(
                                 tool_call_id=func_tool_id,
                                 content=inline_result,
+                                tool_name=func_tool_name,
+                                tool_args=func_tool_args,
+                                intent=llm_response.completion_text or "",
                             )
                             _append_tool_call_result(
                                 func_tool_id,

@@ -41,6 +41,12 @@ from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
+from bot.life.toolresult.condense import run_condense, should_condense
+from bot.life.toolresult.read import (
+    register_tool_result_tools,
+    unregister_tool_result_tools,
+)
+from bot.life.toolresult.store import ToolResultStore
 
 _life_service: LifeService | None = None
 
@@ -108,6 +114,7 @@ class LifeService:
         self.heartflow: TurnRuntime | None = None
         self.attention: AttentionRegistry | None = None
         self.proactive: ProactiveService | None = None
+        self.tool_results: ToolResultStore | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -127,6 +134,13 @@ class LifeService:
             "dropped": 0,
             "failed": 0,
             "normalize_failed": 0,
+        }
+        self._tool_result_counts = {
+            "attempts": 0,
+            "condensed": 0,
+            "skipped": 0,
+            "failed": 0,
+            "chars_saved": 0,
         }
 
     @property
@@ -158,6 +172,12 @@ class LifeService:
         )
         await self.store.ensure_schema()
         self.prompt = PromptAssembler(self.config.prompt)
+        if self.config.tool_result.enabled:
+            self.tool_results = ToolResultStore(
+                max_results_per_session=self.config.tool_result.keep_per_session,
+                max_sessions=self.config.tool_result.max_sessions,
+                max_chars_per_session=self.config.tool_result.max_chars_per_session,
+            )
         if self.config.sender.enabled:
             self.sender = LifeSender(
                 platform_manager=self.platform_manager,
@@ -275,7 +295,9 @@ class LifeService:
             await self.jargon.initialize()
 
         if self.star_context is not None and (
-            self.memory is not None or self.emoji is not None
+            self.memory is not None
+            or self.emoji is not None
+            or self.tool_results is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -287,6 +309,8 @@ class LifeService:
                     register_memory_tools(manager, self)
                 if self.emoji is not None:
                     register_emoji_tools(manager, self.emoji)
+                if self.tool_results is not None:
+                    register_tool_result_tools(manager, self)
 
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
@@ -394,7 +418,9 @@ class LifeService:
         if self.persona is not None:
             await self.persona.close()
         if self.star_context is not None and (
-            self.memory is not None or self.emoji is not None
+            self.memory is not None
+            or self.emoji is not None
+            or self.tool_results is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -406,6 +432,8 @@ class LifeService:
                     unregister_memory_tools(manager)
                 if self.emoji is not None:
                     unregister_emoji_tools(manager)
+                if self.tool_results is not None:
+                    unregister_tool_result_tools(manager)
         if self.memory is not None:
             await self.memory.close()
         if get_life_service() is self:
@@ -639,6 +667,74 @@ class LifeService:
         if self.proactive is not None:
             self.proactive.note_engagement(session_key)
 
+    async def condense_tool_result(
+        self,
+        *,
+        tool_name: str,
+        tool_args: dict[str, Any] | None,
+        content: str,
+        intent: str,
+        session_id: str,
+    ) -> str | None:
+        """Condense one oversized tool result before it enters the history.
+
+        Args:
+            tool_name: Tool that produced the result.
+            tool_args: Arguments the model passed to the tool.
+            content: Raw result text.
+            intent: The model's own reasoning before the call.
+            session_id: Unified message origin of the session.
+
+        Returns:
+            The text to write into the history, or None when the caller should
+            keep the upstream behaviour (disabled, out of scope, short result,
+            or a failed utility call).
+        """
+        config = self.config.tool_result
+        if not config.enabled or self.tool_results is None:
+            return None
+        if not session_id:
+            return None
+        group_id = None
+        parts = session_id.split(":")
+        if len(parts) >= 3 and parts[-2] == "GroupMessage":
+            group_id = parts[-1]
+        if not self.config.session_enabled(session_id, group_id):
+            return None
+        if not should_condense(
+            tool_name,
+            content,
+            enabled=True,
+            threshold_chars=config.threshold_chars,
+            excluded_tool_names=config.excluded_tool_names,
+        ):
+            return None
+
+        self._tool_result_counts["attempts"] += 1
+        outcome = await run_condense(
+            tool_name=tool_name,
+            tool_args=tool_args,
+            content=content,
+            intent=intent,
+            llm=self._llm_summarizer,
+            store=self.tool_results,
+            session_id=session_id,
+            max_input_chars=config.max_input_chars,
+            intent_max_chars=config.intent_max_chars,
+            timeout_seconds=config.llm_timeout_seconds,
+        )
+        if outcome.condensed:
+            self._tool_result_counts["condensed"] += 1
+            self._tool_result_counts["chars_saved"] += (
+                outcome.original_chars - outcome.condensed_chars
+            )
+            return outcome.content
+        if outcome.error in {"timeout", "exception"}:
+            self._tool_result_counts["failed"] += 1
+        else:
+            self._tool_result_counts["skipped"] += 1
+        return None
+
     async def _llm_summarizer(
         self,
         system_prompt: str,
@@ -738,6 +834,14 @@ class LifeService:
         reply: dict[str, Any] = {"enabled": False}
         if self.reply is not None:
             reply = self.reply.status()
+        tool_result: dict[str, Any] = {"enabled": False}
+        if self.tool_results is not None:
+            tool_result = {
+                "enabled": True,
+                "threshold_chars": self.config.tool_result.threshold_chars,
+                "counters": dict(self._tool_result_counts),
+                "store": self.tool_results.stats(),
+            }
         expression: dict[str, Any] = {"enabled": False}
         if self.expression is not None:
             try:
@@ -801,6 +905,7 @@ class LifeService:
             "persona": persona,
             "prompt": prompt,
             "reply": reply,
+            "tool_result": tool_result,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,

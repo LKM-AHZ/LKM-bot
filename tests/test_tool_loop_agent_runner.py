@@ -1878,6 +1878,74 @@ async def test_large_tool_result_is_spilled_to_file_and_replaced_with_read_notic
     assert llm_results
 
 
+class _FakeLifeToolResult:
+    """Stand-in Life service that always condenses."""
+
+    def __init__(self) -> None:
+        self.calls: list[dict[str, Any]] = []
+
+    async def condense_tool_result(self, **kwargs) -> str:
+        self.calls.append(kwargs)
+        return "<压缩后信息；原始结果已保存为 r1。>\n用户要的结论"
+
+
+@pytest.mark.asyncio
+async def test_large_tool_result_is_condensed_by_life_layer(tmp_path, monkeypatch):
+    import bot.life.service as life_service_module
+
+    tool = FunctionTool(
+        name="test_tool",
+        description="测试工具",
+        parameters={"type": "object", "properties": {"query": {"type": "string"}}},
+        handler=AsyncMock(),
+    )
+    read_tool = FunctionTool(
+        name="bot_file_read_tool",
+        description="read file",
+        parameters={"type": "object", "properties": {"path": {"type": "string"}}},
+        handler=AsyncMock(),
+    )
+    tool_set = ToolSet(tools=[tool, read_tool])
+    provider = SingleToolThenFinalProvider(tool.name, {"query": "large"})
+    request = ProviderRequest(
+        prompt="run tool",
+        func_tool=tool_set,
+        contexts=[],
+        session_id="aiocqhttp:GroupMessage:1",
+    )
+    fake_life = _FakeLifeToolResult()
+    monkeypatch.setattr(life_service_module, "get_life_service", lambda: fake_life)
+    runner = ToolLoopAgentRunner()
+
+    await runner.reset(
+        provider=provider,
+        request=request,
+        run_context=ContextWrapper(context=None),
+        tool_executor=cast(
+            Any,
+            LargeTextToolExecutor.from_text(_make_large_tool_result_text()),
+        ),
+        agent_hooks=MockHooks(),
+        streaming=False,
+        tool_result_overflow_dir=str(tmp_path),
+        read_tool=read_tool,
+    )
+
+    async for _ in runner.step_until_done(3):
+        pass
+
+    tool_messages = [m for m in runner.run_context.messages if m.role == "tool"]
+    assert len(tool_messages) == 1
+    tool_message_content = str(tool_messages[0].content)
+    assert "压缩后信息" in tool_message_content
+    assert "用户要的结论" in tool_message_content
+    assert "The tool output was too large" not in tool_message_content
+    assert list(Path(tmp_path).glob("*.txt")) == []
+    assert fake_life.calls[0]["tool_name"] == "test_tool"
+    assert fake_life.calls[0]["tool_args"] == {"query": "large"}
+    assert fake_life.calls[0]["session_id"] == "aiocqhttp:GroupMessage:1"
+
+
 @pytest.mark.asyncio
 async def test_large_tool_result_keeps_preview_when_spill_fails(
     tmp_path,
@@ -2270,9 +2338,7 @@ async def test_step_notices_reach_model_once_per_threshold(
         assert any(marker in str(m) for m in snapshots[step])
     assert "Remaining steps: 0." in str(tools[-1].content)
     assert "tool-call round limit in LKMBot WebUI" in str(tools[-1].content)
-    assert any(
-        "tool-call round limit in LKMBot WebUI" in str(m) for m in snapshots[-1]
-    )
+    assert any("tool-call round limit in LKMBot WebUI" in str(m) for m in snapshots[-1])
     assert runner.request_context_manager.process.await_count == 129
 
 
