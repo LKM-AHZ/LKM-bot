@@ -16,7 +16,7 @@ from bot.life.service import get_life_service
 
 
 async def inject_life_context(event: Any, req: Any) -> bool:
-    """Inject memory and expression context into a provider request.
+    """Inject memory, expression and jargon context into a request.
 
     Args:
         event: Bot message event being processed.
@@ -29,7 +29,7 @@ async def inject_life_context(event: Any, req: Any) -> bool:
     if service is None:
         return False
     changed = False
-    for injector in (service.memory, service.expression):
+    for injector in (service.memory, service.expression, service.jargon):
         if injector is None:
             continue
         try:

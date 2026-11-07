@@ -315,3 +315,38 @@ pytest tests/life -q
 curl -H "Authorization: Bearer <token>" \
   "http://127.0.0.1:6185/api/v1/life/expressions?umo=<umo>"
 ```
+## S3c — group slang
+
+Implemented in `bot/life/jargon/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `models.py` | `life_jargon`, `life_jargon_cursor` |
+| `store.py` | Term dedupe, conflict → `pending`, review, usage, delete |
+| `learn.py` | Definition-pattern mining + LLM extraction, cursor per session |
+| `service.py` | Learn round, contextual explanation, review, status |
+
+```json
+{
+  "enabled": true,
+  "jargon": { "enabled": true, "use_llm": false }
+}
+```
+
+### Rules
+
+- **只学有释义的词**：`X 就是 Y`、`X 指的是 Y`、`Y 简称 X`，引号内的单字词也算
+  （`「典」就是很典型的例子`）。裸词不入库。
+- **同词异义不覆盖**：第二种释义会让整条转 `pending` 并降置信度，等人工
+  `PATCH /api/v1/life/jargon` 复审（可同时改写释义），避免学错就到处用。
+- **命中文才解释**：只有当前 prompt 里真的出现该词，才注入一行释义，并明确写
+  “不要主动使用没把握的黑话”。因此不会把词表硬塞进每次回复。
+- **可删除**：`DELETE /api/v1/life/jargon`（按 umo 或 ids）。
+
+### Verify
+
+```bash
+pytest tests/life -q
+curl -H "Authorization: Bearer <token>" \
+  "http://127.0.0.1:6185/api/v1/life/jargon?umo=<umo>&status=pending"
+```

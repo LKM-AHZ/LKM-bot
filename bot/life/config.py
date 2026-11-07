@@ -208,6 +208,24 @@ class ExpressionConfig(BaseModel):
     """Restrict injection to one kind of session."""
 
 
+class JargonConfig(BaseModel):
+    """Group slang (S3c)."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    learn_interval_minutes: int = 60
+    max_learn_messages: int = 200
+    use_llm: bool = True
+    """Ask the chat model to explain mined terms when available."""
+
+    top_k: int = 4
+    min_confidence: float = 0.5
+    min_term_chars: int = 2
+    max_term_chars: int = 8
+    max_meaning_chars: int = 80
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -222,6 +240,7 @@ class LifeConfig(BaseModel):
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     person: PersonConfig = Field(default_factory=PersonConfig)
     expression: ExpressionConfig = Field(default_factory=ExpressionConfig)
+    jargon: JargonConfig = Field(default_factory=JargonConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:
         """Return the resolved Life data directory.

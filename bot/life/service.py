@@ -24,6 +24,7 @@ from bot.life.config import (
 )
 from bot.life.expression.service import ExpressionService
 from bot.life.ingest import IngestedMessage, normalize_event
+from bot.life.jargon.service import JargonService
 from bot.life.memory.adapter import MemoryAdapter
 from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
 from bot.life.person.service import PersonService
@@ -88,6 +89,7 @@ class LifeService:
         self.memory: MemoryAdapter | None = None
         self.person: PersonService | None = None
         self.expression: ExpressionService | None = None
+        self.jargon: JargonService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -95,6 +97,7 @@ class LifeService:
         self._maintenance: asyncio.Task | None = None
         self._memory_task: asyncio.Task | None = None
         self._expression_task: asyncio.Task | None = None
+        self._jargon_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -181,6 +184,16 @@ class LifeService:
             )
             await self.expression.initialize()
 
+        if self.config.jargon.enabled:
+            self.jargon = JargonService(
+                context=self.star_context,
+                config=self.config.jargon,
+                db_helper=self.db,
+                life_store=self.store,
+                life_config=self.config,
+            )
+            await self.jargon.initialize()
+
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
         self.started_at = int(time.time())
@@ -198,6 +211,11 @@ class LifeService:
             self._expression_task = asyncio.create_task(
                 self._expression_loop(),
                 name="life_expression",
+            )
+        if self.jargon is not None:
+            self._jargon_task = asyncio.create_task(
+                self._jargon_loop(),
+                name="life_jargon",
             )
         set_life_service(self)
         logger.info(
@@ -234,8 +252,14 @@ class LifeService:
             self._expression_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await self._expression_task
+        if self._jargon_task is not None:
+            self._jargon_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._jargon_task
         if self.expression is not None:
             await self.expression.close()
+        if self.jargon is not None:
+            await self.jargon.close()
         if self.person is not None:
             await self.person.close()
         if self.memory is not None:
@@ -364,6 +388,20 @@ class LifeService:
             except Exception:
                 logger.exception("[life] expression learning round failed")
 
+    async def _jargon_loop(self) -> None:
+        """Learn slang from the archive on a fixed interval."""
+        if self.jargon is None:
+            return
+        interval = max(self.config.jargon.learn_interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.jargon.learn_round()
+            except Exception:
+                logger.exception("[life] jargon learning round failed")
+
     async def _ingest_person_facts(self, session_key: str, facts: list[dict]) -> None:
         """Attach digest facts to people.
 
@@ -449,6 +487,12 @@ class LifeService:
                 expression = await self.expression.status()
             except Exception as exc:
                 expression = {"enabled": True, "error": str(exc)}
+        jargon: dict[str, Any] = {"enabled": False}
+        if self.jargon is not None:
+            try:
+                jargon = await self.jargon.status()
+            except Exception as exc:
+                jargon = {"enabled": True, "error": str(exc)}
         return {
             "enabled": self._running,
             "configured": self.config.enabled,
@@ -468,6 +512,7 @@ class LifeService:
             "memory": memory,
             "person": person,
             "expression": expression,
+            "jargon": jargon,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

@@ -23,8 +23,8 @@ class FakeInjector:
         return self.result
 
 
-def _service(memory=None, expression=None):
-    return SimpleNamespace(memory=memory, expression=expression)
+def _service(memory=None, expression=None, jargon=None):
+    return SimpleNamespace(memory=memory, expression=expression, jargon=jargon)
 
 
 @pytest.mark.asyncio
@@ -53,6 +53,22 @@ async def test_runs_both_injectors(monkeypatch):
     assert memory.calls == 1
     assert expression.calls == 1
     assert req.system_prompt == "sys<x><x>"
+
+
+@pytest.mark.asyncio
+async def test_runs_the_jargon_injector_too(monkeypatch):
+    jargon = FakeInjector()
+    monkeypatch.setattr(
+        inject_module,
+        "get_life_service",
+        lambda: _service(None, None, jargon),
+    )
+    req = SimpleNamespace(prompt="hi", system_prompt="sys")
+
+    changed = await inject_module.inject_life_context(None, req)
+
+    assert changed is True
+    assert jargon.calls == 1
 
 
 @pytest.mark.asyncio

@@ -177,6 +177,34 @@ async def test_expression_layer_initializes_and_stops(db, tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_jargon_layer_initializes_and_stops(db, tmp_path):
+    context = FakeContext()
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.jargon.enabled = True
+    config.jargon.use_llm = False
+    config.jargon.learn_interval_minutes = 60
+    service = LifeService(
+        db,
+        star_context=context,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await service.initialize()
+    try:
+        assert service.jargon is not None
+        status = await service.status()
+        assert status["jargon"]["enabled"] is True
+        assert service._jargon_task is not None
+    finally:
+        await service.stop()
+        set_life_service(None)
+
+    assert service._jargon_task is None or service._jargon_task.done()
+
+
+@pytest.mark.asyncio
 async def test_memory_initializes_registers_tools_and_stops(db, tmp_path):
     context = FakeContext()
     service = _service(db, tmp_path, context)

@@ -333,6 +333,103 @@ async def delete_life_expressions(
     return ok({"deleted": deleted})
 
 
+@router.get("/life/jargon")
+async def life_jargon(
+    umo: str = Query(min_length=1),
+    status: str | None = Query(default=None),
+    limit: int = Query(default=100, ge=1, le=500),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return learned slang terms of one session.
+
+    Args:
+        umo: Session scope.
+        status: Optional status filter (active, pending, rejected).
+        limit: Maximum number of rows.
+
+    Returns:
+        Wrapped term list ordered by confidence.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.jargon is None:
+        return ok([])
+    statuses = [status] if status else None
+    return ok(await service.jargon.list_jargon(umo, statuses=statuses, limit=limit))
+
+
+@router.patch("/life/jargon")
+async def review_life_jargon(
+    payload: dict[str, Any] = Body(...),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Confirm, reject or correct one slang term.
+
+    Args:
+        payload: ``{"id": int, "status": "active"|"pending"|"rejected",
+            "meaning": optional corrected explanation}``.
+
+    Returns:
+        Wrapped review result.
+
+    Raises:
+        ApiError: When the payload is incomplete or the term is unknown.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.jargon is None:
+        raise ApiError("jargon layer is not enabled")
+    jargon_id = payload.get("id")
+    status = payload.get("status")
+    if not isinstance(jargon_id, int) or status not in (
+        "active",
+        "pending",
+        "rejected",
+    ):
+        raise ApiError("id must be an integer and status must be valid")
+    meaning = payload.get("meaning")
+    updated = await service.jargon.review(
+        jargon_id,
+        status,
+        meaning if isinstance(meaning, str) else None,
+    )
+    if not updated:
+        raise ApiError(f"unknown jargon id: {jargon_id}")
+    return ok({"updated": updated})
+
+
+@router.delete("/life/jargon")
+async def delete_life_jargon(
+    umo: str | None = Query(default=None),
+    ids: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Delete learned slang terms.
+
+    Args:
+        umo: Delete every term of one session.
+        ids: Comma-separated term ids.
+
+    Returns:
+        Wrapped deletion counter.
+
+    Raises:
+        ApiError: When neither filter is provided.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None or service.jargon is None:
+        return ok({"deleted": 0})
+    jargon_ids = [int(item) for item in ids.split(",") if item.strip()] if ids else None
+    if not jargon_ids and not umo:
+        raise ApiError("either umo or ids is required")
+    deleted = await service.jargon.forget(jargon_ids=jargon_ids, session_key=umo)
+    return ok({"deleted": deleted})
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),
