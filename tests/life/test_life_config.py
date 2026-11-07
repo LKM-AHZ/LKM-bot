@@ -62,3 +62,30 @@ def test_invalid_config_falls_back_to_defaults(tmp_path):
     config = load_life_config(path)
 
     assert config.enabled is False
+
+
+def test_heartflow_defaults_are_disabled():
+    config = LifeConfig()
+
+    assert config.heartflow.enabled is False
+    assert config.heartflow.debounce.enabled is True
+    assert config.heartflow.debounce.hard_cap_seconds == 8.0
+    assert config.heartflow.gate.base_threshold == 0.55
+    assert config.heartflow.gate.weights["at_bot"] > 0
+
+
+def test_heartflow_roundtrip(tmp_path):
+    path = tmp_path / "life" / "config.json"
+    original = LifeConfig(enabled=True)
+    original.heartflow.enabled = True
+    original.heartflow.debounce.natural_seconds = 3.0
+    original.heartflow.gate.base_threshold = 0.6
+    original.heartflow.gate.weights["question"] = 0.9
+
+    saved = save_life_config(original, path)
+    loaded = load_life_config(saved)
+
+    assert loaded.heartflow.enabled is True
+    assert loaded.heartflow.debounce.natural_seconds == 3.0
+    assert loaded.heartflow.gate.base_threshold == 0.6
+    assert loaded.heartflow.gate.weights["question"] == 0.9

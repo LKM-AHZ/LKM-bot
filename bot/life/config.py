@@ -250,6 +250,95 @@ class EmojiConfig(BaseModel):
     max_storage_files: int = 2000
 
 
+DEFAULT_GATE_WEIGHTS: dict[str, float] = {
+    "bias": -1.2,
+    "at_bot": 2.4,
+    "reply_to_bot": 1.6,
+    "wake_word": 1.6,
+    "bot_name": 1.2,
+    "question": 0.7,
+    "mentions_other": -0.9,
+    "sticker_only": -0.4,
+    "burst_length": 0.2,
+    "relation": 0.01,
+}
+"""Linear weights of the reply-likelihood model.
+
+Every feature contributes ``weight * value`` to the logit; ``burst_length`` is
+the number of messages merged into the batch and ``relation`` the 0-100
+relationship score of the last sender. They stay plain numbers so the replay set
+can re-tune them offline without touching code.
+"""
+
+
+class DebounceConfig(BaseModel):
+    """Message debounce before a turn is released to the planner (S4)."""
+
+    enabled: bool = True
+    """When false every message is released immediately."""
+
+    quick_seconds: float = 1.2
+    """Quiet window after a direct address (@, wake word, reply to the bot)."""
+
+    natural_seconds: float = 2.5
+    """Default quiet window for a turn that is not still growing."""
+
+    calm_seconds: float = 4.0
+    """Quiet window for a busy turn of three or more messages."""
+
+    hard_cap_seconds: float = 8.0
+    """Upper bound measured from the first merged message; never waits longer."""
+
+    same_sender_extra_seconds: float = 1.0
+    """Extra wait when one person sends several messages in a row."""
+
+    same_sender_gap_seconds: float = 6.0
+    """Gap below which two messages from one sender count as one turn."""
+
+
+class GateConfig(BaseModel):
+    """Reply likelihood and the dynamic gate (S4)."""
+
+    enabled: bool = True
+    """When false every released turn is answered."""
+
+    base_threshold: float = 0.55
+    """Likelihood needed to answer when the bot is not directly addressed."""
+
+    weights: dict[str, float] = Field(
+        default_factory=lambda: dict(DEFAULT_GATE_WEIGHTS)
+    )
+    """Linear weights of the reply-likelihood model; tuned offline on replay."""
+
+    idle_silence_seconds: float = 900.0
+    """Sessions without bot activity this long stay silent unless addressed."""
+
+    idle_actionable_seconds: float = 120.0
+    """Idle time after which the threshold starts rising."""
+
+    idle_rise_max: float = 0.25
+    """Maximum threshold increase caused by idleness."""
+
+    reply_cooldown_seconds: float = 3.0
+    """Suppress an answer this soon after one was sent (echo / double reply)."""
+
+    backoff_step: float = 0.08
+    """Threshold increase per consecutive wait in the same session."""
+
+    backoff_max: float = 0.32
+    """Cap of the consecutive-wait penalty."""
+
+
+class HeartFlowConfig(BaseModel):
+    """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    debounce: DebounceConfig = Field(default_factory=DebounceConfig)
+    gate: GateConfig = Field(default_factory=GateConfig)
+
+
 class LifeConfig(BaseModel):
     """Root Life layer configuration."""
 
@@ -266,6 +355,7 @@ class LifeConfig(BaseModel):
     expression: ExpressionConfig = Field(default_factory=ExpressionConfig)
     jargon: JargonConfig = Field(default_factory=JargonConfig)
     emoji: EmojiConfig = Field(default_factory=EmojiConfig)
+    heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:
         """Return the resolved Life data directory.

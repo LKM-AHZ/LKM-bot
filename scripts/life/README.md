@@ -53,8 +53,9 @@ inside its session, which is also what labels must use.
 ```
 
 Deciders: `keyword` (wake word, question mark), `silent` (never reply, the
-floor), `always` (always reply, the ceiling). To compare against MaiBot, import
-its decisions in the same shape instead of re-running a decider.
+floor), `always` (always reply, the ceiling) and `heart_flow` (the real S4
+debounce + gate). To compare against MaiBot, import its decisions in the same
+shape instead of re-running a decider.
 
 ### Labels
 
@@ -384,3 +385,60 @@ pytest tests/life -q
 curl -H "Authorization: Bearer <token>" \
   "http://127.0.0.1:6185/api/v1/life/emojis?umo=<umo>"
 ```
+
+## S4a — heart-flow decision path
+
+Implemented in `bot/life/heartflow/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `debounce.py` | Merge a burst into one turn: three tiers, 8s hard cap, @ acceleration, same-sender rule |
+| `gates.py` | Reply likelihood over nine features + dynamic threshold and vetoes |
+| `policy.py` | Debounce + gate over one session or a whole corpus |
+
+```json
+{
+  "enabled": true,
+  "heartflow": {
+    "enabled": true,
+    "debounce": { "quick_seconds": 1.2, "natural_seconds": 2.5, "calm_seconds": 4.0 },
+    "gate": { "base_threshold": 0.55 }
+  }
+}
+```
+
+Nothing in the live pipeline changes yet: S4a ships the decision path and its
+offline evaluation, while the session state machine and planner loop follow in
+S4b/S4c. `heartflow.enabled` therefore only affects the replay tooling for now.
+
+### Rules
+
+- **防抖**：窗口按三档取（快速 1.2s / 自然 2.5s / 沉稳 4.0s），从首条消息起 8 秒硬上限；
+  被 @ / 唤醒 / 回复机器人时走快速档；同一个人连发时窗口只加一次 1 秒。
+- **门控**：九个特征加权求和过 sigmoid，`at_bot`/`reply_to_bot`/`wake_word` 直接放行；
+  命令不接；刚回过 3 秒内不接；`idle_silence_seconds`（默认 900s）内没有机器人活动的会话
+  一律沉默，保证“空闲会话 0 误触发”。
+- **动态阈值**：空闲越久阈值越高（封顶 +0.25），连续沉默次数越多阈值越高（封顶 +0.32）。
+- **可解释**：决策流的每条记录都带 `reason`、`tier`、`likelihood`、`threshold`，
+  可以直接定位是哪条规则做的决定。
+
+### Verify
+
+```bash
+pytest tests/life -q
+
+# the real decision path produces the decision stream
+python scripts/life/replay_runner.py data/life/replay/replay.jsonl \
+  --decider heart_flow --gate-threshold 0.55 \
+  --out data/life/replay/decisions_heart_flow.jsonl
+
+# then score it like any other run
+python scripts/life/life_metrics.py --corpus data/life/replay/replay.jsonl \
+  --decisions data/life/replay/decisions_heart_flow.jsonl \
+  --labels data/life/replay/labels.jsonl \
+  --out data/life/replay/baseline_lkm.json
+```
+
+Tuning knobs on the runner: `--gate-threshold` (likelihood bar), `--no-debounce`
+(decide every message immediately), `--bot-ids` (which `at` targets are the bot;
+empty treats every `at` as addressing the bot) and `--wake-words`.
