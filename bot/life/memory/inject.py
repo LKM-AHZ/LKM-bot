@@ -50,4 +50,8 @@ async def inject_life_context(event: Any, req: Any) -> bool:
         except Exception:
             # Life context is an enhancement: a failure must never break the reply.
             logger.exception("[life] failed to inject %s context", name)
+    assembler = getattr(service, "prompt", None)
+    if assembler is not None and getattr(req, "system_prompt", ""):
+        umo = getattr(event, "unified_msg_origin", "") or ""
+        req.system_prompt = assembler.assemble(req.system_prompt, umo)
     return changed

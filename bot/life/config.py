@@ -205,6 +205,22 @@ class PersonaConfig(BaseModel):
     """How long a resolved profile is cached before it is re-read."""
 
 
+class PromptConfig(BaseModel):
+    """Prompt assembly budgets (S5b)."""
+
+    enabled: bool = True
+    """Runs after every injector; disabling restores plain appending."""
+
+    max_total_chars: int = 2400
+    """Budget for all Life blocks together."""
+
+    max_block_chars: int = 800
+    """Budget for one Life block."""
+
+    dedupe: bool = True
+    """Drop an exact line that an earlier block already carries."""
+
+
 class ExpressionConfig(BaseModel):
     """Learned expressions (S3b)."""
 
@@ -520,6 +536,7 @@ class LifeConfig(BaseModel):
     jargon: JargonConfig = Field(default_factory=JargonConfig)
     emoji: EmojiConfig = Field(default_factory=EmojiConfig)
     persona: PersonaConfig = Field(default_factory=PersonaConfig)
+    prompt: PromptConfig = Field(default_factory=PromptConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

@@ -703,3 +703,49 @@ curl -H "Authorization: Bearer <token>" \
 curl -H "Authorization: Bearer <token>" \
   http://127.0.0.1:6185/api/v1/life/status  # persona block
 ```
+
+## S5b — prompt assembly
+
+Implemented in `bot/life/prompt.py`:
+
+| Piece | Responsibility |
+| --- | --- |
+| `PromptAssembler` | Orders blocks, dedupes repeated lines, caps each block and the total, records the result |
+| `INJECTOR_ORDER` (in `inject.py`) | Persona, memory, expression, jargon, focus, attention — the order blocks are appended |
+| `/life/status` `prompt` | Budgets, counters and the last assembly (block names, sizes, what was dropped) |
+
+```json
+{
+  "prompt": {
+    "enabled": true,
+    "max_total_chars": 2400,
+    "max_block_chars": 800,
+    "dedupe": true
+  }
+}
+```
+
+The injectors keep deciding whether their block applies; the assembler runs once
+after all of them and owns size and order.
+
+### Rules
+
+- **顺序固定**：persona 在前，其后 memory、expression、jargon、focus、attention。非块文本
+  （上游自己的系统提示）保持原位，不重排。
+- **去重只去整行**：与更早块完全相同、且 ≥ 8 字的行会被删掉；短行（“- 晴”）保留。
+  宁可多留一行，也不猜哪一行“意思重复”。
+- **单块按行截断**：`max_block_chars` 超了从行边界切，不切半句；persona 的规则顺序是
+  「长度 → 禁 Markdown → 分段 → 引用 → 口吻」，所以截断先丢概率，硬约束还在。
+- **总预算整块丢弃**：超过 `max_total_chars` 从 attention 往上整块丢，persona 永不丢；全丢完
+  还超就截断 persona。丢块后把连续空行折成一行。
+- **可观测**：每次组装更新 `prompt.last`（`umo`、总字数、每块字数、保留与丢弃清单），
+  计数器记 `assemblies` / `kept_blocks` / `dropped_blocks` / `trimmed_blocks` / `deduped_lines`。
+
+### Verify
+
+```bash
+pytest tests/life -q
+
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status  # prompt.counters + prompt.last
+```

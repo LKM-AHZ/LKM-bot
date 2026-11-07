@@ -36,6 +36,7 @@ from bot.life.memory.adapter import MemoryAdapter
 from bot.life.memory.tools import register_memory_tools, unregister_memory_tools
 from bot.life.person.service import PersonService
 from bot.life.persona.service import PersonaService
+from bot.life.prompt import PromptAssembler
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
@@ -97,6 +98,7 @@ class LifeService:
         self.memory: MemoryAdapter | None = None
         self.person: PersonService | None = None
         self.persona: PersonaService | None = None
+        self.prompt: PromptAssembler | None = None
         self.expression: ExpressionService | None = None
         self.jargon: JargonService | None = None
         self.emoji: EmojiService | None = None
@@ -153,6 +155,7 @@ class LifeService:
             retention_days=self.config.ingest.retention_days,
         )
         await self.store.ensure_schema()
+        self.prompt = PromptAssembler(self.config.prompt)
         if self.config.sender.enabled:
             self.sender = LifeSender(
                 platform_manager=self.platform_manager,
@@ -717,6 +720,12 @@ class LifeService:
                 persona = await self.persona.status()
             except Exception as exc:
                 persona = {"enabled": True, "error": str(exc)}
+        prompt: dict[str, Any] = {"enabled": False}
+        if self.prompt is not None:
+            try:
+                prompt = self.prompt.status()
+            except Exception as exc:
+                prompt = {"enabled": True, "error": str(exc)}
         expression: dict[str, Any] = {"enabled": False}
         if self.expression is not None:
             try:
@@ -778,6 +787,7 @@ class LifeService:
             "memory": memory,
             "person": person,
             "persona": persona,
+            "prompt": prompt,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,

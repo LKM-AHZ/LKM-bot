@@ -122,6 +122,12 @@ class PersonaService:
             return fallback if value is None else float(value)
 
         rules = [f"- 长度：单条回复不超过 {max_chars} 字，能一句话说完就别展开。"]
+        # The format ban goes before the optional rates: when the block is
+        # trimmed, a style probability may be lost, the Markdown ban may not.
+        if not bool(profile.get("allow_markdown")):
+            rules.append(
+                "- 格式：不要输出 Markdown（标题、列表、表格、代码块、加粗）。"
+            )
         segment_prob = rate(
             "multi_segment_prob", self.config.default_multi_segment_prob
         )
@@ -138,10 +144,6 @@ class PersonaService:
         if typo_rate > 0:
             rules.append(
                 f"- 口吻：口语，允许偶尔打错字（约 {typo_rate:.0%}），但不影响理解。"
-            )
-        if not bool(profile.get("allow_markdown")):
-            rules.append(
-                "- 格式：不要输出 Markdown（标题、列表、表格、代码块、加粗）。"
             )
         block = (
             f"<{_BLOCK_TAG}>\n"

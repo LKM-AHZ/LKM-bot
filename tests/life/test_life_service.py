@@ -298,3 +298,33 @@ async def test_persona_stays_off_by_default(service):
     assert service.persona is None
     status = await service.status()
     assert status["persona"]["enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_prompt_assembler_follows_the_life_switch(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert instance.prompt is not None
+        status = (await instance.status())["prompt"]
+        assert status["enabled"] is True
+        assert status["max_total_chars"] == config.prompt.max_total_chars
+    finally:
+        await instance.stop()
+        set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_prompt_assembler_is_absent_before_initialize(db):
+    instance = LifeService(db)
+
+    assert instance.prompt is None
+    status = await instance.status()
+    assert status["prompt"]["enabled"] is False
