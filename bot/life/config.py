@@ -381,6 +381,85 @@ class RuntimeConfig(BaseModel):
     recent_size: int = 50
     """Decision records kept in memory for the dashboard and diagnostics."""
 
+    hot_window_seconds: float = 60.0
+    """After the bot answers, turns in that session use the quick debounce tier."""
+
+    fast_release: bool = True
+    """Answer a very short direct ping without waiting for the window."""
+
+    fast_max_chars: int = 8
+    """Merged text of at most this many characters counts as a fast ping."""
+
+
+class AttentionConfig(BaseModel):
+    """Attention drift and back-reference hints (S4d)."""
+
+    enabled: bool = True
+    """Requires ``heartflow.enabled``."""
+
+    half_life_minutes: float = 40.0
+    """Minutes after which the bot's focus on a session halves."""
+
+    min_focus: float = 0.05
+    """Below this the topic is forgotten instead of being hooked back to."""
+
+    hook_focus_min: float = 0.05
+    """Lower bound of the "drifted but still remembers" band."""
+
+    hook_focus_max: float = 0.5
+    """Above this the bot is still focused, so no hook hint is needed."""
+
+    hook_min_gap_minutes: float = 10.0
+    """A back reference only makes sense after at least this much silence."""
+
+    hook_max_chars: int = 200
+    """Cap of the quoted topic inside the hint."""
+
+    keywords: int = 6
+    """Salient segments kept per session."""
+
+
+class IdleConfig(BaseModel):
+    """Proactive talk, silence and idle backoff (S4d)."""
+
+    enabled: bool = False
+    """Off by default: talking first is the riskiest behaviour of the layer."""
+
+    scan_interval_minutes: int = 10
+    min_idle_minutes: int = 45
+    """A session must be quiet this long before the bot may speak first."""
+
+    max_idle_minutes: int = 720
+    """Past this silence the thread is considered dead; do not revive it."""
+
+    min_talk_value: float = 0.55
+    """Talk value below this means the bot should stay silent."""
+
+    daily_cap: int = 2
+    """Maximum proactive messages per session per day."""
+
+    max_per_round: int = 1
+    """Maximum proactive messages per scan, across sessions."""
+
+    answer_window_minutes: int = 30
+    """A proactive message counts as ignored if nobody answers within this."""
+
+    backoff_base_minutes: float = 120.0
+    backoff_max_minutes: float = 1440.0
+    """Exponential backoff after ignored proactive messages."""
+
+    answer_bonus: float = 0.1
+    """Talk value gained when people answer the bot."""
+
+    ignore_penalty: float = 0.2
+    """Talk value lost when a proactive message is ignored."""
+
+    quiet_hours: list[int] = Field(default_factory=lambda: [0, 8])
+    """Local hours ``[start, end)`` in which the bot never speaks first."""
+
+    max_scan_sessions: int = 50
+    """Sessions inspected per scan."""
+
 
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
@@ -395,6 +474,8 @@ class HeartFlowConfig(BaseModel):
     gate: GateConfig = Field(default_factory=GateConfig)
     focus: FocusConfig = Field(default_factory=FocusConfig)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
+    attention: AttentionConfig = Field(default_factory=AttentionConfig)
+    idle: IdleConfig = Field(default_factory=IdleConfig)
 
 
 class LifeConfig(BaseModel):

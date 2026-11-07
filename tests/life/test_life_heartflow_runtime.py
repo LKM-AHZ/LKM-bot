@@ -238,3 +238,101 @@ def test_runtime_config_defaults():
     assert config.enabled is True
     assert config.shadow is False
     assert config.max_pending_turns == 32
+
+
+@pytest.mark.asyncio
+async def test_hot_session_uses_the_quick_tier():
+    clock = FakeClock()
+    runtime = _runtime(clock)
+    mention = _entry(text="小助手 在吗")
+    mention.ts = clock.now
+    await runtime.handle(SESSION, mention)
+    replied_at = clock.now
+
+    clock.now += 10
+    second_start = clock.now
+    ambient = _entry(text="今天中午大家都在吃什么")
+    ambient.ts = second_start
+    await runtime.handle(SESSION, ambient)
+
+    assert replied_at == pytest.approx(1001.2)
+    # Quick tier (1.2s) instead of the natural window (2.5s).
+    assert clock.now == pytest.approx(second_start + 1.2)
+
+
+@pytest.mark.asyncio
+async def test_cold_session_uses_the_natural_tier():
+    clock = FakeClock()
+    runtime = _runtime(clock)
+    entry = _entry(text="今天中午大家都在吃什么")
+    entry.ts = clock.now
+
+    await runtime.handle(SESSION, entry)
+
+    assert clock.now == pytest.approx(1002.5)
+
+
+@pytest.mark.asyncio
+async def test_short_ping_releases_quickly():
+    clock = FakeClock()
+    runtime = _runtime(clock)
+    entry = _entry(text="在吗")
+    entry.ts = clock.now
+
+    await runtime.handle(SESSION, entry)
+
+    assert clock.now == pytest.approx(1001.2)
+
+
+@pytest.mark.asyncio
+async def test_fast_release_can_be_disabled():
+    clock = FakeClock()
+    runtime = _runtime(clock, fast_release=False)
+    entry = _entry(text="在吗")
+    entry.ts = clock.now
+
+    await runtime.handle(SESSION, entry)
+
+    assert clock.now == pytest.approx(1002.5)
+
+
+@pytest.mark.asyncio
+async def test_reply_callback_receives_the_turn():
+    clock = FakeClock()
+    seen: list[tuple[str, str, float]] = []
+    config = HeartFlowConfig(enabled=True, bot_names=["小助手"])
+    runtime = TurnRuntime(
+        config,
+        clock=clock,
+        sleeper=clock.sleep,
+        on_reply=lambda key, text, now: seen.append((key, text, now)),
+    )
+    entry = _entry(text="小助手 在吗")
+    entry.ts = clock.now
+
+    await runtime.handle(SESSION, entry)
+
+    assert len(seen) == 1
+    assert seen[0][0] == SESSION
+    assert "小助手 在吗" in seen[0][1]
+    assert seen[0][2] == pytest.approx(1001.2)
+
+
+@pytest.mark.asyncio
+async def test_shadow_mode_does_not_notify_the_callback():
+    clock = FakeClock()
+    seen: list[str] = []
+    config = HeartFlowConfig(enabled=True, bot_names=["小助手"])
+    config.runtime.shadow = True
+    runtime = TurnRuntime(
+        config,
+        clock=clock,
+        sleeper=clock.sleep,
+        on_reply=lambda key, text, now: seen.append(key),
+    )
+    entry = _entry(text="小助手 在吗")
+    entry.ts = clock.now
+
+    await runtime.handle(SESSION, entry)
+
+    assert seen == []

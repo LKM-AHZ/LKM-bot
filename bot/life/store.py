@@ -209,6 +209,43 @@ class LifeStore:
             )
             return [str(row[0]) for row in result.all()]
 
+    async def session_last_ts(
+        self,
+        since_ts: int = 0,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Return the last activity of each session.
+
+        Args:
+            since_ts: Inclusive lower timestamp bound.
+            limit: Maximum number of sessions.
+
+        Returns:
+            Rows with ``session_key``, ``last_ts`` and ``messages``, ordered by
+            most recent activity.
+        """
+        query = (
+            select(
+                col(LifeMessage.session_key),
+                func.max(col(LifeMessage.ts)),
+                func.count(),
+            )
+            .where(col(LifeMessage.ts) >= since_ts)
+            .group_by(col(LifeMessage.session_key))
+            .order_by(desc(func.max(col(LifeMessage.ts))))
+            .limit(max(limit, 1))
+        )
+        async with self.db.get_db() as session:
+            result = await session.execute(query)
+            return [
+                {
+                    "session_key": str(row[0]),
+                    "last_ts": int(row[1] or 0),
+                    "messages": int(row[2] or 0),
+                }
+                for row in result.all()
+            ]
+
     async def cleanup(self) -> int:
         """Delete messages older than the configured retention window.
 

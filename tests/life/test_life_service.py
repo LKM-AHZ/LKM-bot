@@ -235,3 +235,35 @@ async def test_heartflow_runtime_is_absent_by_default(service):
     assert service.heartflow is None
     status = await service.status()
     assert status["heartflow"]["enabled"] is False
+
+
+@pytest.mark.asyncio
+async def test_attention_and_proactive_are_wired_when_enabled(db, tmp_path):
+    config = LifeConfig(enabled=True)
+    config.scope.mode = "all"
+    config.heartflow.enabled = True
+    config.heartflow.idle.enabled = True
+    instance = LifeService(
+        db,
+        config=config,
+        config_path=tmp_path / "life" / "config.json",
+        data_dir=tmp_path / "life",
+    )
+    await instance.initialize()
+    try:
+        assert instance.attention is not None
+        assert instance.proactive is not None
+        status = await instance.status()
+        assert status["attention"]["enabled"] is True
+        assert status["proactive"]["configured"] is True
+        assert status["proactive"]["daily_cap"] == 2
+    finally:
+        await instance.stop()
+        set_life_service(None)
+
+
+@pytest.mark.asyncio
+async def test_proactive_stays_off_without_the_idle_switch(service):
+    assert service.proactive is None
+    status = await service.status()
+    assert status["proactive"]["enabled"] is False

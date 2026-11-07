@@ -571,6 +571,37 @@ async def life_focus_delete(
     return ok({"deleted": await service.focus.delete(umo)})
 
 
+@router.get("/life/attention")
+async def life_attention(
+    umo: str | None = Query(default=None),
+    _auth: AuthContext = Depends(require_life_scope),
+) -> dict:
+    """Return attention focus and talk value of the proactive layer.
+
+    Args:
+        umo: Session scope; omitted lists every tracked session.
+
+    Returns:
+        Wrapped attention snapshot plus the per-session talk state.
+    """
+    from bot.life.service import get_life_service
+
+    service = get_life_service()
+    if service is None:
+        return ok({"enabled": False, "sessions": []})
+    attention = (
+        service.attention.status()
+        if service.attention is not None
+        else {"enabled": False}
+    )
+    payload: dict = {"attention": attention, "proactive": None}
+    if service.proactive is not None:
+        payload["proactive"] = await service.proactive.status()
+        if umo:
+            payload["talk"] = await service.proactive.session_state(umo)
+    return ok(payload)
+
+
 @router.get("/life/config")
 async def get_life_config(
     _auth: AuthContext = Depends(require_life_scope),

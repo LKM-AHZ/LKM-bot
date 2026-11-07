@@ -16,6 +16,7 @@ from typing import Any
 from bot import logger
 from bot.core.message.components import Plain
 from bot.core.message.message_event_result import MessageChain
+from bot.core.provider.entities import ProviderType
 from bot.life.config import (
     LifeConfig,
     default_config_path,
@@ -25,7 +26,9 @@ from bot.life.config import (
 from bot.life.emoji.service import EmojiService
 from bot.life.emoji.tools import register_emoji_tools, unregister_emoji_tools
 from bot.life.expression.service import ExpressionService
+from bot.life.heartflow.attention import AttentionRegistry
 from bot.life.heartflow.focus.service import FocusService
+from bot.life.heartflow.proactive import ProactiveService
 from bot.life.heartflow.runtime import TurnRuntime
 from bot.life.ingest import IngestedMessage, normalize_event
 from bot.life.jargon.service import JargonService
@@ -97,6 +100,8 @@ class LifeService:
         self.emoji: EmojiService | None = None
         self.focus: FocusService | None = None
         self.heartflow: TurnRuntime | None = None
+        self.attention: AttentionRegistry | None = None
+        self.proactive: ProactiveService | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -107,6 +112,7 @@ class LifeService:
         self._jargon_task: asyncio.Task | None = None
         self._emoji_task: asyncio.Task | None = None
         self._focus_task: asyncio.Task | None = None
+        self._proactive_task: asyncio.Task | None = None
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -199,7 +205,10 @@ class LifeService:
             await self.expression.initialize()
 
         if self.config.heartflow.enabled and self.config.heartflow.runtime.enabled:
-            self.heartflow = TurnRuntime(self.config.heartflow)
+            self.heartflow = TurnRuntime(
+                self.config.heartflow,
+                on_reply=self._note_heartflow_reply,
+            )
             logger.info(
                 "[life] heart-flow runtime ready; shadow=%s bot_names=%s",
                 self.config.heartflow.runtime.shadow,
@@ -213,6 +222,25 @@ class LifeService:
                 life_config=self.config,
             )
             await self.focus.initialize()
+
+        if self.config.heartflow.enabled and self.config.heartflow.attention.enabled:
+            self.attention = AttentionRegistry(self.config.heartflow.attention)
+
+        if (
+            self.config.heartflow.enabled
+            and self.config.heartflow.idle.enabled
+            and self.sender is not None
+        ):
+            self.proactive = ProactiveService(
+                config=self.config.heartflow.idle,
+                db_helper=self.db,
+                archive=self.store,
+                send=self.send_text,
+                life_config=self.config,
+                summarizer=self._llm_summarizer,
+                focus=self.focus,
+            )
+            await self.proactive.initialize()
 
         if self.config.jargon.enabled:
             self.jargon = JargonService(
@@ -271,6 +299,11 @@ class LifeService:
                 self._focus_loop(),
                 name="life_focus",
             )
+        if self.proactive is not None:
+            self._proactive_task = asyncio.create_task(
+                self._proactive_loop(),
+                name="life_proactive",
+            )
         set_life_service(self)
         logger.info(
             "[life] enabled; data_dir=%s scope_mode=%s memory=%s",
@@ -320,6 +353,12 @@ class LifeService:
                 await self._focus_task
         if self.heartflow is not None:
             await self.heartflow.close()
+        if self._proactive_task is not None:
+            self._proactive_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._proactive_task
+        if self.proactive is not None:
+            await self.proactive.close()
         if self.focus is not None:
             await self.focus.close()
         if self.expression is not None:
@@ -433,6 +472,11 @@ class LifeService:
                 await self.focus.observe_messages(batch)
             except Exception:
                 logger.exception("[life] focus observe failed")
+        if self.proactive is not None:
+            try:
+                await self.proactive.observe_messages(batch)
+            except Exception:
+                logger.exception("[life] proactive observe failed")
 
     async def _maintenance_loop(self) -> None:
         """Run retention cleanup periodically."""
@@ -499,6 +543,20 @@ class LifeService:
             except Exception:
                 logger.exception("[life] emoji collection round failed")
 
+    async def _proactive_loop(self) -> None:
+        """Speak first only when the idle rules allow it."""
+        if self.proactive is None:
+            return
+        interval = max(self.config.heartflow.idle.scan_interval_minutes, 1) * 60
+        while self._running:
+            await asyncio.sleep(interval)
+            if not self._running:
+                return
+            try:
+                await self.proactive.run_round()
+            except Exception:
+                logger.exception("[life] proactive round failed")
+
     async def _focus_loop(self) -> None:
         """Checkpoint dirty timelines on a fixed interval."""
         if self.focus is None:
@@ -538,6 +596,50 @@ class LifeService:
                 await self.memory.store.cleanup()
             except Exception:
                 logger.exception("[life] memory digest round failed")
+
+    async def _note_heartflow_reply(
+        self,
+        session_key: str,
+        text: str,
+        now: float,
+    ) -> None:
+        """Update attention and talk value after an answered turn.
+
+        Args:
+            session_key: Session the bot answered in.
+            text: Text of the merged turn.
+            now: Wall-clock timestamp of the answer.
+        """
+        if self.attention is not None:
+            self.attention.observe(session_key, text, now)
+        if self.proactive is not None:
+            self.proactive.note_engagement(session_key)
+
+    async def _llm_summarizer(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> str | None:
+        """Run one chat completion through the active provider.
+
+        Args:
+            system_prompt: Instructions for the model.
+            user_prompt: Payload of the call.
+
+        Returns:
+            Completion text, or None when no provider is available.
+        """
+        manager = getattr(self.star_context, "provider_manager", None)
+        if manager is None:
+            return None
+        provider = await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
+        if provider is None:
+            return None
+        response = await provider.text_chat(
+            prompt=user_prompt,
+            system_prompt=system_prompt,
+        )
+        return (response.completion_text or "").strip() or None
 
     async def send_text(self, umo: str, text: str) -> SendResult:
         """Send a plain-text proactive message and record the attempt.
@@ -615,6 +717,18 @@ class LifeService:
                 heartflow = self.heartflow.status()
             except Exception as exc:
                 heartflow = {"enabled": True, "error": str(exc)}
+        attention: dict[str, Any] = {"enabled": False}
+        if self.attention is not None:
+            try:
+                attention = self.attention.status()
+            except Exception as exc:
+                attention = {"enabled": True, "error": str(exc)}
+        proactive: dict[str, Any] = {"enabled": False}
+        if self.proactive is not None:
+            try:
+                proactive = await self.proactive.status()
+            except Exception as exc:
+                proactive = {"enabled": True, "error": str(exc)}
         focus: dict[str, Any] = {"enabled": False}
         if self.focus is not None:
             try:
@@ -650,6 +764,8 @@ class LifeService:
             "emoji": emoji,
             "focus": focus,
             "heartflow": heartflow,
+            "attention": attention,
+            "proactive": proactive,
             "sessions": len(self.registry.snapshot()),
             "started_at": self.started_at,
         }

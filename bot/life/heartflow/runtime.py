@@ -26,7 +26,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Callable
 
 from bot import logger
@@ -148,6 +148,7 @@ class TurnRuntime:
         config: HeartFlowConfig,
         clock: Callable[[], float] | None = None,
         sleeper: Callable[[float], Any] | None = None,
+        on_reply: Callable[[str, str, float], Any] | None = None,
     ) -> None:
         """Initialize the runtime without starting any task.
 
@@ -155,11 +156,14 @@ class TurnRuntime:
             config: Heart-flow settings (runtime, debounce, gate, bot names).
             clock: Wall-clock source; tests inject a fake one.
             sleeper: Awaitable sleep; tests inject an instant one.
+            on_reply: Called with ``(session_key, text, now)`` after an answered
+                turn, so attention and talk value can follow the conversation.
         """
         self.config = config
         self.runtime_config = config.runtime
         self._clock = clock or time.time
         self._sleep = sleeper or asyncio.sleep
+        self._on_reply = on_reply
         self._batches: dict[str, TurnBatch] = {}
         self._sessions: dict[str, SessionState] = {}
         self._recent: deque[dict] = deque(
@@ -234,6 +238,7 @@ class TurnRuntime:
                 else:
                     self._counters["replied"] += 1
                     batch.action = ACTION_CONTINUE
+                    self._notify_reply(batch)
             else:
                 self._counters["waited"] += 1
                 batch.action = ACTION_HOLD
@@ -270,13 +275,81 @@ class TurnRuntime:
             The plan that was due.
         """
         deadline = self._clock() + max(self.runtime_config.max_wait_seconds, 0.0)
-        plan = batch.plan(self.config)
+        plan = self._plan(batch)
         while True:
             now = self._clock()
             if plan.release_at <= now or now >= deadline:
                 return plan
             await self._sleep(min(plan.release_at, deadline) - now)
-            plan = batch.plan(self.config)
+            plan = self._plan(batch)
+
+    def _plan(self, batch: TurnBatch) -> DebouncePlan:
+        """Return the plan with the fast-reaction shortcuts applied.
+
+        Two shortcuts make a conversation feel attended instead of laggy:
+
+        - a session the bot just answered stays "hot", so ambient turns use the
+          quick tier instead of making people wait for the natural one;
+        - a very short turn (a ping) uses the quick tier too.
+
+        Args:
+            batch: Batch to plan.
+
+        Returns:
+            Effective release plan.
+        """
+        plan = batch.plan(self.config)
+        if not self.config.debounce.enabled:
+            return plan
+        quick = max(self.config.debounce.quick_seconds, 0.0)
+        latest = batch.entries[-1].ts
+        reasons: list[str] = []
+        if self._is_hot(batch.session_key):
+            reasons.append("hot")
+        text = " ".join(entry.text.strip() for entry in batch.entries).strip()
+        if self.runtime_config.fast_release and 0 < len(text) <= (
+            self.runtime_config.fast_max_chars
+        ):
+            reasons.append("fast")
+        if not reasons:
+            return plan
+        release_at = min(plan.release_at, latest + quick)
+        return replace(
+            plan,
+            tier="quick",
+            release_at=release_at,
+            reason=f"{plan.reason};{'+'.join(reasons)}",
+        )
+
+    def _is_hot(self, session_key: str) -> bool:
+        """Return whether the bot answered this session recently.
+
+        Args:
+            session_key: unified_msg_origin.
+
+        Returns:
+            True when the session is inside the hot window.
+        """
+        state = self._sessions.get(session_key)
+        if state is None or not state.last_bot_reply_ts:
+            return False
+        window = self.runtime_config.hot_window_seconds
+        if window <= 0:
+            return False
+        return self._clock() - state.last_bot_reply_ts <= window
+
+    def _notify_reply(self, batch: TurnBatch) -> None:
+        """Tell the owner that a turn was answered.
+
+        Args:
+            batch: Batch that was released as a reply.
+        """
+        if self._on_reply is None:
+            return
+        try:
+            self._on_reply(batch.session_key, batch.merged_text, self._clock())
+        except Exception:
+            logger.exception("[life] heart-flow reply callback failed")
 
     def _decide(self, batch: TurnBatch) -> GateDecision:
         """Score the merged turn with the shared gate.
