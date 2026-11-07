@@ -41,6 +41,14 @@ from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.sender import LifeSender, SendResult
 from bot.life.session.registry import SessionRegistry
 from bot.life.store import LifeStore
+from bot.life.subagent.inbox import SubAgentInbox, notice_from_task
+from bot.life.subagent.notify import SubAgentNotifier
+from bot.life.subagent.runner import run_subagent_task
+from bot.life.subagent.tasks import SubAgentTaskManager
+from bot.life.subagent.tools import (
+    register_subagent_tools,
+    unregister_subagent_tools,
+)
 from bot.life.toolresult.condense import run_condense, should_condense
 from bot.life.toolresult.read import (
     register_tool_result_tools,
@@ -115,6 +123,9 @@ class LifeService:
         self.attention: AttentionRegistry | None = None
         self.proactive: ProactiveService | None = None
         self.tool_results: ToolResultStore | None = None
+        self.subagents: SubAgentTaskManager | None = None
+        self.subagent_inbox: SubAgentInbox | None = None
+        self.subagent: SubAgentNotifier | None = None
         self.registry = SessionRegistry()
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
@@ -141,6 +152,14 @@ class LifeService:
             "skipped": 0,
             "failed": 0,
             "chars_saved": 0,
+        }
+        self._subagent_counts = {
+            "started": 0,
+            "completed": 0,
+            "failed": 0,
+            "stopped": 0,
+            "woken": 0,
+            "inboxed": 0,
         }
 
     @property
@@ -178,6 +197,18 @@ class LifeService:
                 max_sessions=self.config.tool_result.max_sessions,
                 max_chars_per_session=self.config.tool_result.max_chars_per_session,
             )
+        if self.config.subagent.enabled:
+            self.subagents = SubAgentTaskManager(
+                max_running=self.config.subagent.max_running,
+                max_running_per_session=self.config.subagent.max_running_per_session,
+                finished_keep=self.config.subagent.finished_keep,
+                timeout_seconds=self.config.subagent.timeout_seconds,
+            )
+            self.subagent_inbox = SubAgentInbox(
+                max_per_session=self.config.subagent.inbox_max_per_session,
+                max_age_minutes=self.config.subagent.notice_max_age_minutes,
+            )
+            self.subagent = SubAgentNotifier(self.config.subagent, self.subagent_inbox)
         if self.config.sender.enabled:
             self.sender = LifeSender(
                 platform_manager=self.platform_manager,
@@ -298,6 +329,7 @@ class LifeService:
             self.memory is not None
             or self.emoji is not None
             or self.tool_results is not None
+            or self.subagents is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -311,6 +343,8 @@ class LifeService:
                     register_emoji_tools(manager, self.emoji)
                 if self.tool_results is not None:
                     register_tool_result_tools(manager, self)
+                if self.subagents is not None:
+                    register_subagent_tools(manager, self)
 
         self._queue = asyncio.Queue(maxsize=self.config.ingest.queue_size)
         self._running = True
@@ -421,6 +455,7 @@ class LifeService:
             self.memory is not None
             or self.emoji is not None
             or self.tool_results is not None
+            or self.subagents is not None
         ):
             manager = getattr(
                 getattr(self.star_context, "provider_manager", None),
@@ -434,8 +469,12 @@ class LifeService:
                     unregister_emoji_tools(manager)
                 if self.tool_results is not None:
                     unregister_tool_result_tools(manager)
+                if self.subagents is not None:
+                    unregister_subagent_tools(manager)
         if self.memory is not None:
             await self.memory.close()
+        if self.subagents is not None:
+            await self.subagents.cancel_all()
         if get_life_service() is self:
             set_life_service(None)
         logger.info("[life] stopped; counters=%s", self._counters)
@@ -735,6 +774,173 @@ class LifeService:
             self._tool_result_counts["skipped"] += 1
         return None
 
+    async def chat_provider(self) -> Any:
+        """Return the active chat provider, if any.
+
+        Returns:
+            The provider used for chat completions, or None.
+        """
+        manager = getattr(self.star_context, "provider_manager", None)
+        if manager is None:
+            return None
+        return await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
+
+    def subagent_tools(self, requested: str) -> list[Any]:
+        """Resolve the tool subset one sub-agent may use.
+
+        Args:
+            requested: Comma-separated tool names from the model; empty means
+                every tool this deployment allows.
+
+        Returns:
+            Granted tools, capped by ``max_granted_tools``.
+        """
+        config = self.config.subagent
+        allowed = set(config.allowed_tools)
+        if not allowed:
+            return []
+        names = [name.strip() for name in requested.split(",") if name.strip()]
+        manager = getattr(
+            getattr(self.star_context, "provider_manager", None),
+            "llm_tools",
+            None,
+        )
+        if manager is None:
+            return []
+        granted: list[Any] = []
+        for name in (names or list(config.allowed_tools))[: config.max_granted_tools]:
+            if name not in allowed:
+                continue
+            tool = manager.get_func(name)
+            if tool is None or not getattr(tool, "active", True):
+                continue
+            granted.append(tool)
+        return granted
+
+    async def start_subagent(
+        self,
+        *,
+        event: Any,
+        description: str,
+        requested_tools: str = "",
+    ) -> str:
+        """Register and launch one background sub-agent task.
+
+        Args:
+            event: Bot message event that asked for the task.
+            description: Self-contained task text.
+            requested_tools: Comma-separated tool names from the model.
+
+        Returns:
+            A status line for the tool result, or an ``error:`` string.
+        """
+        if not self.config.subagent.enabled or self.subagents is None:
+            return "error: sub-agent is not enabled"
+        umo = getattr(event, "unified_msg_origin", "") or ""
+        text = (description or "").strip()
+        if not umo:
+            return "error: session is unknown"
+        if not text:
+            return "error: description is empty"
+        if len(text) > 2000:
+            text = text[:2000]
+        tools = self.subagent_tools(requested_tools)
+        task = self.subagents.start(
+            session_id=umo,
+            description=text,
+            granted_tools=[tool.name for tool in tools],
+            runner=lambda task: self._run_subagent(task, event, tools),
+            on_finished=self.note_subagent_finished,
+        )
+        if task is None:
+            return "error: too many sub-agent tasks are running; wait or stop one first"
+        self._subagent_counts["started"] += 1
+        return (
+            f"started: {task.task_id} (background). "
+            f'Use subagent_status(task_id="{task.task_id}") to check it; '
+            "the conclusion is delivered into the chat when it finishes. "
+            "Keep working on the current turn meanwhile."
+        )
+
+    async def _run_subagent(
+        self,
+        task: Any,
+        event: Any,
+        tools: list[Any],
+    ) -> Any:
+        """Run one registered sub-agent task.
+
+        Args:
+            task: Registered task.
+            event: Parent message event handed to the granted tools.
+            tools: Granted tools.
+
+        Returns:
+            The run outcome.
+        """
+        provider = await self.chat_provider()
+        return await run_subagent_task(
+            provider=provider,
+            event=event,
+            session_id=task.session_id,
+            description=task.description,
+            tools=tools,
+            max_turns=self.config.subagent.max_turns,
+            tool_timeout_seconds=self.config.subagent.tool_timeout_seconds,
+        )
+
+    def note_subagent_finished(self, task: Any) -> None:
+        """Deliver a finished task's conclusion into its session.
+
+        The conclusion is appended to a run that is still active (a real wake);
+        otherwise it lands in the inbox and the next prompt shows it.
+
+        Args:
+            task: Task that reached a terminal state.
+        """
+        if task.status == "completed":
+            self._subagent_counts["completed"] += 1
+        elif task.status == "failed":
+            self._subagent_counts["failed"] += 1
+        else:
+            self._subagent_counts["stopped"] += 1
+        if task.status != "completed" or self.subagent_inbox is None:
+            return
+        notice = notice_from_task(task, self.config.subagent.conclusion_max_chars)
+        if not notice.conclusion:
+            return
+        try:
+            from bot.core.pipeline.process_stage.follow_up import get_active_runner
+
+            runner = get_active_runner(task.session_id)
+        except Exception:
+            runner = None
+        if runner is not None:
+            ticket = runner.follow_up(
+                message_text=f"[{task.task_id} 子任务完成]\n{notice.conclusion}"
+            )
+            if ticket is not None:
+                self._subagent_counts["woken"] += 1
+                asyncio.create_task(
+                    self._inbox_when_unconsumed(ticket, notice),
+                    name=f"life_{task.task_id}_delivery",
+                )
+                return
+        self.subagent_inbox.add(notice)
+        self._subagent_counts["inboxed"] += 1
+
+    async def _inbox_when_unconsumed(self, ticket: Any, notice: Any) -> None:
+        """Keep a conclusion in the inbox when the active run never saw it.
+
+        Args:
+            ticket: Follow-up ticket handed to the active runner.
+            notice: Conclusion to fall back to.
+        """
+        await ticket.resolved.wait()
+        if not ticket.consumed and self.subagent_inbox is not None:
+            self.subagent_inbox.add(notice)
+            self._subagent_counts["inboxed"] += 1
+
     async def _llm_summarizer(
         self,
         system_prompt: str,
@@ -749,10 +955,7 @@ class LifeService:
         Returns:
             Completion text, or None when no provider is available.
         """
-        manager = getattr(self.star_context, "provider_manager", None)
-        if manager is None:
-            return None
-        provider = await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
+        provider = await self.chat_provider()
         if provider is None:
             return None
         response = await provider.text_chat(
@@ -834,6 +1037,15 @@ class LifeService:
         reply: dict[str, Any] = {"enabled": False}
         if self.reply is not None:
             reply = self.reply.status()
+        subagent: dict[str, Any] = {"enabled": False}
+        if self.subagents is not None:
+            subagent = {
+                "enabled": True,
+                "counters": dict(self._subagent_counts),
+                "tasks": self.subagents.stats(),
+            }
+            if self.subagent is not None:
+                subagent["delivery"] = self.subagent.status()
         tool_result: dict[str, Any] = {"enabled": False}
         if self.tool_results is not None:
             tool_result = {
@@ -906,6 +1118,7 @@ class LifeService:
             "prompt": prompt,
             "reply": reply,
             "tool_result": tool_result,
+            "subagent": subagent,
             "expression": expression,
             "jargon": jargon,
             "emoji": emoji,

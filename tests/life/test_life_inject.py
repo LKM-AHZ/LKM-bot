@@ -30,6 +30,7 @@ def _service(
     focus=None,
     attention=None,
     persona=None,
+    subagent=None,
 ):
     return SimpleNamespace(
         memory=memory,
@@ -38,6 +39,7 @@ def _service(
         focus=focus,
         attention=attention,
         persona=persona,
+        subagent=subagent,
     )
 
 
@@ -154,6 +156,7 @@ async def test_persona_runs_before_every_other_block(monkeypatch):
             focus=Ordered("focus"),
             attention=Ordered("attention"),
             persona=Ordered("persona"),
+            subagent=Ordered("subagent"),
         ),
     )
     req = SimpleNamespace(prompt="hi", system_prompt="sys")

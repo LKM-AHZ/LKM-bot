@@ -28,6 +28,7 @@ BLOCK_ORDER = (
     "jargon",
     "focus",
     "attention",
+    "subagent",
 )
 """Fixed importance order: dropping starts at the end of this tuple."""
 

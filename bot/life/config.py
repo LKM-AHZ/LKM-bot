@@ -568,6 +568,58 @@ class ToolResultConfig(BaseModel):
     """Control-signal tools whose result must never be rewritten."""
 
 
+class SubAgentConfig(BaseModel):
+    """Background sub-agent tasks (S6b).
+
+    A sub-agent runs in the background with no parent context: its own system
+    prompt, the task text and an optional tool subset. At most
+    ``max_running`` tasks run at once, and a finished conclusion is delivered
+    into the session instead of being sent as a message.
+    """
+
+    enabled: bool = False
+    """Master switch; also requires the Life layer itself to be enabled."""
+
+    max_running: int = 3
+    """Tasks running at the same time, across all sessions."""
+
+    max_running_per_session: int = 2
+    """Tasks one session may run at the same time."""
+
+    finished_keep: int = 20
+    """Finished tasks kept in memory per session for ``subagent_status``."""
+
+    timeout_seconds: float = 120.0
+    """Hard timeout of one task; a timed-out task is marked failed."""
+
+    max_turns: int = 6
+    """Upper bound of model turns inside one sub-agent run."""
+
+    tool_timeout_seconds: float = 30.0
+    """Hard timeout of one tool call inside the sub-agent."""
+
+    max_granted_tools: int = 6
+    """Upper bound of tools the model may grant in one call."""
+
+    conclusion_max_chars: int = 1500
+    """Cap of the stored conclusion."""
+
+    allowed_tools: list[str] = Field(default_factory=list)
+    """Tools a sub-agent may use; empty means a text-only sub-agent."""
+
+    inject_max_items: int = 3
+    """Pending conclusions injected into one prompt."""
+
+    inject_max_chars: int = 900
+    """Cap of the injected ``<life_subagent>`` block."""
+
+    notice_max_age_minutes: int = 120
+    """Undelivered conclusions older than this are dropped."""
+
+    inbox_max_per_session: int = 10
+    """Undelivered conclusions kept per session; the oldest is dropped first."""
+
+
 class HeartFlowConfig(BaseModel):
     """Heart-flow runtime (S4): debounce, gates, focus and planner loop."""
 
@@ -605,6 +657,7 @@ class LifeConfig(BaseModel):
     prompt: PromptConfig = Field(default_factory=PromptConfig)
     reply: ReplyConfig = Field(default_factory=ReplyConfig)
     tool_result: ToolResultConfig = Field(default_factory=ToolResultConfig)
+    subagent: SubAgentConfig = Field(default_factory=SubAgentConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

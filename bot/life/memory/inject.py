@@ -6,8 +6,8 @@ service append its own section, so the core keeps a single call site and the
 Life layer owns every decision about what enters the prompt.
 
 Order is meaningful, not alphabetical: persona first (its service prepends), then
-memory, expressions, slang, focus and attention. S5b turns this fixed list into
-an explicit assembly step with a shared budget.
+memory, expressions, slang, focus, attention and delivered sub-agent conclusions.
+S5b turns this fixed list into an explicit assembly step with a shared budget.
 """
 
 from __future__ import annotations
@@ -24,11 +24,12 @@ INJECTOR_ORDER = (
     "jargon",
     "focus",
     "attention",
+    "subagent",
 )
 
 
 async def inject_life_context(event: Any, req: Any) -> bool:
-    """Inject persona, memory, expression, jargon, focus and attention context.
+    """Inject persona, memory, expression, jargon, focus, attention and sub-agent.
 
     Args:
         event: Bot message event being processed.

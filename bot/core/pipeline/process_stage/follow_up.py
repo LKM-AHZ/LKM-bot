@@ -46,6 +46,18 @@ def register_active_runner(umo: str, runner: AgentRunner) -> None:
         )
 
 
+def get_active_runner(umo: str) -> AgentRunner | None:
+    """Return the agent run currently serving one session.
+
+    Args:
+        umo: Unified message origin of the session.
+
+    Returns:
+        The running agent, or None when the session has no active run.
+    """
+    return _ACTIVE_AGENT_RUNNERS.get(umo)
+
+
 def unregister_active_runner(umo: str, runner: AgentRunner) -> None:
     if _ACTIVE_AGENT_RUNNERS.get(umo) is runner:
         _ACTIVE_AGENT_RUNNERS.pop(umo, None)

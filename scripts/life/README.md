@@ -952,3 +952,105 @@ curl -H "Authorization: Bearer <token>" \
   turns it into `failed` counters with the raw text kept, not an error.
 - The stash lives in process memory, so a multi-process deployment condenses in
   one worker and can only read that worker's stash.
+
+## S6b — background sub-agents
+
+Implemented in `bot/life/subagent/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `models.py` | `SubAgentTask` / `SubAgentOutcome` |
+| `tasks.py` | Bounded registry: capacity, timeout, stop, finished-task retention |
+| `runner.py` | One bounded tool loop with no parent context; per-call tool timeout |
+| `inbox.py` | Per-session inbox of undelivered conclusions |
+| `notify.py` | `<life_subagent>` prompt block |
+| `tools.py` | `subagent`, `subagent_status`, `subagent_stop` |
+
+```json
+{
+  "subagent": {
+    "enabled": false,
+    "max_running": 3,
+    "max_running_per_session": 2,
+    "finished_keep": 20,
+    "timeout_seconds": 120.0,
+    "max_turns": 6,
+    "tool_timeout_seconds": 30.0,
+    "max_granted_tools": 6,
+    "conclusion_max_chars": 1500,
+    "allowed_tools": [],
+    "inject_max_items": 3,
+    "inject_max_chars": 900,
+    "notice_max_age_minutes": 120,
+    "inbox_max_per_session": 10
+  }
+}
+```
+
+### What a sub-agent is
+
+- A **separate** agent run: it sees only the task text and its own system prompt,
+  never the parent conversation, and it cannot ask the user anything.
+- With `allowed_tools` empty it is text-only. Otherwise the model may pass a
+  comma-separated subset; it is intersected with `allowed_tools`, capped by
+  `max_granted_tools`, and resolved from the live tool manager. Granting is
+  explicit: a tool not in `allowed_tools` is never available.
+- The sub-agent uses a minimal executor: it calls the granted tool and sees its
+  text result, but it never sends messages, registers background tasks or writes
+  chat history.
+
+### Lifecycle
+
+```bash
+# model view
+subagent(description="查一下 pixiv 插件的最新版本", tools="web_search")
+# -> started: subagent-1 (background) ...
+subagent_status(task_id="subagent-1")
+# -> [subagent-1] completed (12.4s) ... tools=web_search conclusion=...
+subagent_stop(task_id="subagent-1")
+```
+
+- Capacity: `max_running` process-wide and `max_running_per_session` per chat;
+  over the limit the tool returns `error: too many sub-agent tasks are running`.
+- `timeout_seconds` bounds the whole run; `tool_timeout_seconds` bounds one tool
+  call. A failed run records `error` instead of raising into the chat.
+- Finished tasks stay queryable per session (`finished_keep`), oldest dropped.
+
+### Delivery
+
+A finished conclusion is **not** sent as a message. It is delivered the way the
+bot's event-driven agent allows:
+
+1. If the session still has an active agent run, the conclusion is appended as a
+   follow-up (`agent_runner.follow_up`), a real wake: the model sees it at its
+   next tool result.
+2. Otherwise it lands in the session inbox, and the next prompt carries:
+
+```text
+<life_subagent>
+后台子任务已经完成，结论可以直接使用，不必再派发同一件事：
+- [subagent-1] 查一下 pixiv 插件的最新版本：结论：pixiv 插件最新版本 3.2.1。
+</life_subagent>
+```
+
+3. If the active run never consumed the follow-up, a background check moves the
+   conclusion into the inbox instead, so it is not lost.
+4. Undelivered conclusions expire after `notice_max_age_minutes`.
+
+### Verify
+
+```bash
+pytest tests/life/test_life_subagent.py -q
+pytest tests/life -q
+
+curl -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:6185/api/v1/life/status | jq .data.subagent
+```
+
+### Limits
+
+- The agent is message-driven: a background task cannot start a new turn, so
+  "wake" only exists while a run is active. Otherwise the conclusion waits for
+  the next user message.
+- Inbox delivery is consumed on injection; if the provider call then fails, the
+  conclusion is not retried.
