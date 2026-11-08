@@ -189,7 +189,7 @@ class SupplementMessage:
 
 
 def message_from_row(row: dict[str, Any]) -> SupplementMessage:
-    """Build a referenceable message from one ``LifeMessage`` row.
+    """Build a referenceable message from one archive row.
 
     Image components are split into pictures and stickers by their ``sub_type``
     marker; only components that carry a usable local reference are kept.
@@ -253,7 +253,7 @@ class SupplementResources:
         """Capture resources from archived rows.
 
         Args:
-            rows: ``LifeMessage`` payloads of the current turn.
+            rows: Archive payloads of the current turn.
             allow_at: Whether the scene permits mentions.
             allow_quote: Whether the scene permits quoting.
             session_key: Session owning the resources.

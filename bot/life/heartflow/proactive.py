@@ -18,6 +18,7 @@ from datetime import datetime
 from typing import Any, Awaitable, Callable, Sequence
 
 from bot import logger
+from bot.life.common import SessionScoped
 from bot.life.config import IdleConfig, LifeConfig
 from bot.life.heartflow.idle import (
     Candidate,
@@ -37,7 +38,7 @@ _SYSTEM_PROMPT = (
 )
 
 
-class ProactiveService:
+class ProactiveService(SessionScoped):
     """Idle scan, opener generation and the talk-value bookkeeping."""
 
     def __init__(
@@ -102,20 +103,6 @@ class ProactiveService:
     async def close(self) -> None:
         """Stop the service."""
         self._started = False
-
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may receive proactive messages.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
 
     async def scan(self, now: float | None = None) -> list[Candidate]:
         """Return the sessions that may be spoken to first.

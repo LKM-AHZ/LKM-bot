@@ -63,8 +63,20 @@ class LifeIngestStage(Stage):
             self.service = service
         if service is None:
             return
+        if getattr(service, "_running", False):
+            try:
+                umo = str(event.unified_msg_origin)
+                group_id = event.get_group_id() or None
+                in_scope = service.config.session_enabled(umo, group_id)
+            except Exception:
+                in_scope = False
+            if in_scope:
+                # Life owns the reply decision for this session; the upstream
+                # probability engine must not answer behind its back.
+                event.set_extra("_life_scope_active", True)
         try:
-            await service.ingest(event)
+            if await service.ingest(event):
+                event.set_extra("_life_archived", True)
         except Exception:
             # Archiving must never break message handling.
             from bot import logger

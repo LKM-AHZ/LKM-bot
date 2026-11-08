@@ -8,10 +8,11 @@ every reply, or using a term the bot only half understands).
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Any, Sequence
 
 from bot import logger
-from bot.core.provider.entities import ProviderType
+from bot.life.common import SessionScoped, llm_complete
 from bot.life.config import JargonConfig
 from bot.life.jargon.learn import JargonLearner
 from bot.life.jargon.store import JargonStore
@@ -19,7 +20,7 @@ from bot.life.jargon.store import JargonStore
 _BLOCK_TAG = "life_jargon"
 
 
-class JargonService:
+class JargonService(SessionScoped):
     """Runtime owner of slang terms."""
 
     def __init__(
@@ -59,20 +60,6 @@ class JargonService:
         """Return whether the jargon runtime is active."""
         return self._started
 
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may use jargon.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
-
     async def initialize(self) -> None:
         """Create the tables and wire the learner."""
         await self.store.ensure_schema()
@@ -81,7 +68,11 @@ class JargonService:
                 source=self.life_store,
                 target=self.store,
                 config=self.config,
-                summarizer=self._llm_summarizer if self.config.use_llm else None,
+                summarizer=(
+                    partial(llm_complete, self.context)
+                    if self.config.use_llm
+                    else None
+                ),
             )
         self._started = True
         logger.info("[life] jargon layer ready")
@@ -89,28 +80,6 @@ class JargonService:
     async def close(self) -> None:
         """Mark the runtime stopped."""
         self._started = False
-
-    async def _llm_summarizer(self, system_prompt: str, user_prompt: str) -> str | None:
-        """Run one extraction call through the active chat provider.
-
-        Args:
-            system_prompt: Instructions for the extractor.
-            user_prompt: Transcript payload.
-
-        Returns:
-            Completion text, or None when no provider is available.
-        """
-        manager = getattr(self.context, "provider_manager", None)
-        if manager is None:
-            return None
-        provider = await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
-        if provider is None:
-            return None
-        response = await provider.text_chat(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-        )
-        return (response.completion_text or "").strip() or None
 
     async def learn_round(self, session_keys: Sequence[str] | None = None) -> dict:
         """Learn slang from the archive.

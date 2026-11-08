@@ -150,6 +150,11 @@ class Main(star.Star):
         ):
             return
 
+        if event.get_extra("_life_archived"):
+            # The Life ingest stage already wrote this message into the same
+            # archive, with richer metadata.
+            return
+
         settings = self.context.get_config(umo=event.unified_msg_origin).get(
             "provider_ltm_settings",
             {},
@@ -174,6 +179,10 @@ class Main(star.Star):
                 sender_id=event.get_sender_id(),
                 sender_name=event.get_sender_name(),
                 max_messages=max_messages,
+                source_message_id=str(
+                    getattr(event.message_obj, "message_id", "") or ""
+                )
+                or None,
             )
             if history and history.id is not None:
                 event.set_extra("_current_platform_message_history_id", history.id)

@@ -268,6 +268,10 @@ class PlatformMessageHistory(TimestampMixin, SQLModel, table=True):
     )  # Name of the sender in the platform
     content: dict = Field(sa_type=JSON, nullable=False)  # a message chain list
     llm_checkpoint_id: str | None = Field(default=None, index=True)
+    source_message_id: str | None = Field(default=None, max_length=255, index=True)
+    """Platform message id, used to archive one inbound message exactly once."""
+    life_batch: str | None = Field(default=None, max_length=64, index=True)
+    """Migration batch that wrote this row; empty for live traffic."""
 
     __table_args__ = (
         Index(
@@ -275,6 +279,11 @@ class PlatformMessageHistory(TimestampMixin, SQLModel, table=True):
             "platform_id",
             "user_id",
             "id",
+        ),
+        UniqueConstraint(
+            "platform_id",
+            "source_message_id",
+            name="uix_platform_message_history_source",
         ),
     )
 

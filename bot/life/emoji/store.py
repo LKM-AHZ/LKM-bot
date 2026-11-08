@@ -12,11 +12,14 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
+from bot.life.common import CursorStoreMixin, ensure_tables
 from bot.life.emoji.models import LifeEmoji, LifeEmojiAxis, LifeEmojiCursor
 
 
-class EmojiStore:
+class EmojiStore(CursorStoreMixin):
     """Async SQLite store for stickers."""
+
+    cursor_model = LifeEmojiCursor
 
     def __init__(self, db_helper: BaseDatabase) -> None:
         """Initialize the store.
@@ -28,16 +31,7 @@ class EmojiStore:
 
     async def ensure_schema(self) -> None:
         """Create the emoji tables when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            for model in (LifeEmoji, LifeEmojiAxis, LifeEmojiCursor):
-                await connection.run_sync(
-                    lambda sync_connection, model=model: model.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                        sync_connection,
-                        checkfirst=True,
-                    )
-                )
-            await session.commit()
+        await ensure_tables(self.db, LifeEmoji, LifeEmojiAxis, LifeEmojiCursor)
 
     async def insert_many(self, rows: Sequence[dict[str, Any]]) -> int:
         """Insert stickers, ignoring duplicates by content hash.
@@ -255,52 +249,6 @@ class EmojiStore:
                 )
             await session.commit()
         return paths
-
-    async def cursor(self, session_key: str) -> int:
-        """Return the last collection timestamp of a session.
-
-        Args:
-            session_key: Session scope.
-
-        Returns:
-            Last processed timestamp, or 0 when never collected.
-        """
-        async with self.db.get_db() as session:
-            result = await session.execute(
-                select(LifeEmojiCursor).where(
-                    col(LifeEmojiCursor.session_key) == session_key
-                )
-            )
-            row = result.scalars().first()
-            return int(row.last_ts) if row else 0
-
-    async def set_cursor(self, session_key: str, last_ts: int) -> None:
-        """Persist the collection cursor of a session.
-
-        Args:
-            session_key: Session scope.
-            last_ts: Last processed timestamp.
-        """
-        now = int(time.time())
-        async with self.db.get_db() as session:
-            result = await session.execute(
-                select(LifeEmojiCursor).where(
-                    col(LifeEmojiCursor.session_key) == session_key
-                )
-            )
-            row = result.scalars().first()
-            if row is None:
-                session.add(
-                    LifeEmojiCursor(
-                        session_key=session_key,
-                        last_ts=last_ts,
-                        updated_at=now,
-                    )
-                )
-            else:
-                row.last_ts = last_ts
-                row.updated_at = now
-            await session.commit()
 
     async def stats(self) -> dict[str, Any]:
         """Return sticker counters.

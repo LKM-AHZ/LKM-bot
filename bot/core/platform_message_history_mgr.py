@@ -17,6 +17,8 @@ class PlatformMessageHistoryManager:
         sender_name: str | None = None,
         llm_checkpoint_id: str | None = None,
         max_messages: int | None = None,
+        source_message_id: str | None = None,
+        life_batch: str | None = None,
     ) -> PlatformMessageHistory:
         """Insert a new platform message history record."""
         return await self.db.insert_platform_message_history(
@@ -27,6 +29,8 @@ class PlatformMessageHistoryManager:
             sender_name=sender_name,
             llm_checkpoint_id=llm_checkpoint_id,
             max_messages=max_messages,
+            source_message_id=source_message_id,
+            life_batch=life_batch,
         )
 
     async def insert_message_chain(
@@ -38,6 +42,7 @@ class PlatformMessageHistoryManager:
         sender_id: str | None = None,
         sender_name: str | None = None,
         max_messages: int | None = None,
+        source_message_id: str | None = None,
     ) -> PlatformMessageHistory | None:
         """Store a platform-neutral, path-free representation of a message chain.
 
@@ -103,6 +108,7 @@ class PlatformMessageHistoryManager:
             sender_id=sender_id,
             sender_name=sender_name,
             max_messages=max_messages,
+            source_message_id=source_message_id,
         )
 
     async def get(

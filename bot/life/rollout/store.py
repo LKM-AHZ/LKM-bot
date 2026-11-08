@@ -15,6 +15,7 @@ from sqlalchemy import case, delete, desc, func, select
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
+from bot.life.common import ensure_tables
 from bot.life.rollout.models import LifeTurnDecision
 
 
@@ -47,15 +48,7 @@ class TurnDecisionStore:
 
     async def ensure_schema(self) -> None:
         """Create the decision table when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            await connection.run_sync(
-                lambda sync_connection: LifeTurnDecision.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await session.commit()
+        await ensure_tables(self.db, LifeTurnDecision)
 
     async def insert(self, row: dict[str, Any]) -> None:
         """Insert one decision row.

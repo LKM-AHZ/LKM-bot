@@ -9,6 +9,7 @@ from sqlalchemy import delete, desc, func, select
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
+from bot.life.common import ensure_tables
 from bot.life.heartflow.idle import TalkState
 from bot.life.heartflow.models import LifeTalk
 
@@ -26,15 +27,7 @@ class TalkStore:
 
     async def ensure_schema(self) -> None:
         """Create the talk table when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            await connection.run_sync(
-                lambda sync_connection: LifeTalk.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await session.commit()
+        await ensure_tables(self.db, LifeTalk)
 
     async def get(self, session_key: str) -> TalkState:
         """Return the talk state of one session.

@@ -11,6 +11,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
+from bot.life.common import CursorStoreMixin, ensure_tables
 from bot.life.expression.models import LifeExpression, LifeExpressionCursor
 
 
@@ -28,8 +29,10 @@ def expression_checksum(situation: str, style: str) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
-class ExpressionStore:
+class ExpressionStore(CursorStoreMixin):
     """Async SQLite store for learned expressions."""
+
+    cursor_model = LifeExpressionCursor
 
     def __init__(self, db_helper: BaseDatabase) -> None:
         """Initialize the store.
@@ -41,16 +44,7 @@ class ExpressionStore:
 
     async def ensure_schema(self) -> None:
         """Create the expression tables and indexes when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            for model in (LifeExpression, LifeExpressionCursor):
-                await connection.run_sync(
-                    lambda sync_connection, model=model: model.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                        sync_connection,
-                        checkfirst=True,
-                    )
-                )
-            await session.commit()
+        await ensure_tables(self.db, LifeExpression, LifeExpressionCursor)
 
     async def upsert_many(self, rows: Sequence[dict[str, Any]]) -> dict[str, int]:
         """Insert new expressions and reinforce existing ones.
@@ -259,52 +253,6 @@ class ExpressionStore:
                 )
             await session.commit()
             return max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
-
-    async def cursor(self, session_key: str) -> int:
-        """Return the last learned timestamp of a session.
-
-        Args:
-            session_key: Session scope.
-
-        Returns:
-            Last processed timestamp, or 0 when never learned.
-        """
-        async with self.db.get_db() as session:
-            result = await session.execute(
-                select(LifeExpressionCursor).where(
-                    col(LifeExpressionCursor.session_key) == session_key
-                )
-            )
-            row = result.scalars().first()
-            return int(row.last_ts) if row else 0
-
-    async def set_cursor(self, session_key: str, last_ts: int) -> None:
-        """Persist the learning cursor of a session.
-
-        Args:
-            session_key: Session scope.
-            last_ts: Last processed timestamp.
-        """
-        now = int(time.time())
-        async with self.db.get_db() as session:
-            result = await session.execute(
-                select(LifeExpressionCursor).where(
-                    col(LifeExpressionCursor.session_key) == session_key
-                )
-            )
-            row = result.scalars().first()
-            if row is None:
-                session.add(
-                    LifeExpressionCursor(
-                        session_key=session_key,
-                        last_ts=last_ts,
-                        updated_at=now,
-                    )
-                )
-            else:
-                row.last_ts = last_ts
-                row.updated_at = now
-            await session.commit()
 
     async def stats(self) -> dict[str, Any]:
         """Return expression counters.

@@ -10,26 +10,9 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
+from bot.life.common import event_session_enabled
 
 _TOOL_NAMES = ("send_document", "send_file", "download_file")
-
-
-def _session_enabled(service: Any, event: Any) -> bool:
-    """Return whether the event's session may use files.
-
-    Args:
-        service: Life service owning the configuration.
-        event: Bot message event.
-
-    Returns:
-        True when the session is inside the Life scope.
-    """
-    umo = getattr(event, "unified_msg_origin", "") or ""
-    if not umo:
-        return False
-    getter = getattr(event, "get_group_id", None)
-    group_id = getter() if callable(getter) else None
-    return service.config.session_enabled(umo, group_id)
 
 
 def register_file_tools(manager: Any, service: Any) -> None:
@@ -44,7 +27,7 @@ def register_file_tools(manager: Any, service: Any) -> None:
         """Write a text/markdown document and send it to this chat."""
         if service.files is None:
             return "error: file service is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: file service is not enabled for this session"
         umo = getattr(event, "unified_msg_origin", "") or ""
         return await service.files.write_and_send(
@@ -55,7 +38,7 @@ def register_file_tools(manager: Any, service: Any) -> None:
         """Send one document that already exists in the file store."""
         if service.files is None:
             return "error: file service is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: file service is not enabled for this session"
         umo = getattr(event, "unified_msg_origin", "") or ""
         return await service.files.send(umo, str(name or ""))
@@ -64,7 +47,7 @@ def register_file_tools(manager: Any, service: Any) -> None:
         """Download an http(s) file into the store without sending it."""
         if service.files is None:
             return "error: file service is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: file service is not enabled for this session"
         umo = getattr(event, "unified_msg_origin", "") or ""
         return await service.files.download(umo, str(url or ""), str(name or ""))

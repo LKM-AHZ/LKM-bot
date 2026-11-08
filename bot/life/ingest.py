@@ -39,7 +39,7 @@ class IngestedMessage:
         """Return the row payload used by the store.
 
         Returns:
-            Mapping compatible with ``LifeMessage`` columns.
+            Mapping consumed by ``LifeStore.insert_batch``.
         """
         return {
             "platform_id": self.platform_id,

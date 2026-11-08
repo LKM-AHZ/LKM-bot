@@ -9,26 +9,9 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
+from bot.life.common import event_session_enabled
 
 _TOOL_NAMES = ("subagent", "subagent_status", "subagent_stop")
-
-
-def _session_enabled(service: Any, event: Any) -> bool:
-    """Return whether the event's session may use sub-agents.
-
-    Args:
-        service: Life service owning the configuration.
-        event: Bot message event.
-
-    Returns:
-        True when the session is inside the Life scope.
-    """
-    umo = getattr(event, "unified_msg_origin", "") or ""
-    if not umo:
-        return False
-    getter = getattr(event, "get_group_id", None)
-    group_id = getter() if callable(getter) else None
-    return service.config.session_enabled(umo, group_id)
 
 
 def register_subagent_tools(manager: Any, service: Any) -> None:
@@ -43,7 +26,7 @@ def register_subagent_tools(manager: Any, service: Any) -> None:
         """Start a background task that runs on its own and reports back."""
         if service.subagents is None:
             return "error: sub-agent is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: sub-agent is not enabled for this session"
         return await service.start_subagent(
             event=event,
@@ -55,7 +38,7 @@ def register_subagent_tools(manager: Any, service: Any) -> None:
         """Check one task, or list this chat's tasks."""
         if service.subagents is None:
             return "error: sub-agent is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: sub-agent is not enabled for this session"
         umo = getattr(event, "unified_msg_origin", "") or ""
         if task_id.strip():
@@ -72,7 +55,7 @@ def register_subagent_tools(manager: Any, service: Any) -> None:
         """Stop a running background task."""
         if service.subagents is None:
             return "error: sub-agent is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: sub-agent is not enabled for this session"
         umo = getattr(event, "unified_msg_origin", "") or ""
         task = service.subagents.get(str(task_id))

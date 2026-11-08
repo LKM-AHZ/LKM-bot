@@ -9,6 +9,7 @@ from sqlalchemy import delete, desc, func, select
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
+from bot.life.common import ensure_tables
 from bot.life.heartflow.focus.models import LifeFocus, LifeFocusTurn
 
 
@@ -25,16 +26,7 @@ class FocusStore:
 
     async def ensure_schema(self) -> None:
         """Create the focus tables when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            for model in (LifeFocus, LifeFocusTurn):
-                await connection.run_sync(
-                    lambda sync_connection, model=model: model.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                        sync_connection,
-                        checkfirst=True,
-                    )
-                )
-            await session.commit()
+        await ensure_tables(self.db, LifeFocus, LifeFocusTurn)
 
     async def load(
         self,

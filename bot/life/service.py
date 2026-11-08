@@ -19,6 +19,7 @@ from bot.core.message.message_event_result import MessageChain
 from bot.core.provider.entities import ProviderType
 from bot.life.acp.service import AcpService
 from bot.life.acp.tools import register_acp_tools, unregister_acp_tools
+from bot.life.common import llm_complete
 from bot.life.config import (
     LifeConfig,
     default_config_path,
@@ -43,7 +44,6 @@ from bot.life.person.service import PersonService
 from bot.life.persona.service import PersonaService
 from bot.life.prompt import PromptAssembler
 from bot.life.reaction.service import ReactionService
-from bot.life.reasoning import ReasoningRecorder
 from bot.life.reply.creative import translate_reply
 from bot.life.reply.postprocess import ReplyPostProcessor
 from bot.life.rollout.service import RolloutService
@@ -139,7 +139,6 @@ class LifeService:
         self.subagent_inbox: SubAgentInbox | None = None
         self.subagent: SubAgentNotifier | None = None
         self.monitor: PlannerMonitor | None = None
-        self.reasoning: ReasoningRecorder | None = None
         self.reactions: ReactionService | None = None
         self.acp: AcpService | None = None
         self.files: FileService | None = None
@@ -227,9 +226,6 @@ class LifeService:
                 max_age_minutes=self.config.subagent.notice_max_age_minutes,
             )
             self.subagent = SubAgentNotifier(self.config.subagent, self.subagent_inbox)
-        if self.config.reasoning.enabled:
-            self.reasoning = ReasoningRecorder(self.db, self.config.reasoning)
-            await self.reasoning.ensure_schema()
         if self.config.monitor.enabled:
             self.monitor = PlannerMonitor(self.config.monitor)
         if self.config.reaction.enabled:
@@ -286,7 +282,6 @@ class LifeService:
                 if self.config.creative.enabled
                 else None,
                 scenes=self.config.scenes,
-                reasoning=self.reasoning,
             )
 
         if self.config.memory.enabled:
@@ -542,30 +537,34 @@ class LifeService:
             set_life_service(None)
         logger.info("[life] stopped; counters=%s", self._counters)
 
-    async def ingest(self, event: Any) -> None:
-        """Archive one inbound event.
+    async def ingest(self, event: Any) -> bool:
+        """Queue one inbound event for archiving.
 
         Args:
             event: ``BotMessageEvent``-like object from the pipeline.
+
+        Returns:
+            True when the event was queued; False when this session is not
+            archived by the Life layer.
         """
         if not self._running or self._queue is None:
-            return
+            return False
         if not self.config.ingest.enabled:
-            return
+            return False
         try:
             umo = event.unified_msg_origin
             group_id = event.get_group_id() or None
         except Exception:
             self._counters["normalize_failed"] += 1
-            return
+            return False
         if not self.config.session_enabled(umo, group_id):
-            return
+            return False
         try:
             message = normalize_event(event, self.config.ingest)
         except Exception:
             logger.exception("[life] failed to normalize event")
             self._counters["normalize_failed"] += 1
-            return
+            return False
         self.registry.touch(message)
         self._counters["ingested"] += 1
         try:
@@ -576,6 +575,7 @@ class LifeService:
                 self._queue.get_nowait()
             with contextlib.suppress(asyncio.QueueFull):
                 self._queue.put_nowait(message)
+        return True
 
     async def _consume_loop(self) -> None:
         """Drain the queue in batches and persist them."""
@@ -659,11 +659,6 @@ class LifeService:
                     await self.rollout.prune()
                 except Exception:
                     logger.exception("[life] rollout prune failed")
-            if self.reasoning is not None:
-                try:
-                    await self.reasoning.prune()
-                except Exception:
-                    logger.exception("[life] reasoning prune failed")
 
     async def _expression_loop(self) -> None:
         """Learn expressions from the archive on a fixed interval."""
@@ -1059,14 +1054,7 @@ class LifeService:
         Returns:
             Completion text, or None when no provider is available.
         """
-        provider = await self.chat_provider()
-        if provider is None:
-            return None
-        response = await provider.text_chat(
-            prompt=user_prompt,
-            system_prompt=system_prompt,
-        )
-        return (response.completion_text or "").strip() or None
+        return await llm_complete(self.star_context, system_prompt, user_prompt)
 
     async def send_chain(
         self,

@@ -229,6 +229,8 @@ class BaseDatabase(abc.ABC):
         sender_name: str | None = None,
         llm_checkpoint_id: str | None = None,
         max_messages: int | None = None,
+        source_message_id: str | None = None,
+        life_batch: str | None = None,
     ) -> PlatformMessageHistory:
         """Insert a new platform message history record."""
         ...

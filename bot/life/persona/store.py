@@ -9,6 +9,7 @@ from sqlalchemy import delete, desc, func, select
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
+from bot.life.common import ensure_tables
 from bot.life.config import PersonaConfig
 from bot.life.persona.models import LifePersonaProfile
 
@@ -51,15 +52,7 @@ class PersonaStore:
 
     async def ensure_schema(self) -> None:
         """Create the persona table when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            await connection.run_sync(
-                lambda sync_connection: LifePersonaProfile.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await session.commit()
+        await ensure_tables(self.db, LifePersonaProfile)
 
     async def get(self, persona_id: str) -> dict[str, Any] | None:
         """Return one profile.

@@ -8,24 +8,21 @@ cursor. Two paths feed the same table:
   and keeps the first version honest.
 * **LLM** - one batched call turns recent messages into ``(situation, style)``
   pairs, which carry more context but need a chat provider.
+
+The loop itself is shared with the jargon learner; only the extraction differs.
 """
 
 from __future__ import annotations
 
-import json
 import re
-import time
-from typing import Any, Awaitable, Callable, Sequence
+from typing import Any, Sequence
 
-from bot import logger
+from bot.life.common import ArchiveLearner
 from bot.life.config import ExpressionConfig
 from bot.life.expression.store import ExpressionStore
 
-Summarizer = Callable[[str, str], Awaitable[str | None]]
-
 _SEGMENT_SPLIT = re.compile(r"[，,、。！？!?…~～\s]+")
 _TRIM = " \t「」『』“”\"'()（）[]【】…~～"
-_JSON_BLOCK = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 _NOISE = re.compile(r"https?://|@\S+|^/|^\d+$|^[\W_]+$")
 _MARKERS = (
     "哈哈",
@@ -56,106 +53,15 @@ _MAX_SITUATION_CHARS = 120
 _MAX_LLM_EXPRESSIONS = 5
 
 
-class ExpressionLearner:
+class ExpressionLearner(ArchiveLearner):
     """Turn archived messages into learned expressions."""
 
-    def __init__(
-        self,
-        source: Any,
-        target: ExpressionStore,
-        config: ExpressionConfig | None = None,
-        summarizer: Summarizer | None = None,
-    ) -> None:
-        """Initialize the learner.
+    label = "expression"
+    config_type = ExpressionConfig
+    result_keys = ("inserted", "merged")
+    include_candidates = True
 
-        Args:
-            source: Archive store exposing ``fetch_range`` and ``active_sessions``.
-            target: Expression store.
-            config: Learning settings.
-            summarizer: Optional LLM callable for the batched extraction path.
-        """
-        self.source = source
-        self.target = target
-        self.config = config or ExpressionConfig()
-        self.summarizer = summarizer
-        self._counters = {
-            "rounds": 0,
-            "sessions": 0,
-            "candidates": 0,
-            "inserted": 0,
-            "merged": 0,
-            "llm_calls": 0,
-            "llm_failures": 0,
-            "skipped": 0,
-        }
-
-    def snapshot(self) -> dict[str, Any]:
-        """Return learning counters.
-
-        Returns:
-            Copy of the internal counters.
-        """
-        return dict(self._counters)
-
-    async def run(self, session_keys: Sequence[str] | None = None) -> dict[str, Any]:
-        """Learn from recently active sessions.
-
-        Args:
-            session_keys: Sessions to process; None discovers active ones.
-
-        Returns:
-            Per-round counters.
-        """
-        if not self.config.enabled:
-            return {"enabled": False}
-        self._counters["rounds"] += 1
-        if session_keys is None:
-            lookback = (
-                int(time.time()) - max(self.config.learn_interval_minutes, 1) * 120
-            )
-            session_keys = await self.source.active_sessions(
-                since_ts=lookback, limit=20
-            )
-        for session_key in list(session_keys)[:20]:
-            try:
-                await self.learn_session(session_key)
-            except Exception:
-                logger.exception(f"[life] expression learning failed for {session_key}")
-        self._counters["sessions"] += len(list(session_keys or []))
-        return {"enabled": True, **self.snapshot()}
-
-    async def learn_session(self, session_key: str) -> dict[str, Any]:
-        """Learn from one session since its cursor.
-
-        Args:
-            session_key: Session scope.
-
-        Returns:
-            Counters of this session.
-        """
-        cursor = await self.target.cursor(session_key)
-        messages = await self.source.fetch_range(
-            session_key,
-            since_ts=cursor,
-            limit=max(self.config.max_learn_messages, 1),
-        )
-        if not messages:
-            self._counters["skipped"] += 1
-            return {"session": session_key, "skipped": True}
-        candidates = self.mine(messages)
-        if self.summarizer is not None and self.config.use_llm:
-            candidates.extend(await self._llm_extract(messages))
-        self._counters["candidates"] += len(candidates)
-        result = await self.target.upsert_many(candidates)
-        self._counters["inserted"] += result["inserted"]
-        self._counters["merged"] += result["merged"]
-        await self.target.set_cursor(session_key, int(messages[-1].get("ts") or 0))
-        return {
-            "session": session_key,
-            "messages": len(messages),
-            "candidates": len(candidates),
-            **result,
-        }
+    target: ExpressionStore
 
     def mine(self, messages: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract repeated emphatic phrases from a batch of messages.
@@ -232,27 +138,16 @@ class ExpressionLearner:
         lowered = style.lower()
         return any(marker in lowered for marker in _MARKERS)
 
-    async def _llm_extract(
-        self,
-        messages: Sequence[dict[str, Any]],
-    ) -> list[dict[str, Any]]:
-        """Ask the chat model for situation/style pairs.
+    def llm_prompt(self, transcript: str) -> str:
+        """Build the extraction prompt.
 
         Args:
-            messages: Archived messages of one session.
+            transcript: Rendered message transcript.
 
         Returns:
-            Candidate payloads with ``source="llm"``; empty on failure.
+            Prompt text.
         """
-        transcript = "\n".join(
-            f"{message.get('sender_name') or '?'}: "
-            f"{str(message.get('plain_text') or '')[:200]}"
-            for message in messages[-30:]
-            if message.get("plain_text")
-        )
-        if not transcript.strip():
-            return []
-        prompt = (
+        return (
             "从下面的群聊里提炼「表达方式」：某个具体情景下人们怎么说。\n"
             "只输出 JSON 数组，元素形如 "
             '{"situation": "什么情景", "style": "怎么说（要短，像口头禅或句式）"}。\n'
@@ -260,29 +155,29 @@ class ExpressionLearner:
             "不要抽象总结；不要编造；没有就输出 []。最多 "
             f"{_MAX_LLM_EXPRESSIONS} 条。\n\n记录：\n{transcript}"
         )
-        summarizer = self.summarizer
-        if summarizer is None:
-            return []
-        self._counters["llm_calls"] += 1
-        try:
-            raw = await summarizer(
-                "你是语言习惯分析助手，只输出 JSON，不输出解释。",
-                prompt,
-            )
-        except Exception as exc:
-            self._counters["llm_failures"] += 1
-            logger.warning(f"[life] expression extraction failed: {exc}")
-            return []
-        if not raw:
-            return []
-        match = _JSON_BLOCK.search(raw)
-        try:
-            items = json.loads(match.group(1) if match else raw)
-        except json.JSONDecodeError:
-            logger.debug("[life] expression payload was not JSON; ignored")
-            return []
-        if not isinstance(items, list):
-            return []
+
+    def llm_system_prompt(self) -> str:
+        """Return the extraction system prompt.
+
+        Returns:
+            System prompt text.
+        """
+        return "你是语言习惯分析助手，只输出 JSON，不输出解释。"
+
+    def parse_items(
+        self,
+        items: list[Any],
+        messages: Sequence[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """Turn parsed LLM items into expression rows.
+
+        Args:
+            items: JSON array returned by the model.
+            messages: Archived messages of the session.
+
+        Returns:
+            Candidate payloads with ``source="llm"``.
+        """
         session_key = str(messages[0].get("session_key") or "")
         scene = "group" if messages[0].get("group_id") else "private"
         rows: list[dict[str, Any]] = []

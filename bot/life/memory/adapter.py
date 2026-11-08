@@ -8,13 +8,13 @@ the built-in SQLite engine or by the upstream ``a_memorix`` engine.
 
 from __future__ import annotations
 
-import asyncio
 import time
+from functools import partial
 from pathlib import Path
 from typing import Any, Sequence
 
 from bot import logger
-from bot.core.provider.entities import ProviderType
+from bot.life.common import llm_complete
 from bot.life.config import MemoryConfig
 from bot.life.memory.digest import DigestBuilder
 from bot.life.memory.embedding import EmbeddingClient, EmbeddingUnavailable
@@ -101,7 +101,15 @@ class MemoryAdapter:
                 source=self.life_store,
                 target=self.store,
                 config=self.config.digest,
-                summarizer=self._llm_summarizer if self.config.digest.use_llm else None,
+                summarizer=(
+                    partial(
+                        llm_complete,
+                        self.context,
+                        timeout=max(self.config.digest.llm_timeout_seconds, 1.0),
+                    )
+                    if self.config.digest.use_llm
+                    else None
+                ),
                 on_facts=self._on_facts,
             )
         if self.config.upstream.engine == "a_memorix":
@@ -141,30 +149,6 @@ class MemoryAdapter:
         if self.upstream is not None:
             await self.upstream.close()
         self._started = False
-
-    async def _llm_summarizer(self, system_prompt: str, user_prompt: str) -> str | None:
-        """Run one summarization call through the active chat provider.
-
-        Args:
-            system_prompt: System instructions for the summarizer.
-            user_prompt: User payload containing the transcript.
-
-        Returns:
-            Completion text, or None when no provider is available.
-        """
-        manager = getattr(self.context, "provider_manager", None)
-        if manager is None:
-            return None
-        provider = await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
-        if provider is None:
-            return None
-        timeout = max(self.config.digest.llm_timeout_seconds, 1.0)
-        async with asyncio.timeout(timeout):
-            response = await provider.text_chat(
-                prompt=user_prompt,
-                system_prompt=system_prompt,
-            )
-        return (response.completion_text or "").strip() or None
 
     async def remember(
         self,

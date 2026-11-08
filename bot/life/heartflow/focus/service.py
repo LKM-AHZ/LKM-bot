@@ -21,6 +21,7 @@ from collections import OrderedDict
 from typing import Any, Sequence
 
 from bot import logger
+from bot.life.common import SessionScoped
 from bot.life.config import FocusConfig, LifeConfig
 from bot.life.heartflow.focus.store import FocusStore
 from bot.life.heartflow.focus.timeline import (
@@ -39,7 +40,7 @@ _MEDIA_MARKERS = {
 }
 
 
-class FocusService:
+class FocusService(SessionScoped):
     """Timeline cache, compression loop and prompt block."""
 
     def __init__(
@@ -88,20 +89,6 @@ class FocusService:
             return
         await self.checkpoint_all()
         self._started = False
-
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may keep a timeline.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
 
     def focus_key(self, umo: str) -> str:
         """Return the timeline key a session belongs to.

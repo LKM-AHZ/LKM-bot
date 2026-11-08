@@ -10,6 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
+from bot.life.common import event_session_enabled
 from bot.life.toolresult.store import StoredToolResult
 
 _TOOL_NAMES = ("read_tool_result",)
@@ -116,24 +117,6 @@ def render_read_view(
     return f"{header}\n" + "\n".join(selected) + note
 
 
-def _session_enabled(service: Any, event: Any) -> bool:
-    """Return whether the event's session may read its stash.
-
-    Args:
-        service: Life service owning the configuration.
-        event: Bot message event.
-
-    Returns:
-        True when the session is inside the Life scope.
-    """
-    umo = getattr(event, "unified_msg_origin", "") or ""
-    if not umo:
-        return False
-    getter = getattr(event, "get_group_id", None)
-    group_id = getter() if callable(getter) else None
-    return service.config.session_enabled(umo, group_id)
-
-
 def register_tool_result_tools(manager: Any, service: Any) -> None:
     """Register ``read_tool_result`` on the core tool manager.
 
@@ -153,7 +136,7 @@ def register_tool_result_tools(manager: Any, service: Any) -> None:
         config = service.config.tool_result
         if not config.enabled or service.tool_results is None:
             return "error: tool-result cache is not enabled"
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: tool-result cache is not enabled for this session"
         umo = getattr(event, "unified_msg_origin", "") or ""
         stored = service.tool_results.get(umo, str(result_id))

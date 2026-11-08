@@ -839,19 +839,6 @@ class CreativeConfig(BaseModel):
     """Hard timeout for the translation request."""
 
 
-class ReasoningConfig(BaseModel):
-    """Reply reasoning records (MaiBot 1.4 reasoning-process log)."""
-
-    enabled: bool = False
-    """Record one compact request/reply snapshot per answered turn."""
-
-    max_chars: int = 4000
-    """Bounded size of the stored prompt and reply bodies."""
-
-    retention_days: int = 7
-    """Rows older than this are pruned when the table opens."""
-
-
 class ScenePolicyConfig(BaseModel):
     """Reply policy of one chat scene."""
 
@@ -954,7 +941,6 @@ class LifeConfig(BaseModel):
     files: FilesConfig = Field(default_factory=FilesConfig)
     heartflow: HeartFlowConfig = Field(default_factory=HeartFlowConfig)
     scenes: ScenesConfig = Field(default_factory=ScenesConfig)
-    reasoning: ReasoningConfig = Field(default_factory=ReasoningConfig)
     pause: PauseConfig = Field(default_factory=PauseConfig)
 
     def resolved_data_dir(self, override: str | Path | None = None) -> Path:

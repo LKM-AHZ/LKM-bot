@@ -13,6 +13,7 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
+from bot.life.common import ensure_tables
 from bot.life.config import PersonConfig
 from bot.life.person.models import LifePerson, LifePersonFact, LifePersonProfile
 from bot.life.person.names import clean_name, name_tokens, normalize_name
@@ -68,16 +69,7 @@ class PersonStore:
 
     async def ensure_schema(self) -> None:
         """Create the person tables and indexes when missing."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            for model in (LifePerson, LifePersonFact, LifePersonProfile):
-                await connection.run_sync(
-                    lambda sync_connection, model=model: model.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                        sync_connection,
-                        checkfirst=True,
-                    )
-                )
-            await session.commit()
+        await ensure_tables(self.db, LifePerson, LifePersonFact, LifePersonProfile)
 
     async def observe_batch(self, observations: Sequence[dict[str, Any]]) -> int:
         """Upsert people and update their relationship scores.

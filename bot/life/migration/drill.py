@@ -30,12 +30,12 @@ from sqlalchemy import delete, func, select
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
+from bot.core.db.po import PlatformMessageHistory
 from bot.life.emoji.models import LifeEmoji
 from bot.life.expression.models import LifeExpression
 from bot.life.jargon.models import LifeJargon
 from bot.life.memory.models import LifeMemory
 from bot.life.migration.service import MigrationService
-from bot.life.models import LifeMessage
 from bot.life.person.models import LifePerson, LifePersonFact
 from bot.life.rollout.models import LifeTurnDecision
 
@@ -46,7 +46,7 @@ DEFAULT_MESSAGES = 200
 """Synthetic messages per drill; enough to measure without taking minutes."""
 
 _DRILL_MODELS = (
-    LifeMessage,
+    PlatformMessageHistory,
     LifePerson,
     LifePersonFact,
     LifeExpression,
@@ -334,14 +334,19 @@ async def _insert_sentinel(db_helper: BaseDatabase, umo: str) -> str:
     message_id = f"drill-live-{uuid.uuid4().hex[:12]}"
     async with db_helper.get_db() as session:
         session.add(
-            LifeMessage(
+            PlatformMessageHistory(
                 platform_id="aiocqhttp",
-                session_key=umo,
-                message_id=message_id,
-                ts=int(time.time()),
-                components=[],
-                plain_text="live traffic",
-                flags={},
+                user_id=umo,
+                content={
+                    "type": "user",
+                    "message": [],
+                    "life": {
+                        "message_id": message_id,
+                        "ts": int(time.time()),
+                        "plain_text": "live traffic",
+                    },
+                },
+                source_message_id=message_id,
             )
         )
         await session.commit()
@@ -362,7 +367,9 @@ async def _message_exists(db_helper: BaseDatabase, message_id: str) -> bool:
         row = (
             (
                 await session.execute(
-                    select(LifeMessage).where(col(LifeMessage.message_id) == message_id)
+                    select(PlatformMessageHistory).where(
+                        col(PlatformMessageHistory.source_message_id) == message_id
+                    )
                 )
             )
             .scalars()
@@ -380,6 +387,8 @@ async def _delete_sentinel(db_helper: BaseDatabase, message_id: str) -> None:
     """
     async with db_helper.get_db() as session:
         await session.execute(
-            delete(LifeMessage).where(col(LifeMessage.message_id) == message_id)
+            delete(PlatformMessageHistory).where(
+                col(PlatformMessageHistory.source_message_id) == message_id
+            )
         )
         await session.commit()

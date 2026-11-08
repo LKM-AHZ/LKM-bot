@@ -11,26 +11,9 @@ import json
 from typing import Any
 
 from bot import logger
+from bot.life.common import event_session_enabled
 
 _TOOL_NAMES = ("search_memory", "remember", "get_person_profile")
-
-
-def _session_enabled(service: Any, event: Any) -> bool:
-    """Return whether the event's session is inside the Life scope.
-
-    Args:
-        service: Life service owning the configuration.
-        event: Bot message event.
-
-    Returns:
-        True when the session is enabled.
-    """
-    umo = getattr(event, "unified_msg_origin", "") or ""
-    if not umo:
-        return False
-    getter = getattr(event, "get_group_id", None)
-    group_id = getter() if callable(getter) else None
-    return service.config.session_enabled(umo, group_id)
 
 
 def register_memory_tools(manager: Any, service: Any) -> None:
@@ -48,7 +31,7 @@ def register_memory_tools(manager: Any, service: Any) -> None:
         limit: int = 5,
     ) -> str:
         """Search this chat's long-term memory."""
-        if service.memory is None or not _session_enabled(service, event):
+        if service.memory is None or not event_session_enabled(service, event):
             return "error: long-term memory is not enabled for this session"
         hits = await service.memory.search(
             query=query,
@@ -73,7 +56,7 @@ def register_memory_tools(manager: Any, service: Any) -> None:
 
     async def remember(event: Any, content: str, importance: float = 0.6) -> str:
         """Store one memory in this chat's long-term memory."""
-        if service.memory is None or not _session_enabled(service, event):
+        if service.memory is None or not event_session_enabled(service, event):
             return "error: long-term memory is not enabled for this session"
         inserted = await service.memory.remember(
             content=content,
@@ -85,7 +68,7 @@ def register_memory_tools(manager: Any, service: Any) -> None:
 
     async def get_person_profile(event: Any, person: str) -> str:
         """Return what the bot remembers about one person."""
-        if not _session_enabled(service, event):
+        if not event_session_enabled(service, event):
             return "error: long-term memory is not enabled for this session"
         if service.person is not None:
             profile = await service.person.profile(

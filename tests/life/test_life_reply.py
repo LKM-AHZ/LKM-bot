@@ -13,6 +13,14 @@ from bot.life.config import LifeConfig, ReplyConfig
 from bot.life.reply.postprocess import ReplyPostProcessor
 
 
+class FakeTrace:
+    def __init__(self) -> None:
+        self.records: list[tuple[str, dict]] = []
+
+    def record(self, action: str, **fields) -> None:
+        self.records.append((action, fields))
+
+
 class FakeResult:
     def __init__(self, text: str = "在吗", llm: bool = True) -> None:
         self.chain = [Plain(text)]
@@ -40,6 +48,7 @@ class FakeEvent:
         self._persona_id = persona_id
         self.message_obj = SimpleNamespace(message_id=message_id)
         self.sent: list[str] = []
+        self.trace = FakeTrace()
 
     async def send(self, chain) -> None:
         for comp in chain.chain:
@@ -347,3 +356,16 @@ async def test_non_llm_results_are_left_alone():
 
     assert result.chain[0].text == "**命令输出**"
     assert processor.status()["counters"]["processed"] == 0
+
+
+@pytest.mark.asyncio
+async def test_records_the_final_reply_on_the_trace():
+    processor = _processor()
+    event = FakeEvent()
+    result = FakeResult("好的")
+
+    await processor.process(event, result)
+
+    action, fields = event.trace.records[0]
+    assert action == "life_reply"
+    assert fields["message"] == "好的"

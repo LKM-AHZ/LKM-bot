@@ -168,7 +168,7 @@ class SQLiteDatabase(BaseDatabase):
             )
 
     async def _ensure_platform_message_history_checkpoint_column(self, conn) -> None:
-        """Ensure platform_message_history has llm_checkpoint_id."""
+        """Ensure platform_message_history has the Life archive columns."""
         result = await conn.execute(text("PRAGMA table_info(platform_message_history)"))
         columns = {row[1] for row in result.fetchall()}
 
@@ -177,6 +177,20 @@ class SQLiteDatabase(BaseDatabase):
                 text(
                     "ALTER TABLE platform_message_history "
                     "ADD COLUMN llm_checkpoint_id VARCHAR DEFAULT NULL"
+                )
+            )
+        if "source_message_id" not in columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE platform_message_history "
+                    "ADD COLUMN source_message_id VARCHAR(255) DEFAULT NULL"
+                )
+            )
+        if "life_batch" not in columns:
+            await conn.execute(
+                text(
+                    "ALTER TABLE platform_message_history "
+                    "ADD COLUMN life_batch VARCHAR(64) DEFAULT NULL"
                 )
             )
         await conn.execute(
@@ -191,6 +205,20 @@ class SQLiteDatabase(BaseDatabase):
                 "CREATE INDEX IF NOT EXISTS "
                 "ix_platform_message_history_platform_user_id "
                 "ON platform_message_history (platform_id, user_id, id)"
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS "
+                "uix_platform_message_history_source "
+                "ON platform_message_history (platform_id, source_message_id)"
+            )
+        )
+        await conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS "
+                "ix_platform_message_history_life_batch "
+                "ON platform_message_history (life_batch)"
             )
         )
 
@@ -787,6 +815,8 @@ class SQLiteDatabase(BaseDatabase):
         sender_name=None,
         llm_checkpoint_id=None,
         max_messages=None,
+        source_message_id=None,
+        life_batch=None,
     ):
         """Insert a new platform message history record."""
         async with self.get_db() as session:
@@ -799,6 +829,8 @@ class SQLiteDatabase(BaseDatabase):
                     sender_id=sender_id,
                     sender_name=sender_name,
                     llm_checkpoint_id=llm_checkpoint_id,
+                    source_message_id=source_message_id,
+                    life_batch=life_batch,
                 )
                 session.add(new_history)
                 await session.flush()

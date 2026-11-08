@@ -196,3 +196,35 @@ async def test_runs_the_attention_injector_last(monkeypatch):
     assert changed is True
     assert attention.calls == 1
     assert req.system_prompt == "sys<x><x>"
+
+
+class FakeTrace:
+    def __init__(self) -> None:
+        self.records: list[tuple[str, dict]] = []
+
+    def record(self, action: str, **fields) -> None:
+        self.records.append((action, fields))
+
+
+@pytest.mark.asyncio
+async def test_records_the_request_snapshot_on_the_trace(monkeypatch):
+    monkeypatch.setattr(inject_module, "get_life_service", lambda: _service())
+    trace = FakeTrace()
+    event = SimpleNamespace(
+        trace=trace,
+        unified_msg_origin="aiocqhttp:GroupMessage:1",
+    )
+    req = SimpleNamespace(
+        prompt="hi",
+        system_prompt="sys",
+        model="m1",
+        func_tool=SimpleNamespace(names=lambda: ["search"]),
+    )
+
+    await inject_module.inject_life_context(event, req)
+
+    action, fields = trace.records[0]
+    assert action == "life_request"
+    assert fields["prompt"] == "hi"
+    assert fields["system_prompt"] == "sys"
+    assert fields["tools"] == ["search"]

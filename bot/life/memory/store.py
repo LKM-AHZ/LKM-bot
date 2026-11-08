@@ -25,6 +25,7 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
+from bot.life.common import CursorStoreMixin, ensure_tables
 from bot.life.memory.models import LifeMemory, LifeMemoryCursor
 
 _ASCII_TOKEN = re.compile(r"[a-z0-9_]{2,}")
@@ -125,8 +126,10 @@ def unpack_vector(blob: bytes) -> np.ndarray:
     return np.frombuffer(blob, dtype=np.float32)
 
 
-class MemoryStore:
+class MemoryStore(CursorStoreMixin):
     """Async SQLite store for long-term memory rows."""
+
+    cursor_model = LifeMemoryCursor
 
     def __init__(self, db_helper: BaseDatabase, retention_days: int = 0) -> None:
         """Initialize the store.
@@ -140,21 +143,7 @@ class MemoryStore:
 
     async def ensure_schema(self) -> None:
         """Create memory tables and indexes when they do not exist."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            await connection.run_sync(
-                lambda sync_connection: LifeMemory.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await connection.run_sync(
-                lambda sync_connection: LifeMemoryCursor.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await session.commit()
+        await ensure_tables(self.db, LifeMemory, LifeMemoryCursor)
 
     async def insert_many(self, rows: list[dict[str, Any]]) -> int:
         """Insert memory rows, ignoring duplicates.
@@ -598,53 +587,6 @@ class MemoryStore:
         if deleted:
             logger.info(f"[life] memory retention removed {deleted} rows")
         return deleted
-
-    async def cursor(self, session_key: str) -> int:
-        """Return the last digested timestamp of a session.
-
-        Args:
-            session_key: Session scope.
-
-        Returns:
-            Last processed timestamp, or 0 when never digested.
-        """
-        async with self.db.get_db() as session:
-            result = await session.execute(
-                select(LifeMemoryCursor).where(
-                    col(LifeMemoryCursor.session_key) == session_key
-                )
-            )
-            row = result.scalars().first()
-            return int(row.last_ts) if row else 0
-
-    async def set_cursor(self, session_key: str, last_ts: int) -> None:
-        """Persist the digest cursor of a session.
-
-        Args:
-            session_key: Session scope.
-            last_ts: Last processed timestamp.
-        """
-        now = int(time.time())
-        async with self.db.get_db() as session:
-            result = await session.execute(
-                select(LifeMemoryCursor).where(
-                    col(LifeMemoryCursor.session_key) == session_key
-                )
-            )
-            row = result.scalars().first()
-            if row is None:
-                session.add(
-                    LifeMemoryCursor(
-                        session_key=session_key,
-                        last_ts=last_ts,
-                        updated_at=now,
-                    )
-                )
-            else:
-                row.last_ts = last_ts
-                row.updated_at = now
-            await session.commit()
-
 
 def _public(row: LifeMemory) -> dict[str, Any]:
     """Strip the vector from a stored row.

@@ -15,6 +15,7 @@ from bot import logger
 from bot.core.message.components import Image
 from bot.core.message.message_event_result import MessageChain
 from bot.core.provider.entities import ProviderType
+from bot.life.common import SessionScoped
 from bot.life.config import EmojiConfig, MemoryEmbeddingConfig
 from bot.life.emoji.collect import EmojiCollector
 from bot.life.emoji.select import EmojiSelector
@@ -24,7 +25,7 @@ from bot.life.memory.embedding import EmbeddingClient
 from bot.life.memory.store import pack_vector
 
 
-class EmojiService:
+class EmojiService(SessionScoped):
     """Runtime owner of the sticker library."""
 
     def __init__(
@@ -75,20 +76,6 @@ class EmojiService:
     def enabled(self) -> bool:
         """Return whether the sticker runtime is active."""
         return self._started
-
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may use stickers.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
 
     async def initialize(self) -> None:
         """Create tables, wire the collector and selector."""

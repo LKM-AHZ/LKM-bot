@@ -26,6 +26,7 @@ from typing import Any
 
 from bot import logger
 from bot.core.message.components import Plain, Reply
+from bot.life.common import SessionScoped
 from bot.life.config import LifeConfig, ReplyConfig
 from bot.life.scenes import policy_for as scene_policy_for
 from bot.life.scenes import quote_rate as scale_quote_rate
@@ -41,7 +42,7 @@ _MARKDOWN = (
 )
 
 
-class ReplyPostProcessor:
+class ReplyPostProcessor(SessionScoped):
     """Rewrite outbound replies according to the session persona profile."""
 
     def __init__(
@@ -53,7 +54,6 @@ class ReplyPostProcessor:
         creative: Any = None,
         translator: Any = None,
         scenes: Any = None,
-        reasoning: Any = None,
     ) -> None:
         """Initialize the processor.
 
@@ -65,7 +65,6 @@ class ReplyPostProcessor:
             creative: Super creative mode config, or None.
             translator: Async callable rewriting one reply body back to Chinese.
             scenes: Scene policy config, or None.
-            reasoning: Reasoning recorder, or None.
         """
         self.config = config
         self.life_config = life_config
@@ -73,7 +72,6 @@ class ReplyPostProcessor:
         self.creative = creative
         self.translator = translator
         self.scenes = scenes
-        self.reasoning = reasoning
         self.rng = rng or random.Random()
         self._tasks: set[asyncio.Task] = set()
         self._recent: deque[dict[str, Any]] = deque(maxlen=50)
@@ -88,20 +86,6 @@ class ReplyPostProcessor:
             "translated": 0,
             "skipped": 0,
         }
-
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may be post-processed.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
 
     def strip_markdown(self, text: str) -> str:
         """Turn Markdown into plain sentences.
@@ -355,11 +339,12 @@ class ReplyPostProcessor:
 
         texts = [comp.text for comp in result.chain if isinstance(comp, Plain)]
         final = "".join(texts)
-        if self.reasoning is not None:
+        trace = getattr(event, "trace", None)
+        if trace is not None:
             try:
-                await self.reasoning.remember_reply(event, final)
+                trace.record("life_reply", session=umo, message=final, chars=len(final))
             except Exception:
-                logger.exception("[life] reasoning reply record failed")
+                logger.exception("[life] trace reply snapshot failed")
         self._recent.append(
             {
                 "umo": umo,

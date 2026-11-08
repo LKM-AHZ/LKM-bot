@@ -3,7 +3,7 @@
 The service reads MaiBot read-only, converts six datasets and writes only Life
 tables:
 
-- ``messages``: ``mai_messages`` to ``life_messages`` (bot accounts and
+- ``messages``: ``mai_messages`` to the shared message archive (bot accounts and
   ``is_notify`` system notices skipped),
 - ``people``: ``person_info`` plus its ``memory_points`` to ``life_person`` and
   ``life_person_fact`` (rows the source never confirmed are skipped unless
@@ -40,6 +40,8 @@ from sqlmodel import SQLModel, col
 
 from bot import logger
 from bot.core.db import BaseDatabase
+from bot.core.db.po import PlatformMessageHistory
+from bot.life.common import ensure_tables
 from bot.life.emoji.models import LifeEmoji
 from bot.life.expression.models import LifeExpression
 from bot.life.expression.store import expression_checksum
@@ -56,10 +58,10 @@ from bot.life.migration.source import (
     map_platform,
     to_ts,
 )
-from bot.life.models import LifeMessage
 from bot.life.person.models import LifePerson, LifePersonFact
 from bot.life.person.names import clean_name, normalize_name
 from bot.life.person.store import fact_hash
+from bot.life.store import LifeStore
 
 _INSERT_BATCH = 500
 """Rows per write transaction; messages are streamed in chunks of this size."""
@@ -68,7 +70,7 @@ _MEMORY_BATCH = 200
 """Paragraphs per A_memorix conversion batch."""
 
 _DATASET_MODELS: dict[str, tuple[type[SQLModel], ...]] = {
-    "messages": (LifeMessage,),
+    "messages": (),
     "people": (LifePerson, LifePersonFact),
     "expressions": (LifeExpression,),
     "jargon": (LifeJargon,),
@@ -77,7 +79,6 @@ _DATASET_MODELS: dict[str, tuple[type[SQLModel], ...]] = {
 }
 
 _ALL_MODELS: tuple[type[SQLModel], ...] = (
-    LifeMessage,
     LifePerson,
     LifePersonFact,
     LifeExpression,
@@ -223,19 +224,11 @@ class MigrationService:
                 raise ValueError(f"unknown timezone: {timezone}") from exc
         self.memory_store = MemoryStore(db_helper)
         self.importer = MemoryImporter(self.memory_store)
+        self.message_store = LifeStore(db_helper)
 
     async def ensure_schema(self) -> None:
         """Create every table the migration can touch."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            for model in _ALL_MODELS:
-                await connection.run_sync(
-                    lambda sync_connection, model=model: model.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                        sync_connection,
-                        checkfirst=True,
-                    )
-                )
-            await session.commit()
+        await ensure_tables(self.db, *_ALL_MODELS)
 
     async def preflight(
         self,
@@ -398,6 +391,7 @@ class MigrationService:
                     started - since_days * 86400 if since_days > 0 else 0,
                     max(limit, 0),
                     dry_run,
+                    batch_id,
                 )
             if "people" in selected:
                 await self._import_people(
@@ -542,6 +536,19 @@ class MigrationService:
                         int(result.rowcount or 0),  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
                         0,
                     )
+                # Imported messages live in the shared archive; their watermark
+                # would also match live traffic, so they are tagged by batch.
+                message_result = await session.execute(
+                    delete(PlatformMessageHistory).where(
+                        col(PlatformMessageHistory.life_batch) == batch_id
+                    )
+                )
+                message_deleted = max(
+                    int(message_result.rowcount or 0),  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
+                    0,
+                )
+                if message_deleted:
+                    deleted["platform_message_history"] = message_deleted
                 await session.commit()
                 # Files are only dropped once no surviving row references them.
                 if paths:
@@ -762,6 +769,7 @@ class MigrationService:
         since_ts: int,
         limit: int,
         dry_run: bool,
+        batch_id: str,
     ) -> None:
         """Convert ``mai_messages`` rows in chunks.
 
@@ -772,6 +780,7 @@ class MigrationService:
             since_ts: Lower timestamp bound; 0 keeps everything.
             limit: Maximum rows to convert; 0 keeps everything.
             dry_run: Count only when True.
+            batch_id: Rollback tag stored on every imported row.
         """
         rows: list[dict[str, Any]] = []
         for record in connection.execute("SELECT * FROM mai_messages ORDER BY id"):
@@ -784,14 +793,16 @@ class MigrationService:
             if not dry_run:
                 rows.append(row)
                 if len(rows) >= _INSERT_BATCH:
-                    written, duplicates = await self._insert(LifeMessage, rows)
-                    self._record_writes(counters, written, duplicates)
+                    written = await self.message_store.insert_batch(
+                        rows, life_batch=batch_id
+                    )
+                    self._record_writes(counters, written, len(rows) - written)
                     rows = []
             if limit and counters["ready"] >= limit:
                 break
         if rows and not dry_run:
-            written, duplicates = await self._insert(LifeMessage, rows)
-            self._record_writes(counters, written, duplicates)
+            written = await self.message_store.insert_batch(rows, life_batch=batch_id)
+            self._record_writes(counters, written, len(rows) - written)
 
     def _message_row(
         self,

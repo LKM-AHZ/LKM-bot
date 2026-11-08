@@ -15,6 +15,7 @@ from typing import Any, Sequence
 
 from bot import logger
 from bot.core.provider.entities import ProviderType
+from bot.life.common import SessionScoped
 from bot.life.config import PersonConfig
 from bot.life.person.names import clean_name, derive_person_id, normalize_name
 from bot.life.person.store import PersonStore
@@ -42,7 +43,7 @@ def infer_category(content: str) -> str:
     return "other"
 
 
-class PersonService:
+class PersonService(SessionScoped):
     """Runtime owner of people, facts and profiles."""
 
     def __init__(
@@ -77,20 +78,6 @@ class PersonService:
     def enabled(self) -> bool:
         """Return whether the person runtime is active."""
         return self._started
-
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may use the person layer.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
 
     async def initialize(self) -> None:
         """Create the person tables and mark the runtime ready."""

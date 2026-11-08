@@ -111,6 +111,9 @@ class GroupChatContext:
         return response.completion_text
 
     async def need_active_reply(self, event: BotMessageEvent) -> bool:
+        if event.get_extra("_life_scope_active"):
+            # The Life heart-flow already decided for this session.
+            return False
         cfg = self.cfg(event)
         if not cfg["enable_active_reply"]:
             return False

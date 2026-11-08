@@ -281,59 +281,6 @@ async def life_sessions(
     )
 
 
-@router.get("/life/reasoning")
-async def life_reasoning(
-    limit: int = Query(default=20, ge=1, le=200),
-    session: str | None = Query(default=None),
-    _auth: AuthContext = Depends(require_life_scope),
-) -> dict:
-    """Return compact reasoning records of recent turns.
-
-    Args:
-        limit: Maximum number of records.
-        session: Optional session key filter.
-
-    Returns:
-        Wrapped record summaries; empty when the switch is off.
-    """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
-    recorder = getattr(service, "reasoning", None) if service else None
-    if recorder is None:
-        return ok({"enabled": False, "items": []})
-    items = await recorder.list_recent(limit=limit, session_key=session)
-    return ok({"enabled": True, "items": items})
-
-
-@router.get("/life/reasoning/{record_id}")
-async def life_reasoning_detail(
-    record_id: int,
-    _auth: AuthContext = Depends(require_life_scope),
-) -> dict:
-    """Return one full reasoning record.
-
-    Args:
-        record_id: Row id from the list endpoint.
-
-    Returns:
-        Wrapped full record.
-
-    Raises:
-        ApiError: When the record does not exist or the switch is off.
-    """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
-    recorder = getattr(service, "reasoning", None) if service else None
-    if recorder is None:
-        raise ApiError("life reasoning records are disabled")
-    record = await recorder.get(record_id)
-    if record is None:
-        raise ApiError("reasoning record not found")
-    return ok(record)
-
-
 @router.get("/life/memory")
 async def life_memory(
     limit: int = Query(default=20, ge=1, le=200),

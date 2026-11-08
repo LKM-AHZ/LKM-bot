@@ -1,8 +1,16 @@
-"""Persistence helpers for the Life layer."""
+"""Persistence helpers for the Life layer.
+
+Inbound messages live in the core ``platform_message_history`` table: it is the
+single archive used by the dashboard, the LTM context and every Life learner.
+Rows written here carry a normalized message chain for other consumers plus a
+``life`` metadata block (timestamp, group, components) and a ``source_message_id``
+so the same platform message is stored exactly once.
+"""
 
 from __future__ import annotations
 
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import delete, desc, func, select
@@ -11,15 +19,89 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
-from bot.life.models import LifeMessage, LifeOutbound
+from bot.core.db.po import PlatformMessageHistory
+from bot.life.common import ensure_tables
+from bot.life.models import LifeOutbound
+
+_MEDIA_TYPES = {"image", "record", "video", "file"}
+
+
+def _parts_from_components(components: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Convert Life component payloads into the core history format.
+
+    Args:
+        components: Normalized component dicts from ``normalize_event``.
+
+    Returns:
+        Parts accepted by the dashboard and LTM history readers.
+    """
+    parts: list[dict[str, Any]] = []
+    for component in components:
+        kind = str(component.get("type") or "unknown")
+        raw_data = component.get("data")
+        data: dict[str, Any] = raw_data if isinstance(raw_data, dict) else {}
+        if kind in {"text", "plain"}:
+            text = str(data.get("text") or "")
+            if text:
+                parts.append({"type": "plain", "text": text})
+        elif kind == "at":
+            parts.append(
+                {
+                    "type": "at",
+                    "user_id": str(data.get("qq") or data.get("user_id") or ""),
+                    "name": str(data.get("name") or ""),
+                }
+            )
+        elif kind == "reply":
+            parts.append(
+                {
+                    "type": "reply",
+                    "message_id": str(data.get("id") or ""),
+                    "sender_name": str(data.get("sender_nickname") or ""),
+                    "text": str(data.get("message_str") or ""),
+                }
+            )
+        elif kind in _MEDIA_TYPES:
+            parts.append({"type": "plain", "text": f"[{kind}]"})
+        else:
+            parts.append({"type": "plain", "text": f"[{kind}]"})
+    return parts
+
+
+def _group_id_from_umo(user_id: str) -> str | None:
+    """Return the group id encoded in a unified message origin.
+
+    Args:
+        user_id: Unified message origin.
+
+    Returns:
+        Group id, or None for private sessions.
+    """
+    parts = user_id.split(":")
+    if len(parts) >= 3 and parts[1].lower() == "groupmessage":
+        return parts[2] or None
+    return None
+
+
+def _int_ts(value: Any) -> int:
+    """Convert a datetime or numeric timestamp to Unix seconds.
+
+    Args:
+        value: Datetime or numeric value.
+
+    Returns:
+        Unix timestamp; 0 when the value is unusable.
+    """
+    if isinstance(value, datetime):
+        return int(value.replace(tzinfo=timezone.utc).timestamp())
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return 0
 
 
 class LifeStore:
-    """Thin async wrapper around the Life tables.
-
-    The store creates its tables explicitly so the Life layer can be enabled at
-    runtime without relying on import order relative to the core database.
-    """
+    """Thin async wrapper around the unified message archive."""
 
     def __init__(self, db_helper: BaseDatabase, retention_days: int = 0) -> None:
         """Initialize the store.
@@ -32,40 +114,77 @@ class LifeStore:
         self.retention_days = retention_days
 
     async def ensure_schema(self) -> None:
-        """Create Life tables and indexes when they do not exist."""
-        async with self.db.get_db() as session:
-            connection = await session.connection()
-            await connection.run_sync(
-                lambda sync_connection: LifeMessage.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await connection.run_sync(
-                lambda sync_connection: LifeOutbound.__table__.create(  # ty: ignore[unresolved-attribute]  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
-                )
-            )
-            await session.commit()
+        """Create the outbound table when it is missing."""
+        await ensure_tables(self.db, LifeOutbound)
 
-    async def insert_batch(self, rows: list[dict[str, Any]]) -> int:
-        """Insert a batch of messages, ignoring duplicates.
+    def _content(
+        self,
+        row: dict[str, Any],
+        life_batch: str | None = None,
+    ) -> dict[str, Any]:
+        """Build the stored content for one archived message.
+
+        Args:
+            row: ``IngestedMessage.to_row()`` payload.
+            life_batch: Migration batch id, or None for live traffic.
+
+        Returns:
+            Core history content with the Life metadata block.
+        """
+        components = list(row.get("components") or [])
+        meta = {
+            "message_id": row.get("message_id"),
+            "ts": row.get("ts"),
+            "group_id": row.get("group_id"),
+            "reply_to": row.get("reply_to"),
+            "flags": row.get("flags") or {},
+            "plain_text": row.get("plain_text") or "",
+            "components": components,
+            "ingested_at": row.get("ingested_at") or 0,
+        }
+        if life_batch:
+            meta["batch"] = life_batch
+        return {
+            "type": "user",
+            "message": _parts_from_components(components),
+            "life": meta,
+        }
+
+    async def insert_batch(
+        self,
+        rows: list[dict[str, Any]],
+        *,
+        life_batch: str | None = None,
+    ) -> int:
+        """Insert archived inbound messages, ignoring duplicates.
 
         Args:
             rows: Row payloads produced by ``IngestedMessage.to_row()``.
+            life_batch: Migration batch id; None for live traffic.
 
         Returns:
             Number of rows actually inserted.
         """
         if not rows:
             return 0
+        values = [
+            {
+                "platform_id": row["platform_id"],
+                "user_id": row["session_key"],
+                "content": self._content(row, life_batch),
+                "sender_id": row.get("sender_id"),
+                "sender_name": row.get("sender_name"),
+                "source_message_id": row.get("message_id") or None,
+                "life_batch": life_batch,
+            }
+            for row in rows
+        ]
         async with self.db.get_db() as session:
             statement = (
-                sqlite_insert(LifeMessage)
-                .values(rows)
+                sqlite_insert(PlatformMessageHistory)
+                .values(values)
                 .on_conflict_do_nothing(
-                    index_elements=["platform_id", "message_id"],
+                    index_elements=["platform_id", "source_message_id"],
                 )
             )
             result = await session.execute(statement)
@@ -106,6 +225,48 @@ class LifeStore:
             session.add(row)
             await session.commit()
 
+    @staticmethod
+    def _row(row: PlatformMessageHistory) -> dict[str, Any]:
+        """Convert one core history row into a Life archive row.
+
+        Args:
+            row: Core history record.
+
+        Returns:
+            Row dictionary with the keys Life consumers expect.
+        """
+        content: dict[str, Any] = (
+            row.content if isinstance(row.content, dict) else {}
+        )
+        raw_life = content.get("life")
+        life: dict[str, Any] = raw_life if isinstance(raw_life, dict) else {}
+        ts = _int_ts(life.get("ts")) or _int_ts(row.created_at)
+        plain_text = str(life.get("plain_text") or "")
+        if not plain_text:
+            parts = content.get("message")
+            if isinstance(parts, list):
+                plain_text = "".join(
+                    str(part.get("text") or "")
+                    for part in parts
+                    if isinstance(part, dict) and part.get("type") == "plain"
+                )
+        return {
+            "id": row.id,
+            "platform_id": row.platform_id,
+            "session_key": row.user_id,
+            "message_id": row.source_message_id or life.get("message_id") or "",
+            "ts": ts,
+            "sender_id": row.sender_id,
+            "sender_name": row.sender_name,
+            "group_id": life.get("group_id") or _group_id_from_umo(row.user_id),
+            "components": life.get("components") or [],
+            "plain_text": plain_text,
+            "reply_to": life.get("reply_to"),
+            "flags": life.get("flags") or {},
+            "ingested_at": life.get("ingested_at") or ts,
+            "life_batch": row.life_batch,
+        }
+
     async def stats(self) -> dict[str, Any]:
         """Return archive and outbound counters.
 
@@ -113,28 +274,38 @@ class LifeStore:
             Mapping with row counts, distinct sessions, and timestamp bounds.
         """
         async with self.db.get_db() as session:
+            archived = col(PlatformMessageHistory.source_message_id).is_not(None)
+            ts_expr = func.json_extract(
+                col(PlatformMessageHistory.content), "$.life.ts"
+            )
             total = (
-                await session.execute(select(func.count()).select_from(LifeMessage))
+                await session.execute(
+                    select(func.count())
+                    .select_from(PlatformMessageHistory)
+                    .where(archived)
+                )
             ).scalar_one()
             sessions = (
                 await session.execute(
-                    select(func.count(func.distinct(LifeMessage.session_key)))
+                    select(
+                        func.count(func.distinct(PlatformMessageHistory.user_id))
+                    ).where(archived)
                 )
             ).scalar_one()
-            earliest = (
-                await session.execute(select(func.min(LifeMessage.ts)))
-            ).scalar_one()
-            latest = (
-                await session.execute(select(func.max(LifeMessage.ts)))
-            ).scalar_one()
+            bounds = (
+                await session.execute(
+                    select(func.min(ts_expr), func.max(ts_expr)).where(archived)
+                )
+            ).one()
+            earliest, latest = bounds
             outbound_total = (
                 await session.execute(select(func.count()).select_from(LifeOutbound))
             ).scalar_one()
         return {
             "messages": int(total or 0),
             "sessions": int(sessions or 0),
-            "earliest_ts": int(earliest) if earliest else None,
-            "latest_ts": int(latest) if latest else None,
+            "earliest_ts": _int_ts(earliest) or None,
+            "latest_ts": _int_ts(latest) or None,
             "outbound": int(outbound_total or 0),
         }
 
@@ -145,13 +316,16 @@ class LifeStore:
             limit: Maximum number of rows.
 
         Returns:
-            Row dictionaries ordered by timestamp descending.
+            Row dictionaries ordered by id descending.
         """
         async with self.db.get_db() as session:
             result = await session.execute(
-                select(LifeMessage).order_by(desc(LifeMessage.ts)).limit(limit)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+                select(PlatformMessageHistory)
+                .where(col(PlatformMessageHistory.source_message_id).is_not(None))
+                .order_by(desc(col(PlatformMessageHistory.id)))
+                .limit(max(limit, 1))
             )
-            return [row.model_dump() for row in result.scalars().all()]
+            return [self._row(row) for row in result.scalars().all()]
 
     async def fetch_range(
         self,
@@ -164,25 +338,41 @@ class LifeStore:
 
         Args:
             session_key: Session scope.
-            since_ts: Inclusive lower timestamp bound.
+            since_ts: Exclusive lower timestamp bound.
             until_ts: Inclusive upper timestamp bound; None means now.
             limit: Maximum number of rows.
 
         Returns:
             Message rows ordered by timestamp ascending.
         """
-        query = select(LifeMessage).where(
-            LifeMessage.session_key == session_key  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
-        )
-        if since_ts:
-            query = query.where(LifeMessage.ts > since_ts)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
-        if until_ts:
-            query = query.where(LifeMessage.ts <= until_ts)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
         async with self.db.get_db() as session:
-            result = await session.execute(
-                query.order_by(LifeMessage.ts).limit(max(limit, 1))  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+            query = select(PlatformMessageHistory).where(
+                col(PlatformMessageHistory.user_id) == session_key,
+                col(PlatformMessageHistory.source_message_id).is_not(None),
             )
-            return [row.model_dump() for row in result.scalars().all()]
+            if since_ts:
+                query = query.where(
+                    col(PlatformMessageHistory.created_at)
+                    > datetime.fromtimestamp(since_ts, timezone.utc).replace(
+                        tzinfo=None
+                    )
+                )
+            if until_ts:
+                query = query.where(
+                    col(PlatformMessageHistory.created_at)
+                    <= datetime.fromtimestamp(until_ts, timezone.utc).replace(
+                        tzinfo=None
+                    )
+                )
+            result = await session.execute(
+                query.order_by(col(PlatformMessageHistory.id))
+            )
+            rows = [self._row(row) for row in result.scalars().all()]
+        if since_ts:
+            rows = [row for row in rows if row["ts"] > since_ts]
+        if until_ts:
+            rows = [row for row in rows if row["ts"] <= until_ts]
+        return rows[: max(limit, 1)]
 
     async def active_sessions(
         self,
@@ -198,15 +388,22 @@ class LifeStore:
         Returns:
             Session keys ordered by most recent activity.
         """
-        query = select(col(LifeMessage.session_key)).where(
-            col(LifeMessage.ts) >= since_ts
-        )
         async with self.db.get_db() as session:
-            result = await session.execute(
-                query.group_by(col(LifeMessage.session_key))
-                .order_by(desc(func.max(col(LifeMessage.ts))))
+            query = (
+                select(col(PlatformMessageHistory.user_id))
+                .where(col(PlatformMessageHistory.source_message_id).is_not(None))
+                .group_by(col(PlatformMessageHistory.user_id))
+                .order_by(desc(func.max(col(PlatformMessageHistory.id))))
                 .limit(max(limit, 1))
             )
+            if since_ts:
+                query = query.where(
+                    col(PlatformMessageHistory.created_at)
+                    >= datetime.fromtimestamp(since_ts, timezone.utc).replace(
+                        tzinfo=None
+                    )
+                )
+            result = await session.execute(query)
             return [str(row[0]) for row in result.all()]
 
     async def session_last_ts(
@@ -224,30 +421,38 @@ class LifeStore:
             Rows with ``session_key``, ``last_ts`` and ``messages``, ordered by
             most recent activity.
         """
-        query = (
-            select(
-                col(LifeMessage.session_key),
-                func.max(col(LifeMessage.ts)),
-                func.count(),
-            )
-            .where(col(LifeMessage.ts) >= since_ts)
-            .group_by(col(LifeMessage.session_key))
-            .order_by(desc(func.max(col(LifeMessage.ts))))
-            .limit(max(limit, 1))
-        )
         async with self.db.get_db() as session:
+            query = (
+                select(
+                    col(PlatformMessageHistory.user_id),
+                    func.max(col(PlatformMessageHistory.created_at)),
+                    func.count(),
+                )
+                .where(col(PlatformMessageHistory.source_message_id).is_not(None))
+                .group_by(col(PlatformMessageHistory.user_id))
+                .order_by(desc(func.max(col(PlatformMessageHistory.created_at))))
+                .limit(max(limit, 1))
+            )
+            if since_ts:
+                query = query.where(
+                    col(PlatformMessageHistory.created_at)
+                    >= datetime.fromtimestamp(since_ts, timezone.utc).replace(
+                        tzinfo=None
+                    )
+                )
             result = await session.execute(query)
-            return [
-                {
-                    "session_key": str(row[0]),
-                    "last_ts": int(row[1] or 0),
-                    "messages": int(row[2] or 0),
-                }
-                for row in result.all()
-            ]
+            rows = result.all()
+        return [
+            {
+                "session_key": str(row[0]),
+                "last_ts": _int_ts(row[1]),
+                "messages": int(row[2] or 0),
+            }
+            for row in rows
+        ]
 
     async def cleanup(self) -> int:
-        """Delete messages older than the configured retention window.
+        """Delete archived messages older than the retention window.
 
         Returns:
             Number of deleted rows; 0 when retention is disabled.
@@ -255,9 +460,13 @@ class LifeStore:
         if self.retention_days <= 0:
             return 0
         cutoff = int(time.time()) - self.retention_days * 86400
+        ts_expr = func.json_extract(col(PlatformMessageHistory.content), "$.life.ts")
         async with self.db.get_db() as session:
             result = await session.execute(
-                delete(LifeMessage).where(LifeMessage.ts < cutoff)  # ty: ignore[invalid-argument-type]  # SQLModel column descriptor
+                delete(PlatformMessageHistory).where(
+                    col(PlatformMessageHistory.source_message_id).is_not(None),
+                    ts_expr < cutoff,
+                )
             )
             await session.commit()
             deleted = max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount

@@ -55,12 +55,23 @@ async def inject_life_context(event: Any, req: Any) -> bool:
     if assembler is not None and getattr(req, "system_prompt", ""):
         umo = getattr(event, "unified_msg_origin", "") or ""
         req.system_prompt = assembler.assemble(req.system_prompt, umo)
-    recorder = getattr(service, "reasoning", None)
-    if recorder is not None:
+    trace = getattr(event, "trace", None)
+    if trace is not None:
         try:
-            await recorder.remember_request(event, req)
+            tools: list[str] = []
+            tool_set = getattr(req, "func_tool", None)
+            if tool_set is not None:
+                tools = list(tool_set.names())
+            trace.record(
+                "life_request",
+                session=str(getattr(event, "unified_msg_origin", "") or ""),
+                model=str(getattr(req, "model", "") or ""),
+                tools=tools,
+                system_prompt=str(getattr(req, "system_prompt", "") or ""),
+                prompt=str(getattr(req, "prompt", "") or ""),
+            )
         except Exception:
-            logger.exception("[life] reasoning record failed")
+            logger.exception("[life] trace request snapshot failed")
     config = getattr(service, "config", None)
     creative = getattr(config, "creative", None)
     # Translation lives in the reply layer; without it the foreign-language

@@ -21,7 +21,7 @@ from bot.life.jargon.store import term_checksum
 from bot.life.memory.models import LifeMemory
 from bot.life.migration.service import MigrationService, _memory_kind
 from bot.life.migration.source import MaiBotSource, build_session_key, to_ts
-from bot.life.models import LifeMessage
+from bot.core.db.po import PlatformMessageHistory
 from bot.life.person.models import LifePerson, LifePersonFact
 
 UMO = "aiocqhttp:GroupMessage:1001"
@@ -337,8 +337,10 @@ async def test_notify_messages_are_skipped(service, life_db, tmp_path):
 
     async with life_db.get_db() as session:
         ids = {
-            row.message_id
-            for row in (await session.execute(select(LifeMessage))).scalars().all()
+            row.source_message_id
+            for row in (
+                await session.execute(select(PlatformMessageHistory))
+            ).scalars().all()
         }
     assert "m7" not in ids
     assert ids == {"m1", "m2", "m4"}
@@ -479,7 +481,7 @@ async def test_dry_run_counts_without_writing(service, life_db, tmp_path):
     }
     assert report["datasets"]["memory"]["ready"] == 2
     assert report["datasets"]["memory"]["skipped_reasons"] == {"deleted": 1}
-    assert await _count(life_db, LifeMessage) == 0
+    assert await _count(life_db, PlatformMessageHistory) == 0
     assert await _count(life_db, LifePerson) == 0
 
 
@@ -491,7 +493,7 @@ async def test_import_writes_every_dataset(service, life_db, tmp_path):
 
     assert report["batch_id"] is not None
     assert report["totals"]["written"] == 3 + 3 + 3 + 2 + 1 + 2
-    assert await _count(life_db, LifeMessage) == 3
+    assert await _count(life_db, PlatformMessageHistory) == 3
     assert await _count(life_db, LifePerson) == 1
     assert await _count(life_db, LifePersonFact) == 2
     assert await _count(life_db, LifeExpression) == 3
@@ -500,7 +502,9 @@ async def test_import_writes_every_dataset(service, life_db, tmp_path):
     assert await _count(life_db, LifeMemory) == 2
 
     async with life_db.get_db() as session:
-        messages = (await session.execute(select(LifeMessage))).scalars().all()
+        messages = (
+            await session.execute(select(PlatformMessageHistory))
+        ).scalars().all()
         people = (await session.execute(select(LifePerson))).scalars().all()
         facts = (await session.execute(select(LifePersonFact))).scalars().all()
         expressions = (await session.execute(select(LifeExpression))).scalars().all()
@@ -508,14 +512,14 @@ async def test_import_writes_every_dataset(service, life_db, tmp_path):
         emoji = (await session.execute(select(LifeEmoji))).scalars().all()
         memories = (await session.execute(select(LifeMemory))).scalars().all()
 
-    by_id = {row.message_id: row for row in messages}
+    by_id = {row.source_message_id: row for row in messages}
     assert set(by_id) == {"m1", "m2", "m4"}
-    assert by_id["m1"].session_key == UMO
-    assert by_id["m1"].flags["at"] is True
+    assert by_id["m1"].user_id == UMO
+    assert by_id["m1"].content["life"]["flags"]["at"] is True
     assert by_id["m1"].sender_name == "一群的一号"
-    assert by_id["m2"].session_key == "aiocqhttp:FriendMessage:u2"
-    assert by_id["m2"].flags["image"] is True
-    assert by_id["m4"].session_key == "telegram:GroupMessage:2002"
+    assert by_id["m2"].user_id == "aiocqhttp:FriendMessage:u2"
+    assert by_id["m2"].content["life"]["flags"]["image"] is True
+    assert by_id["m4"].user_id == "telegram:GroupMessage:2002"
     assert {row.person_id for row in people} == {"p1"}
     assert {row.content for row in facts} == {"喜欢咖啡", "经常熬夜"}
     assert {row.category for row in facts} == {"喜好", "习惯"}
@@ -545,7 +549,7 @@ async def test_import_is_idempotent(service, life_db, tmp_path):
     second = await service.run(root, umos=[UMO], dry_run=False)
 
     assert second["totals"]["written"] == 0
-    assert await _count(life_db, LifeMessage) == 3
+    assert await _count(life_db, PlatformMessageHistory) == 3
     assert await _count(life_db, LifeMemory) == 2
 
 
@@ -557,8 +561,8 @@ async def test_rollback_deletes_only_the_batch(service, life_db, tmp_path):
     rolled = await service.rollback(report["batch_id"])
 
     assert rolled["status"] == "rolled_back"
-    assert rolled["deleted"]["life_messages"] == 3
-    assert await _count(life_db, LifeMessage) == 0
+    assert rolled["deleted"]["platform_message_history"] == 3
+    assert await _count(life_db, PlatformMessageHistory) == 0
     assert await _count(life_db, LifePerson) == 0
     assert await _count(life_db, LifePersonFact) == 0
     assert await _count(life_db, LifeExpression) == 0
@@ -574,22 +578,27 @@ async def test_rollback_keeps_later_rows(service, life_db, tmp_path):
     root = _source(tmp_path)
     report = await service.run(root, umos=[UMO], dry_run=False)
     async with life_db.get_db() as session:
-        session.add(LifeMessage(
-            platform_id="aiocqhttp",
-            session_key=UMO,
-            message_id="live-after-import",
-            ts=1,
-            components=[],
-            plain_text="x",
-            flags={},
-        ))
+        session.add(
+            PlatformMessageHistory(
+                platform_id="aiocqhttp",
+                user_id=UMO,
+                source_message_id="live-after-import",
+                content={
+                    "type": "user",
+                    "message": [],
+                    "life": {"message_id": "live-after-import", "ts": 1},
+                },
+            )
+        )
         await session.commit()
 
     await service.rollback(report["batch_id"])
 
     async with life_db.get_db() as session:
-        remaining = (await session.execute(select(LifeMessage))).scalars().all()
-    assert [row.message_id for row in remaining] == ["live-after-import"]
+        remaining = (
+            await session.execute(select(PlatformMessageHistory))
+        ).scalars().all()
+    assert [row.source_message_id for row in remaining] == ["live-after-import"]
 
 
 @pytest.mark.asyncio
@@ -628,14 +637,15 @@ async def test_missing_source_table_is_reported(service, tmp_path):
 async def test_failed_batch_rollback_is_a_noop(service, life_db, tmp_path):
     async with life_db.get_db() as session:
         session.add(
-            LifeMessage(
+            PlatformMessageHistory(
                 platform_id="aiocqhttp",
-                session_key=UMO,
-                message_id="pre-existing",
-                ts=1,
-                components=[],
-                plain_text="x",
-                flags={},
+                user_id=UMO,
+                source_message_id="pre-existing",
+                content={
+                    "type": "user",
+                    "message": [],
+                    "life": {"message_id": "pre-existing", "ts": 1},
+                },
             )
         )
         await session.commit()
@@ -653,7 +663,7 @@ async def test_failed_batch_rollback_is_a_noop(service, life_db, tmp_path):
     rolled = await service.rollback(runs[0]["batch_id"])
 
     assert rolled["deleted"] == {}
-    assert await _count(life_db, LifeMessage) == 1
+    assert await _count(life_db, PlatformMessageHistory) == 1
 
 
 @pytest.mark.asyncio

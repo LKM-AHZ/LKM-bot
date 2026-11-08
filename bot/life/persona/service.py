@@ -11,13 +11,14 @@ import time
 from typing import Any
 
 from bot import logger
+from bot.life.common import SessionScoped
 from bot.life.config import LifeConfig, PersonaConfig
 from bot.life.persona.store import PersonaStore
 
 _BLOCK_TAG = "life_persona"
 
 
-class PersonaService:
+class PersonaService(SessionScoped):
     """Runtime owner of persona profiles."""
 
     def __init__(
@@ -44,20 +45,6 @@ class PersonaService:
     def enabled(self) -> bool:
         """Return whether the persona runtime is active."""
         return self._started
-
-    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
-        """Return whether a session is inside the Life allowlist.
-
-        Args:
-            umo: Session key.
-            group_id: Group id, or None.
-
-        Returns:
-            True when the session may use the profile.
-        """
-        if self.life_config is None:
-            return True
-        return bool(self.life_config.session_enabled(umo, group_id))
 
     async def initialize(self) -> None:
         """Create the table and mark the service ready."""
