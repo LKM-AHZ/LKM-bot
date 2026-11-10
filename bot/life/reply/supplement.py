@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import re
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
@@ -32,11 +31,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from bot.core.message.components import At, Image, Plain, Reply
 from bot.core.message.message_event_result import MessageChain
-
-_FENCE = re.compile(
-    r"\A```(?:json)?[ \t]*\r?\n(.*?)\r?\n```[ \t]*\Z",
-    re.IGNORECASE | re.DOTALL,
-)
+from bot.life.common import parse_json_object
 
 _MAX_PLAN_PARTS = 16
 """Hard ceiling from upstream; the config may lower it further."""
@@ -162,14 +157,7 @@ def parse_supplement_plan(response: str) -> ReplySupplementPlan:
     Raises:
         ValueError: When the payload is not JSON or fails validation.
     """
-    text = (response or "").strip()
-    match = _FENCE.fullmatch(text)
-    if match:
-        text = match.group(1).strip()
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"supplement plan is not valid JSON: {exc.msg}") from exc
+    payload = parse_json_object(response, "supplement plan")
     return ReplySupplementPlan.model_validate(payload)
 
 

@@ -6,12 +6,12 @@ import hashlib
 import time
 from typing import Any, Iterable, Sequence
 
-from sqlalchemy import delete, desc, func, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
-from bot.life.common import CursorStoreMixin, ensure_tables
+from bot.life.common import CursorStoreMixin, delete_rows, ensure_tables, get_row
 from bot.life.expression.models import LifeExpression, LifeExpressionCursor
 
 
@@ -150,9 +150,7 @@ class ExpressionStore(CursorStoreMixin):
         Returns:
             Row dictionary, or None when missing.
         """
-        async with self.db.get_db() as session:
-            row = await session.get(LifeExpression, expression_id)
-            return row.model_dump() if row else None
+        return await get_row(self.db, LifeExpression, expression_id)
 
     async def bump_usage(self, expression_ids: Iterable[int]) -> int:
         """Record that expressions were used in a reply.
@@ -236,23 +234,9 @@ class ExpressionStore(CursorStoreMixin):
         Raises:
             ValueError: When neither filter is given.
         """
-        if not expression_ids and not session_key:
-            raise ValueError("delete requires expression_ids or session_key")
-        async with self.db.get_db() as session:
-            if expression_ids:
-                result = await session.execute(
-                    delete(LifeExpression).where(
-                        col(LifeExpression.id).in_(tuple(expression_ids))
-                    )
-                )
-            else:
-                result = await session.execute(
-                    delete(LifeExpression).where(
-                        col(LifeExpression.session_key) == session_key
-                    )
-                )
-            await session.commit()
-            return max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
+        return await delete_rows(
+            self.db, LifeExpression, expression_ids, session_key, "expression"
+        )
 
     async def stats(self) -> dict[str, Any]:
         """Return expression counters.

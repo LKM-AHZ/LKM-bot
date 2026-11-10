@@ -15,11 +15,11 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Iterator, Sequence
+from typing import Any, Awaitable, Callable, Iterable, Iterator, Sequence
 from zoneinfo import ZoneInfo
 
 import numpy as np
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlmodel import col
 
 from bot import logger
@@ -29,6 +29,10 @@ from bot.core.umo_alias import parse_umo
 Summarizer = Callable[[str, str], Awaitable[str | None]]
 
 _JSON_BLOCK = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
+_JSON_FENCE = re.compile(
+    r"\A```(?:json)?[ \t]*\r?\n(.*?)\r?\n```[ \t]*\Z",
+    re.IGNORECASE | re.DOTALL,
+)
 
 
 async def ensure_tables(db_helper: Any, *models: Any) -> None:
@@ -48,6 +52,57 @@ async def ensure_tables(db_helper: Any, *models: Any) -> None:
                 )
             )
         await session.commit()
+
+
+async def get_row(db_helper: Any, model: Any, row_id: Any) -> dict[str, Any] | None:
+    """Return one row by primary key as a plain dict.
+
+    Args:
+        db_helper: Core async database helper.
+        model: SQLModel class owning the table.
+        row_id: Primary key value.
+
+    Returns:
+        Row dictionary, or None when missing.
+    """
+    async with db_helper.get_db() as session:
+        row = await session.get(model, row_id)
+        return row.model_dump() if row else None
+
+
+async def delete_rows(
+    db_helper: Any,
+    model: Any,
+    ids: Iterable[int] | None,
+    session_key: str | None,
+    label: str,
+) -> int:
+    """Delete rows by id or by session.
+
+    Args:
+        db_helper: Core async database helper.
+        model: SQLModel class owning the table.
+        ids: Explicit row ids.
+        session_key: Delete every row of one session.
+        label: Prefix of the id field used in the error message.
+
+    Returns:
+        Number of deleted rows.
+
+    Raises:
+        ValueError: When neither filter is given.
+    """
+    if not ids and not session_key:
+        raise ValueError(f"delete requires {label}_ids or session_key")
+    async with db_helper.get_db() as session:
+        condition = (
+            col(model.id).in_(tuple(ids))
+            if ids
+            else col(model.session_key) == session_key
+        )
+        result = await session.execute(delete(model).where(condition))
+        await session.commit()
+        return max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
 
 
 def event_umo(event: Any) -> str:
@@ -100,6 +155,30 @@ def event_session_enabled(service: Any, event: Any) -> bool:
     if config is None:
         return True
     return bool(config.session_enabled(umo, group_id))
+
+
+def tool_guard(
+    service: Any,
+    event: Any,
+    available: bool,
+    label: str,
+) -> str | None:
+    """Return the error of an unavailable tool, or None when it may run.
+
+    Args:
+        service: Life service or feature service owning the scope.
+        event: Bot message event.
+        available: Whether the feature itself is enabled.
+        label: Feature name used in the error message.
+
+    Returns:
+        Error text for the model, or None when the tool may run.
+    """
+    if not available:
+        return f"error: {label} is not enabled"
+    if not event_session_enabled(service, event):
+        return f"error: {label} is not enabled for this session"
+    return None
 
 
 def umo_group_id(umo: str) -> str | None:
@@ -384,6 +463,29 @@ def parse_json_array(raw: str) -> list[Any] | None:
     return payload if isinstance(payload, list) else None
 
 
+def parse_json_object(raw: str, label: str = "payload") -> Any:
+    """Parse one JSON object from a completion, unwrapping a code fence.
+
+    Args:
+        raw: Completion text.
+        label: Payload name used in the error message.
+
+    Returns:
+        Parsed JSON value.
+
+    Raises:
+        ValueError: When the payload is not valid JSON.
+    """
+    text = (raw or "").strip()
+    match = _JSON_FENCE.fullmatch(text)
+    if match:
+        text = match.group(1).strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{label} is not valid JSON: {exc.msg}") from exc
+
+
 def has_prompt_block(req: Any, tag: str) -> bool:
     """Return whether a prompt already carries the given Life block.
 
@@ -477,6 +579,26 @@ async def llm_complete(
     return (response.completion_text or "").strip() or None
 
 
+async def active_session_keys(
+    source: Any,
+    interval_minutes: float,
+    limit: int,
+) -> list[str]:
+    """Return the recently active sessions of one learning round.
+
+    Args:
+        source: Archive store exposing ``active_sessions``.
+        interval_minutes: Round interval; the lookback covers two rounds.
+        limit: Maximum number of sessions.
+
+    Returns:
+        Session keys, newest first.
+    """
+    lookback = int(time.time()) - max(interval_minutes, 1) * 120
+    keys = await source.active_sessions(since_ts=lookback, limit=max(limit, 1))
+    return list(keys)[: max(limit, 1)]
+
+
 class ArchiveLearner:
     """Shared learn-from-archive loop for expression and jargon.
 
@@ -541,11 +663,8 @@ class ArchiveLearner:
             return {"enabled": False}
         self._counters["rounds"] += 1
         if session_keys is None:
-            lookback = (
-                int(time.time()) - max(self.config.learn_interval_minutes, 1) * 120
-            )
-            session_keys = await self.source.active_sessions(
-                since_ts=lookback, limit=20
+            session_keys = await active_session_keys(
+                self.source, self.config.learn_interval_minutes, 20
             )
         keys = list(session_keys)[:20]
         for session_key in keys:

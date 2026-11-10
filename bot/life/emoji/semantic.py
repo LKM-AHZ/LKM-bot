@@ -14,20 +14,13 @@ sending stay in :mod:`bot.life.emoji.service`.
 from __future__ import annotations
 
 import asyncio
-import json
-import re
 from typing import Any, Sequence
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
-from bot.life.common import cosine
+from bot.life.common import cosine, parse_json_object
 from bot.life.memory.store import unpack_vector
-
-_FENCE = re.compile(
-    r"\A```(?:json)?[ \t]*\r?\n(.*?)\r?\n```[ \t]*\Z",
-    re.IGNORECASE | re.DOTALL,
-)
 
 EMOTION = "emotion"
 CONTENT = "content"
@@ -88,14 +81,7 @@ def parse_tags(response: str) -> EmojiTags:
     Raises:
         ValueError: When the payload is not JSON or fails validation.
     """
-    text = (response or "").strip()
-    match = _FENCE.fullmatch(text)
-    if match:
-        text = match.group(1).strip()
-    try:
-        payload = json.loads(text)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"emoji tags are not valid JSON: {exc.msg}") from exc
+    payload = parse_json_object(response, "emoji tags")
     return EmojiTags.model_validate(payload)
 
 

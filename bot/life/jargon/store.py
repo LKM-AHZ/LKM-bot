@@ -6,11 +6,11 @@ import hashlib
 import time
 from typing import Any, Iterable, Sequence
 
-from sqlalchemy import delete, desc, func, select
+from sqlalchemy import desc, func, select
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
-from bot.life.common import CursorStoreMixin, ensure_tables
+from bot.life.common import CursorStoreMixin, delete_rows, ensure_tables, get_row
 from bot.life.config import JargonConfig
 from bot.life.jargon.models import LifeJargon, LifeJargonCursor
 
@@ -143,9 +143,7 @@ class JargonStore(CursorStoreMixin):
         Returns:
             Row dictionary, or None when missing.
         """
-        async with self.db.get_db() as session:
-            row = await session.get(LifeJargon, jargon_id)
-            return row.model_dump() if row else None
+        return await get_row(self.db, LifeJargon, jargon_id)
 
     async def get_by_term(self, session_key: str, term: str) -> dict[str, Any] | None:
         """Return one term of a session.
@@ -269,19 +267,7 @@ class JargonStore(CursorStoreMixin):
         Raises:
             ValueError: When neither filter is given.
         """
-        if not jargon_ids and not session_key:
-            raise ValueError("delete requires jargon_ids or session_key")
-        async with self.db.get_db() as session:
-            if jargon_ids:
-                result = await session.execute(
-                    delete(LifeJargon).where(col(LifeJargon.id).in_(tuple(jargon_ids)))
-                )
-            else:
-                result = await session.execute(
-                    delete(LifeJargon).where(col(LifeJargon.session_key) == session_key)
-                )
-            await session.commit()
-            return max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
+        return await delete_rows(self.db, LifeJargon, jargon_ids, session_key, "jargon")
 
     async def stats(self) -> dict[str, Any]:
         """Return jargon counters.

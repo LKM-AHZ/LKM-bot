@@ -11,7 +11,12 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlmodel import col
 
 from bot.core.db import BaseDatabase
-from bot.life.common import CursorStoreMixin, ensure_tables, prune_oldest_files
+from bot.life.common import (
+    CursorStoreMixin,
+    ensure_tables,
+    get_row,
+    prune_oldest_files,
+)
 from bot.life.emoji.models import LifeEmoji, LifeEmojiAxis, LifeEmojiCursor
 
 
@@ -63,9 +68,7 @@ class EmojiStore(CursorStoreMixin):
         Returns:
             Row dictionary, or None when missing.
         """
-        async with self.db.get_db() as session:
-            row = await session.get(LifeEmoji, emoji_id)
-            return row.model_dump() if row else None
+        return await get_row(self.db, LifeEmoji, emoji_id)
 
     async def get_by_hash(self, session_key: str, sha256: str) -> dict[str, Any] | None:
         """Return one sticker by content hash.

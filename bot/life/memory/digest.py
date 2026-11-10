@@ -16,7 +16,7 @@ import time
 from typing import Any, Awaitable, Callable, Sequence
 
 from bot import logger
-from bot.life.common import parse_json_array
+from bot.life.common import active_session_keys, parse_json_array
 from bot.life.config import MemoryDigestConfig
 from bot.life.memory.store import MemoryStore
 
@@ -89,10 +89,10 @@ class DigestBuilder:
             return {"enabled": False}
         self._counters["rounds"] += 1
         if session_keys is None:
-            lookback = int(time.time()) - max(self.config.interval_minutes, 1) * 120
-            session_keys = await self.source.active_sessions(
-                since_ts=lookback,
-                limit=self.config.max_sessions_per_round,
+            session_keys = await active_session_keys(
+                self.source,
+                self.config.interval_minutes,
+                self.config.max_sessions_per_round,
             )
         keys = list(session_keys)[: max(self.config.max_sessions_per_round, 1)]
         for session_key in keys:

@@ -25,7 +25,13 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
-from bot.life.common import CursorStoreMixin, cosine, ensure_tables
+from bot.life.common import (
+    CursorStoreMixin,
+    cosine,
+    delete_rows,
+    ensure_tables,
+    get_row,
+)
 from bot.life.memory.models import LifeMemory, LifeMemoryCursor
 
 _ASCII_TOKEN = re.compile(r"[a-z0-9_]{2,}")
@@ -218,9 +224,7 @@ class MemoryStore(CursorStoreMixin):
         Returns:
             Row dictionary, or None when missing.
         """
-        async with self.db.get_db() as session:
-            row = await session.get(LifeMemory, memory_id)
-            return row.model_dump() if row else None
+        return await get_row(self.db, LifeMemory, memory_id)
 
     async def pending_embeddings(
         self,
@@ -503,19 +507,9 @@ class MemoryStore(CursorStoreMixin):
         Returns:
             Number of deleted rows.
         """
-        if not memory_ids and not session_key:
-            raise ValueError("delete requires memory_ids or session_key")
-        async with self.db.get_db() as session:
-            if memory_ids:
-                result = await session.execute(
-                    delete(LifeMemory).where(col(LifeMemory.id).in_(tuple(memory_ids)))
-                )
-            else:
-                result = await session.execute(
-                    delete(LifeMemory).where(col(LifeMemory.session_key) == session_key)
-                )
-            await session.commit()
-            return max(int(result.rowcount or 0), 0)  # ty: ignore[unresolved-attribute]  # CursorResult exposes rowcount
+        return await delete_rows(
+            self.db, LifeMemory, memory_ids, session_key, "memory"
+        )
 
     async def export(self, session_key: str | None = None) -> list[dict[str, Any]]:
         """Export memories for backup or migration.

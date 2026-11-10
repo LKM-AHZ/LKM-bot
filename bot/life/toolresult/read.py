@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
-from bot.life.common import event_session_enabled, unregister_tools
+from bot.life.common import tool_guard, unregister_tools
 from bot.life.toolresult.store import StoredToolResult
 
 _TOOL_NAMES = ("read_tool_result",)
@@ -134,10 +134,9 @@ def register_tool_result_tools(manager: Any, service: Any) -> None:
     ) -> str:
         """Read the raw text behind an earlier condensed tool result."""
         config = service.config.tool_result
-        if not config.enabled or service.tool_results is None:
-            return "error: tool-result cache is not enabled"
-        if not event_session_enabled(service, event):
-            return "error: tool-result cache is not enabled for this session"
+        available = config.enabled and service.tool_results is not None
+        if error := tool_guard(service, event, available, "tool-result cache"):
+            return error
         umo = getattr(event, "unified_msg_origin", "") or ""
         stored = service.tool_results.get(umo, str(result_id))
         if stored is None:

@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
-from bot.life.common import event_session_enabled, unregister_tools
+from bot.life.common import tool_guard, unregister_tools
 
 _TOOL_NAMES = ("send_document", "send_file", "download_file")
 
@@ -25,10 +25,10 @@ def register_file_tools(manager: Any, service: Any) -> None:
 
     async def send_document(event: Any, name: str, content: str) -> str:
         """Write a text/markdown document and send it to this chat."""
-        if service.files is None:
-            return "error: file service is not enabled"
-        if not event_session_enabled(service, event):
-            return "error: file service is not enabled for this session"
+        if error := tool_guard(
+            service, event, service.files is not None, "file service"
+        ):
+            return error
         umo = getattr(event, "unified_msg_origin", "") or ""
         return await service.files.write_and_send(
             umo, str(name or ""), str(content or "")
@@ -36,19 +36,19 @@ def register_file_tools(manager: Any, service: Any) -> None:
 
     async def send_file(event: Any, name: str) -> str:
         """Send one document that already exists in the file store."""
-        if service.files is None:
-            return "error: file service is not enabled"
-        if not event_session_enabled(service, event):
-            return "error: file service is not enabled for this session"
+        if error := tool_guard(
+            service, event, service.files is not None, "file service"
+        ):
+            return error
         umo = getattr(event, "unified_msg_origin", "") or ""
         return await service.files.send(umo, str(name or ""))
 
     async def download_file(event: Any, url: str, name: str = "") -> str:
         """Download an http(s) file into the store without sending it."""
-        if service.files is None:
-            return "error: file service is not enabled"
-        if not event_session_enabled(service, event):
-            return "error: file service is not enabled for this session"
+        if error := tool_guard(
+            service, event, service.files is not None, "file service"
+        ):
+            return error
         umo = getattr(event, "unified_msg_origin", "") or ""
         return await service.files.download(umo, str(url or ""), str(name or ""))
 

@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 import aiohttp
 
 from bot import logger
+from bot.life.common import active_session_keys
 from bot.life.config import EmojiConfig
 from bot.life.emoji.store import EmojiStore
 
@@ -89,11 +90,8 @@ class EmojiCollector:
             return {"enabled": False}
         self._counters["rounds"] += 1
         if session_keys is None:
-            lookback = (
-                int(time.time()) - max(self.config.collect_interval_minutes, 1) * 120
-            )
-            session_keys = await self.source.active_sessions(
-                since_ts=lookback, limit=20
+            session_keys = await active_session_keys(
+                self.source, self.config.collect_interval_minutes, 20
             )
         keys = list(session_keys)[:20]
         for session_key in keys:

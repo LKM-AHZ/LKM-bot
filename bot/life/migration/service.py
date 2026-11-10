@@ -31,7 +31,7 @@ import sqlite3
 import time
 import uuid
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, Callable, Sequence
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import delete, desc, func, select
@@ -1068,6 +1068,44 @@ class MigrationService:
             confidence = 0.6
         return category[:32], content[:2000], confidence
 
+    async def _import_table(
+        self,
+        connection: sqlite3.Connection,
+        counters: dict[str, Any],
+        table: str,
+        model: Any,
+        builder: Callable[
+            [sqlite3.Row, set[tuple[str, str]]],
+            tuple[list[dict[str, Any]], str, int],
+        ],
+        dry_run: bool,
+    ) -> None:
+        """Convert one source table through its row builder and insert the rows.
+
+        Args:
+            connection: Open source connection.
+            counters: Dataset counters.
+            table: Source table name.
+            model: Target SQLModel class.
+            builder: ``(record, seen) -> (rows, skip_reason, truncated)``.
+            dry_run: Count only when True.
+        """
+        rows: list[dict[str, Any]] = []
+        seen: set[tuple[str, str]] = set()
+        for record in connection.execute(f"SELECT * FROM {table} ORDER BY id"):
+            counters["seen"] += 1
+            converted, reason, truncated = builder(record, seen)
+            if not converted:
+                self._skip(counters, reason)
+                continue
+            counters["ready"] += len(converted)
+            counters["truncated"] += truncated
+            if not dry_run:
+                rows.extend(converted)
+        if rows and not dry_run:
+            written, duplicates = await self._insert(model, rows)
+            self._record_writes(counters, written, duplicates)
+
     async def _import_expressions(
         self,
         connection: sqlite3.Connection,
@@ -1085,23 +1123,16 @@ class MigrationService:
             umos: Fallback targets for global expressions.
             dry_run: Count only when True.
         """
-        rows: list[dict[str, Any]] = []
-        seen: set[tuple[str, str]] = set()
-        for record in connection.execute("SELECT * FROM expressions ORDER BY id"):
-            counters["seen"] += 1
-            converted, reason, truncated = self._expression_rows(
+        await self._import_table(
+            connection,
+            counters,
+            "expressions",
+            LifeExpression,
+            lambda record, seen: self._expression_rows(
                 record, session_index, umos, seen
-            )
-            if not converted:
-                self._skip(counters, reason)
-                continue
-            counters["ready"] += len(converted)
-            counters["truncated"] += truncated
-            if not dry_run:
-                rows.extend(converted)
-        if rows and not dry_run:
-            written, duplicates = await self._insert(LifeExpression, rows)
-            self._record_writes(counters, written, duplicates)
+            ),
+            dry_run,
+        )
 
     def _expression_rows(
         self,
@@ -1204,23 +1235,14 @@ class MigrationService:
             umos: Targets for global slang.
             dry_run: Count only when True.
         """
-        rows: list[dict[str, Any]] = []
-        seen: set[tuple[str, str]] = set()
-        for record in connection.execute("SELECT * FROM jargons ORDER BY id"):
-            counters["seen"] += 1
-            converted, reason, truncated = self._jargon_rows(
-                record, session_index, umos, seen
-            )
-            if not converted:
-                self._skip(counters, reason)
-                continue
-            counters["ready"] += len(converted)
-            counters["truncated"] += truncated
-            if not dry_run:
-                rows.extend(converted)
-        if rows and not dry_run:
-            written, duplicates = await self._insert(LifeJargon, rows)
-            self._record_writes(counters, written, duplicates)
+        await self._import_table(
+            connection,
+            counters,
+            "jargons",
+            LifeJargon,
+            lambda record, seen: self._jargon_rows(record, session_index, umos, seen),
+            dry_run,
+        )
 
     def _jargon_rows(
         self,

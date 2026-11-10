@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
-from bot.life.common import event_session_enabled, unregister_tools
+from bot.life.common import tool_guard, unregister_tools
 
 _TOOL_NAMES = ("ask_external_agent",)
 
@@ -20,10 +20,10 @@ def register_acp_tools(manager: Any, service: Any) -> None:
 
     async def ask_external_agent(event: Any, question: str) -> str:
         """Ask the external ACP agent one self-contained question."""
-        if service.acp is None:
-            return "error: external agent is not enabled"
-        if not event_session_enabled(service, event):
-            return "error: external agent is not enabled for this session"
+        if error := tool_guard(
+            service, event, service.acp is not None, "external agent"
+        ):
+            return error
         umo = getattr(event, "unified_msg_origin", "") or ""
         answer = await service.acp.ask(umo, str(question or ""))
         if not answer:
