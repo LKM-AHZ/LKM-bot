@@ -10,16 +10,16 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
+from collections.abc import Coroutine
 from pathlib import Path
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from bot import logger
 from bot.core.message.components import Plain
 from bot.core.message.message_event_result import MessageChain
-from bot.core.provider.entities import ProviderType
 from bot.life.acp.service import AcpService
 from bot.life.acp.tools import register_acp_tools, unregister_acp_tools
-from bot.life.common import llm_complete
+from bot.life.common import llm_complete, resolve_chat_provider, umo_group_id
 from bot.life.config import (
     LifeConfig,
     default_config_path,
@@ -146,14 +146,7 @@ class LifeService:
         self.started_at = 0
         self._queue: asyncio.Queue[IngestedMessage | None] | None = None
         self._worker: asyncio.Task | None = None
-        self._maintenance: asyncio.Task | None = None
-        self._memory_task: asyncio.Task | None = None
-        self._expression_task: asyncio.Task | None = None
-        self._jargon_task: asyncio.Task | None = None
-        self._emoji_task: asyncio.Task | None = None
-        self._focus_task: asyncio.Task | None = None
-        self._proactive_task: asyncio.Task | None = None
-        self._files_task: asyncio.Task | None = None
+        self._tasks: dict[str, asyncio.Task] = {}
         self._running = False
         self._counters = {
             "ingested": 0,
@@ -390,45 +383,21 @@ class LifeService:
         self._running = True
         self.started_at = int(time.time())
         self._worker = asyncio.create_task(self._consume_loop(), name="life_ingest")
-        self._maintenance = asyncio.create_task(
-            self._maintenance_loop(),
-            name="life_maintenance",
-        )
+        self._spawn("maintenance", self._maintenance_loop())
         if self.memory is not None and self.config.memory.digest.enabled:
-            self._memory_task = asyncio.create_task(
-                self._memory_loop(),
-                name="life_memory",
-            )
+            self._spawn("memory", self._memory_loop())
         if self.expression is not None:
-            self._expression_task = asyncio.create_task(
-                self._expression_loop(),
-                name="life_expression",
-            )
+            self._spawn("expression", self._expression_loop())
         if self.jargon is not None:
-            self._jargon_task = asyncio.create_task(
-                self._jargon_loop(),
-                name="life_jargon",
-            )
+            self._spawn("jargon", self._jargon_loop())
         if self.emoji is not None:
-            self._emoji_task = asyncio.create_task(
-                self._emoji_loop(),
-                name="life_emoji",
-            )
+            self._spawn("emoji", self._emoji_loop())
         if self.focus is not None:
-            self._focus_task = asyncio.create_task(
-                self._focus_loop(),
-                name="life_focus",
-            )
+            self._spawn("focus", self._focus_loop())
         if self.proactive is not None:
-            self._proactive_task = asyncio.create_task(
-                self._proactive_loop(),
-                name="life_proactive",
-            )
+            self._spawn("proactive", self._proactive_loop())
         if self.files is not None:
-            self._files_task = asyncio.create_task(
-                self._files_loop(),
-                name="life_files",
-            )
+            self._spawn("files", self._files_loop())
         set_life_service(self)
         logger.info(
             "[life] enabled; data_dir=%s scope_mode=%s memory=%s",
@@ -452,36 +421,9 @@ class LifeService:
                 self._worker.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
                     await self._worker
-        if self._maintenance is not None:
-            self._maintenance.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._maintenance
-        if self._memory_task is not None:
-            self._memory_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._memory_task
-        if self._expression_task is not None:
-            self._expression_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._expression_task
-        if self._jargon_task is not None:
-            self._jargon_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._jargon_task
-        if self._emoji_task is not None:
-            self._emoji_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._emoji_task
-        if self._focus_task is not None:
-            self._focus_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._focus_task
+        await self._cancel_tasks()
         if self.heartflow is not None:
             await self.heartflow.close()
-        if self._proactive_task is not None:
-            self._proactive_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._proactive_task
         if self.proactive is not None:
             await self.proactive.close()
         if self.focus is not None:
@@ -526,11 +468,6 @@ class LifeService:
             await self.memory.close()
         if self.subagents is not None:
             await self.subagents.cancel_all()
-        if self._files_task is not None:
-            self._files_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._files_task
-            self._files_task = None
         if self.acp is not None:
             await self.acp.close()
         if get_life_service() is self:
@@ -632,6 +569,48 @@ class LifeService:
             except Exception:
                 logger.exception("[life] proactive observe failed")
 
+    def _spawn(self, name: str, coro: Coroutine[Any, Any, Any]) -> None:
+        """Register one background task under a stable name.
+
+        Args:
+            name: Short task name; also used in the asyncio task name.
+            coro: Coroutine to run until the service stops.
+        """
+        self._tasks[name] = asyncio.create_task(coro, name=f"life_{name}")
+
+    async def _cancel_tasks(self) -> None:
+        """Cancel and await every background task registered by ``_spawn``."""
+        tasks = list(self._tasks.values())
+        for task in tasks:
+            task.cancel()
+        for task in tasks:
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
+        self._tasks.clear()
+
+    async def _periodic(
+        self,
+        interval_seconds: float,
+        label: str,
+        *actions: Callable[[], Awaitable[Any]],
+    ) -> None:
+        """Run one or more actions on a fixed interval until stopped.
+
+        Args:
+            interval_seconds: Sleep between rounds.
+            label: Description used in the failure log.
+            actions: Coroutine factories executed in order each round.
+        """
+        while self._running:
+            await asyncio.sleep(interval_seconds)
+            if not self._running:
+                return
+            try:
+                for action in actions:
+                    await action()
+            except Exception:
+                logger.exception(f"[life] {label} failed")
+
     async def _maintenance_loop(self) -> None:
         """Run retention cleanup periodically."""
         if self.store is None:
@@ -664,85 +643,61 @@ class LifeService:
         """Learn expressions from the archive on a fixed interval."""
         if self.expression is None:
             return
-        interval = max(self.config.expression.learn_interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.expression.learn_round()
-            except Exception:
-                logger.exception("[life] expression learning round failed")
+        await self._periodic(
+            max(self.config.expression.learn_interval_minutes, 1) * 60,
+            "expression learning round",
+            self.expression.learn_round,
+        )
 
     async def _jargon_loop(self) -> None:
         """Learn slang from the archive on a fixed interval."""
         if self.jargon is None:
             return
-        interval = max(self.config.jargon.learn_interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.jargon.learn_round()
-            except Exception:
-                logger.exception("[life] jargon learning round failed")
+        await self._periodic(
+            max(self.config.jargon.learn_interval_minutes, 1) * 60,
+            "jargon learning round",
+            self.jargon.learn_round,
+        )
 
     async def _emoji_loop(self) -> None:
         """Collect stickers from the archive on a fixed interval."""
         if self.emoji is None:
             return
-        interval = max(self.config.emoji.collect_interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.emoji.collect_round()
-            except Exception:
-                logger.exception("[life] emoji collection round failed")
+        await self._periodic(
+            max(self.config.emoji.collect_interval_minutes, 1) * 60,
+            "emoji collection round",
+            self.emoji.collect_round,
+        )
 
     async def _files_loop(self) -> None:
         """Remove expired files on a fixed interval."""
         if self.files is None:
             return
-        interval = max(self.config.files.cleanup_interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.files.cleanup()
-            except Exception:
-                logger.exception("[life] file cleanup failed")
+        await self._periodic(
+            max(self.config.files.cleanup_interval_minutes, 1) * 60,
+            "file cleanup",
+            self.files.cleanup,
+        )
 
     async def _proactive_loop(self) -> None:
         """Speak first only when the idle rules allow it."""
         if self.proactive is None:
             return
-        interval = max(self.config.heartflow.idle.scan_interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.proactive.run_round()
-            except Exception:
-                logger.exception("[life] proactive round failed")
+        await self._periodic(
+            max(self.config.heartflow.idle.scan_interval_minutes, 1) * 60,
+            "proactive round",
+            self.proactive.run_round,
+        )
 
     async def _focus_loop(self) -> None:
         """Checkpoint dirty timelines on a fixed interval."""
         if self.focus is None:
             return
-        interval = max(self.config.heartflow.focus.checkpoint_interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.focus.checkpoint_all()
-            except Exception:
-                logger.exception("[life] focus checkpoint failed")
+        await self._periodic(
+            max(self.config.heartflow.focus.checkpoint_interval_minutes, 1) * 60,
+            "focus checkpoint",
+            self.focus.checkpoint_all,
+        )
 
     async def _ingest_person_facts(self, session_key: str, facts: list[dict]) -> None:
         """Attach digest facts to people.
@@ -759,16 +714,12 @@ class LifeService:
         """Digest archived chat into memory and refresh vectors periodically."""
         if self.memory is None:
             return
-        interval = max(self.config.memory.digest.interval_minutes, 1) * 60
-        while self._running:
-            await asyncio.sleep(interval)
-            if not self._running:
-                return
-            try:
-                await self.memory.digest_round()
-                await self.memory.store.cleanup()
-            except Exception:
-                logger.exception("[life] memory digest round failed")
+        await self._periodic(
+            max(self.config.memory.digest.interval_minutes, 1) * 60,
+            "memory digest round",
+            self.memory.digest_round,
+            self.memory.store.cleanup,
+        )
 
     def migration_service(self) -> Any:
         """Return the offline migration service, creating it on first use.
@@ -833,10 +784,7 @@ class LifeService:
             return None
         if not session_id:
             return None
-        group_id = None
-        parts = session_id.split(":")
-        if len(parts) >= 3 and parts[-2] == "GroupMessage":
-            group_id = parts[-1]
+        group_id = umo_group_id(session_id)
         if not self.config.session_enabled(session_id, group_id):
             return None
         if not should_condense(
@@ -879,10 +827,7 @@ class LifeService:
         Returns:
             The provider used for chat completions, or None.
         """
-        manager = getattr(self.star_context, "provider_manager", None)
-        if manager is None:
-            return None
-        return await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
+        return await resolve_chat_provider(self.star_context)
 
     def subagent_tools(self, requested: str) -> list[Any]:
         """Resolve the tool subset one sub-agent may use.
@@ -1279,14 +1224,8 @@ class LifeService:
         config = self.config.creative
 
         async def translate(text: str) -> str | None:
-            manager = getattr(self.star_context, "provider_manager", None)
-            if manager is None:
-                return None
-            try:
-                provider = await manager.get_using_provider_async(
-                    ProviderType.CHAT_COMPLETION
-                )
-            except Exception:
+            provider = await resolve_chat_provider(self.star_context)
+            if provider is None:
                 return None
             return await translate_reply(
                 provider,

@@ -133,7 +133,7 @@ class TurnBatch:
         Returns:
             Lines formatted as ``speaker: text``, empty when nothing was said.
         """
-        return "\\n".join(
+        return "\n".join(
             f"{entry.sender_name or '某人'}: {entry.text}"
             for entry in self.entries
             if entry.text.strip()

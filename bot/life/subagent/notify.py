@@ -9,6 +9,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from bot.life.common import (
+    append_prompt_block,
+    event_umo,
+    has_prompt_block,
+)
 from bot.life.config import SubAgentConfig
 from bot.life.subagent.inbox import SubAgentInbox
 
@@ -39,11 +44,8 @@ class SubAgentNotifier:
         Returns:
             True when the system prompt was modified.
         """
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
-            return False
-        prompt = getattr(req, "system_prompt", "") or ""
-        if f"<{SUBAGENT_TAG}>" in prompt:
+        umo = event_umo(event)
+        if not umo or has_prompt_block(req, SUBAGENT_TAG):
             return False
         notices = self.inbox.take(umo, limit=self.config.inject_max_items)
         if not notices:
@@ -63,7 +65,8 @@ class SubAgentNotifier:
         )
         if len(block) > self.config.inject_max_chars:
             block = block[: self.config.inject_max_chars].rstrip() + "…"
-        req.system_prompt = f"{prompt}\n\n{block}" if prompt else block
+        if not append_prompt_block(req, SUBAGENT_TAG, block, separator="\n\n"):
+            return False
         self.injected += 1
         return True
 

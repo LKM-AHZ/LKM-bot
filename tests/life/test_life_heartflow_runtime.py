@@ -124,6 +124,10 @@ async def test_concurrent_messages_merge_into_one_turn():
     assert follower_outcome.reason.startswith("merged:")
     assert "Alice: 小助手 在吗" in leader_outcome.merged_text
     assert "Alice: 看这个图" in leader_outcome.merged_text
+    assert leader_outcome.merged_text.splitlines() == [
+        "Alice: 小助手 在吗",
+        "Alice: 看这个图",
+    ]
     status = runtime.status()
     assert status["counters"]["turns"] == 1
     assert status["counters"]["merged"] == 1

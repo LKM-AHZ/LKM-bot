@@ -14,8 +14,7 @@ from typing import Any, Sequence
 from bot import logger
 from bot.core.message.components import Image
 from bot.core.message.message_event_result import MessageChain
-from bot.core.provider.entities import ProviderType
-from bot.life.common import SessionScoped
+from bot.life.common import SessionScoped, resolve_chat_provider
 from bot.life.config import EmojiConfig, MemoryEmbeddingConfig
 from bot.life.emoji.collect import EmojiCollector
 from bot.life.emoji.select import EmojiSelector
@@ -170,15 +169,7 @@ class EmojiService(SessionScoped):
             return 0
         if self.embedding is None or not self.embedding.available:
             return 0
-        manager = getattr(self.context, "provider_manager", None)
-        provider = None
-        if manager is not None:
-            try:
-                provider = await manager.get_using_provider_async(
-                    ProviderType.CHAT_COMPLETION
-                )
-            except Exception:
-                provider = None
+        provider = await resolve_chat_provider(self.context)
         if provider is None:
             return 0
         rows = await self.store.pending_axes(

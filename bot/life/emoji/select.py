@@ -10,10 +10,9 @@ from __future__ import annotations
 
 import time
 from collections import deque
-from typing import Any, Sequence
+from typing import Any
 
-import numpy as np
-
+from bot.life.common import cosine
 from bot.life.config import EmojiConfig
 from bot.life.emoji.store import EmojiStore
 from bot.life.memory.store import tokenize, unpack_vector
@@ -127,7 +126,10 @@ class EmojiSelector:
                 continue
             similarity = 0.0
             if query_vector and row.get("embedding"):
-                similarity = _cosine(unpack_vector(row["embedding"]), query_vector)
+                similarity = max(
+                    0.0,
+                    min(1.0, cosine(unpack_vector(row["embedding"]), query_vector)),
+                )
             if similarity <= 0.0:
                 similarity = self._tag_similarity(row, context_tokens)
             if similarity <= 0.0:
@@ -174,20 +176,3 @@ class EmojiSelector:
         if not overlap:
             return 0.0
         return min(overlap / max(len(context_tokens), 1), 1.0)
-
-
-def _cosine(left: np.ndarray, right: Sequence[float]) -> float:
-    """Return the cosine similarity of two vectors.
-
-    Args:
-        left: Stored vector.
-        right: Query vector.
-
-    Returns:
-        Similarity in ``[0, 1]``; 0 when sizes differ or a vector is empty.
-    """
-    other = np.asarray(right, dtype=np.float32)
-    if not left.size or left.size != other.size:
-        return 0.0
-    denominator = float(np.linalg.norm(left) * np.linalg.norm(other)) or 1e-9
-    return max(0.0, min(1.0, float(np.dot(left, other)) / denominator))

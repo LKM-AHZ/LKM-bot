@@ -22,11 +22,11 @@ import asyncio
 import random
 import re
 from collections import deque
-from typing import Any
+from typing import Any, Callable
 
 from bot import logger
 from bot.core.message.components import Plain, Reply
-from bot.life.common import SessionScoped
+from bot.life.common import SessionScoped, event_group_id, event_session_enabled
 from bot.life.config import LifeConfig, ReplyConfig
 from bot.life.scenes import policy_for as scene_policy_for
 from bot.life.scenes import quote_rate as scale_quote_rate
@@ -211,9 +211,8 @@ class ReplyPostProcessor(SessionScoped):
         umo = getattr(event, "unified_msg_origin", "") or ""
         if not umo:
             return
-        getter = getattr(event, "get_group_id", None)
-        group_id = getter() if callable(getter) else None
-        if not self.session_enabled(umo, group_id):
+        group_id = event_group_id(event)
+        if not event_session_enabled(self, event):
             self._counters["skipped"] += 1
             return
         profile = await self._profile(event)
@@ -358,6 +357,36 @@ class ReplyPostProcessor(SessionScoped):
             }
         )
 
+    def _deliver_later(
+        self,
+        event: Any,
+        result: Any,
+        items: list[Any],
+        to_chain: Callable[[Any], list[Any]],
+        label: str,
+    ) -> None:
+        """Send follow-up messages after a short pause each.
+
+        Args:
+            event: Bot message event used as the send channel.
+            result: Decorated result; only its metadata is inherited.
+            items: Segments or chains to deliver.
+            to_chain: Callable turning one item into components.
+            label: Noun used in the failure log.
+        """
+
+        async def deliver() -> None:
+            for item in items:
+                await asyncio.sleep(self.config.segment_delay_seconds)
+                try:
+                    await event.send(result.derive(to_chain(item)))
+                except Exception:
+                    logger.exception(f"[life] failed to send a {label}")
+
+        task = asyncio.create_task(deliver())
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
     def _deliver_rest(self, event: Any, result: Any, segments: list[str]) -> None:
         """Send the trailing reply segments after a short pause each.
 
@@ -366,18 +395,13 @@ class ReplyPostProcessor(SessionScoped):
             result: Decorated result; only its metadata is inherited.
             segments: Texts to deliver after the first one.
         """
-
-        async def deliver() -> None:
-            for text in segments:
-                await asyncio.sleep(self.config.segment_delay_seconds)
-                try:
-                    await event.send(result.derive([Plain(text)]))
-                except Exception:
-                    logger.exception("[life] failed to send a follow-up segment")
-
-        task = asyncio.create_task(deliver())
-        self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
+        self._deliver_later(
+            event,
+            result,
+            segments,
+            lambda text: [Plain(text)],
+            "follow-up segment",
+        )
 
     def _deliver_chains(self, event: Any, result: Any, chains: list[Any]) -> None:
         """Send supplement messages after the main reply.
@@ -387,18 +411,13 @@ class ReplyPostProcessor(SessionScoped):
             result: Decorated result; only its metadata is inherited.
             chains: Message chains produced by the supplement plan.
         """
-
-        async def deliver() -> None:
-            for chain in chains:
-                await asyncio.sleep(self.config.segment_delay_seconds)
-                try:
-                    await event.send(result.derive(list(chain.chain)))
-                except Exception:
-                    logger.exception("[life] failed to send a supplement message")
-
-        task = asyncio.create_task(deliver())
-        self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
+        self._deliver_later(
+            event,
+            result,
+            chains,
+            lambda chain: list(chain.chain),
+            "supplement message",
+        )
 
     async def _profile(self, event: Any) -> dict[str, Any] | None:
         """Resolve the style profile of the session's persona.

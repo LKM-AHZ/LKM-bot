@@ -11,7 +11,14 @@ import time
 from typing import Any
 
 from bot import logger
-from bot.life.common import SessionScoped
+from bot.life.common import (
+    SessionScoped,
+    append_prompt_block,
+    event_group_id,
+    event_session_enabled,
+    event_umo,
+    has_prompt_block,
+)
 from bot.life.config import LifeConfig, PersonaConfig
 from bot.life.persona.store import PersonaStore
 
@@ -154,15 +161,10 @@ class PersonaService(SessionScoped):
         """
         if not self._started or not self.config.enabled:
             return False
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
+        umo = event_umo(event)
+        if not umo or not event_session_enabled(self, event):
             return False
-        getter = getattr(event, "get_group_id", None)
-        group_id = getter() if callable(getter) else None
-        if not self.session_enabled(umo, group_id):
-            return False
-        system_prompt = getattr(req, "system_prompt", "") or ""
-        if f"<{_BLOCK_TAG}" in system_prompt:
+        if has_prompt_block(req, _BLOCK_TAG):
             return False
         extra_getter = getattr(event, "get_extra", None)
         persona_id = ""
@@ -171,8 +173,10 @@ class PersonaService(SessionScoped):
         profile = await self.profile_for(persona_id)
         if profile is None:
             return False
+        group_id = event_group_id(event)
         block = self.render_block(profile, "group" if group_id else "private")
-        req.system_prompt = f"{block}\n\n{system_prompt}" if system_prompt else block
+        if not append_prompt_block(req, _BLOCK_TAG, block, prepend=True):
+            return False
         self._counters["injections"] += 1
         return True
 

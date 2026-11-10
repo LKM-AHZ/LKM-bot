@@ -25,6 +25,7 @@ from bot.core.message.components import At, AtAll, Reply
 from bot.core.pipeline.context import PipelineContext
 from bot.core.pipeline.stage import Stage, register_stage
 from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.life.common import resolve_chat_provider
 from bot.life.heartflow.runtime import ACTION_CONTINUE, TurnEntry, TurnRuntime
 from bot.life.scenes import policy_for, reply_blocked
 
@@ -364,7 +365,6 @@ async def _plan_reply_supplement(
         Payload for ``_life_reply_supplement``, or None when planning is off,
         unavailable or invalid.
     """
-    from bot.core.provider.entities import ProviderType
     from bot.life.reply.supplement import (
         SupplementResources,
         generate_reply_supplement,
@@ -400,15 +400,7 @@ async def _plan_reply_supplement(
     )
     if not resources.messages:
         return None
-    manager = getattr(context, "provider_manager", None)
-    provider = None
-    if manager is not None:
-        try:
-            provider = await manager.get_using_provider_async(
-                ProviderType.CHAT_COMPLETION
-            )
-        except Exception:
-            provider = None
+    provider = await resolve_chat_provider(context)
     plan = await generate_reply_supplement(
         provider,
         resources,

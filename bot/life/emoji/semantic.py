@@ -21,6 +21,7 @@ from typing import Any, Sequence
 import numpy as np
 from pydantic import BaseModel, Field, field_validator
 
+from bot.life.common import cosine
 from bot.life.memory.store import unpack_vector
 
 _FENCE = re.compile(
@@ -148,8 +149,7 @@ def score_axes(
         ``(score, row)`` pairs sorted best first; empty when nothing scores.
     """
     query_vector = np.asarray(query, dtype=np.float32)
-    query_norm = float(np.linalg.norm(query_vector))
-    if not query_vector.size or query_norm == 0:
+    if not query_vector.size or not np.linalg.norm(query_vector):
         return []
     scored: list[tuple[float, dict[str, Any]]] = []
     for row in rows:
@@ -158,10 +158,7 @@ def score_axes(
         vector = unpack_vector(row.get("axis_vector") or b"")
         if not vector.size or vector.size != query_vector.size:
             continue
-        denominator = float(np.linalg.norm(vector)) * query_norm or 1e-9
-        similarity = float(np.dot(vector, query_vector)) / denominator
-        if not np.isfinite(similarity):
-            continue
-        scored.append((max(0.0, min(1.0, similarity)), row))
+        similarity = max(0.0, min(1.0, cosine(vector, query_vector)))
+        scored.append((similarity, row))
     scored.sort(key=lambda item: item[0], reverse=True)
     return scored

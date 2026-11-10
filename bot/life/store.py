@@ -20,7 +20,7 @@ from sqlmodel import col
 from bot import logger
 from bot.core.db import BaseDatabase
 from bot.core.db.po import PlatformMessageHistory
-from bot.life.common import ensure_tables
+from bot.life.common import ensure_tables, to_unix_seconds, umo_group_id
 from bot.life.models import LifeOutbound
 
 _MEDIA_TYPES = {"image", "record", "video", "file"}
@@ -66,38 +66,6 @@ def _parts_from_components(components: list[dict[str, Any]]) -> list[dict[str, A
         else:
             parts.append({"type": "plain", "text": f"[{kind}]"})
     return parts
-
-
-def _group_id_from_umo(user_id: str) -> str | None:
-    """Return the group id encoded in a unified message origin.
-
-    Args:
-        user_id: Unified message origin.
-
-    Returns:
-        Group id, or None for private sessions.
-    """
-    parts = user_id.split(":")
-    if len(parts) >= 3 and parts[1].lower() == "groupmessage":
-        return parts[2] or None
-    return None
-
-
-def _int_ts(value: Any) -> int:
-    """Convert a datetime or numeric timestamp to Unix seconds.
-
-    Args:
-        value: Datetime or numeric value.
-
-    Returns:
-        Unix timestamp; 0 when the value is unusable.
-    """
-    if isinstance(value, datetime):
-        return int(value.replace(tzinfo=timezone.utc).timestamp())
-    try:
-        return int(value or 0)
-    except (TypeError, ValueError):
-        return 0
 
 
 class LifeStore:
@@ -240,7 +208,9 @@ class LifeStore:
         )
         raw_life = content.get("life")
         life: dict[str, Any] = raw_life if isinstance(raw_life, dict) else {}
-        ts = _int_ts(life.get("ts")) or _int_ts(row.created_at)
+        ts = to_unix_seconds(life.get("ts"), timezone="UTC") or to_unix_seconds(
+            row.created_at, timezone="UTC"
+        )
         plain_text = str(life.get("plain_text") or "")
         if not plain_text:
             parts = content.get("message")
@@ -258,7 +228,7 @@ class LifeStore:
             "ts": ts,
             "sender_id": row.sender_id,
             "sender_name": row.sender_name,
-            "group_id": life.get("group_id") or _group_id_from_umo(row.user_id),
+            "group_id": life.get("group_id") or umo_group_id(row.user_id),
             "components": life.get("components") or [],
             "plain_text": plain_text,
             "reply_to": life.get("reply_to"),
@@ -304,8 +274,8 @@ class LifeStore:
         return {
             "messages": int(total or 0),
             "sessions": int(sessions or 0),
-            "earliest_ts": _int_ts(earliest) or None,
-            "latest_ts": _int_ts(latest) or None,
+            "earliest_ts": to_unix_seconds(earliest) or None,
+            "latest_ts": to_unix_seconds(latest) or None,
             "outbound": int(outbound_total or 0),
         }
 
@@ -445,7 +415,7 @@ class LifeStore:
         return [
             {
                 "session_key": str(row[0]),
-                "last_ts": _int_ts(row[1]),
+                "last_ts": to_unix_seconds(row[1]),
                 "messages": int(row[2] or 0),
             }
             for row in rows

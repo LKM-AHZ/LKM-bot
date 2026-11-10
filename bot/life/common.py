@@ -10,15 +10,21 @@ from __future__ import annotations
 
 import asyncio
 import json
+import math
 import re
 import time
-from typing import Any, Awaitable, Callable, Sequence
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Awaitable, Callable, Iterator, Sequence
+from zoneinfo import ZoneInfo
 
+import numpy as np
 from sqlalchemy import select
 from sqlmodel import col
 
 from bot import logger
 from bot.core.provider.entities import ProviderType
+from bot.core.umo_alias import parse_umo
 
 Summarizer = Callable[[str, str], Awaitable[str | None]]
 
@@ -44,22 +50,83 @@ async def ensure_tables(db_helper: Any, *models: Any) -> None:
         await session.commit()
 
 
+def event_umo(event: Any) -> str:
+    """Return the unified message origin of an event.
+
+    Args:
+        event: Bot message event.
+
+    Returns:
+        Session key, or an empty string when the event has none.
+    """
+    return str(getattr(event, "unified_msg_origin", "") or "")
+
+
+def event_group_id(event: Any) -> str | None:
+    """Return the group id of an event, if any.
+
+    Args:
+        event: Bot message event.
+
+    Returns:
+        Group id, or None for private sessions and stubs without the getter.
+    """
+    getter = getattr(event, "get_group_id", None)
+    return getter() if callable(getter) else None
+
+
 def event_session_enabled(service: Any, event: Any) -> bool:
     """Return whether the event's session is inside the Life scope.
 
+    Works with both the root ``LifeService`` (``config`` is the root
+    configuration) and feature services inheriting :class:`SessionScoped`
+    (``session_enabled`` reads their ``life_config``).
+
     Args:
-        service: Life service owning the root configuration.
+        service: Life service or feature service owning the scope.
         event: Bot message event.
 
     Returns:
         True when the session is enabled.
     """
-    umo = getattr(event, "unified_msg_origin", "") or ""
+    umo = event_umo(event)
     if not umo:
         return False
-    getter = getattr(event, "get_group_id", None)
-    group_id = getter() if callable(getter) else None
-    return service.config.session_enabled(umo, group_id)
+    group_id = event_group_id(event)
+    checker = getattr(service, "session_enabled", None)
+    if callable(checker):
+        return bool(checker(umo, group_id))
+    config = getattr(service, "config", None)
+    if config is None:
+        return True
+    return bool(config.session_enabled(umo, group_id))
+
+
+def umo_group_id(umo: str) -> str | None:
+    """Return the group id encoded in a unified message origin.
+
+    Args:
+        umo: Unified message origin.
+
+    Returns:
+        Group id, or None for private sessions and malformed keys.
+    """
+    parsed = parse_umo(umo)
+    if parsed["message_type"].lower() != "groupmessage":
+        return None
+    return parsed["session_id"] or None
+
+
+def umo_platform(umo: str) -> str:
+    """Return the platform id encoded in a unified message origin.
+
+    Args:
+        umo: Unified message origin.
+
+    Returns:
+        Platform id, ``unknown`` when the key is empty or malformed.
+    """
+    return parse_umo(umo)["platform"]
 
 
 class SessionScoped:
@@ -138,6 +205,243 @@ class CursorStoreMixin:
             await session.commit()
 
 
+async def resolve_chat_provider(context: Any) -> Any:
+    """Return the active chat provider without raising.
+
+    Args:
+        context: Star context exposing ``provider_manager``.
+
+    Returns:
+        Provider instance, or None when none is configured or resolvable.
+    """
+    manager = getattr(context, "provider_manager", None)
+    if manager is None:
+        return None
+    try:
+        return await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
+    except Exception:
+        return None
+
+
+def cosine(left: Any, right: Any) -> float:
+    """Return the raw cosine similarity of two vectors.
+
+    Args:
+        left: First vector.
+        right: Second vector of the same size.
+
+    Returns:
+        Similarity in ``[-1, 1]``; 0 for empty or mismatched vectors.
+    """
+    left_vector = np.asarray(left, dtype=np.float32)
+    right_vector = np.asarray(right, dtype=np.float32)
+    if not left_vector.size or left_vector.size != right_vector.size:
+        return 0.0
+    denominator = (
+        float(np.linalg.norm(left_vector) * np.linalg.norm(right_vector)) or 1e-9
+    )
+    similarity = float(np.dot(left_vector, right_vector)) / denominator
+    return similarity if math.isfinite(similarity) else 0.0
+
+
+def prune_oldest_files(directory: Path, keep: int, label: str = "file") -> int:
+    """Delete the oldest files when a directory exceeds its cap.
+
+    Args:
+        directory: Directory to prune.
+        keep: Maximum number of files to keep; non-positive disables pruning.
+        label: Noun used in failure logs.
+
+    Returns:
+        Number of files deleted.
+    """
+    if keep <= 0 or not directory.exists():
+        return 0
+    files = sorted(
+        (path for path in directory.iterdir() if path.is_file()),
+        key=lambda path: path.stat().st_mtime,
+    )
+    removed = 0
+    for path in files[: max(len(files) - keep, 0)]:
+        try:
+            path.unlink()
+            removed += 1
+        except OSError as exc:
+            logger.warning(f"[life] failed to prune {label} {path}: {exc}")
+    return removed
+
+
+def iter_jsonl(path: str | Path, *, strict: bool = False) -> Iterator[dict[str, Any]]:
+    """Yield the JSON objects of a JSONL file.
+
+    Args:
+        path: File to read.
+        strict: Raise ``ValueError`` on malformed lines instead of skipping them.
+
+    Yields:
+        Parsed objects.
+
+    Raises:
+        ValueError: When ``strict`` is set and a line is not a JSON object.
+    """
+    target = Path(path)
+    with target.open("r", encoding="utf-8") as handle:
+        for number, line in enumerate(handle, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as exc:
+                if strict:
+                    raise ValueError(
+                        f"{target}:{number} is not valid JSON: {exc}"
+                    ) from exc
+                continue
+            if not isinstance(record, dict):
+                if strict:
+                    raise ValueError(f"{target}:{number} is not a JSON object")
+                continue
+            yield record
+
+
+def read_jsonl(path: str | Path, *, strict: bool = False) -> list[dict[str, Any]]:
+    """Parse a JSONL file into a list of objects.
+
+    Args:
+        path: File to read.
+        strict: Raise ``ValueError`` on malformed lines instead of skipping them.
+
+    Returns:
+        Parsed objects in file order.
+    """
+    return list(iter_jsonl(path, strict=strict))
+
+
+def to_unix_seconds(value: Any, *, timezone: str | None = None) -> int:
+    """Convert a datetime, epoch or ISO-like value to Unix seconds.
+
+    Naive datetimes are interpreted in the given zone; without one the host's
+    local zone is used, matching how MaiBot exports store them.
+
+    Args:
+        value: Datetime, ISO text, integer/float seconds or milliseconds.
+        timezone: IANA zone applied to naive values.
+
+    Returns:
+        Unix timestamp in seconds; 0 when the value cannot be parsed.
+    """
+    if value in (None, ""):
+        return 0
+    zone = ZoneInfo(timezone) if timezone else None
+    if isinstance(value, datetime):
+        if value.tzinfo is None and zone is not None:
+            value = value.replace(tzinfo=zone)
+        return int(value.timestamp())
+    if isinstance(value, int | float):
+        number = float(value)
+        if number > 10**11:  # milliseconds
+            number /= 1000.0
+        return int(number)
+    text = str(value).strip()
+    if text.isdigit():
+        return to_unix_seconds(int(text), timezone=timezone)
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        parsed = None
+    if parsed is not None:
+        if parsed.tzinfo is None and zone is not None:
+            parsed = parsed.replace(tzinfo=zone)
+        return int(parsed.timestamp())
+    for pattern in ("%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            parsed = datetime.strptime(text[:19], pattern)
+        except ValueError:
+            continue
+        if zone is not None:
+            return int(parsed.replace(tzinfo=zone).timestamp())
+        return int(time.mktime(parsed.timetuple()))
+    return 0
+
+
+def parse_json_array(raw: str) -> list[Any] | None:
+    """Parse a JSON array from a completion, unwrapping a code fence.
+
+    Args:
+        raw: Completion text.
+
+    Returns:
+        Parsed list, or None when the payload is not a JSON array.
+    """
+    if not raw:
+        return None
+    match = _JSON_BLOCK.search(raw)
+    try:
+        payload = json.loads(match.group(1) if match else raw)
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, list) else None
+
+
+def has_prompt_block(req: Any, tag: str) -> bool:
+    """Return whether a prompt already carries the given Life block.
+
+    Args:
+        req: Provider request.
+        tag: XML tag name of the block.
+
+    Returns:
+        True when the opening tag is already present.
+    """
+    return f"<{tag}" in (getattr(req, "system_prompt", "") or "")
+
+
+def append_prompt_block(
+    req: Any,
+    tag: str,
+    block: str,
+    *,
+    prepend: bool = False,
+    separator: str = "",
+) -> bool:
+    """Append or prepend one Life block unless it is already present.
+
+    Args:
+        req: Provider request.
+        tag: XML tag name used for the idempotency check.
+        block: Rendered block.
+        prepend: Put the block before the existing prompt.
+        separator: Text inserted between the existing prompt and the block.
+
+    Returns:
+        True when the prompt was modified.
+    """
+    current = getattr(req, "system_prompt", "") or ""
+    if not block or f"<{tag}" in current:
+        return False
+    if prepend:
+        req.system_prompt = f"{block}\n\n{current}" if current else block
+    else:
+        req.system_prompt = f"{current}{separator}{block}" if current else block
+    return True
+
+
+def unregister_tools(manager: Any, names: Sequence[str], label: str) -> None:
+    """Remove a set of tools from the core tool manager.
+
+    Args:
+        manager: ``FunctionToolManager`` exposed by the provider manager.
+        names: Tool names to remove.
+        label: Noun used in the debug log, e.g. ``memory``.
+    """
+    for name in names:
+        try:
+            manager.remove_func(name)
+        except Exception:
+            logger.debug(f"[life] failed to remove {label} tool {name}")
+
+
 async def llm_complete(
     context: Any,
     system_prompt: str,
@@ -156,10 +460,7 @@ async def llm_complete(
     Returns:
         Completion text, or None when no provider is available.
     """
-    manager = getattr(context, "provider_manager", None)
-    if manager is None:
-        return None
-    provider = await manager.get_using_provider_async(ProviderType.CHAT_COMPLETION)
+    provider = await resolve_chat_provider(context)
     if provider is None:
         return None
     if timeout is None:
@@ -367,12 +668,8 @@ class ArchiveLearner:
             return []
         if not raw:
             return []
-        match = _JSON_BLOCK.search(raw)
-        try:
-            items = json.loads(match.group(1) if match else raw)
-        except json.JSONDecodeError:
+        items = parse_json_array(raw)
+        if items is None:
             logger.debug(f"[life] {self.label} payload was not JSON; ignored")
-            return []
-        if not isinstance(items, list):
             return []
         return self.parse_items(items, messages)

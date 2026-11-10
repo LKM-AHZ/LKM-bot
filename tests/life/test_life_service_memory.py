@@ -168,12 +168,13 @@ async def test_expression_layer_initializes_and_stops(db, tmp_path):
         status = await service.status()
         assert status["expression"]["enabled"] is True
         assert status["expression"]["index"] is None
-        assert service._expression_task is not None
+        task = service._tasks["expression"]
+        assert not task.done()
     finally:
         await service.stop()
         set_life_service(None)
 
-    assert service._expression_task is None or service._expression_task.done()
+    assert task.done()
 
 
 @pytest.mark.asyncio
@@ -196,12 +197,13 @@ async def test_jargon_layer_initializes_and_stops(db, tmp_path):
         assert service.jargon is not None
         status = await service.status()
         assert status["jargon"]["enabled"] is True
-        assert service._jargon_task is not None
+        task = service._tasks["jargon"]
+        assert not task.done()
     finally:
         await service.stop()
         set_life_service(None)
 
-    assert service._jargon_task is None or service._jargon_task.done()
+    assert task.done()
 
 
 @pytest.mark.asyncio
@@ -224,11 +226,13 @@ async def test_emoji_layer_registers_tool_and_stops(db, tmp_path):
         status = await service.status()
         assert status["emoji"]["enabled"] is True
         assert "send_meme" in context.provider_manager.llm_tools.registered
-        assert service._emoji_task is not None
+        task = service._tasks["emoji"]
+        assert not task.done()
     finally:
         await service.stop()
         set_life_service(None)
 
+    assert task.done()
     assert "send_meme" not in context.provider_manager.llm_tools.registered
 
 

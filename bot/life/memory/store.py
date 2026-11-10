@@ -25,7 +25,7 @@ from sqlmodel import col
 
 from bot import logger
 from bot.core.db import BaseDatabase
-from bot.life.common import CursorStoreMixin, ensure_tables
+from bot.life.common import CursorStoreMixin, cosine, ensure_tables
 from bot.life.memory.models import LifeMemory, LifeMemoryCursor
 
 _ASCII_TOKEN = re.compile(r"[a-z0-9_]{2,}")
@@ -343,11 +343,7 @@ class MemoryStore(CursorStoreMixin):
             if query_vector.size and row.get("embedding"):
                 stored = unpack_vector(row["embedding"])
                 if stored.size == query_vector.size:
-                    norm = float(
-                        np.linalg.norm(stored) * np.linalg.norm(query_vector) + 1e-9
-                    )
-                    similarity = float(np.dot(stored, query_vector)) / norm
-                    similarity = max(0.0, similarity)
+                    similarity = max(0.0, cosine(stored, query_vector))
             if mode == "search":
                 score = similarity if similarity else keyword_score
             elif mode == "hybrid":

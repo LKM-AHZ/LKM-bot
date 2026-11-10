@@ -12,7 +12,15 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from bot import logger
-from bot.life.common import SessionScoped, llm_complete
+from bot.life.common import (
+    SessionScoped,
+    append_prompt_block,
+    event_group_id,
+    event_session_enabled,
+    event_umo,
+    has_prompt_block,
+    llm_complete,
+)
 from bot.life.config import ExpressionConfig, MemoryEmbeddingConfig
 from bot.life.expression.index import ExpressionIndex
 from bot.life.expression.learn import ExpressionLearner
@@ -148,19 +156,15 @@ class ExpressionService(SessionScoped):
         """
         if not self._started or not self.config.enabled or self.selector is None:
             return False
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
+        umo = event_umo(event)
+        if not umo or not event_session_enabled(self, event):
             return False
-        getter = getattr(event, "get_group_id", None)
-        group_id = getter() if callable(getter) else None
-        if not self.session_enabled(umo, group_id):
-            return False
-        system_prompt = getattr(req, "system_prompt", "") or ""
-        if _BLOCK_TAG in system_prompt:
+        if has_prompt_block(req, _BLOCK_TAG):
             return False
         prompt = (getattr(req, "prompt", "") or "").strip()
         if not prompt:
             return False
+        group_id = event_group_id(event)
         scene = "group" if group_id else "private"
         if self.config.scene != "any" and self.config.scene != scene:
             return False
@@ -168,9 +172,8 @@ class ExpressionService(SessionScoped):
         if not selected:
             return False
         block = self.selector.build_block(selected)
-        if not block:
+        if not append_prompt_block(req, _BLOCK_TAG, block):
             return False
-        req.system_prompt = f"{system_prompt}{block}"
         await self.store.bump_usage([int(row["id"]) for row in selected])
         self._counters["selected"] += len(selected)
         self._counters["injections"] += 1

@@ -25,6 +25,13 @@ async def require_life_scope(request: Request) -> AuthContext:
     return await require_scope(request, "system")
 
 
+def _life_service() -> Any:
+    """Return the running Life service, imported lazily to avoid a cycle."""
+    from bot.life.service import get_life_service
+
+    return get_life_service()
+
+
 @router.get("/life/status")
 async def life_status(
     _auth: AuthContext = Depends(require_life_scope),
@@ -34,9 +41,7 @@ async def life_status(
     Returns:
         Wrapped status payload.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None:
         return ok({"enabled": False, "configured": False})
     return ok(await service.status())
@@ -57,9 +62,7 @@ async def life_monitor(
     Returns:
         Wrapped records oldest-last plus the monitor block.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.monitor is None:
         return ok({"enabled": False, "records": []})
     return ok(
@@ -81,9 +84,7 @@ async def life_diagnostics(
         Wrapped diagnostics report.
     """
     from bot.life.diagnostics import build_report
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None:
         return ok(
             {
@@ -110,9 +111,7 @@ async def life_rollout(
         Wrapped report with counts, latency percentiles, busiest sessions and
         the latest decisions.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.rollout is None:
         return ok({"enabled": False, "window_days": days, "turns": 0})
     return ok({"enabled": True, **await service.rollout.report(days)})
@@ -131,9 +130,7 @@ async def life_migration_runs(
     Returns:
         Wrapped batch list.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None:
         return ok({"enabled": False, "runs": []})
     migration = service.migration_service()
@@ -159,9 +156,7 @@ async def life_migration_preview(
     Raises:
         ApiError: When the source is missing or cannot be read.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None:
         raise ApiError("the Life layer is not running")
     source = str(payload.get("source") or "").strip()
@@ -205,9 +200,7 @@ async def life_migration_rollback(
     Raises:
         ApiError: When the batch is unknown.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None:
         raise ApiError("the Life layer is not running")
     batch = str(payload.get("batch") or "").strip()
@@ -234,9 +227,7 @@ async def life_messages(
     Returns:
         Wrapped message list.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.store is None:
         return ok([])
     return ok(await service.store.recent(limit))
@@ -257,9 +248,7 @@ async def life_sessions(
     Returns:
         Wrapped session list plus the pause rules currently in force.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.store is None:
         return ok({"sessions": [], "pause": {}})
     rows = await service.store.session_last_ts(
@@ -296,9 +285,7 @@ async def life_memory(
     Returns:
         Wrapped memory payload.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.memory is None:
         return ok({"enabled": False, "items": []})
     status = await service.memory.status()
@@ -325,9 +312,7 @@ async def life_memory_search(
     Returns:
         Wrapped hit list.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.memory is None:
         return ok([])
     if mode not in ("search", "time", "hybrid", "episode", "aggregate"):
@@ -353,9 +338,7 @@ async def delete_life_memory(
     Raises:
         ApiError: When neither filter is provided.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.memory is None:
         return ok({"deleted": 0})
     memory_ids = [int(item) for item in ids.split(",") if item.strip()] if ids else None
@@ -378,9 +361,7 @@ async def export_life_memory(
     Returns:
         Wrapped export payload.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.memory is None:
         return ok([])
     return ok(await service.memory.export(umo))
@@ -401,9 +382,7 @@ async def life_people(
     Returns:
         Wrapped list ordered by relationship score.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.person is None:
         return ok([])
     return ok(await service.person.store.list_people(umo, limit=limit))
@@ -429,9 +408,7 @@ async def life_person_profile(
     Raises:
         ApiError: When the person is unknown.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.person is None:
         raise ApiError("person layer is not enabled")
     profile = await service.person.profile(umo, person, refresh=refresh)
@@ -457,9 +434,7 @@ async def delete_life_person(
     Returns:
         Wrapped deletion counters.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.person is None:
         raise ApiError("person layer is not enabled")
     deleted = await service.person.forget(umo, person, fact_id=fact_id)
@@ -482,9 +457,7 @@ async def resolve_life_person_fact(
     Raises:
         ApiError: When the payload is incomplete.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.person is None:
         raise ApiError("person layer is not enabled")
     fact_id = payload.get("fact_id")
@@ -509,9 +482,7 @@ async def life_expressions(
     Returns:
         Wrapped expression list ordered by weight.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.expression is None:
         return ok([])
     return ok(await service.expression.list_expressions(umo, limit=limit))
@@ -535,9 +506,7 @@ async def delete_life_expressions(
     Raises:
         ApiError: When neither filter is provided.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.expression is None:
         return ok({"deleted": 0})
     expression_ids = (
@@ -569,9 +538,7 @@ async def life_jargon(
     Returns:
         Wrapped term list ordered by confidence.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.jargon is None:
         return ok([])
     statuses = [status] if status else None
@@ -595,9 +562,7 @@ async def review_life_jargon(
     Raises:
         ApiError: When the payload is incomplete or the term is unknown.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.jargon is None:
         raise ApiError("jargon layer is not enabled")
     jargon_id = payload.get("id")
@@ -637,9 +602,7 @@ async def delete_life_jargon(
     Raises:
         ApiError: When neither filter is provided.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.jargon is None:
         return ok({"deleted": 0})
     jargon_ids = [int(item) for item in ids.split(",") if item.strip()] if ids else None
@@ -666,9 +629,7 @@ async def life_emojis(
     Returns:
         Wrapped sticker list ordered by usage.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.emoji is None:
         return ok([])
     return ok(await service.emoji.list_emojis(umo, status=status, limit=limit))
@@ -690,9 +651,7 @@ async def update_life_emoji(
     Raises:
         ApiError: When the payload is incomplete or the sticker is unknown.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.emoji is None:
         raise ApiError("sticker library is not enabled")
     emoji_id = payload.get("id")
@@ -734,9 +693,7 @@ async def delete_life_emojis(
     Raises:
         ApiError: When neither filter is provided.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.emoji is None:
         return ok({"deleted": 0})
     emoji_ids = [int(item) for item in ids.split(",") if item.strip()] if ids else None
@@ -759,9 +716,7 @@ async def life_focus(
     Returns:
         Wrapped timeline detail or session summaries.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.focus is None:
         return ok({"enabled": False, "turns": [], "digest": ""})
     if not umo:
@@ -782,9 +737,7 @@ async def life_focus_delete(
     Returns:
         Wrapped deleted row count.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.focus is None:
         return ok({"deleted": 0})
     return ok({"deleted": await service.focus.delete(umo)})
@@ -803,9 +756,7 @@ async def life_attention(
     Returns:
         Wrapped attention snapshot plus the per-session talk state.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None:
         return ok({"enabled": False, "sessions": []})
     attention = (
@@ -846,9 +797,7 @@ async def list_life_persona(
     Returns:
         Wrapped profile list with stats.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.persona is None:
         return ok({"profiles": [], "stats": {"total": 0}})
     return ok(
@@ -875,9 +824,7 @@ async def get_life_persona(
     Raises:
         ApiError: When the profile is unknown.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.persona is None:
         raise ApiError("persona layer is not enabled")
     profile = await service.persona.store.get(_persona_key(persona_id))
@@ -904,9 +851,7 @@ async def save_life_persona(
     Raises:
         ApiError: When the persona layer is disabled.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.persona is None:
         raise ApiError("persona layer is not enabled")
     row = await service.persona.upsert(
@@ -931,9 +876,7 @@ async def delete_life_persona(
     Raises:
         ApiError: When the persona layer is disabled.
     """
-    from bot.life.service import get_life_service
-
-    service = get_life_service()
+    service = _life_service()
     if service is None or service.persona is None:
         raise ApiError("persona layer is not enabled")
     return ok({"deleted": await service.persona.delete(_persona_key(persona_id))})

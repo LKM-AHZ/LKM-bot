@@ -12,12 +12,13 @@ rate within tolerance and zero Markdown leaks.
 
 from __future__ import annotations
 
-import json
 import math
 import re
 from bisect import bisect_right
 from pathlib import Path
 from typing import Any
+
+from bot.life.common import read_jsonl as _read_jsonl_records
 
 _MARKDOWN = (
     re.compile(r"^\s*#{1,6}\s", re.M),
@@ -93,18 +94,7 @@ def read_jsonl(path: Path) -> list[dict[str, Any]]:
     Raises:
         ValueError: When a line is not a JSON object.
     """
-    records: list[dict[str, Any]] = []
-    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-        if not line.strip():
-            continue
-        try:
-            record = json.loads(line)
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"{path}:{number} is not valid JSON: {exc}") from exc
-        if not isinstance(record, dict):
-            raise ValueError(f"{path}:{number} is not a JSON object")
-        records.append(record)
-    return records
+    return _read_jsonl_records(path, strict=True)
 
 
 def status_records(payload: dict[str, Any]) -> list[dict[str, Any]]:

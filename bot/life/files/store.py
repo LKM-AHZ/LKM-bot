@@ -7,6 +7,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from bot.life.common import prune_oldest_files
+
 _UNSAFE = re.compile(r"[^\w.\-]+", re.UNICODE)
 # Windows reserved device names must not become file names.
 _RESERVED = {
@@ -249,21 +251,7 @@ class FileStore:
         Returns:
             Number of removed files.
         """
-        if not self.out_dir.is_dir():
-            return 0
-        files = sorted(
-            (path for path in self.out_dir.iterdir() if path.is_file()),
-            key=lambda path: path.stat().st_mtime,
-        )
-        removed = 0
-        while len(files) > self.max_files:
-            oldest = files.pop(0)
-            try:
-                oldest.unlink()
-                removed += 1
-            except OSError:
-                continue
-        return removed
+        return prune_oldest_files(self.out_dir, self.max_files, "document")
 
     def list_recent(self, limit: int = 20) -> list[StoredFile]:
         """Return the newest documents.

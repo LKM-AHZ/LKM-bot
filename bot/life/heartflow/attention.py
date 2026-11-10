@@ -19,6 +19,11 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
+from bot.life.common import (
+    append_prompt_block,
+    event_umo,
+    has_prompt_block,
+)
 from bot.life.config import AttentionConfig
 
 _BLOCK_TAG = "life_attention"
@@ -183,18 +188,15 @@ class AttentionRegistry:
         """
         if not self.config.enabled:
             return False
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
-            return False
-        system_prompt = getattr(req, "system_prompt", "") or ""
-        if f"<{_BLOCK_TAG}" in system_prompt:
+        umo = event_umo(event)
+        if not umo or has_prompt_block(req, _BLOCK_TAG):
             return False
         hint = self.hint(umo, self._clock())
         if not hint:
             return False
-        req.system_prompt = (
-            f"{system_prompt}\n\n<{_BLOCK_TAG}>\n{hint}\n</{_BLOCK_TAG}>"
-        )
+        block = f"<{_BLOCK_TAG}>\n{hint}\n</{_BLOCK_TAG}>"
+        if not append_prompt_block(req, _BLOCK_TAG, block, separator="\n\n"):
+            return False
         self._counters["hooks"] += 1
         return True
 

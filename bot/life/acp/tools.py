@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
-from bot.life.common import event_session_enabled
+from bot.life.common import event_session_enabled, unregister_tools
 
 _TOOL_NAMES = ("ask_external_agent",)
 
@@ -59,8 +59,4 @@ def unregister_acp_tools(manager: Any) -> None:
     Args:
         manager: ``FunctionToolManager`` exposed by the provider manager.
     """
-    for name in _TOOL_NAMES:
-        try:
-            manager.remove_func(name)
-        except Exception:
-            logger.debug(f"[life] failed to remove ACP tool {name}")
+    unregister_tools(manager, _TOOL_NAMES, "ACP")

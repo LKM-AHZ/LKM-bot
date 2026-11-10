@@ -21,7 +21,13 @@ from collections import OrderedDict
 from typing import Any, Sequence
 
 from bot import logger
-from bot.life.common import SessionScoped
+from bot.life.common import (
+    SessionScoped,
+    append_prompt_block,
+    event_session_enabled,
+    event_umo,
+    has_prompt_block,
+)
 from bot.life.config import FocusConfig, LifeConfig
 from bot.life.heartflow.focus.store import FocusStore
 from bot.life.heartflow.focus.timeline import (
@@ -280,21 +286,15 @@ class FocusService(SessionScoped):
         """
         if not self._started or not self.config.enabled or not self.config.inject:
             return False
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
+        umo = event_umo(event)
+        if not umo or not event_session_enabled(self, event):
             return False
-        getter = getattr(event, "get_group_id", None)
-        group_id = getter() if callable(getter) else None
-        if not self.session_enabled(umo, group_id):
-            return False
-        system_prompt = getattr(req, "system_prompt", "") or ""
-        if f"<{_BLOCK_TAG}" in system_prompt:
+        if has_prompt_block(req, _BLOCK_TAG):
             return False
         timeline = await self.timeline(self.focus_key(umo))
         block = timeline.render_digest_block()
-        if not block:
+        if not append_prompt_block(req, _BLOCK_TAG, block or ""):
             return False
-        req.system_prompt = f"{system_prompt}{block}"
         self._counters["injections"] += 1
         return True
 

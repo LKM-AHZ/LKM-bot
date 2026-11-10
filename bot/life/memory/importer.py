@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import json
 import sqlite3
-import time
 from pathlib import Path
 from typing import Any, Iterable
 
 from bot import logger
+from bot.life.common import iter_jsonl, to_unix_seconds
 from bot.life.memory.store import MemoryStore, tokenize
 
 _CONTENT_KEYS = ("content", "text", "memory", "memo", "summary", "fact", "content_text")
@@ -38,33 +38,6 @@ def _first_value(row: dict[str, Any], keys: Iterable[str]) -> Any:
         if value not in (None, ""):
             return value
     return None
-
-
-def _normalize_ts(value: Any) -> int:
-    """Convert a timestamp-like value to a Unix timestamp.
-
-    Args:
-        value: Integer seconds, float seconds, milliseconds or ISO text.
-
-    Returns:
-        Unix timestamp in seconds; 0 when it cannot be parsed.
-    """
-    if value in (None, ""):
-        return 0
-    if isinstance(value, (int, float)):
-        number = float(value)
-        if number > 10**11:  # milliseconds
-            number /= 1000.0
-        return int(number)
-    text = str(value).strip()
-    if text.isdigit():
-        return _normalize_ts(int(text))
-    for pattern in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
-        try:
-            return int(time.mktime(time.strptime(text[:19], pattern)))
-        except ValueError:
-            continue
-    return 0
 
 
 class MemoryImporter:
@@ -198,7 +171,7 @@ class MemoryImporter:
                     # Rows without a timestamp stay undated (0) instead of
                     # pretending they happened at import time: recall then
                     # treats them as "no date" rather than as fresh memory.
-                    "ts": _normalize_ts(_first_value(row, _TS_KEYS)),
+                    "ts": to_unix_seconds(_first_value(row, _TS_KEYS)),
                     "meta": {"imported": True, "source": source},
                     "keywords": " ".join(tokenize(text)[:64]),
                 }
@@ -222,15 +195,7 @@ class MemoryImporter:
         Yields:
             Parsed objects.
         """
-        with path.open("r", encoding="utf-8") as handle:
-            for line in handle:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    yield json.loads(line)
-                except json.JSONDecodeError:
-                    continue
+        yield from iter_jsonl(path)
 
     def _read_json(self, path: Path) -> list[dict[str, Any]]:
         """Read a JSON array or object file.

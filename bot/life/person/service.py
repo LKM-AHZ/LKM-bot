@@ -14,8 +14,7 @@ import time
 from typing import Any, Sequence
 
 from bot import logger
-from bot.core.provider.entities import ProviderType
-from bot.life.common import SessionScoped
+from bot.life.common import SessionScoped, resolve_chat_provider, umo_platform
 from bot.life.config import PersonConfig
 from bot.life.person.names import clean_name, derive_person_id, normalize_name
 from bot.life.person.store import PersonStore
@@ -154,9 +153,7 @@ class PersonService(SessionScoped):
                 continue
             person = await self.store.find(session_key, name)
             if person is None:
-                platform = (
-                    session_key.split(":")[0] if ":" in session_key else "unknown"
-                )
+                platform = umo_platform(session_key)
                 person_id = derive_person_id(platform, None, name)
                 await self.store.observe_batch(
                     [
@@ -341,15 +338,7 @@ class PersonService(SessionScoped):
         Returns:
             Summary text, or an empty string when the model is unavailable.
         """
-        manager = getattr(self.context, "provider_manager", None)
-        if manager is None:
-            return ""
-        try:
-            provider = await manager.get_using_provider_async(
-                ProviderType.CHAT_COMPLETION
-            )
-        except Exception:
-            provider = None
+        provider = await resolve_chat_provider(self.context)
         if provider is None:
             return ""
         lines = "\n".join(f"- {fact['content']}" for fact in facts)

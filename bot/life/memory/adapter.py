@@ -14,7 +14,13 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from bot import logger
-from bot.life.common import llm_complete
+from bot.life.common import (
+    append_prompt_block,
+    event_session_enabled,
+    event_umo,
+    has_prompt_block,
+    llm_complete,
+)
 from bot.life.config import MemoryConfig
 from bot.life.memory.digest import DigestBuilder
 from bot.life.memory.embedding import EmbeddingClient, EmbeddingUnavailable
@@ -91,6 +97,20 @@ class MemoryAdapter:
     def enabled(self) -> bool:
         """Return whether the memory runtime is active."""
         return self._started
+
+    def session_enabled(self, umo: str, group_id: str | None = None) -> bool:
+        """Return whether a session may use memory.
+
+        Args:
+            umo: Session key.
+            group_id: Group id, or None for private sessions.
+
+        Returns:
+            True when the injected scope check accepts the session.
+        """
+        if self._scope_check is None:
+            return True
+        return bool(self._scope_check(umo, group_id))
 
     async def initialize(self) -> None:
         """Create the engine, wire the digest pipeline and start upstream."""
@@ -297,16 +317,10 @@ class MemoryAdapter:
         """
         if not self._started or not self.config.inject.enabled:
             return False
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
+        umo = event_umo(event)
+        if not umo or not event_session_enabled(self, event):
             return False
-        if self._scope_check is not None:
-            getter = getattr(event, "get_group_id", None)
-            group_id = getter() if callable(getter) else None
-            if not self._scope_check(umo, group_id):
-                return False
-        system_prompt = getattr(req, "system_prompt", "") or ""
-        if _BLOCK_TAG in system_prompt:
+        if has_prompt_block(req, _BLOCK_TAG):
             return False
         prompt = (getattr(req, "prompt", "") or "").strip()
         if not prompt:
@@ -348,7 +362,8 @@ class MemoryAdapter:
             + "\n".join(lines)
             + f"\n</{_BLOCK_TAG}>"
         )
-        req.system_prompt = f"{system_prompt}{block}"
+        if not append_prompt_block(req, _BLOCK_TAG, block):
+            return False
         self._counters["injections"] += 1
         self._counters["injected_hits"] += len(lines)
         return True

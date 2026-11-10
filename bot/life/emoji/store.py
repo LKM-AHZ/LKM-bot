@@ -10,9 +10,8 @@ from sqlalchemy import delete, desc, func, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlmodel import col
 
-from bot import logger
 from bot.core.db import BaseDatabase
-from bot.life.common import CursorStoreMixin, ensure_tables
+from bot.life.common import CursorStoreMixin, ensure_tables, prune_oldest_files
 from bot.life.emoji.models import LifeEmoji, LifeEmojiAxis, LifeEmojiCursor
 
 
@@ -294,21 +293,7 @@ class EmojiStore(CursorStoreMixin):
         Returns:
             Number of files deleted.
         """
-        if keep <= 0 or not directory.exists():
-            return 0
-        files = sorted(
-            (path for path in directory.iterdir() if path.is_file()),
-            key=lambda path: path.stat().st_mtime,
-        )
-        excess = len(files) - keep
-        removed = 0
-        for path in files[: max(excess, 0)]:
-            try:
-                path.unlink()
-                removed += 1
-            except OSError as exc:
-                logger.warning(f"[life] failed to prune emoji file {path}: {exc}")
-        return removed
+        return prune_oldest_files(directory, keep, "emoji file")
 
     async def pending_axes(self, limit: int = 12) -> list[dict[str, Any]]:
         """Return active stickers that still need tag-axis vectors.

@@ -9,12 +9,11 @@ deployment can be inspected without any risk of mutation.
 from __future__ import annotations
 
 import sqlite3
-import time
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Any
-from zoneinfo import ZoneInfo
+
+from bot.life.common import to_unix_seconds
 
 PLATFORM_ALIASES = {
     "qq": "aiocqhttp",
@@ -55,38 +54,7 @@ def to_ts(value: Any, timezone: str | None = None) -> int:
     Returns:
         Unix timestamp in seconds; 0 when the value cannot be parsed.
     """
-    if value in (None, ""):
-        return 0
-    zone = ZoneInfo(timezone) if timezone else None
-    if isinstance(value, datetime):
-        if value.tzinfo is None and zone is not None:
-            value = value.replace(tzinfo=zone)
-        return int(value.timestamp())
-    if isinstance(value, int | float):
-        number = float(value)
-        if number > 10**11:  # milliseconds
-            number /= 1000.0
-        return int(number)
-    text = str(value).strip()
-    if text.isdigit():
-        return to_ts(int(text), timezone)
-    try:
-        parsed = datetime.fromisoformat(text)
-    except ValueError:
-        parsed = None
-    if parsed is not None:
-        if parsed.tzinfo is None and zone is not None:
-            parsed = parsed.replace(tzinfo=zone)
-        return int(parsed.timestamp())
-    for pattern in ("%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S", "%Y-%m-%d"):
-        try:
-            parsed = datetime.strptime(text[:19], pattern)
-        except ValueError:
-            continue
-        if zone is not None:
-            return int(parsed.replace(tzinfo=zone).timestamp())
-        return int(time.mktime(parsed.timetuple()))
-    return 0
+    return to_unix_seconds(value, timezone=timezone)
 
 
 def map_platform(value: str | None) -> str | None:

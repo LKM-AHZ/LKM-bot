@@ -11,7 +11,7 @@ import json
 from typing import Any
 
 from bot import logger
-from bot.life.common import event_session_enabled
+from bot.life.common import event_session_enabled, unregister_tools
 
 _TOOL_NAMES = ("search_memory", "remember", "get_person_profile")
 
@@ -182,8 +182,4 @@ def unregister_memory_tools(manager: Any) -> None:
     Args:
         manager: ``FunctionToolManager`` exposed by the provider manager.
     """
-    for name in _TOOL_NAMES:
-        try:
-            manager.remove_func(name)
-        except Exception:
-            logger.debug(f"[life] failed to remove memory tool {name}")
+    unregister_tools(manager, _TOOL_NAMES, "memory")

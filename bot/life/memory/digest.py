@@ -12,12 +12,11 @@ retrieval useful in an offline deployment.
 
 from __future__ import annotations
 
-import json
-import re
 import time
 from typing import Any, Awaitable, Callable, Sequence
 
 from bot import logger
+from bot.life.common import parse_json_array
 from bot.life.config import MemoryDigestConfig
 from bot.life.memory.store import MemoryStore
 
@@ -30,7 +29,6 @@ FactSink = Callable[[str, list[dict]], Awaitable[None]]
 _MAX_WINDOW_CHARS = 2400
 _MAX_SUMMARY_CHARS = 700
 _MAX_FACTS_PER_WINDOW = 4
-_JSON_BLOCK = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 
 
 class DigestBuilder:
@@ -311,14 +309,9 @@ class DigestBuilder:
             return []
         if not raw:
             return []
-        match = _JSON_BLOCK.search(raw)
-        payload = match.group(1) if match else raw
-        try:
-            items = json.loads(payload)
-        except json.JSONDecodeError:
+        items = parse_json_array(raw)
+        if items is None:
             logger.debug("[life] memory fact payload was not JSON; ignored")
-            return []
-        if not isinstance(items, list):
             return []
         rows: list[dict[str, Any]] = []
         for item in items[:_MAX_FACTS_PER_WINDOW]:

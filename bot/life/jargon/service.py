@@ -12,7 +12,14 @@ from functools import partial
 from typing import Any, Sequence
 
 from bot import logger
-from bot.life.common import SessionScoped, llm_complete
+from bot.life.common import (
+    SessionScoped,
+    append_prompt_block,
+    event_session_enabled,
+    event_umo,
+    has_prompt_block,
+    llm_complete,
+)
 from bot.life.config import JargonConfig
 from bot.life.jargon.learn import JargonLearner
 from bot.life.jargon.store import JargonStore
@@ -110,15 +117,10 @@ class JargonService(SessionScoped):
         """
         if not self._started or not self.config.enabled:
             return False
-        umo = getattr(event, "unified_msg_origin", "") or ""
-        if not umo:
+        umo = event_umo(event)
+        if not umo or not event_session_enabled(self, event):
             return False
-        getter = getattr(event, "get_group_id", None)
-        group_id = getter() if callable(getter) else None
-        if not self.session_enabled(umo, group_id):
-            return False
-        system_prompt = getattr(req, "system_prompt", "") or ""
-        if _BLOCK_TAG in system_prompt:
+        if has_prompt_block(req, _BLOCK_TAG):
             return False
         prompt = (getattr(req, "prompt", "") or "").strip()
         if not prompt:
@@ -151,7 +153,8 @@ class JargonService(SessionScoped):
             + "\n".join(lines)
             + f"\n</{_BLOCK_TAG}>"
         )
-        req.system_prompt = f"{system_prompt}{block}"
+        if not append_prompt_block(req, _BLOCK_TAG, block):
+            return False
         await self.store.bump_usage([int(row["id"]) for row in selected])
         self._counters["injections"] += 1
         self._counters["explained_terms"] += len(selected)

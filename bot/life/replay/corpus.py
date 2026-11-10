@@ -11,13 +11,12 @@ and the metrics CLI so all four agree on parsing.
 
 from __future__ import annotations
 
-import json
 import statistics
 from collections import Counter
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
 
+from bot.life.common import iter_jsonl, to_unix_seconds
 from bot.life.replay.metrics import percentile
 
 _MEDIA_TYPES = frozenset({"image", "record", "video", "file"})
@@ -32,17 +31,14 @@ def parse_timestamp(value: object) -> float | None:
     Returns:
         Epoch seconds, or None when the value cannot be parsed.
     """
-    if isinstance(value, bool):
+    if isinstance(value, bool) or value in (None, ""):
         return None
     if isinstance(value, int | float):
         return float(value)
-    if not isinstance(value, str) or not value:
+    if not isinstance(value, str):
         return None
-    text = value.replace("Z", "+00:00")
-    try:
-        return datetime.fromisoformat(text).timestamp()
-    except ValueError:
-        return None
+    parsed = to_unix_seconds(value)
+    return float(parsed) if parsed else None
 
 
 def message_timestamp(message: dict[str, Any]) -> float | None:
@@ -116,17 +112,7 @@ def iter_sessions(path: str | Path) -> Iterator[dict[str, Any]]:
     corpus_path = Path(path)
     if not corpus_path.exists():
         raise FileNotFoundError(corpus_path)
-    with corpus_path.open("r", encoding="utf-8") as file:
-        for line in file:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                session = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if isinstance(session, dict):
-                yield session
+    yield from iter_jsonl(corpus_path)
 
 
 def load_sessions(path: str | Path) -> list[dict[str, Any]]:

@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import Any
 
 from bot import logger
+from bot.life.common import event_session_enabled, event_umo, unregister_tools
 
 _TOOL_NAMES = ("send_meme",)
 
@@ -25,12 +26,10 @@ def register_emoji_tools(manager: Any, service: Any) -> None:
         """Send one sticker that fits the current mood."""
         if not service.enabled:
             return "error: sticker library is not enabled"
-        umo = getattr(event, "unified_msg_origin", "") or ""
+        umo = event_umo(event)
         if not umo:
             return "error: session is unknown"
-        getter = getattr(event, "get_group_id", None)
-        group_id = getter() if callable(getter) else None
-        if not service.session_enabled(umo, group_id):
+        if not event_session_enabled(service, event):
             return "error: sticker library is not enabled for this session"
         result = await service.send(umo, description or "当前对话")
         if result.get("ok"):
@@ -65,8 +64,4 @@ def unregister_emoji_tools(manager: Any) -> None:
     Args:
         manager: ``FunctionToolManager`` exposed by the provider manager.
     """
-    for name in _TOOL_NAMES:
-        try:
-            manager.remove_func(name)
-        except Exception:
-            logger.debug(f"[life] failed to remove emoji tool {name}")
+    unregister_tools(manager, _TOOL_NAMES, "emoji")
