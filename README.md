@@ -14,16 +14,16 @@ Python 包名为 `bot`。
 | `bot/api/`、`bot/builtin_stars/` | 插件公共 API 与内置插件 |
 | `bot/dashboard/api/`、`bot/dashboard/services/`、`bot/dashboard/server.py` | FastAPI 路由、服务逻辑、Hypercorn 与静态资源 |
 | `bot/lkm/` | 社区集成：面板 SSO、面板子路径、后端服务通道（媒体/文件库）与账号统一 |
-| `LKM-official-website/bot-panel/`（前端仓库） | Vue WebUI，构建产物由 Astro 托管在 `/bot/`；本仓库只提供面板 API |
+| `dashboard/` | Vue WebUI；独立构建到 `bot/dashboard/dist/`，由 bot 进程服务 |
 | `openspec/`、`tests/`、`docs/` | API 规格、回归测试与中英文使用/开发文档 |
 | `scripts/` | 构建、发布和 API 文档工具 |
 
-先在仓库根目录执行 `uv sync`、`uv run main.py`。面板前端已迁到前端仓库
-`LKM-official-website/bot-panel/`：本地开发在那里执行 `pnpm dev`，构建用
-`pnpm run build:bot-panel`（产物由 Astro 托管在 `/bot/`）。社区集成优先放在 `bot/lkm/`，
-沿用 `bot` 命名空间。
-`bot-panel/src/api/generated/` 不直接编辑；API 变更后在 `LKM-official-website/bot-panel/`
-运行 `pnpm generate:api`，同步相应测试和文档。
+先在仓库根目录执行 `uv sync`、`uv run main.py`。面板源码在本仓库的 `dashboard/`：
+`pnpm --dir dashboard install --frozen-lockfile` 后执行 `pnpm --dir dashboard dev`。
+生产构建运行 `pnpm --dir dashboard build`，产物位于 `bot/dashboard/dist/`，由同一进程提供。
+LKM 网关部署构建时设置 `VITE_BASE_PATH=/bot/`；镜像构建会自动处理前缀与产物打包。
+面板源码、依赖与构建均不需要 website 仓库。社区集成继续放在 `bot/lkm/`。
+`dashboard/src/api/generated/` 不直接编辑；API 变更后使用 `@hey-api/openapi-ts` 重新生成客户端。
 
 Dashboard 配置服务按职责归属文件：`config_profile_service.py` 管理配置档和系统设置，
 `config_routing_service.py` 管理会话配置路由，`config_display_service.py` 构造编辑器元数据，

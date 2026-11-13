@@ -1,3 +1,10 @@
+FROM node:24-alpine AS dashboard
+WORKDIR /panel
+ARG BOT_BASE_PATH=/
+COPY dashboard/ ./
+RUN corepack enable && pnpm install --frozen-lockfile \
+    && VITE_BASE_PATH=${BOT_BASE_PATH} pnpm build:deploy
+
 FROM python:3.12-slim
 WORKDIR /LKMBot
 
@@ -56,5 +63,7 @@ RUN python -m pip install uv==0.12.12 \
     && touch /LKMBot/.bot
 
 EXPOSE 6185
+
+COPY --from=dashboard /bot/dashboard/dist /LKMBot/bot/dashboard/dist
 
 CMD ["python", "main.py"]

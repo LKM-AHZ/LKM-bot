@@ -1,0 +1,24 @@
+name: Dashboard
+on:
+  pull_request:
+    paths: ["dashboard/**", "bot/core/dashboard_assets.py", "Dockerfile", ".github/workflows/dashboard.yml"]
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.6.0
+          package_json_file: dashboard/package.json
+      - run: pnpm --dir dashboard install --frozen-lockfile
+      - run: pnpm --dir dashboard typecheck
+      - run: node --test dashboard/tests/*.test.mjs
+      - run: pnpm --dir dashboard i18n:check
+      - run: pnpm --dir dashboard build:deploy
+        env:
+          VITE_BASE_PATH: /bot/

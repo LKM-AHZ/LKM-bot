@@ -109,9 +109,7 @@ def test_check_env_appends_user_site_packages_after_runtime_paths(monkeypatch):
 
     monkeypatch.setattr(sys, "version_info", _version_info(3, 12))
     monkeypatch.setattr("main.get_bot_root", lambda: bot_root)
-    monkeypatch.setattr(
-        "main.get_bot_site_packages_path", lambda: site_packages_path
-    )
+    monkeypatch.setattr("main.get_bot_site_packages_path", lambda: site_packages_path)
     monkeypatch.setattr("main.get_bot_config_path", lambda: "/tmp/config")
     monkeypatch.setattr("main.get_bot_plugin_path", lambda: "/tmp/plugins")
     monkeypatch.setattr("main.get_bot_temp_path", lambda: "/tmp/temp")
@@ -133,16 +131,12 @@ def test_check_env_does_not_append_duplicate_user_site_packages(monkeypatch):
 
     monkeypatch.setattr(sys, "version_info", _version_info(3, 12))
     monkeypatch.setattr("main.get_bot_root", lambda: bot_root)
-    monkeypatch.setattr(
-        "main.get_bot_site_packages_path", lambda: site_packages_path
-    )
+    monkeypatch.setattr("main.get_bot_site_packages_path", lambda: site_packages_path)
     monkeypatch.setattr("main.get_bot_config_path", lambda: "/tmp/config")
     monkeypatch.setattr("main.get_bot_plugin_path", lambda: "/tmp/plugins")
     monkeypatch.setattr("main.get_bot_temp_path", lambda: "/tmp/temp")
     monkeypatch.setattr("main.get_bot_knowledge_base_path", lambda: "/tmp/kb")
-    monkeypatch.setattr(
-        sys, "path", [bot_root, *original_sys_path, site_packages_path]
-    )
+    monkeypatch.setattr(sys, "path", [bot_root, *original_sys_path, site_packages_path])
 
     with mock.patch("os.makedirs"):
         check_env()
@@ -202,6 +196,10 @@ async def test_check_dashboard_files_returns_none_without_static_files(
     monkeypatch.setattr(
         "bot.core.dashboard_assets.get_bot_data_path",
         lambda: str(tmp_path / "data"),
+    )
+    monkeypatch.setattr(
+        "bot.core.dashboard_assets.__file__",
+        str(tmp_path / "bot" / "core" / "dashboard_assets.py"),
     )
 
     assert await check_dashboard_files() is None

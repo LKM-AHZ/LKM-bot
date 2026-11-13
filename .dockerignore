@@ -31,3 +31,7 @@ tests/
 .bot
 .bot-tmp
 bot.lock
+dashboard/node_modules/
+dashboard/src/assets/mdi-subset/
+dashboard/public/vendor/
+bot/dashboard/dist/

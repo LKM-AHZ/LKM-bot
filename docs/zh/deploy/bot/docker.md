@@ -114,13 +114,10 @@ docker run -itd -p 6185:6185 -p 6199:6199 -e TZ=Asia/Shanghai -v "${PWD}\data:/L
 如果没有报错，你会看到 LKMBot 打印出的启动日志（含监听地址与首启面板初始密码）。
 
 > [!IMPORTANT]
-> **镜像只带后端 API，不含管理面板前端。** 面板源码在根仓库 `LKM-Website` 的 `bot-panel/`，
-> 由官网以 `/bot/` 子路径托管，所以 `docker run` 起来后 6185 上只有 API，没有可登录的面板页面。
-> 需要面板时二选一：
->
-> 1. 按上文接入 LKM 全栈，面板由官网提供并走网关 `/bot/`；
-> 2. 自备一份构建好的面板静态文件（目录内需有 `index.html`）放到 `data/dist/`，或启动时追加
->    `--webui-dir /path/to/dist`（例如 `docker run … lkmbot:latest --webui-dir /LKMBot/data/dist`）。
+> **面板源码位于本仓库的 `dashboard/`。** 安装依赖后运行 `pnpm --dir dashboard build`，
+> bot 会在 6185 服务 `bot/dashboard/dist/`。Dockerfile 自动构建并内置面板；独立部署镜像传
+> `--build-arg BOT_BASE_PATH=/`，LKM 全栈传其配置的 `/bot` 前缀。`--webui-dir` 和 `data/dist/`
+> 继续作为显式覆盖。原官网托管入口已改为 bot 自带静态服务，构建和运行不再需要官网仓库。
 
 > [!TIP]
 > 由于 Docker 隔离了网络环境，所以不能使用 `localhost` 访问容器内的接口。

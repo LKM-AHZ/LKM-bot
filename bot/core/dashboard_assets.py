@@ -1,10 +1,7 @@
 """Static panel asset discovery.
 
-The panel frontend is built and served by the community website (Astro serves
-``/bot/``), so LKMBot no longer ships, downloads, or version-checks a Dashboard
-dist. This module only keeps the optional static fallback: an explicit
-``--webui-dir`` argument or a prebuilt panel dropped into ``data/dist`` is still
-served by the bot process itself.
+The panel is built from this repository's dashboard directory. Explicit
+``--webui-dir`` and ``data/dist`` overrides take precedence over bundled assets.
 """
 
 from __future__ import annotations
@@ -43,7 +40,7 @@ def resolve_dashboard_dist(webui_dir: str | Path | None = None) -> Path | None:
 
     Returns:
         The explicit directory when it exists, otherwise a structurally usable
-        ``data/dist`` fallback, otherwise None.
+        ``data/dist`` override, then bundled assets, otherwise None.
     """
     explicit_dist = Path(webui_dir).absolute() if webui_dir else None
     if explicit_dist is not None and explicit_dist.exists():
@@ -55,10 +52,12 @@ def resolve_dashboard_dist(webui_dir: str | Path | None = None) -> Path | None:
         return user_dist.absolute()
     if user_dist.exists():
         logger.warning(
-            "Ignoring %s because index.html is missing; the panel is served by "
-            "the website at /bot/.",
+            "Ignoring %s because index.html is missing.",
             user_dist,
         )
+    bundled = Path(__file__).resolve().parents[1] / "dashboard" / "dist"
+    if (bundled / "index.html").is_file():
+        return bundled
     return None
 
 

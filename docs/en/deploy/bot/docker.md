@@ -102,13 +102,12 @@ If everything goes well, you will see logs printed by LKMBot.
 If there are no errors, you will see LKMBot's startup logs (listen address and the generated initial dashboard password).
 
 > [!IMPORTANT]
-> **The image ships the backend API only, not the dashboard frontend.** The panel source lives in the
-> `LKM-Website` repo under `bot-panel/` and is served by the website at `/bot/`, so after `docker run`
-> port 6185 exposes the API without a login page. Two options if you need the dashboard:
->
-> 1. Deploy the full LKM stack as shown above; the website then serves the panel through the gateway at `/bot/`.
-> 2. Put a prebuilt panel build (must contain `index.html`) into `data/dist/`, or append
->    `--webui-dir /path/to/dist` (for example `docker run … lkmbot:latest --webui-dir /LKMBot/data/dist`).
+> **The panel is owned by this repository's `dashboard/` directory.** Build it with
+> `pnpm --dir dashboard install --frozen-lockfile` and `pnpm --dir dashboard build`.
+> The bot serves `bot/dashboard/dist/` on port 6185. The Dockerfile builds and bundles it
+> automatically; standalone images use `--build-arg BOT_BASE_PATH=/`, while the LKM stack
+> passes its configured `/bot` prefix. `--webui-dir` and `data/dist/` remain explicit overrides.
+> The former website-hosted panel now maps to the bot's own static server; no website checkout is needed.
 
 > [!TIP]
 > Since Docker isolates the network environment, you cannot use `localhost` to reach the container's endpoints.

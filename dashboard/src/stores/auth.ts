@@ -1,0 +1,181 @@
+import { defineStore } from 'pinia';
+import { router } from '@/router';
+import {
+  authApi,
+  providerApi,
+  systemConfigApi,
+} from '@/api/v1';
+import { httpClient } from '@/api/http';
+import { useProviderModelSelection } from '@/composables/useProviderModelSelection';
+
+export const useAuthStore = defineStore("auth", {
+  state: () => ({
+    // @ts-ignore
+    username: '',
+    returnUrl: null,
+  }),
+  actions: {
+    async finishAuthenticatedSession(data: any): Promise<void> {
+      this.username = data.username;
+      localStorage.setItem('user', this.username);
+      localStorage.setItem('token', data.token);
+      const passwordUpgradeRequired = !!data?.password_upgrade_required;
+      const md5PwdHint = !!data?.md5_pwd_hint;
+      const passwordWarning =
+        !!data?.change_pwd_hint ||
+        (md5PwdHint && !passwordUpgradeRequired);
+      if (passwordWarning) {
+        localStorage.setItem('change_pwd_hint', 'true');
+        if (md5PwdHint && !passwordUpgradeRequired) {
+          localStorage.setItem('md5_pwd_hint', 'true');
+        } else {
+          localStorage.removeItem('md5_pwd_hint');
+        }
+      } else {
+        localStorage.removeItem('change_pwd_hint');
+        localStorage.removeItem('md5_pwd_hint');
+      }
+      if (passwordUpgradeRequired) {
+        localStorage.setItem('password_upgrade_required', 'true');
+      } else {
+        localStorage.removeItem('password_upgrade_required');
+      }
+
+      const onboardingCompleted = await this.checkOnboardingCompleted();
+      this.returnUrl = null;
+      if (passwordWarning) {
+        router.push('/auth/setup');
+        return;
+      }
+      if (onboardingCompleted) {
+        router.push('/dashboard/default');
+      } else {
+        router.push('/welcome');
+      }
+    },
+    async login(
+      username: string,
+      password: string,
+      code?: string,
+      trustDeviceToken = false,
+    ): Promise<'totp_required' | 'upgrade_recovery_required' | void> {
+      try {
+        const res = await authApi.login({
+          username,
+          password,
+          code,
+          trust_device_flag: trustDeviceToken,
+        });
+
+        if (res.data.status === 'error') {
+          return Promise.reject(res.data.message);
+        }
+
+        await this.finishAuthenticatedSession(res.data.data);
+      } catch (error: any) {
+        if (error?.response?.status === 401 && error.response?.data?.data?.totp_required) {
+          return 'totp_required';
+        }
+        return Promise.reject(error?.response?.data?.message || error);
+      }
+    },
+    async setup(
+      username: string,
+      password: string,
+      confirmPassword: string,
+    ): Promise<void> {
+      try {
+        const res = await authApi.setup({
+          username,
+          password,
+          confirm_password: confirmPassword,
+        });
+
+        if (res.data.status === 'error') {
+          return Promise.reject(res.data.message);
+        }
+
+        await this.finishAuthenticatedSession(res.data.data);
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    },
+    async checkOnboardingCompleted(): Promise<boolean> {
+      try {
+        // 1. 检查平台配置
+        const platformRes = await systemConfigApi.get();
+        const systemConfig = (platformRes.data.data as any).config || {};
+        const hasPlatform = (systemConfig.platform || []).length > 0;
+        if (!hasPlatform) return false;
+
+        // 2. 检查提供者配置
+        const providerRes = await providerApi.schema();
+        const providers = providerRes.data.data?.providers || [];
+        const sources = providerRes.data.data?.provider_sources || [];
+        const sourceMap = new Map();
+        sources.forEach((s: any) => sourceMap.set(s.id, s.provider_type));
+        
+        const hasProvider = providers.some((provider: any) => {
+          if (provider.provider_type) return provider.provider_type === 'chat_completion';
+          if (provider.provider_source_id) {
+            const type = sourceMap.get(provider.provider_source_id);
+            if (type === 'chat_completion') return true;
+          }
+          return String(provider.type || '').includes('chat_completion');
+        });
+
+        return hasProvider;
+      } catch (e) {
+        console.error('Failed to check onboarding status:', e);
+        return false;
+      }
+    },
+    /**
+     * 会话水合：社区后台 SSO 免登只写 httpOnly cookie（见后端 `auth_sso`），而面板的路由守卫
+     * 与 WebSocket/SSE 都依赖 `localStorage.token`，故首次进入内嵌面板时用既有 cookie 换 token。
+     *
+     * 返回是否水合成功（false = 确实未登录，调用方按未登录处理；网络异常同样返回 false，
+     * 由后续请求各自报错，不在此处吞掉错误语义）。
+     */
+    async hydrateFromCookie(): Promise<boolean> {
+      try {
+        const res = await httpClient.get('/api/v1/auth/session');
+        const data: any = res?.data?.data;
+        const token = String(data?.token || '');
+        if (!token) return false;
+        localStorage.setItem('token', token);
+        this.username = String(data?.username || '');
+        if (this.username) {
+          localStorage.setItem('user', this.username);
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    logout() {
+      this.username = '';
+      useProviderModelSelection().setSelection('');
+      try {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('change_pwd_hint');
+        localStorage.removeItem('md5_pwd_hint');
+        localStorage.removeItem('password_upgrade_required');
+        for (let index = localStorage.length - 1; index >= 0; index--) {
+          const key = localStorage.key(index);
+          if (key?.startsWith('chat.sessionProvider.')) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch {
+        // Storage availability must not prevent logout or the in-memory reset.
+      }
+      void authApi.logout().catch(() => undefined);
+      router.push('/auth/login');
+    },
+    has_token(): boolean {
+      return !!localStorage.getItem('token');
+    }
+  }
+});

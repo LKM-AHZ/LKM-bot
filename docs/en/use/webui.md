@@ -249,7 +249,7 @@ In the browser WebUI, open `⋮ → Update LKMBot` in the upper-right corner, ex
 
 You can also use the `/dashboard_update` command to manually update the admin panel (admin command).
 
-The admin panel ships with the community website and is served by Astro at `/bot/`; it is no longer bundled into the LKMBot package. `data/dist` remains a static fallback directory (build it with the deployment prefix).
+The panel is built from this repository’s `dashboard/` directory into `bot/dashboard/dist/` and served by the bot process. Rebuild the bot image to update it; source installs run `pnpm --dir dashboard build`. For the LKM prefix, build with `VITE_BASE_PATH=/bot/`. The former website-hosted entry now uses the bot static server, without a website checkout. Explicit `--webui-dir` and `data/dist` overrides take precedence; move stale overrides aside before using a new bundled version.
 
 ## Customizing WebUI Port
 
