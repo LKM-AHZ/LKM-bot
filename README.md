@@ -151,51 +151,7 @@ uv tool install --force . --python 3.12
 LKMBot 使用 `ruff` 进行代码格式化和检查。
 
 ```bash
-git clone https://github.com/Alma1314/LKM-bot.git
+git clone https://github.com/LKM-AHZ/LKM-bot.git
 pip install pre-commit
 pre-commit install
 ```
-
-## 🌍 社区
-
-### QQ 群组
-
-我们有 15 个以上的交流群，详情请参阅[社区](https://docs.astrbot.app/community.html)。
-
-### Discord 频道
-
-<a href="https://discord.gg/hAVk6tgV36"><img alt="Discord_community" src="https://img.shields.io/badge/Discord-AstrBot-purple?style=for-the-badge&color=76bad9"></a>
-
-## ❤️ Special Thanks
-
-特别感谢所有 Contributors 和插件开发者对 LKMBot 的贡献 ❤️
-
-<a href="https://github.com/AstrBotDevs/AstrBot/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=AstrBotDevs/AstrBot&max=500&columns=17" />
-</a>
-
-开源伙伴 ❤️
-
-- [NapNeko/NapCatQQ](https://github.com/NapNeko/NapCatQQ) - 出色的猫猫框架
-- [Mai-with-u/MaiBot](https://github.com/Mai-with-u/MaiBot) - QQ 中强大的“数字生命”！
-
-## ⭐ Star History
-
-> [!TIP]
-> 如果本项目对您的生活 / 工作产生了帮助，或者您关注本项目的未来发展，请给项目 Star，这是我们维护这个开源项目的动力 <3
-
-<div align="center">
-
-[![Star History Chart](https://api.star-history.com/svg?repos=astrbotdevs/astrbot&type=Date)](https://star-history.com/#astrbotdevs/astrbot&Date)
-
-</div>
-
-<div align="center">
-
-_陪伴与能力从来不应该是对立面。我们希望创造的是一个既能理解情绪、给予陪伴，也能可靠完成工作的机器人。_
-
-_私は、高性能ですから!_
-
-<img src="https://files.astrbot.app/watashiwa-koseino-desukara.gif" width="100"/>
-
-</div>
