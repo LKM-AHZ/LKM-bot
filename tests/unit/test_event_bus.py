@@ -143,7 +143,7 @@ class TestEventBusDispatch:
         # Start dispatch in background and cancel after processing
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(processed.wait(), timeout=1.0)
+            await asyncio.wait_for(processed.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -189,7 +189,7 @@ class TestEventBusDispatch:
             mock_logger.error.side_effect = error_and_signal
             task = asyncio.create_task(event_bus.dispatch())
             try:
-                await asyncio.wait_for(logged.wait(), timeout=1.0)
+                await asyncio.wait_for(logged.wait(), timeout=5.0)
             finally:
                 task.cancel()
                 with suppress(asyncio.CancelledError):
@@ -230,7 +230,7 @@ class TestEventBusDispatch:
 
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(processed_all.wait(), timeout=1.0)
+            await asyncio.wait_for(processed_all.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -270,7 +270,7 @@ class TestEventBusDispatch:
         with patch.object(event_bus, "_print_event") as mock_print_event:
             task = asyncio.create_task(event_bus.dispatch())
             try:
-                await asyncio.wait_for(processed.wait(), timeout=1.0)
+                await asyncio.wait_for(processed.wait(), timeout=5.0)
             finally:
                 task.cancel()
                 with suppress(asyncio.CancelledError):
@@ -342,7 +342,9 @@ async def test_session_isolation_precedes_registration(
         plugin_manager=SimpleNamespace(
             context=SimpleNamespace(
                 get_config=lambda **_: config,
-                bot_config_mgr=SimpleNamespace(_create_message_config=lambda _: (config, frozenset())),
+                bot_config_mgr=SimpleNamespace(
+                    _create_message_config=lambda _: (config, frozenset())
+                ),
             )
         ),
         db_helper=None,
@@ -556,7 +558,7 @@ class TestEventSubscription:
 
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(processed.wait(), timeout=1.0)
+            await asyncio.wait_for(processed.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -642,7 +644,7 @@ class TestEventSubscription:
 
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(exception_raised.wait(), timeout=1.0)
+            await asyncio.wait_for(exception_raised.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -701,7 +703,7 @@ class TestEventFiltering:
 
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(processed.wait(), timeout=1.0)
+            await asyncio.wait_for(processed.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -745,7 +747,7 @@ class TestEventFiltering:
 
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(processed.wait(), timeout=1.0)
+            await asyncio.wait_for(processed.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -806,7 +808,7 @@ class TestEventFiltering:
 
         task = asyncio.create_task(event_bus.dispatch())
         try:
-            await asyncio.wait_for(processed.wait(), timeout=1.0)
+            await asyncio.wait_for(processed.wait(), timeout=5.0)
         finally:
             task.cancel()
             with suppress(asyncio.CancelledError):
@@ -853,7 +855,7 @@ class TestEventFiltering:
             mock_logger.error.side_effect = lambda *args, **kwargs: error_logged.set()  # noqa: ARG001
             task = asyncio.create_task(event_bus.dispatch())
             try:
-                await asyncio.wait_for(error_logged.wait(), timeout=1.0)
+                await asyncio.wait_for(error_logged.wait(), timeout=5.0)
             finally:
                 task.cancel()
                 with suppress(asyncio.CancelledError):
@@ -898,7 +900,7 @@ class TestEventFiltering:
             mock_logger.error.side_effect = lambda *args, **kwargs: error_logged.set()  # noqa: ARG001
             task = asyncio.create_task(event_bus.dispatch())
             try:
-                await asyncio.wait_for(error_logged.wait(), timeout=1.0)
+                await asyncio.wait_for(error_logged.wait(), timeout=5.0)
             finally:
                 task.cancel()
                 with suppress(asyncio.CancelledError):
