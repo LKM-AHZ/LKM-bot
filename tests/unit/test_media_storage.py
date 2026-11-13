@@ -51,6 +51,13 @@ class _Client:
         return {"id": "1", "url": self._url}
 
 
+@pytest.fixture(autouse=True)
+def reset_media_counters():
+    media_storage.reset_stats()
+    yield
+    media_storage.reset_stats()
+
+
 @pytest.fixture
 def patch_media(monkeypatch):
     """Wire the module's collaborators and return a factory for the stub client."""
@@ -122,3 +129,29 @@ async def test_require_media_url_raises_when_unconfigured(patch_media):
 
     with pytest.raises(Exception):
         await media_storage.require_media_url("/tmp/a.png")
+
+
+async def test_counters_separate_uploads_from_fallbacks(patch_media):
+    patch_media(_Client())
+
+    await media_storage.public_media_url("/tmp/a.png")
+
+    assert media_storage.stats() == {
+        "attempts": 1,
+        "uploaded": 1,
+        "failed": 0,
+        "local": 0,
+    }
+
+
+async def test_failed_backend_upload_is_counted(patch_media):
+    patch_media(_Client(error=BackendUnavailable("down")))
+
+    await media_storage.public_media_url("/tmp/a.png")
+
+    assert media_storage.stats() == {
+        "attempts": 1,
+        "uploaded": 0,
+        "failed": 1,
+        "local": 1,
+    }

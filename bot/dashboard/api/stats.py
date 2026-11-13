@@ -178,3 +178,24 @@ async def restart_system(
     service: StatService = Depends(get_service),
 ):
     return await _run(service.restart_core())
+
+
+@router.get("/stats/media-backend")
+async def get_media_backend_status(
+    _auth: AuthContext = Depends(require_system_scope),
+):
+    """Return bot→backend link health: request counters and fallback counts.
+
+    This makes silent media fallbacks visible: ``media.failed`` growing together
+    with ``media.local`` means the backend link is broken even though replies
+    keep flowing.
+    """
+    from bot.core import media_storage
+    from bot.lkm.backend_client import get_backend_client
+
+    return ok(
+        {
+            "backend": get_backend_client().stats(),
+            "media": media_storage.stats(),
+        }
+    )

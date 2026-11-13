@@ -111,3 +111,36 @@ async def test_unconfigured_raises(monkeypatch):
 
     with pytest.raises(account_auth.AccountAuthUnavailable):
         await account_auth.verify_community_account("alma", "pw")
+
+
+@pytest.mark.asyncio
+async def test_transient_transport_error_is_retried_once(monkeypatch):
+    monkeypatch.setenv(account_auth.AUTH_BASE_URL_ENV, "http://auth:8001")
+    monkeypatch.setenv(account_auth.AUTH_TOKEN_ENV, "t0ken")
+    calls = []
+
+    class _Flaky:
+        def __init__(self, **_kwargs) -> None:
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *exc_info):
+            return False
+
+        async def post(self, path, json=None):
+            calls.append(path)
+            if len(calls) == 1:
+                raise account_auth.httpx.ConnectError("refused")
+            return _Response(
+                200,
+                {"user_id": "u-1", "username": "alma", "account_level": "admin"},
+            )
+
+    monkeypatch.setattr(account_auth.httpx, "AsyncClient", lambda **kw: _Flaky())
+
+    identity = await account_auth.verify_community_account("alma", "pw")
+
+    assert identity["user_id"] == "u-1"
+    assert len(calls) == 2

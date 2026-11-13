@@ -18,6 +18,7 @@ platforms, install plugins, read logs), and the panel has no read-only role to g
 
 from __future__ import annotations
 
+import asyncio
 import os
 from typing import Any
 
@@ -27,6 +28,8 @@ AUTH_BASE_URL_ENV = "LKM_AUTH_BASE_URL"
 AUTH_TOKEN_ENV = "LKM_AUTH_INTERNAL_TOKEN"
 
 DEFAULT_TIMEOUT_S = 8.0
+#: A dead peer should fail fast; the read budget stays generous for a slow hash.
+CONNECT_TIMEOUT_S = 3.0
 #: Community account level allowed into the control plane.
 REQUIRED_ACCOUNT_LEVEL = "admin"
 
@@ -76,22 +79,35 @@ async def verify_community_account(
     base, token = _config()
     if not base or not token:
         raise AccountAuthUnavailable("AUTH delegation is not configured")
-    try:
-        async with httpx.AsyncClient(
-            base_url=base,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=DEFAULT_TIMEOUT_S,
-        ) as client:
-            resp = await client.post(
-                "/api/v1/auth/internal/verify-password",
-                json={
-                    "account": account,
-                    "password": password,
-                    "ip_address": ip_address,
-                },
-            )
-    except httpx.HTTPError as exc:
-        raise AccountAuthUnavailable(f"AUTH request failed: {exc}") from exc
+    timeout = httpx.Timeout(
+        DEFAULT_TIMEOUT_S, connect=min(CONNECT_TIMEOUT_S, DEFAULT_TIMEOUT_S)
+    )
+    resp = None
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(
+                base_url=base,
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=timeout,
+            ) as client:
+                resp = await client.post(
+                    "/api/v1/auth/internal/verify-password",
+                    json={
+                        "account": account,
+                        "password": password,
+                        "ip_address": ip_address,
+                    },
+                )
+        except httpx.TransportError as exc:
+            # One retry covers a transient connect failure; a wrong password never
+            # reaches this branch, so retrying cannot double-count a failure.
+            if attempt == 0:
+                await asyncio.sleep(0.1)
+                continue
+            raise AccountAuthUnavailable(f"AUTH request failed: {exc}") from exc
+        break
+    if resp is None:  # pragma: no cover - the loop either breaks or raises
+        raise AccountAuthUnavailable("AUTH request failed")
 
     if resp.status_code in (401, 403, 423):
         # 401 wrong credentials, 403 admission not allowed, 423 locked: all "not this person"

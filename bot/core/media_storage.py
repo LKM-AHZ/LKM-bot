@@ -21,6 +21,28 @@ from bot.core import bot_config, file_token_service
 from bot.core.utils.media_utils import file_uri_to_path, is_file_uri
 from bot.lkm.backend_client import BackendUnavailable, get_backend_client
 
+_counters = {
+    "attempts": 0,
+    "uploaded": 0,
+    "failed": 0,
+    "local": 0,
+}
+
+
+def stats() -> dict[str, int]:
+    """Return publish counters for the dashboard (backend attempts vs local fallbacks).
+
+    Returns:
+        Copy of the process-wide counters.
+    """
+    return dict(_counters)
+
+
+def reset_stats() -> None:
+    """Zero the counters (tests only)."""
+    for key in _counters:
+        _counters[key] = 0
+
 
 def _log() -> Any:
     """Return the bot logger lazily.
@@ -50,16 +72,20 @@ async def public_media_url(path: str, *, source: str = "other") -> str | None:
     if mode != "local":
         client = get_backend_client()
         if client.configured:
+            _counters["attempts"] += 1
             local_path = file_uri_to_path(path) if is_file_uri(path) else str(path)
             try:
                 view = await client.upload_media(local_path, source=source)
                 url = str(view.get("url") or "")
                 if url:
+                    _counters["uploaded"] += 1
                     return url
+                _counters["failed"] += 1
                 _log().warning("Backend media upload returned an empty url: %s", path)
             except (BackendUnavailable, OSError) as exc:
                 # Falling back keeps replies flowing; the warning tells operators the backend
                 # link is broken without turning a media failure into a message failure.
+                _counters["failed"] += 1
                 _log().warning(
                     "Backend media upload failed, falling back to local: %s", exc
                 )
@@ -73,6 +99,7 @@ async def public_media_url(path: str, *, source: str = "other") -> str | None:
     if not callback_host:
         return None
     token = await file_token_service.register_file(path)
+    _counters["local"] += 1
     _log().debug(
         "Registered local media: %s/api/v1/files/tokens/%s", callback_host, token
     )

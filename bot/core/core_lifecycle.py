@@ -144,6 +144,50 @@ class BotCoreLifecycle:
                 fallback_id,
             )
 
+    async def _check_backend_link(self) -> None:
+        """Warn about a misconfigured or unreachable LKM-service link.
+
+        The probe is best-effort: a dead or absent backend never blocks startup,
+        it only makes the degradation visible in the log (and the media path
+        keeps falling back to local tokens).
+        """
+        try:
+            from bot.lkm.account_auth import (
+                AUTH_BASE_URL_ENV,
+                AUTH_TOKEN_ENV,
+                auth_mode,
+            )
+            from bot.lkm.backend_client import BackendUnavailable, get_backend_client
+
+            client = get_backend_client()
+            if client.configured:
+                if not client.public_origin:
+                    logger.warning(
+                        "LKM_SERVICE_PUBLIC_ORIGIN is unset; media URLs handed to IM "
+                        f"platforms will use {client.base_url}, which they may not reach"
+                    )
+                try:
+                    status = await client.media_status(timeout=5)
+                except BackendUnavailable as exc:
+                    logger.warning(
+                        f"LKM-service backend is unreachable ({exc}); "
+                        "media falls back to local tokens"
+                    )
+                else:
+                    logger.info(f"LKM-service media backend ready: {status}")
+
+            mode = auth_mode(self.bot_config)
+            if mode in {"both", "backend"} and not (
+                os.environ.get(AUTH_BASE_URL_ENV, "").strip()
+                and os.environ.get(AUTH_TOKEN_ENV, "").strip()
+            ):
+                logger.warning(
+                    f"dashboard.auth_mode={mode} but {AUTH_BASE_URL_ENV}/"
+                    f"{AUTH_TOKEN_ENV} are not configured; community login will fail"
+                )
+        except Exception as exc:
+            logger.warning(f"backend link self-check failed: {exc}")
+
     async def initialize(self) -> None:
         """初始化 LKMBot 核心生命周期管理类.
 
@@ -159,6 +203,8 @@ class BotCoreLifecycle:
             )
         else:
             LogManager.configure_logger(cast("logging.Logger", logger), self.bot_config)
+
+        await self._check_backend_link()
 
         await self.db.initialize()
         button_callback_db_path = getattr(self.db, "db_path", None)
@@ -422,6 +468,14 @@ class BotCoreLifecycle:
                 pass
             except Exception as e:
                 logger.error(f"任务 {task.get_name()} 发生错误: {e}")
+
+        # 关闭后端 HTTP 连接池（媒体上传/文件库共用）
+        from bot.lkm.backend_client import close_backend_client
+
+        try:
+            await close_backend_client()
+        except Exception as exc:
+            logger.warning(f"关闭后端 HTTP 客户端失败: {exc}")
 
         # 释放数据库引擎连接池
         from bot.core.utils.trace_store import close_trace_store
