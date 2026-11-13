@@ -66,9 +66,7 @@ async def create_native_runner(
         )
     runner = AgentRunner()
     read_tool = (
-        request.func_tool.get_tool("bot_file_read_tool")
-        if request.func_tool
-        else None
+        request.func_tool.get_tool("bot_file_read_tool") if request.func_tool else None
     )
     compression_provider = await providers.resolve_compression_provider(config, context)
     if (

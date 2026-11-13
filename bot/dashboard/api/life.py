@@ -84,6 +84,7 @@ async def life_diagnostics(
         Wrapped diagnostics report.
     """
     from bot.life.diagnostics import build_report
+
     service = _life_service()
     if service is None:
         return ok(

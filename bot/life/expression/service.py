@@ -94,9 +94,7 @@ class ExpressionService(SessionScoped):
                 target=self.store,
                 config=self.config,
                 summarizer=(
-                    partial(llm_complete, self.context)
-                    if self.config.use_llm
-                    else None
+                    partial(llm_complete, self.context) if self.config.use_llm else None
                 ),
             )
         self.selector = ExpressionSelector(self.store, self.config, self.index)

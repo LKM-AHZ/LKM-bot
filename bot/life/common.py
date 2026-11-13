@@ -46,9 +46,11 @@ async def ensure_tables(db_helper: Any, *models: Any) -> None:
         connection = await session.connection()
         for model in models:
             await connection.run_sync(
-                lambda sync_connection, model=model: model.__table__.create(  # SQLModel adds __table__ at runtime
-                    sync_connection,
-                    checkfirst=True,
+                lambda sync_connection, model=model: (
+                    model.__table__.create(  # SQLModel adds __table__ at runtime
+                        sync_connection,
+                        checkfirst=True,
+                    )
                 )
             )
         await session.commit()
@@ -780,7 +782,9 @@ class ArchiveLearner:
             return []
         self._counters["llm_calls"] += 1
         try:
-            raw = await summarizer(self.llm_system_prompt(), self.llm_prompt(transcript))
+            raw = await summarizer(
+                self.llm_system_prompt(), self.llm_prompt(transcript)
+            )
         except Exception as exc:
             self._counters["llm_failures"] += 1
             logger.warning(f"[life] {self.label} extraction failed: {exc}")

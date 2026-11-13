@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import builtins
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 from uuid import uuid4
@@ -55,7 +56,7 @@ class AgentConfigService:
             await self.store.get(config_id)
         return {"runtime": runtime_name, "config": config}
 
-    async def list(self) -> list[dict]:
+    async def list(self) -> builtins.list[dict]:
         """Return saved configurations, including unavailable runtimes.
 
         Returns:
@@ -132,7 +133,7 @@ class AgentConfigService:
                 )
             await self.store.delete(config_id)
 
-    def runtimes(self) -> list[dict]:
+    def runtimes(self) -> builtins.list[dict]:
         """Describe callable runtimes and their reusable-agent defaults.
 
         Returns:

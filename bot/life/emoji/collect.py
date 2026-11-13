@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Sequence
 from urllib.parse import urlparse
+from urllib.request import url2pathname
 
 import aiohttp
 
@@ -239,7 +240,10 @@ class EmojiCollector:
         path: Path | None = None
         if reference.startswith("file://"):
             parsed = urlparse(reference)
-            path = Path(parsed.path)
+            # url2pathname turns "/C:/dir/a.png" into "C:\dir\a.png" on Windows
+            # and unquotes percent escapes; Path(parsed.path) breaks both.
+            raw = f"//{parsed.netloc}{parsed.path}" if parsed.netloc else parsed.path
+            path = Path(url2pathname(raw))
         else:
             path = Path(reference)
         try:

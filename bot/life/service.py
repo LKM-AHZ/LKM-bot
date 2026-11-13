@@ -954,10 +954,7 @@ class LifeService:
         if not notice.conclusion:
             return
         agent_service = getattr(self.star_context, "agent", None)
-        if (
-            agent_service is None
-            or agent_service.active_turn(task.session_id) is None
-        ):
+        if agent_service is None or agent_service.active_turn(task.session_id) is None:
             self.subagent_inbox.add(notice)
             self._subagent_counts["inboxed"] += 1
             return
@@ -985,9 +982,7 @@ class LifeService:
                     self.subagent_inbox.add(notice)
                     self._subagent_counts["inboxed"] += 1
 
-        asyncio.create_task(
-            _wake_session(), name=f"life_{task.task_id}_delivery"
-        )
+        asyncio.create_task(_wake_session(), name=f"life_{task.task_id}_delivery")
 
     async def _llm_summarizer(
         self,

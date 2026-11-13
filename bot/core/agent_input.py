@@ -91,16 +91,9 @@ def append_system_reminders(
         user_nickname = event.message_obj.sender.nickname
         system_parts.append(f"User ID: {user_id}, Nickname: {user_nickname}")
 
-    if cfg.get("group_name_display") and event.message_obj.group_id:
-        if not event.message_obj.group:
-            logger.error(
-                "Group name display enabled but group object is None. Group ID: %s",
-                event.message_obj.group_id,
-            )
-        else:
-            group_name = event.message_obj.group.group_name
-            if group_name:
-                system_parts.append(f"Group name: {group_name}")
+    group = event.message_obj.group
+    if cfg.get("group_name_display") and group and group.group_name:
+        system_parts.append(f"Group name: {group.group_name}")
 
     if cfg.get("datetime_system_prompt"):
         now = None

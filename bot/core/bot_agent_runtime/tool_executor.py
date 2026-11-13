@@ -37,9 +37,6 @@ BACKGROUND_TASK_RESULT_WOKE_USER_PROMPT = (
 
 
 class FunctionToolExecutor(BaseFunctionToolExecutor[BotAgentContext]):
-
-
-
     @classmethod
     async def execute(cls, tool, run_context, **tool_args):
         """执行函数调用。
@@ -96,7 +93,6 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[BotAgentContext]):
                 async for r in results:
                     yield r
             return
-
 
     @classmethod
     async def _execute_background(

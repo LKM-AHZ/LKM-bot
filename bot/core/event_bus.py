@@ -71,9 +71,7 @@ class EventBus:
             if event.unified_msg_origin != original_umo:
                 # Isolation changes the routing key. Match the scheduler to the
                 # same final UMO used by providers and other configuration readers.
-                conf_info = self.bot_config_mgr.get_conf_info(
-                    event.unified_msg_origin
-                )
+                conf_info = self.bot_config_mgr.get_conf_info(event.unified_msg_origin)
                 conf_id = conf_info["id"]
                 scheduler = self.pipeline_scheduler_mapping.get(conf_id)
                 if not scheduler:

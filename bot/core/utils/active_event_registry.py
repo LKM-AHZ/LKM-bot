@@ -20,9 +20,9 @@ class ActiveEventRegistry:
         self._agent_stop_callbacks: dict[BotMessageEvent, set[Callable[[], None]]] = (
             defaultdict(set)
         )
-        self._background_tasks: dict[
-            str, dict[asyncio.Task[None], BotMessageEvent]
-        ] = defaultdict(dict)
+        self._background_tasks: dict[str, dict[asyncio.Task[None], BotMessageEvent]] = (
+            defaultdict(dict)
+        )
         self._background_cancel_requested: set[asyncio.Task[None]] = set()
 
     def register(self, event: BotMessageEvent) -> None:

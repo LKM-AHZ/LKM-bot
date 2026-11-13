@@ -203,9 +203,7 @@ class LifeStore:
         Returns:
             Row dictionary with the keys Life consumers expect.
         """
-        content: dict[str, Any] = (
-            row.content if isinstance(row.content, dict) else {}
-        )
+        content: dict[str, Any] = row.content if isinstance(row.content, dict) else {}
         raw_life = content.get("life")
         life: dict[str, Any] = raw_life if isinstance(raw_life, dict) else {}
         ts = to_unix_seconds(life.get("ts"), timezone="UTC") or to_unix_seconds(

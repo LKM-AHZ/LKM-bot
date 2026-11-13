@@ -183,7 +183,7 @@ def sanitize_filename(name: str) -> str:
 
 def validate_config(
     data,
-    schema: dict,
+    schema: dict[str, Any],
     is_core: bool,
     *,
     runtime: dict | None = None,
@@ -201,11 +201,11 @@ def validate_config(
     """
     errors = []
 
-    def validate(data: dict, metadata: dict = schema, path="") -> None:
+    def validate(data: dict, metadata: dict[str, Any] = schema, path="") -> None:
         for key, value in data.items():
             if key not in metadata:
                 continue
-            meta = metadata[key]
+            meta: Any = metadata[key]
             if (
                 is_core
                 and path == "provider."
@@ -259,13 +259,16 @@ def validate_config(
                 meta["type"] == "list"
                 and isinstance(value, list)
                 and value
-                and "items" in meta
                 and isinstance(value[0], dict)
             ):
-                for item in value:
-                    validate(item, meta["items"], path=f"{path}{key}.")
+                items = meta.get("items")
+                if isinstance(items, dict):
+                    for item in value:
+                        validate(item, items, path=f"{path}{key}.")
             elif meta["type"] == "object" and isinstance(value, dict):
-                validate(value, meta["items"], path=f"{path}{key}.")
+                items = meta.get("items")
+                if isinstance(items, dict):
+                    validate(value, items, path=f"{path}{key}.")
 
             if meta["type"] == "int" and not isinstance(value, int):
                 casted = try_cast(value, "int")

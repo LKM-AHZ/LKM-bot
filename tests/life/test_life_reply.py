@@ -237,7 +237,9 @@ async def test_a_reply_is_split_when_upstream_segmentation_is_off():
     result = FakeResult("第一句话比较长一点。第二句话也比较长。第三句话同样不短。")
 
     await processor.process(event, result, upstream_segmented=False)
-    await asyncio.sleep(0.01)
+    # Follow-up segments are delivered by background tasks; a fixed sleep races
+    # on platforms with a coarse monotonic clock (Windows).
+    await asyncio.gather(*processor._tasks)
 
     assert len(result.chain) == 1
     assert result.chain[0].text == "第一句话比较长一点。"

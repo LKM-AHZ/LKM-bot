@@ -171,6 +171,7 @@ exclude = ["tests", "dashboard", "node_modules", "dist", "data"]
 include = ["bot/**"]
 
 [tool.ty.overrides.rules]
+unused-ignore-comment = "ignore"
 unused-type-ignore-comment = "ignore"
 
 # Files introduced or changed by upstream whose diagnostics come from
@@ -180,7 +181,7 @@ unused-type-ignore-comment = "ignore"
 # file (or its stub) becomes well-typed.
 [[tool.ty.overrides]]
 include = [
-    "bot/core/computer/windows_job.py",
+    "bot/core/bot_agent_runtime/computer/windows_job.py",
     "bot/core/platform/sources/discord/discord_platform_adapter.py",
     "bot/core/platform/sources/lark/lark_event.py",
     "bot/core/platform/sources/lark/lark_group_info.py",
@@ -222,8 +223,8 @@ no-matching-overload = "ignore"
 # 该路径只在 win32 下启用，这里按规则收窄到这两个文件，其他平台代码仍全量检查。
 [[tool.ty.overrides]]
 include = [
-    "bot/core/computer/process_sandbox/windows.py",
-    "bot/core/computer/process_sandbox/windows_setup.py",
+    "bot/core/bot_agent_runtime/computer/process_sandbox/windows.py",
+    "bot/core/bot_agent_runtime/computer/process_sandbox/windows_setup.py",
 ]
 
 [tool.ty.overrides.rules]

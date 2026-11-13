@@ -507,9 +507,7 @@ class MemoryStore(CursorStoreMixin):
         Returns:
             Number of deleted rows.
         """
-        return await delete_rows(
-            self.db, LifeMemory, memory_ids, session_key, "memory"
-        )
+        return await delete_rows(self.db, LifeMemory, memory_ids, session_key, "memory")
 
     async def export(self, session_key: str | None = None) -> list[dict[str, Any]]:
         """Export memories for backup or migration.
@@ -577,6 +575,7 @@ class MemoryStore(CursorStoreMixin):
         if deleted:
             logger.info(f"[life] memory retention removed {deleted} rows")
         return deleted
+
 
 def _public(row: LifeMemory) -> dict[str, Any]:
     """Strip the vector from a stored row.

@@ -7,7 +7,7 @@ from typing import Any, TypeVar, cast, overload
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from deprecated import deprecated
-from sqlmodel import delete
+from sqlmodel import col, delete
 
 from bot import logger
 from bot.core.db import BaseDatabase
@@ -172,7 +172,8 @@ class SharedPreferences:
                         async with session.begin():
                             await session.execute(
                                 delete(Preference).where(
-                                    Preference.scope == scope, Preference.key == key
+                                    col(Preference.scope) == scope,
+                                    col(Preference.key) == key,
                                 )
                             )
                             session.add_all(
@@ -487,7 +488,7 @@ class SharedPreferences:
     def get(
         self,
         key: str,
-        default: _VT = None,
+        default: _VT = cast(_VT, None),
         scope: str | None = None,
         scope_id: str | None = "",
     ) -> _VT:

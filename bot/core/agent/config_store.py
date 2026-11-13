@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import builtins
 from typing import TYPE_CHECKING
 
 from sqlmodel import col, select
@@ -21,7 +22,7 @@ class AgentConfigStore:
         self.db = db
         self.lock = asyncio.Lock()
 
-    async def list(self) -> list[StoredAgentConfig]:
+    async def list(self) -> builtins.list[StoredAgentConfig]:
         """Return reusable configurations in creation order.
 
         Returns:

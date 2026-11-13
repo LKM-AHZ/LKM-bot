@@ -8,6 +8,11 @@ Pass ``--hang`` to never answer prompts, which exercises the timeout path.
 import json
 import sys
 
+# The bot speaks UTF-8 over the pipe. Windows gives children the ANSI code page
+# by default, where the non-ASCII chunks below would crash the writer.
+sys.stdin.reconfigure(encoding="utf-8")
+sys.stdout.reconfigure(encoding="utf-8")
+
 SESSION_ID = "s-1"
 HANG = "--hang" in sys.argv
 

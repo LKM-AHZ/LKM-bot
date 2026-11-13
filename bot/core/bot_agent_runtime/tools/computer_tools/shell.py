@@ -136,7 +136,7 @@ class ExecuteShellTool(FunctionTool):
                 if not creator_id:
                     return "Error executing command: sender identity is unavailable."
                 creator_is_admin = get_agent_permissions(context).role == "admin"
-                sandbox_roots = {}
+                sandbox_roots: dict[str, Any] = {}
                 if local_policy and local_policy.filesystem_scope == "workspace":
                     umo = context.context.event.unified_msg_origin
                     sandbox_roots = {

@@ -26,9 +26,7 @@ def get_runtime_config_default(
     """
     if runtime == "bot" and delegated:
         return {"model": {"provider_id": ""}, "persona": {"persona_id": ""}}
-    config = get_agent_runner_config_default(
-        "local" if runtime == "bot" else runtime
-    )
+    config = get_agent_runner_config_default("local" if runtime == "bot" else runtime)
     if runtime == "bot":
         config["persona"].update(system_prompt="", tools=None, skills=None)
         config["subagents"] = {

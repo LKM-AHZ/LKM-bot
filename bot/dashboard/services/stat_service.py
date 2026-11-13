@@ -128,8 +128,7 @@ class StatService:
         username = self.config["dashboard"]["username"]
         password = get_dashboard_password_hash(self.config, upgraded=True)
         return (
-            username in {"bot", "lkmbot"}
-            and is_default_dashboard_password(password)
+            username in {"bot", "lkmbot"} and is_default_dashboard_password(password)
         ) and not DEMO_MODE
 
     async def get_version(self) -> dict:

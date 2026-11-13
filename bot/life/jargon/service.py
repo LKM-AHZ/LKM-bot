@@ -76,9 +76,7 @@ class JargonService(SessionScoped):
                 target=self.store,
                 config=self.config,
                 summarizer=(
-                    partial(llm_complete, self.context)
-                    if self.config.use_llm
-                    else None
+                    partial(llm_complete, self.context) if self.config.use_llm else None
                 ),
             )
         self._started = True

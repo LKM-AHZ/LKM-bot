@@ -316,9 +316,7 @@ class AgentSession(ABC):
 
     runtime_name: str = "bot"
 
-    def __init__(
-        self, session_id: str, umo: str, *, runtime_name: str = "bot"
-    ) -> None:
+    def __init__(self, session_id: str, umo: str, *, runtime_name: str = "bot") -> None:
         self.runtime_name = runtime_name
         self.id = session_id
         self.umo = umo

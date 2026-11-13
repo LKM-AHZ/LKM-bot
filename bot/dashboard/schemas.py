@@ -211,6 +211,8 @@ class AgentConfigRequest(BaseModel):
     enabled: bool = True
     runtime: str = Field(min_length=1)
     config: dict[str, Any] = Field(default_factory=dict)
+
+
 class TraceSettingsRequest(BaseModel):
     trace_enable: bool | None = None
 

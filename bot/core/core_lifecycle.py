@@ -205,9 +205,7 @@ class BotCoreLifecycle:
         self.platform_manager = PlatformManager(self.bot_config, self.event_queue)
 
         # 初始化对话管理器
-        self.conversation_manager = ConversationManager(
-            self.db, self.bot_config_mgr
-        )
+        self.conversation_manager = ConversationManager(self.db, self.bot_config_mgr)
 
         # 初始化平台消息历史管理器
         self.platform_message_history_manager = PlatformMessageHistoryManager(self.db)

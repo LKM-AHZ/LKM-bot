@@ -323,7 +323,7 @@ class AgentService:
             event.message_obj.sender.user_id = source_event.get_sender_id()
             event.message_obj.sender.nickname = source_event.get_sender_name()
             event.message_obj.self_id = source_event.get_self_id()
-            event.message_obj.group_id = source_event.get_group_id()
+            event.message_obj.set_group(source_event.get_group_id())
             event.set_extra(
                 "_api_key_allow_admin_role",
                 source_event.get_extra("_api_key_allow_admin_role"),

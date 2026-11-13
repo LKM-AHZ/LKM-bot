@@ -394,6 +394,8 @@ class SessionManagementService:
         """
         payload = self._payload(data)
         umo = payload.get("umo")
+        if not isinstance(umo, str) or not umo:
+            raise SessionManagementServiceError("缺少必要参数: umo")
         if payload.get("rule_key") != OVERRIDE_KEY:
             raise SessionManagementServiceError(
                 "Use config_overrides for session settings"
