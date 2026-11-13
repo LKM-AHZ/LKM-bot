@@ -12,7 +12,6 @@
 import asyncio
 import logging
 import os
-import sys
 import threading
 import time
 import traceback
@@ -22,8 +21,10 @@ from typing import cast
 
 from bot.api import logger, sp
 from bot.core import LogBroker, LogManager
+from bot.core.agent.config_store import AgentConfigStore
+from bot.core.agent.runtime import AgentRuntime
+from bot.core.bot_agent_runtime import BotAgentRuntime
 from bot.core.bot_config_mgr import BotConfigManager
-from bot.core.computer.computer_client import shutdown_local_booter
 from bot.core.config.default import VERSION
 from bot.core.conversation_mgr import ConversationManager
 from bot.core.cron import CronJobManager
@@ -66,6 +67,8 @@ class BotCoreLifecycle:
         self.bot_config = bot_config  # 初始化配置
         self.db = db  # 初始化数据库
 
+        self.agent_configs = AgentConfigStore(db)
+        self.agent_runtimes: dict[str, AgentRuntime] = {}
         self.cron_manager: CronJobManager | None = None
         self.temp_dir_cleaner: TempDirCleaner | None = None
         self.life_service = None
@@ -122,7 +125,7 @@ class BotCoreLifecycle:
                 return
             self._default_chat_provider_warning_emitted = True
             logger.warning(
-                "Detected %d enabled chat providers but `agent_runner.config.model.provider_id` is empty. "
+                "Detected %d enabled chat providers but `agent.config.model.provider_id` is empty. "
                 "LKMBot will use `%s` as the startup fallback chat provider. "
                 "Set a default chat model in the WebUI configuration page to avoid unexpected provider switching.",
                 len(providers),
@@ -177,18 +180,6 @@ class BotCoreLifecycle:
             sp=sp,
         )
         await self.bot_config_mgr.initialize()
-        if sys.platform == "win32" and any(
-            config.get("provider_settings", {}).get("computer_use_runtime") == "local"
-            for config in self.bot_config_mgr.confs.values()
-        ):
-            try:
-                from bot.core.computer.process_sandbox.windows_setup import (
-                    initialize_windows_sandbox,
-                )
-
-                await asyncio.to_thread(initialize_windows_sandbox)
-            except Exception as exc:
-                logger.warning(f"Windows Local sandbox is unavailable: {exc}")
         self.temp_dir_cleaner = TempDirCleaner(
             max_size_getter=lambda: self.bot_config_mgr.default_conf.get(
                 TempDirCleaner.CONFIG_KEY,
@@ -214,7 +205,9 @@ class BotCoreLifecycle:
         self.platform_manager = PlatformManager(self.bot_config, self.event_queue)
 
         # 初始化对话管理器
-        self.conversation_manager = ConversationManager(self.db)
+        self.conversation_manager = ConversationManager(
+            self.db, self.bot_config_mgr
+        )
 
         # 初始化平台消息历史管理器
         self.platform_message_history_manager = PlatformMessageHistoryManager(self.db)
@@ -238,7 +231,14 @@ class BotCoreLifecycle:
             self.bot_config_mgr,
             self.kb_manager,
             self.cron_manager,
+            agent_runtimes=self.agent_runtimes,
         )
+        runtime = BotAgentRuntime(
+            self.star_context,
+            agent_configs=self.agent_configs,
+        )
+        self.star_context.agent.register_runtime("bot", runtime)
+        await runtime.initialize()
         self.star_context.html_renderer = html_renderer
 
         # The Life layer is optional and stays a no-op unless enabled.
@@ -263,6 +263,11 @@ class BotCoreLifecycle:
         self._warn_about_unset_default_chat_provider()
 
         await self.kb_manager.initialize()
+        from bot.core.db.migration.migra_session_overrides import (
+            migrate_session_overrides,
+        )
+
+        await migrate_session_overrides(self.bot_config_mgr, self.db)
 
         # 初始化消息事件流水线调度器
         self.pipeline_scheduler_mapping = await self.load_pipeline_scheduler()
@@ -391,7 +396,9 @@ class BotCoreLifecycle:
         if self.cron_manager:
             await self.cron_manager.shutdown()
 
-        await shutdown_local_booter()
+        context = getattr(self, "star_context", None)
+        if isinstance(context, Context):
+            await context.agent.close()
 
         for plugin in self.plugin_manager.context.get_all_stars():
             try:
@@ -429,7 +436,9 @@ class BotCoreLifecycle:
 
     async def restart(self) -> None:
         """重启 LKMBot 核心生命周期管理类, 终止各个管理器并重新加载平台实例"""
-        await shutdown_local_booter()
+        context = getattr(self, "star_context", None)
+        if isinstance(context, Context):
+            await context.agent.close()
         await self.provider_manager.terminate()
         await self.platform_manager.terminate()
         await self.kb_manager.terminate()
@@ -468,7 +477,13 @@ class BotCoreLifecycle:
         mapping = {}
         for conf_id, ab_config in self.bot_config_mgr.confs.items():
             scheduler = PipelineScheduler(
-                PipelineContext(ab_config, self.plugin_manager, conf_id, self.db),
+                PipelineContext(
+                    ab_config,
+                    self.plugin_manager,
+                    conf_id,
+                    self.db,
+                    agent_runtimes=self.agent_runtimes,
+                ),
             )
             await scheduler.initialize()
             mapping[conf_id] = scheduler
@@ -485,7 +500,13 @@ class BotCoreLifecycle:
         if not ab_config:
             raise ValueError(f"配置文件 {conf_id} 不存在")
         scheduler = PipelineScheduler(
-            PipelineContext(ab_config, self.plugin_manager, conf_id, self.db),
+            PipelineContext(
+                ab_config,
+                self.plugin_manager,
+                conf_id,
+                self.db,
+                agent_runtimes=self.agent_runtimes,
+            ),
         )
         await scheduler.initialize()
         self.pipeline_scheduler_mapping[conf_id] = scheduler

@@ -65,7 +65,7 @@ from bot.api.message_components import (
     Image,
     Record,
 )  # 消息链中的组件，可以根据需要导入
-from bot.core.platform.bot_message_event import MessageSession
+from bot.core.platform.message_session import MessageSession
 from bot.core.platform.register import register_platform_adapter
 from bot import logger
 from .client import FakeClient

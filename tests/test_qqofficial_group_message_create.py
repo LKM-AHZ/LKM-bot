@@ -11,13 +11,13 @@ from botpy import ConnectionSession
 
 from bot.api.event import MessageChain
 from bot.api.message_components import At, Image, Plain, Reply
-from bot.core.platform import Group
 from bot.core.message.message_event_result import (
     MessageEventResult,
     ResultContentType,
 )
 from bot.core.pipeline.respond.stage import RespondStage
 from bot.core.pipeline.result_decorate.stage import ResultDecorateStage
+from bot.core.platform import Group
 from bot.core.platform.message_session import MessageSession
 from bot.core.platform.message_type import MessageType
 from bot.core.platform.sources.qqofficial import qqofficial_group_info
@@ -790,24 +790,25 @@ async def test_result_decorate_segments_qqofficial_ws_plain_result():
     stage.reply_with_mention = False
     stage.reply_with_quote = False
     stage.forward_threshold = 1000
+    config = {
+        "provider_tts_settings": {
+            "enable": False,
+            "use_file_service": False,
+            "dual_output": False,
+        },
+        "callback_api_base": "",
+        "t2i": False,
+    }
+    context = SimpleNamespace(
+        get_config=lambda **_: config,
+        get_using_tts_provider_async=AsyncMock(return_value=None),
+    )
     setattr(
         stage,
         "ctx",
         SimpleNamespace(
-            plugin_manager=SimpleNamespace(
-                context=SimpleNamespace(
-                    get_using_tts_provider_async=AsyncMock(return_value=None)
-                )
-            ),
-            bot_config={
-                "provider_tts_settings": {
-                    "enable": False,
-                    "use_file_service": False,
-                    "dual_output": False,
-                },
-                "callback_api_base": "",
-                "t2i": False,
-            },
+            plugin_manager=SimpleNamespace(context=context),
+            bot_config=config,
         ),
     )
     result = MessageEventResult(

@@ -5,6 +5,7 @@ from fastapi.routing import APIRoute
 
 from bot.lkm.sso import router as auth_sso_router
 
+from .agent_configs import router as agent_configs_router
 from .api_keys import router as api_keys_router
 from .auth import ScopeDependency
 from .auth import router as auth_router
@@ -57,6 +58,7 @@ def build_api_router() -> APIRouter:
         extensions_router,
         skills_router,
         sessions_router,
+        agent_configs_router,
         logs_router,
         stats_router,
         tools_router,

@@ -4,8 +4,8 @@ import pytest
 from sqlmodel import select
 
 from bot.core.agent.response import AgentStats
+from bot.core.bot_agent_runtime import history as native_history
 from bot.core.db.po import ProviderStat
-from bot.core.pipeline.process_stage.method.agent_sub_stages import internal
 from bot.core.provider.entities import ProviderRequest, TokenUsage
 
 
@@ -14,7 +14,7 @@ async def test_record_internal_agent_stats_persists_provider_stat(
     temp_db,
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(internal, "db_helper", temp_db)
+    monkeypatch.setattr(native_history, "db_helper", temp_db)
 
     event = SimpleNamespace(unified_msg_origin="webchat:FriendMessage:session-42")
     req = ProviderRequest(
@@ -38,7 +38,7 @@ async def test_record_internal_agent_stats_persists_provider_stat(
     )
     final_resp = SimpleNamespace(role="assistant")
 
-    await internal._record_internal_agent_stats(
+    await native_history.record_agent_stats(
         event,
         req,
         agent_runner,

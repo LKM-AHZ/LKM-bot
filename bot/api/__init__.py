@@ -2,7 +2,7 @@ import logging
 import sys
 
 from bot.core import html_renderer, sp
-from bot.core.agent.tool import FunctionTool, ToolSet
+from bot.core.agent.tool import FunctionTool, ToolExecResult, ToolSet
 from bot.core.agent.tool_executor import BaseFunctionToolExecutor
 from bot.core.config.bot_config import BotConfig
 from bot.core.star.register import register_llm_tool as llm_tool
@@ -75,6 +75,7 @@ __all__ = [
     "BotConfig",
     "BaseFunctionToolExecutor",
     "FunctionTool",
+    "ToolExecResult",
     "ToolSet",
     "get_backend_client",
     "html_renderer",

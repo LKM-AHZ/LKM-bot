@@ -19,8 +19,8 @@ from bot.api.message_components import (
     Reply,
     Video,
 )
-from bot.core.platform import Group, MessageType
 from bot.core.message.message_event_result import MessageChain
+from bot.core.platform import Group, MessageType
 from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
@@ -78,7 +78,7 @@ async def test_discord_reply_body_reaches_model_request(source):
     Args:
         source: Where the referenced Discord message is available.
     """
-    from bot.core.bot_main_agent.media import append_quoted_content
+    from bot.core.agent_media import append_quoted_content
     from bot.core.provider.entities import ProviderRequest
 
     adapter = DiscordPlatformAdapter.__new__(DiscordPlatformAdapter)

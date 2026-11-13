@@ -11,7 +11,6 @@ from bot.core.pipeline.waking_check.stage import (
 )
 from bot.core.platform import button_interaction
 from bot.core.star.filter.button_action import ButtonActionFilter
-from bot.core.star.session_plugin_manager import SessionPluginManager
 
 
 def test_button_action_filter_matches_action():
@@ -80,6 +79,9 @@ async def test_button_click_only_activates_button_handlers(monkeypatch):
     stage.ignore_at_all = False
     stage.disable_builtin_commands = False
     stage.no_permission_reply = True
+    stage.ctx.plugin_manager = SimpleNamespace(
+        context=SimpleNamespace(get_config=lambda **_: stage.ctx.bot_config)
+    )
     stage._umo_auto_name_recorder = MagicMock()
 
     ordinary_filter = MagicMock()
@@ -103,11 +105,6 @@ async def test_button_click_only_activates_button_handlers(monkeypatch):
     async def return_handlers(_event, handlers):
         return handlers
 
-    monkeypatch.setattr(
-        SessionPluginManager,
-        "filter_handlers_by_session",
-        return_handlers,
-    )
 
     interaction = ButtonInteraction(
         action_id="approve",

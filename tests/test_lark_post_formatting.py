@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 import pytest_asyncio
 
-from bot.core.bot_main_agent.media import append_quoted_content
-from bot.core.bot_main_agent.request import collect_initial_request
+from bot.core.agent_media import append_quoted_content
+from bot.core.bot_agent_runtime.main_agent.request import collect_initial_request
 from bot.core.message.components import Reply
 from bot.core.pipeline.process_stage.method.agent_sub_stages import third_party
 from bot.core.pipeline.waking_check import stage as waking
@@ -97,16 +97,14 @@ async def waking_stage(monkeypatch):
             db_helper=MagicMock(),
         )
     )
+    stage.ctx.plugin_manager = SimpleNamespace(
+        context=SimpleNamespace(get_config=lambda **_: stage.ctx.bot_config)
+    )
     stage._umo_auto_name_recorder = MagicMock()
     monkeypatch.setattr(
         waking.star_handlers_registry,
         "get_handlers_by_event_type",
         lambda *args, **kwargs: [],
-    )
-    monkeypatch.setattr(
-        waking.SessionPluginManager,
-        "filter_handlers_by_session",
-        AsyncMock(return_value=[]),
     )
     return stage
 
@@ -190,7 +188,7 @@ async def test_lark_post_preserves_formatting(
         waking_stage.ctx.bot_config["wake_prefix"] = [wake_prefix]
         main_agent_build_config.provider_wake_prefix = provider_prefix
         monkeypatch.setattr(
-            'bot.core.bot_main_agent.request._get_session_conv',
+            "bot.core.bot_agent_runtime.main_agent.request._get_session_conv",
             AsyncMock(return_value=SimpleNamespace(history="[]")),
         )
         await waking_stage.process(parsed_event)

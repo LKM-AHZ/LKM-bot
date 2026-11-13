@@ -6,7 +6,7 @@
   >
     <v-navigation-drawer
       class="chat-sidebar"
-      :class="{ collapsed: isSidebarCollapsed }"
+      :class="{ collapsed: isSidebarCollapsed, 'sidebar-page-navigation': sidebarNavigation }"
       :model-value="isMobile ? mobileDrawer.open : true"
       @update:model-value="isMobile && mobileDrawer.SET($event)"
       :permanent="!isMobile"
@@ -31,7 +31,7 @@
             <ChatUILogo class="chat-sidebar-brand-logo" />
             <span class="chat-sidebar-brand-copy">
               <span class="chat-sidebar-brand-name">LKMBot</span>
-              <span class="chat-sidebar-brand-mode">ChatUI</span>
+              <span v-if="!sidebarNavigation" class="chat-sidebar-brand-mode">ChatUI</span>
             </span>
           </div>
           <button
@@ -60,6 +60,21 @@
             <PanelLeft :size="20" class="sidebar-panel-toggle-icon" />
           </v-btn>
         </div>
+
+        <v-btn
+          v-if="sidebarNavigation"
+          class="new-chat-btn sidebar-back-btn"
+          :class="{ 'icon-only': isSidebarCollapsed }"
+          variant="text"
+          :icon="isSidebarCollapsed"
+          :aria-label="t('core.navigation.backToNavigation')"
+          @click="backToNavigation"
+        >
+          <ChevronLeft :size="20" :class="{ 'mr-2': !isSidebarCollapsed }" />
+          <span v-if="!isSidebarCollapsed">{{ t('core.navigation.backToNavigation') }}</span>
+          <v-tooltip v-if="isSidebarCollapsed" activator="parent" location="right"
+            :text="t('core.navigation.backToNavigation')" :open-delay="0" />
+        </v-btn>
 
         <button
           v-if="isSidebarCollapsed"
@@ -543,6 +558,7 @@ import { useDisplay } from "vuetify";
 import { isAxiosError } from "axios";
 import {
   ArrowDown,
+  ChevronLeft,
   Box,
   PanelLeft,
   Pencil,
@@ -621,6 +637,7 @@ watch(
 );
 onUnmounted(() => headerContext.SET_COMPONENT(null));
 const customizer = useCustomizerStore();
+const sidebarNavigation = computed(() => customizer.chatNavigationInSidebar && !props.chatboxMode);
 const { t } = useI18n();
 const { tm } = useModuleI18n("features/chat");
 const confirmDialog = useConfirmDialog();
@@ -765,6 +782,12 @@ const isSidebarCollapsed = computed(
 const isProviderWorkspace = computed(
   () => activeWorkspace.value === "providers",
 );
+
+async function backToNavigation() {
+  const previousRoute = sessionStorage.getItem("bot:last_bot_route") || "/";
+  await router.push(previousRoute.startsWith("/chat") ? "/" : previousRoute);
+  if (isMobile.value) mobileDrawer.SET(true);
+}
 
 function toggleChatSidebar() {
   if (isMobile.value) {
@@ -2209,28 +2232,28 @@ async function stopCurrentSession() {
 /* The header draws across the whole width, above the full-height chat sidebar. */
 :global(.chat-sidebar .v-navigation-drawer__content) {
   /* Seat the brand's top edge at the content area's top edge, fully below the toolbar. */
-  padding-top: calc(var(--lkmbot-toolbar-height, 40px) - 10px);
+  padding-top: calc(var(--lkmbot-toolbar-height, 42px) - 10px);
   box-sizing: border-box;
 }
 
 /* Off macOS the chat sidebar owns the top-left corner, so the brand sits in the
    toolbar band itself instead of clearing it. */
-:global(html:not([data-astrbot-desktop-platform='macos']) .chat-sidebar .v-navigation-drawer__content) {
+:global(html:not([data-bot-desktop-platform='macos']) .chat-sidebar .v-navigation-drawer__content) {
   padding-top: 4px;
 }
 
-:global(html:not([data-astrbot-desktop-platform='macos']) .chat-sidebar .chat-sidebar-brand) {
-  min-height: var(--lkmbot-toolbar-height, 40px);
+:global(html:not([data-bot-desktop-platform='macos']) .chat-sidebar .chat-sidebar-brand) {
+  min-height: var(--lkmbot-toolbar-height, 42px);
 }
 
 /* On macOS the chat sidebar stays transparent; the shared tint is painted behind it. */
-:global(html[data-astrbot-desktop-platform='macos'] .chat-sidebar) {
+:global(html[data-bot-desktop-platform='macos'] .chat-sidebar) {
   background: transparent !important;
 }
 
 /* A temporary (mobile) drawer floats above the page, so the vibrancy
    transparency would let content bleed through; keep it opaque instead. */
-:global(html[data-astrbot-desktop-platform='macos'] .chat-sidebar.v-navigation-drawer--temporary) {
+:global(html[data-bot-desktop-platform='macos'] .chat-sidebar.v-navigation-drawer--temporary) {
   background: var(--lkmbot-chrome-bg, rgb(var(--v-theme-surface))) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16) !important;
   z-index: 1007 !important;
@@ -2238,12 +2261,12 @@ async function stopCurrentSession() {
 
 /* Off macOS the chat sidebar is opaque and owns the top-left corner: it must paint
    above the header's left zone so the brand stays visible in the toolbar band. */
-:global(html:not([data-astrbot-desktop-platform='macos']) .chat-sidebar) {
+:global(html:not([data-bot-desktop-platform='macos']) .chat-sidebar) {
   z-index: 1007 !important;
 }
 
 /* The dark chat sidebar uses its own palette; match the corner notch to it. */
-:global(html:not([data-astrbot-desktop-platform='macos']) .v-application.v-theme--PurpleThemeDark .v-main.chat-main) {
+:global(html:not([data-bot-desktop-platform='macos']) .v-application.v-theme--PurpleThemeDark .v-main.chat-main) {
   background-image: linear-gradient(
     to right,
     var(--lkmbot-chrome-bg, #242424) 0 calc(var(--v-layout-left) + 12px),
@@ -2255,6 +2278,23 @@ async function stopCurrentSession() {
    drop it so the sub-header sits directly under the toolbar band. */
 :global(.chat-main) {
   padding-top: 0 !important;
+}
+
+.sidebar-page-navigation .sidebar-top > :not(.chat-sidebar-brand),
+.sidebar-page-navigation .sidebar-content {
+  animation: sidebar-page-forward 180ms ease-out;
+}
+
+@keyframes sidebar-page-forward {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-page-navigation .sidebar-top > :not(.chat-sidebar-brand),
+  .sidebar-page-navigation .sidebar-content {
+    animation: none;
+  }
 }
 
 .sidebar-top {
@@ -2432,6 +2472,11 @@ async function stopCurrentSession() {
   letter-spacing: 0;
   font-size: 14px;
   font-weight: 500;
+}
+
+.sidebar-back-btn {
+  margin-top: 8px;
+  margin-bottom: 2px;
 }
 
 .sidebar-provider-btn {

@@ -7,7 +7,7 @@ from pathlib import Path
 import mcp
 import pytest
 
-from bot.core.computer.booters.cua import CuaShellComponent
+from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 from bot.core.config.default import CONFIG_METADATA_3
 from bot.core.provider.func_tool_manager import FunctionToolManager
 
@@ -176,7 +176,7 @@ def _agent_computer_use_items():
 
 @pytest.mark.asyncio
 async def test_get_booter_creates_cua_booter(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     created = []
 
@@ -204,7 +204,7 @@ async def test_get_booter_creates_cua_booter(monkeypatch):
     monkeypatch.setitem(computer_client.session_booter, "cua-test", None)
     computer_client.session_booter.pop("cua-test", None)
     monkeypatch.setattr(
-        "bot.core.computer.booters.cua.CuaBooter",
+        "bot.core.bot_agent_runtime.computer.booters.cua.CuaBooter",
         FakeCuaBooter,
         raising=False,
     )
@@ -233,7 +233,7 @@ async def test_get_booter_creates_cua_booter(monkeypatch):
 
 
 def test_cua_ephemeral_kwargs_include_local_when_supported():
-    from bot.core.computer.booters.cua import CuaBooter
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaBooter
 
     def ephemeral(image, ttl=None, telemetry_enabled=None, local=None):
         return image, ttl, telemetry_enabled, local
@@ -246,7 +246,7 @@ def test_cua_ephemeral_kwargs_include_local_when_supported():
 
 
 def test_cua_ephemeral_kwargs_include_api_key_for_cloud_when_supported():
-    from bot.core.computer.booters.cua import CuaBooter
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaBooter
 
     def ephemeral(image, local=None, api_key=None):
         return image, local, api_key
@@ -259,7 +259,10 @@ def test_cua_ephemeral_kwargs_include_api_key_for_cloud_when_supported():
 
 
 def test_cua_default_config_matches_booter_defaults():
-    from bot.core.computer.booters.cua import CUA_DEFAULT_CONFIG, CuaBooter
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CUA_DEFAULT_CONFIG,
+        CuaBooter,
+    )
     from bot.core.config.default import DEFAULT_CONFIG
 
     booter = CuaBooter()
@@ -285,7 +288,7 @@ def test_cua_default_config_matches_booter_defaults():
 
 @pytest.mark.asyncio
 async def test_cua_config_log_does_not_include_api_key(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     log_messages = []
 
@@ -305,7 +308,7 @@ async def test_cua_config_log_does_not_include_api_key(monkeypatch):
     monkeypatch.setitem(computer_client.session_booter, "cua-log-test", None)
     computer_client.session_booter.pop("cua-log-test", None)
     monkeypatch.setattr(
-        "bot.core.computer.booters.cua.CuaBooter",
+        "bot.core.bot_agent_runtime.computer.booters.cua.CuaBooter",
         FakeCuaBooter,
         raising=False,
     )
@@ -333,7 +336,7 @@ async def test_cua_config_log_does_not_include_api_key(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_booter_shuts_down_client_when_skill_sync_fails(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     shutdowns = []
 
@@ -354,7 +357,7 @@ async def test_get_booter_shuts_down_client_when_skill_sync_fails(monkeypatch):
     monkeypatch.setitem(computer_client.session_booter, "cua-sync-fail", None)
     computer_client.session_booter.pop("cua-sync-fail", None)
     monkeypatch.setattr(
-        "bot.core.computer.booters.cua.CuaBooter",
+        "bot.core.bot_agent_runtime.computer.booters.cua.CuaBooter",
         FakeCuaBooter,
         raising=False,
     )
@@ -377,7 +380,7 @@ async def test_get_booter_shuts_down_client_when_skill_sync_fails(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_cua_idle_timeout_shuts_down_session_proactively(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     shutdowns = []
 
@@ -398,7 +401,7 @@ async def test_cua_idle_timeout_shuts_down_session_proactively(monkeypatch):
         computer_client, "_sync_skills_to_sandbox", lambda booter: asyncio.sleep(0)
     )
     monkeypatch.setattr(
-        "bot.core.computer.booters.cua.CuaBooter",
+        "bot.core.bot_agent_runtime.computer.booters.cua.CuaBooter",
         FakeCuaBooter,
         raising=False,
     )
@@ -425,7 +428,7 @@ async def test_cua_idle_timeout_shuts_down_session_proactively(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_cua_idle_timeout_refreshes_on_reuse(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     shutdowns = []
 
@@ -446,7 +449,7 @@ async def test_cua_idle_timeout_refreshes_on_reuse(monkeypatch):
         computer_client, "_sync_skills_to_sandbox", lambda booter: asyncio.sleep(0)
     )
     monkeypatch.setattr(
-        "bot.core.computer.booters.cua.CuaBooter",
+        "bot.core.bot_agent_runtime.computer.booters.cua.CuaBooter",
         FakeCuaBooter,
         raising=False,
     )
@@ -480,7 +483,7 @@ async def test_cua_idle_timeout_refreshes_on_reuse(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_cua_idle_timeout_zero_disables_proactive_shutdown(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     shutdowns = []
 
@@ -501,7 +504,7 @@ async def test_cua_idle_timeout_zero_disables_proactive_shutdown(monkeypatch):
         computer_client, "_sync_skills_to_sandbox", lambda booter: asyncio.sleep(0)
     )
     monkeypatch.setattr(
-        "bot.core.computer.booters.cua.CuaBooter",
+        "bot.core.bot_agent_runtime.computer.booters.cua.CuaBooter",
         FakeCuaBooter,
         raising=False,
     )
@@ -529,7 +532,7 @@ async def test_cua_idle_timeout_zero_disables_proactive_shutdown(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_non_cua_booter_does_not_schedule_idle_cleanup(monkeypatch):
-    from bot.core.computer import computer_client
+    from bot.core.bot_agent_runtime.computer import computer_client
 
     class FakeShipyardBooter:
         async def available(self):
@@ -560,7 +563,7 @@ async def test_non_cua_booter_does_not_schedule_idle_cleanup(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_cua_components_map_sdk_results(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaFileSystemComponent,
         CuaGUIComponent,
         CuaPythonComponent,
@@ -596,7 +599,9 @@ async def test_cua_components_map_sdk_results(tmp_path):
 
 @pytest.mark.asyncio
 async def test_cua_list_dir_returns_entries_list_for_shell_fallback():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
     delattr(sandbox, "filesystem")
@@ -610,7 +615,9 @@ async def test_cua_list_dir_returns_entries_list_for_shell_fallback():
 
 @pytest.mark.asyncio
 async def test_cua_shell_filesystem_fallback_shell_quotes_paths():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     path = "folder/it's file.txt"
     sandbox = FakeSandbox()
@@ -628,7 +635,9 @@ async def test_cua_shell_filesystem_fallback_shell_quotes_paths():
 
 @pytest.mark.asyncio
 async def test_cua_write_file_shell_fallback_uses_python_base64_decoder():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
     delattr(sandbox, "filesystem")
@@ -642,7 +651,9 @@ async def test_cua_write_file_shell_fallback_uses_python_base64_decoder():
 
 @pytest.mark.asyncio
 async def test_cua_write_file_shell_fallback_creates_parent_directory():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
     delattr(sandbox, "filesystem")
@@ -655,7 +666,9 @@ async def test_cua_write_file_shell_fallback_creates_parent_directory():
 
 @pytest.mark.asyncio
 async def test_cua_write_file_shell_fallback_chunks_large_payloads():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
     delattr(sandbox, "filesystem")
@@ -671,7 +684,9 @@ async def test_cua_write_file_shell_fallback_chunks_large_payloads():
 
 @pytest.mark.asyncio
 async def test_cua_create_file_reports_mode_as_informational():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
 
@@ -684,7 +699,9 @@ async def test_cua_create_file_reports_mode_as_informational():
 
 @pytest.mark.asyncio
 async def test_cua_write_file_shell_fallback_propagates_shell_failure():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
     sandbox.shell = FailingShell()
@@ -700,7 +717,9 @@ async def test_cua_write_file_shell_fallback_propagates_shell_failure():
 
 @pytest.mark.asyncio
 async def test_cua_edit_file_propagates_write_failure():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     class ReadableButFailingWriteShell:
         def __init__(self):
@@ -730,7 +749,9 @@ async def test_cua_edit_file_propagates_write_failure():
 
 @pytest.mark.asyncio
 async def test_cua_list_dir_shell_fallback_returns_filename_only_entries():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = FakeSandbox()
     sandbox.shell = SyncShell("alpha.txt\nfolder\n")
@@ -744,7 +765,9 @@ async def test_cua_list_dir_shell_fallback_returns_filename_only_entries():
 
 @pytest.mark.asyncio
 async def test_cua_shell_filesystem_fallback_rejects_non_posix_os_type():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = SandboxWithoutFilesystem()
     fs = CuaFileSystemComponent(sandbox, os_type="windows")
@@ -764,7 +787,10 @@ async def test_cua_shell_filesystem_fallback_rejects_non_posix_os_type():
 
 @pytest.mark.asyncio
 async def test_cua_shell_and_python_accept_sync_sdk_methods():
-    from bot.core.computer.booters.cua import CuaPythonComponent, CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaPythonComponent,
+        CuaShellComponent,
+    )
 
     sandbox = FakeSandbox()
     sandbox.shell = SyncShell()
@@ -779,7 +805,9 @@ async def test_cua_shell_and_python_accept_sync_sdk_methods():
 
 @pytest.mark.asyncio
 async def test_cua_filesystem_prefers_native_files_interface():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = SandboxWithoutFilesystem()
     sandbox.files = FakeFiles()
@@ -796,7 +824,9 @@ async def test_cua_filesystem_prefers_native_files_interface():
 
 @pytest.mark.asyncio
 async def test_cua_filesystem_uses_legacy_filesystem_when_files_lacks_method():
-    from bot.core.computer.booters.cua import CuaFileSystemComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
+        CuaFileSystemComponent,
+    )
 
     sandbox = SandboxWithoutFilesystem()
     sandbox.files = type("UploadOnlyFiles", (), {"upload": FakeFiles().upload})()
@@ -814,7 +844,7 @@ async def test_cua_filesystem_uses_legacy_filesystem_when_files_lacks_method():
 
 @pytest.mark.asyncio
 async def test_cua_shell_normalizes_output_returncode_shape():
-    from bot.core.computer.booters.cua import CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 
     sandbox = FakeSandbox()
     sandbox.shell = ProcessShapeShell()
@@ -831,7 +861,7 @@ async def test_cua_shell_normalizes_output_returncode_shape():
 
 @pytest.mark.asyncio
 async def test_cua_shell_normalizes_command_result_object_shape():
-    from bot.core.computer.booters.cua import CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 
     sandbox = FakeSandbox()
     sandbox.shell = CommandResultShapeShell(stdout="hello\n", returncode=0)
@@ -848,7 +878,7 @@ async def test_cua_shell_normalizes_command_result_object_shape():
 
 @pytest.mark.asyncio
 async def test_cua_shell_prefers_returncode_when_exit_code_is_none():
-    from bot.core.computer.booters.cua import CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 
     class ShellWithMixedExitCode:
         async def run(self, command: str, **kwargs):
@@ -870,7 +900,7 @@ async def test_cua_shell_prefers_returncode_when_exit_code_is_none():
 
 @pytest.mark.asyncio
 async def test_cua_python_fallback_preserves_shell_command_result_stdout():
-    from bot.core.computer.booters.cua import CuaPythonComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaPythonComponent
 
     sandbox = SandboxWithoutFilesystem()
     sandbox.shell = CommandResultShapeShell(stdout="from python fallback\n")
@@ -885,7 +915,7 @@ async def test_cua_python_fallback_preserves_shell_command_result_stdout():
 
 @pytest.mark.asyncio
 async def test_cua_shell_background_wrapper_detaches_via_python_subprocess():
-    from bot.core.computer.booters.cua import CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 
     sandbox = FakeSandbox()
 
@@ -907,7 +937,7 @@ async def test_cua_shell_background_wrapper_detaches_via_python_subprocess():
 
 @pytest.mark.asyncio
 async def test_cua_shell_background_rejects_non_posix_os_type():
-    from bot.core.computer.booters.cua import CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 
     sandbox = FakeSandbox()
 
@@ -926,7 +956,7 @@ async def test_cua_shell_background_rejects_non_posix_os_type():
 
 @pytest.mark.asyncio
 async def test_cua_upload_file_fallback_rejects_non_posix_os_type(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -956,7 +986,7 @@ async def test_cua_upload_file_fallback_rejects_non_posix_os_type(tmp_path):
 
 @pytest.mark.asyncio
 async def test_cua_upload_file_prefers_native_files_upload(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -987,7 +1017,7 @@ async def test_cua_upload_file_prefers_native_files_upload(tmp_path):
 
 @pytest.mark.asyncio
 async def test_cua_upload_file_uses_native_write_bytes_when_upload_missing(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1026,7 +1056,7 @@ async def test_cua_upload_file_uses_native_write_bytes_when_upload_missing(tmp_p
 
 @pytest.mark.asyncio
 async def test_cua_upload_file_propagates_native_upload_failure_result(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1061,7 +1091,7 @@ async def test_cua_upload_file_propagates_native_upload_failure_result(tmp_path)
 
 @pytest.mark.asyncio
 async def test_cua_download_file_shell_quotes_remote_path(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1101,7 +1131,7 @@ async def test_cua_download_file_shell_quotes_remote_path(tmp_path):
 
 @pytest.mark.asyncio
 async def test_cua_download_file_fallback_rejects_non_posix_os_type(tmp_path):
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1129,7 +1159,7 @@ async def test_cua_download_file_fallback_rejects_non_posix_os_type(tmp_path):
 
 @pytest.mark.asyncio
 async def test_cua_boot_cleans_up_sandbox_when_component_setup_fails(monkeypatch):
-    from bot.core.computer.booters import cua as cua_booter
+    from bot.core.bot_agent_runtime.computer.booters import cua as cua_booter
 
     closed = []
 
@@ -1180,7 +1210,7 @@ async def test_cua_boot_cleans_up_sandbox_when_component_setup_fails(monkeypatch
 
 @pytest.mark.asyncio
 async def test_cua_shell_background_reports_missing_python3_requirement():
-    from bot.core.computer.booters.cua import CuaShellComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
 
     sandbox = FakeSandbox()
     sandbox.shell = FailingShell()
@@ -1194,7 +1224,7 @@ async def test_cua_shell_background_reports_missing_python3_requirement():
 
 @pytest.mark.asyncio
 async def test_cua_python_fallback_reports_missing_python3_requirement():
-    from bot.core.computer.booters.cua import CuaPythonComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaPythonComponent
 
     sandbox = SandboxWithoutFilesystem()
     sandbox.shell = FailingShell()
@@ -1209,7 +1239,7 @@ async def test_cua_python_fallback_reports_missing_python3_requirement():
 
 @pytest.mark.asyncio
 async def test_cua_gui_reports_missing_mouse_or_keyboard():
-    from bot.core.computer.booters.cua import CuaGUIComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaGUIComponent
 
     class SandboxWithoutGuiDevices:
         async def screenshot(self):
@@ -1229,7 +1259,7 @@ async def test_cua_gui_reports_missing_mouse_or_keyboard():
 
 @pytest.mark.asyncio
 async def test_cua_gui_press_error_lists_probed_methods():
-    from bot.core.computer.booters.cua import CuaGUIComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaGUIComponent
 
     class SandboxWithoutPress:
         keyboard = object()
@@ -1247,7 +1277,7 @@ async def test_cua_gui_press_error_lists_probed_methods():
 
 @pytest.mark.asyncio
 async def test_cua_gui_caches_component_methods_after_initialization():
-    from bot.core.computer.booters.cua import CuaGUIComponent
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaGUIComponent
 
     class CountingMouse:
         def __init__(self):
@@ -1278,7 +1308,7 @@ async def test_cua_gui_caches_component_methods_after_initialization():
 
 
 def test_cua_capabilities_reflect_initialized_sandbox_gui_devices():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1324,7 +1354,7 @@ def test_cua_capabilities_reflect_initialized_sandbox_gui_devices():
 
 @pytest.mark.asyncio
 async def test_cua_shutdown_clears_cached_components():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1358,7 +1388,7 @@ async def test_cua_shutdown_clears_cached_components():
 
 @pytest.mark.asyncio
 async def test_cua_available_checks_shell_health():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1390,7 +1420,7 @@ async def test_cua_available_checks_shell_health():
 
 @pytest.mark.asyncio
 async def test_cua_available_rejects_unknown_health_exit_code():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1418,7 +1448,7 @@ async def test_cua_available_rejects_unknown_health_exit_code():
 
 @pytest.mark.asyncio
 async def test_cua_available_returns_false_when_shell_health_fails():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1448,7 +1478,7 @@ async def test_cua_available_returns_false_when_shell_health_fails():
 
 @pytest.mark.asyncio
 async def test_cua_available_propagates_cancellation():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1479,7 +1509,7 @@ async def test_cua_available_propagates_cancellation():
 
 @pytest.mark.asyncio
 async def test_cua_available_allows_shell_health_warning_on_stderr():
-    from bot.core.computer.booters.cua import (
+    from bot.core.bot_agent_runtime.computer.booters.cua import (
         CuaBooter,
         CuaFileSystemComponent,
         CuaGUIComponent,
@@ -1513,7 +1543,7 @@ async def test_cua_available_allows_shell_health_warning_on_stderr():
 
 
 def test_cua_tools_are_registered_as_builtin_tools():
-    from bot.core.tools.computer_tools.cua import (
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
         CuaKeyboardTypeTool,
         CuaMouseClickTool,
         CuaScreenshotTool,
@@ -1557,8 +1587,10 @@ _PNG_BYTES = base64.b64decode(
 
 @pytest.mark.asyncio
 async def test_screenshot_tool_returns_image_and_sends_file(monkeypatch, tmp_path):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaScreenshotTool
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaScreenshotTool,
+    )
 
     sent_messages = []
 
@@ -1630,9 +1662,11 @@ async def test_screenshot_tool_normalizes_supported_screenshot_shapes(
     tmp_path,
     screenshot_shape,
 ):
-    from bot.core.computer.booters.cua import CuaGUIComponent
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaScreenshotTool
+    from bot.core.bot_agent_runtime.computer.booters.cua import CuaGUIComponent
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaScreenshotTool,
+    )
 
     sent_messages = []
 
@@ -1700,8 +1734,10 @@ async def test_screenshot_tool_normalizes_supported_screenshot_shapes(
 
 @pytest.mark.asyncio
 async def test_screenshot_tool_can_opt_in_to_llm_image_content(monkeypatch, tmp_path):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaScreenshotTool
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaScreenshotTool,
+    )
 
     class FakeEvent:
         unified_msg_origin = "umo"
@@ -1751,8 +1787,10 @@ async def test_screenshot_tool_can_opt_in_to_llm_image_content(monkeypatch, tmp_
 
 @pytest.mark.asyncio
 async def test_screenshot_tool_can_opt_out_of_llm_image_content(monkeypatch, tmp_path):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaScreenshotTool
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaScreenshotTool,
+    )
 
     class FakeEvent:
         unified_msg_origin = "umo"
@@ -1802,8 +1840,8 @@ async def test_screenshot_tool_can_opt_out_of_llm_image_content(monkeypatch, tmp
 
 @pytest.mark.asyncio
 async def test_cua_tools_return_permission_error_without_gui_lookup(monkeypatch):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import (
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
         CuaKeyboardTypeTool,
         CuaMouseClickTool,
         CuaScreenshotTool,
@@ -1839,8 +1877,10 @@ async def test_cua_tools_return_permission_error_without_gui_lookup(monkeypatch)
 
 @pytest.mark.asyncio
 async def test_cua_tools_include_exception_type_for_blank_error(monkeypatch):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaMouseClickTool
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaMouseClickTool,
+    )
 
     class BlankError(Exception):
         def __str__(self):
@@ -1873,8 +1913,10 @@ async def test_cua_tools_include_exception_type_for_blank_error(monkeypatch):
 async def test_cua_mouse_click_tool_happy_path_forwards_args_and_serializes_json(
     monkeypatch,
 ):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaMouseClickTool
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaMouseClickTool,
+    )
 
     class FakeEvent:
         unified_msg_origin = "umo"
@@ -1924,8 +1966,10 @@ async def test_cua_mouse_click_tool_happy_path_forwards_args_and_serializes_json
 async def test_cua_keyboard_type_tool_happy_path_forwards_args_and_serializes_json(
     monkeypatch,
 ):
-    from bot.core.tools.computer_tools import cua as cua_tools
-    from bot.core.tools.computer_tools.cua import CuaKeyboardTypeTool
+    from bot.core.bot_agent_runtime.tools.computer_tools import cua as cua_tools
+    from bot.core.bot_agent_runtime.tools.computer_tools.cua import (
+        CuaKeyboardTypeTool,
+    )
 
     class FakeEvent:
         unified_msg_origin = "umo"

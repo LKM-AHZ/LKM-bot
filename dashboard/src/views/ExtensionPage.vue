@@ -429,6 +429,7 @@ const updateDialogPluginLogo = computed(() => {
           :pluginName="curr_namespace"
           :pluginI18n="extension_config.i18n"
           enable-default-reset
+          foldable
         />
         <p v-else>{{ tm("dialogs.config.noConfig") }}</p>
       </v-card-text>
@@ -700,14 +701,14 @@ const updateDialogPluginLogo = computed(() => {
 
           <div v-if="selectedInstallPlugin" class="mt-4">
             <v-chip
-              v-if="selectedInstallPlugin.astrbot_version"
+              v-if="selectedInstallPlugin.bot_version"
               size="small"
               color="secondary"
               variant="outlined"
               class="mr-2 mb-2"
             >
               {{ tm("card.status.botVersion") }}:
-              {{ selectedInstallPlugin.astrbot_version }}
+              {{ selectedInstallPlugin.bot_version }}
             </v-chip>
             <v-chip
               v-if="
@@ -728,7 +729,7 @@ const updateDialogPluginLogo = computed(() => {
             </v-chip>
             <v-alert
               v-if="
-                selectedInstallPlugin.astrbot_version &&
+                selectedInstallPlugin.bot_version &&
                 installSupport.checked &&
                 !installSupport.supported
               "
@@ -838,14 +839,14 @@ const updateDialogPluginLogo = computed(() => {
 
                 <div v-if="selectedInstallPlugin" class="mb-3">
                   <v-chip
-                    v-if="selectedInstallPlugin.astrbot_version"
+                    v-if="selectedInstallPlugin.bot_version"
                     size="small"
                     color="secondary"
                     variant="outlined"
                     class="mr-2 mb-2"
                   >
                     {{ tm("card.status.botVersion") }}:
-                    {{ selectedInstallPlugin.astrbot_version }}
+                    {{ selectedInstallPlugin.bot_version }}
                   </v-chip>
                   <v-chip
                     v-if="
@@ -867,7 +868,7 @@ const updateDialogPluginLogo = computed(() => {
                   </v-chip>
                   <v-alert
                     v-if="
-                      selectedInstallPlugin.astrbot_version &&
+                      selectedInstallPlugin.bot_version &&
                       installSupport.checked &&
                       !installSupport.supported
                     "
@@ -1275,6 +1276,12 @@ const updateDialogPluginLogo = computed(() => {
 </template>
 
 <style scoped>
+.plugin-config-form {
+  /* v-card-text padding, published for the fold headers so their hover highlight
+     reaches the card edges. */
+  --config-group-inset: 16px;
+}
+
 .plugin-config-form > :deep(.config-section) {
   display: none;
 }

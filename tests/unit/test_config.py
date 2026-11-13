@@ -1,7 +1,6 @@
 """Tests for config module."""
 
 import asyncio
-import copy
 import json
 import os
 import threading
@@ -11,7 +10,6 @@ import pytest
 
 from bot.core.config.bot_config import BotConfig, RateLimitStrategy
 from bot.core.config.default import (
-    DEFAULT_CONFIG,
     DEFAULT_VALUE_MAP,
     get_local_permission_defaults,
 )
@@ -129,6 +127,7 @@ class TestBotConfigLoad:
             == expected
         )
         assert defaults == get_local_permission_defaults(system)
+
 
 
 

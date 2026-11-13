@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import time
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
@@ -559,27 +560,23 @@ async def test_service_note_finished_delivers_to_inbox(life_db, tmp_path) -> Non
 
 @pytest.mark.asyncio
 async def test_service_note_finished_wakes_active_runner(life_db, tmp_path) -> None:
-    import bot.core.pipeline.process_stage.follow_up as follow_up_module
-
     service = await _make_service(life_db, tmp_path)
-    ticket = SimpleNamespace(
-        resolved=asyncio.Event(),
-        consumed=True,
+    run_turn = AsyncMock()
+    service.star_context = SimpleNamespace(
+        agent=SimpleNamespace(
+            active_turn=lambda umo: object(),
+            run_turn=run_turn,
+        )
     )
-    runner = SimpleNamespace(follow_up=lambda *, message_text: ticket)
-    original = follow_up_module.get_active_runner
-    follow_up_module.get_active_runner = lambda umo: runner
     try:
         task = _task()
         task.status = "completed"
         service.note_subagent_finished(task)
+        await asyncio.sleep(0)
         assert service._subagent_counts["woken"] == 1
         assert service.subagent_inbox.stats()["pending"] == 0
-        ticket.resolved.set()
-        await asyncio.sleep(0)
-        assert service.subagent_inbox.stats()["pending"] == 0
+        run_turn.assert_awaited_once()
     finally:
-        follow_up_module.get_active_runner = original
         await service.stop()
         set_life_service(None)
 

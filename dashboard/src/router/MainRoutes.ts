@@ -209,7 +209,7 @@ const MainRoutes = {
     {
       name: 'SessionManagement',
       path: '/session-management',
-      component: () => import('@/views/SessionManagementPage.vue')
+      redirect: '/config?scope=sessions'
     },
     {
       name: 'Persona',

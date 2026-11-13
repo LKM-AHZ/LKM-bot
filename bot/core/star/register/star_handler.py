@@ -524,7 +524,10 @@ def register_on_agent_begin(**kwargs):
 
 
 def register_on_agent_done(**kwargs):
-    """当 Agent 运行完成后的事件
+    """Register an Agent exit handler, including errors and cancellation.
+
+    The response can be None when execution exits without a final response.
+    Inspect run_context.run_end_reason and run_context.run_error for details.
 
     Examples:
     ```py
@@ -536,7 +539,7 @@ def register_on_agent_done(**kwargs):
         self,
         event: BotMessageEvent,
         run_context: ContextWrapper[BotAgentContext],
-        response: LLMResponse,
+        response: LLMResponse | None,
     ) -> None:
         ...
     ```

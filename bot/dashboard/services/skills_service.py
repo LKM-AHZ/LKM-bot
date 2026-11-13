@@ -10,11 +10,11 @@ from pathlib import Path
 from typing import Any
 
 from bot.core import DEMO_MODE, logger
-from bot.core.computer.computer_client import (
+from bot.core.bot_agent_runtime.computer.computer_client import (
     _discover_bay_credentials,
     sync_skills_to_active_sandboxes,
 )
-from bot.core.skills.neo_skill_sync import NeoSkillSyncManager
+from bot.core.bot_agent_runtime.computer.neo_skill_sync import NeoSkillSyncManager
 from bot.core.skills.skill_manager import SkillManager
 from bot.core.utils.bot_path import get_bot_temp_path
 

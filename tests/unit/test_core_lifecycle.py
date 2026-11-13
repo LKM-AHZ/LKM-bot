@@ -1,7 +1,6 @@
 """Tests for BotCoreLifecycle."""
 
 import asyncio
-import logging
 import os
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -45,6 +44,7 @@ class TestBotCoreLifecycleInit:
 
         assert lifecycle.log_broker == mock_log_broker
         assert lifecycle.db == mock_db
+        assert lifecycle.agent_runtimes == {}
         assert lifecycle.cron_manager is None
         assert lifecycle.temp_dir_cleaner is None
 
@@ -350,6 +350,7 @@ class TestBotCoreLifecycleInitialize:
 
         # Mock all the dependencies
         mock_db.initialize = AsyncMock()
+        mock_db.get_preferences = AsyncMock(return_value=[])
         mock_html_renderer = MagicMock()
         mock_html_renderer.initialize = AsyncMock()
 
@@ -483,6 +484,7 @@ class TestBotCoreLifecycleInitialize:
 
         # Verify pipeline scheduler loaded
         assert lifecycle.pipeline_scheduler_mapping is not None
+
 
 
 

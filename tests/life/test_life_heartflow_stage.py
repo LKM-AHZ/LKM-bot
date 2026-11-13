@@ -254,18 +254,22 @@ async def test_scope_outside_the_allowlist_passes_through():
 
 
 def _waking_context() -> SimpleNamespace:
-    return SimpleNamespace(
-        bot_config={
-            "platform_settings": {
-                "no_permission_reply": False,
-                "friend_message_needs_wake_prefix": False,
-                "ignore_bot_self_message": False,
-                "ignore_at_all": False,
-            },
-            "admins_id": [],
-            "wake_prefix": ["/"],
-            "disable_builtin_commands": False,
+    config = {
+        "platform_settings": {
+            "no_permission_reply": False,
+            "friend_message_needs_wake_prefix": False,
+            "ignore_bot_self_message": False,
+            "ignore_at_all": False,
         },
+        "admins_id": [],
+        "wake_prefix": ["/"],
+        "disable_builtin_commands": False,
+    }
+    return SimpleNamespace(
+        bot_config=config,
+        plugin_manager=SimpleNamespace(
+            context=SimpleNamespace(get_config=lambda umo=None: config)
+        ),
         db_helper=None,
         bot_config_id="test",
     )
@@ -276,15 +280,9 @@ async def _identity(event, handlers):
 
 
 @pytest.mark.asyncio
-async def test_forced_wake_bypasses_the_wake_check(monkeypatch):
+async def test_forced_wake_bypasses_the_wake_check():
     from bot.core.pipeline.waking_check.stage import WakingCheckStage
-    from bot.core.star.session_plugin_manager import SessionPluginManager
 
-    monkeypatch.setattr(
-        SessionPluginManager,
-        "filter_handlers_by_session",
-        staticmethod(_identity),
-    )
     stage = WakingCheckStage()
     await stage.initialize(_waking_context())
     event = FakeEvent("接着说")
@@ -297,15 +295,9 @@ async def test_forced_wake_bypasses_the_wake_check(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_ambient_group_message_is_dropped_without_the_flag(monkeypatch):
+async def test_ambient_group_message_is_dropped_without_the_flag():
     from bot.core.pipeline.waking_check.stage import WakingCheckStage
-    from bot.core.star.session_plugin_manager import SessionPluginManager
 
-    monkeypatch.setattr(
-        SessionPluginManager,
-        "filter_handlers_by_session",
-        staticmethod(_identity),
-    )
     stage = WakingCheckStage()
     await stage.initialize(_waking_context())
     event = FakeEvent("接着说")

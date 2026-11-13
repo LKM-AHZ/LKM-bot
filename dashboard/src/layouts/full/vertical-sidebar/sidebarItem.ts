@@ -10,11 +10,10 @@ import {
   Clock3,
   Database,
   Gauge,
-  Hand,
   Heart,
+  House,
   Image,
   MessageSquareQuote,
-  PencilRuler,
   Puzzle,
   Radar,
   SlidersHorizontal,
@@ -59,7 +58,7 @@ const sidebarItem: menu[] = [
   },
   {
     title: 'core.navigation.welcome',
-    icon: markRaw(Hand),
+    icon: markRaw(House),
     to: '/welcome',
   },
   {
@@ -86,11 +85,6 @@ const sidebarItem: menu[] = [
     title: 'core.navigation.data',
     icon: markRaw(Database),
     to: '/data'
-  },
-  {
-    title: 'core.navigation.sessionManagement',
-    icon: markRaw(PencilRuler),
-    to: '/session-management'
   },
   {
     header: 'core.navigation.groups.life',

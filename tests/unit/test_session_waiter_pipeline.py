@@ -12,11 +12,10 @@ from bot.core.pipeline.process_stage import stage as processing
 from bot.core.pipeline.scheduler import PipelineScheduler
 from bot.core.pipeline.waking_check import stage as waking
 from bot.core.pipeline.whitelist_check.stage import WhitelistCheckStage
-from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.platform.message_type import MessageType
 from bot.core.platform.platform_metadata import PlatformMetadata
-from bot.core.star.session_plugin_manager import SessionPluginManager
 from bot.core.utils.session_waiter import (
     USER_SESSIONS,
     DefaultSessionFilter,
@@ -57,6 +56,9 @@ async def test_session_waiter_pipeline(monkeypatch, private, state):
     context = SimpleNamespace(
         bot_config=config, bot_config_id="test", db_helper=None
     )
+    context.plugin_manager = SimpleNamespace(
+        context=SimpleNamespace(get_config=lambda **_: config)
+    )
     message = BotMessage()
     message.type = MessageType.FRIEND_MESSAGE if private else MessageType.GROUP_MESSAGE
     message.sender = MessageMember(user_id="user", nickname="User")
@@ -84,9 +86,6 @@ async def test_session_waiter_pipeline(monkeypatch, private, state):
         monkeypatch.setattr(module, "FILTERS", [session_filter, session_filter])
     monkeypatch.setattr(
         waking.star_handlers_registry, "get_handlers_by_event_type", lambda *a, **kw: []
-    )
-    monkeypatch.setattr(
-        SessionPluginManager, "filter_handlers_by_session", AsyncMock(return_value=[])
     )
 
     wake = waking.WakingCheckStage()

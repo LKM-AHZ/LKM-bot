@@ -26,7 +26,9 @@ You can fetch the plugin data directory with:
 
 ```py
 from pathlib import Path
-from bot.core.utils.bot_path import get_bot_data_path
+# Before LKMBot v4.30.0:
+# from bot.core.utils.bot_path import get_bot_data_path
+from bot.api.util import get_bot_data_path
 
 plugin_data_path = (
     Path(get_bot_data_path()) / "plugin_data" / self.name

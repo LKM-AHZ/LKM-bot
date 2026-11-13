@@ -953,37 +953,41 @@ class LifeService:
         notice = notice_from_task(task, self.config.subagent.conclusion_max_chars)
         if not notice.conclusion:
             return
-        try:
-            from bot.core.pipeline.process_stage.follow_up import get_active_runner
-
-            runner = get_active_runner(task.session_id)
-        except Exception:
-            runner = None
-        if runner is not None:
-            ticket = runner.follow_up(
-                message_text=f"[{task.task_id} 子任务完成]\n{notice.conclusion}"
-            )
-            if ticket is not None:
-                self._subagent_counts["woken"] += 1
-                asyncio.create_task(
-                    self._inbox_when_unconsumed(ticket, notice),
-                    name=f"life_{task.task_id}_delivery",
-                )
-                return
-        self.subagent_inbox.add(notice)
-        self._subagent_counts["inboxed"] += 1
-
-    async def _inbox_when_unconsumed(self, ticket: Any, notice: Any) -> None:
-        """Keep a conclusion in the inbox when the active run never saw it.
-
-        Args:
-            ticket: Follow-up ticket handed to the active runner.
-            notice: Conclusion to fall back to.
-        """
-        await ticket.resolved.wait()
-        if not ticket.consumed and self.subagent_inbox is not None:
+        agent_service = getattr(self.star_context, "agent", None)
+        if (
+            agent_service is None
+            or agent_service.active_turn(task.session_id) is None
+        ):
             self.subagent_inbox.add(notice)
             self._subagent_counts["inboxed"] += 1
+            return
+        from bot.core.agent.input import PlainInput
+
+        async def _wake_session() -> None:
+            """Queue the conclusion as a non-delivering turn in its session.
+
+            Falls back to the inbox when the runtime cannot accept another turn.
+            """
+            try:
+                await self.star_context.agent.run_turn(
+                    umo=task.session_id,
+                    input_message=[
+                        PlainInput(
+                            text=f"[{task.task_id} 子任务完成]\n{notice.conclusion}"
+                        )
+                    ],
+                    send_to_user=False,
+                )
+                self._subagent_counts["woken"] += 1
+            except Exception:
+                logger.exception("[life] subagent conclusion wake failed")
+                if self.subagent_inbox is not None:
+                    self.subagent_inbox.add(notice)
+                    self._subagent_counts["inboxed"] += 1
+
+        asyncio.create_task(
+            _wake_session(), name=f"life_{task.task_id}_delivery"
+        )
 
     async def _llm_summarizer(
         self,

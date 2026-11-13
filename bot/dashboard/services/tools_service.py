@@ -5,9 +5,11 @@ from typing import Any
 
 from bot.core import logger, sp
 from bot.core.agent.mcp_client import MCPTool, validate_mcp_stdio_config
+from bot.core.bot_agent_runtime.tools.registry import (
+    get_builtin_tool_config_statuses,
+)
 from bot.core.core_lifecycle import BotCoreLifecycle
 from bot.core.star import star_map
-from bot.core.tools.registry import get_builtin_tool_config_statuses
 
 
 class ToolsServiceError(Exception):

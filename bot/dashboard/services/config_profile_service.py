@@ -6,8 +6,8 @@ import copy
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from bot.core.computer import computer_client
-from bot.core.computer.booters.local import LocalShellComponent
+from bot.core.bot_agent_runtime.computer import computer_client
+from bot.core.bot_agent_runtime.computer.booters.local import LocalShellComponent
 from bot.core.config.agent_runner import normalize_agent_runner
 from bot.core.config.default import (
     CONFIG_METADATA_2,

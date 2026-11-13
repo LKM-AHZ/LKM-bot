@@ -7,7 +7,7 @@ import traceback
 from typing import Any
 
 from bot.core import logger
-from bot.core.config.agent_runner import normalize_agent_runner
+from bot.core.config.agent import normalize_agent
 from bot.core.config.bot_config import BotConfig
 from bot.core.config.default import (
     CONFIG_METADATA_2,
@@ -210,11 +210,10 @@ def validate_config(
                 is_core
                 and path == "provider."
                 and key == "key"
-                and data.get("type") == "system_one_decision"
+                and data.get("type") in {"system_one_decision", "openai_decision"}
             ):
-                # System One uses a single key within the shared provider schema.
-                meta = dict(meta)
-                meta["type"] = "string"
+                # Decision providers use a single key within the shared provider schema.
+                meta = {**meta, "type": "string"}
             if "type" not in meta:
                 logger.debug(f"配置项 {path}{key} 没有类型定义, 跳过校验")
                 continue
@@ -463,7 +462,9 @@ async def _validate_neo_connectivity(post_config: dict) -> str | None:
 
     access_token = sandbox.get("shipyard_neo_access_token", "")
     if not access_token:
-        from bot.core.computer.computer_client import _discover_bay_credentials
+        from bot.core.bot_agent_runtime.computer.computer_client import (
+            _discover_bay_credentials,
+        )
 
         access_token = _discover_bay_credentials(endpoint)
 
@@ -512,9 +513,7 @@ def save_config(
         ValueError: If configuration validation fails.
     """
     if is_core:
-        post_config["agent_runner"] = normalize_agent_runner(
-            post_config.get("agent_runner")
-        )
+        post_config["agent"] = normalize_agent(post_config.get("agent"))
 
     try:
         if is_core:

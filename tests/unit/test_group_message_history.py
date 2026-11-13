@@ -4,12 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
+from bot.core.bot_agent_runtime.tools.message_tools import (
+    GetGroupMessageHistoryTool,
+)
 from bot.core.db.sqlite import SQLiteDatabase
 from bot.core.message.components import File, Image, Plain, Record, Video
 from bot.core.message.message_event_result import MessageChain
 from bot.core.platform.message_type import MessageType
 from bot.core.platform_message_history_mgr import PlatformMessageHistoryManager
-from bot.core.tools.message_tools import GetGroupMessageHistoryTool
 
 
 def _parse_history_csv(result: str) -> tuple[list[dict[str, str]], dict[str, str]]:

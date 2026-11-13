@@ -22,7 +22,9 @@ Import:
 
 ```py
 import bot.api.message_components as Comp
-from bot.core.utils.session_waiter import (
+# Before LKMBot v4.30.0:
+# from bot.core.utils.session_waiter import session_waiter, SessionController
+from bot.api.util import (
     session_waiter,
     SessionController,
 )
@@ -113,7 +115,9 @@ By default, the LKMBot session controller uses `sender_id` (the sender's ID) as 
 
 ```py
 import bot.api.message_components as Comp
-from bot.core.utils.session_waiter import (
+# Before LKMBot v4.30.0:
+# from bot.core.utils.session_waiter import session_waiter, SessionFilter, SessionController
+from bot.api.util import (
     session_waiter,
     SessionFilter,
     SessionController,

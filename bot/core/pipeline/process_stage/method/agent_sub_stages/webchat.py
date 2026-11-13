@@ -5,23 +5,21 @@ from __future__ import annotations
 from bot.core import logger
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.provider import Provider
-from bot.core.provider.entities import ProviderRequest
 
 
 async def generate_conversation_title(
-    event: BotMessageEvent, req: ProviderRequest, prov: Provider
+    event: BotMessageEvent, user_prompt: str, prov: Provider
 ) -> None:
     """Generate a missing WebChat session title alongside an interactive run.
 
     Args:
         event: WebChat event identifying the platform session.
-        req: Prepared request containing the user's prompt.
+        user_prompt: Prepared text of the current user input.
         prov: Chat provider used to generate the title.
     """
     from bot.core import db_helper
 
     chatui_session_id = event.session_id.split("!")[-1]
-    user_prompt = req.prompt
     session = await db_helper.get_platform_session_by_id(chatui_session_id)
 
     if not user_prompt or not chatui_session_id or not session or session.display_name:

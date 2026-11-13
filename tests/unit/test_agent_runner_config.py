@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from bot.core.config.agent import get_runtime_config_default
 from bot.core.config.agent_runner import (
     AGENT_RUNNER_CONFIG_DEFAULTS,
     get_agent_runner_config_default,
@@ -64,16 +65,17 @@ async def test_agent_request_normalizes_incomplete_runner_config():
             "streaming_response": True,
             "unsupported_streaming_strategy": "aggregate",
         },
-        "agent_runner": {
-            "runner_type": "dify",
+        "agent": {
+            "runtime": "dify",
             "config": {"dify_api_key": "saved-key"},
         },
     }
     stage = AgentRequestSubStage()
+    context = SimpleNamespace(bot_config=config, agent_runtimes={})
 
-    await stage.initialize(SimpleNamespace(bot_config=config))
+    await stage.initialize(context)
 
-    assert stage.agent_sub_stage.runner_config == {
+    assert context.bot_config["agent"]["config"] == {
         **get_agent_runner_config_default("dify"),
         "dify_api_key": "saved-key",
     }
@@ -85,10 +87,12 @@ async def test_agent_request_normalizes_incomplete_runner_config():
 def test_each_runner_configuration_round_trips(tmp_path, runner_type: str):
     config = copy.deepcopy(DEFAULT_CONFIG)
     expected = {
-        "runner_type": runner_type,
-        "config": get_agent_runner_config_default(runner_type),
+        "runtime": "bot" if runner_type == "local" else runner_type,
+        "config": get_runtime_config_default(
+            "bot" if runner_type == "local" else runner_type
+        ),
     }
-    config["agent_runner"] = expected
+    config["agent"] = expected
     config_path = tmp_path / f"{runner_type}.json"
     config_path.write_text(json.dumps(config), encoding="utf-8")
 
@@ -96,33 +100,15 @@ def test_each_runner_configuration_round_trips(tmp_path, runner_type: str):
     loaded.save_config()
     reloaded = BotConfig(config_path=str(config_path))
 
-    assert reloaded["agent_runner"] == expected
+    assert reloaded["agent"] == expected
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def test_new_agent_runner_config_is_authoritative_and_opaque_on_reload(tmp_path):
+def test_new_agent_config_is_authoritative_and_opaque_on_reload(tmp_path):
     config = copy.deepcopy(DEFAULT_CONFIG)
     config["config_version"] = 2
     config["provider_settings"]["agent_runner_type"] = "coze"
-    config["agent_runner"] = {
-        "runner_type": "dify",
+    config["agent"] = {
+        "runtime": "dify",
         "config": {
             **get_agent_runner_config_default("dify"),
             "dify_api_key": "saved-key",
@@ -134,7 +120,7 @@ def test_new_agent_runner_config_is_authoritative_and_opaque_on_reload(tmp_path)
 
     loaded = BotConfig(config_path=str(config_path))
 
-    assert loaded["agent_runner"]["runner_type"] == "dify"
-    assert loaded["agent_runner"]["config"]["dify_api_key"] == "saved-key"
-    assert loaded["agent_runner"]["config"]["variables"] == {"nested": {"value": 1}}
+    assert loaded["agent"]["runtime"] == "dify"
+    assert loaded["agent"]["config"]["dify_api_key"] == "saved-key"
+    assert loaded["agent"]["config"]["variables"] == {"nested": {"value": 1}}
     assert "agent_runner_type" not in loaded["provider_settings"]

@@ -12,7 +12,6 @@ from bot.core.platform.button_interaction import (
 from bot.core.star.filter.button_action import ButtonActionFilter
 from bot.core.star.filter.command_group import CommandGroupFilter
 from bot.core.star.filter.permission import PermissionTypeFilter
-from bot.core.star.session_plugin_manager import SessionPluginManager
 from bot.core.star.star import star_map
 from bot.core.star.star_handler import EventType, star_handlers_registry
 from bot.core.utils.session_waiter import FILTERS, USER_SESSIONS
@@ -111,7 +110,10 @@ class WakingCheckStage(Stage):
                 break
 
         # 检查 wake
-        wake_prefixes = self.ctx.bot_config["wake_prefix"]
+        effective_config = self.ctx.plugin_manager.context.get_config(
+            umo=event.unified_msg_origin
+        )
+        wake_prefixes = effective_config["wake_prefix"]
         messages = event.get_messages()
         is_wake = event.is_wake
         if event.get_extra("_life_force_wake"):
@@ -179,7 +181,26 @@ class WakingCheckStage(Stage):
         handlers_parsed_params = {}  # 注册了指令的 handler
 
         # 将 plugins_name 设置到 event 中
-        enabled_plugins_name = self.ctx.bot_config.get("plugin_set", ["*"])
+        disabled_plugins = effective_config.get("disabled_plugins", [])
+        enabled_plugins_name = effective_config.get("plugin_set", ["*"])
+        if disabled_plugins:
+            from bot.core.star.star import star_registry
+
+            enabled_plugins_name = [
+                plugin.name
+                for plugin in star_registry
+                if plugin.name
+                and (
+                    plugin.reserved
+                    or (
+                        plugin.name not in disabled_plugins
+                        and (
+                            "*" in enabled_plugins_name
+                            or plugin.name in enabled_plugins_name
+                        )
+                    )
+                )
+            ]
         if enabled_plugins_name == ["*"]:
             # 如果是 *，则表示所有插件都启用
             event.plugins_name = None
@@ -191,6 +212,9 @@ class WakingCheckStage(Stage):
             EventType.AdapterMessageEvent,
             plugins_name=event.plugins_name,
         ):
+            plugin = star_map.get(handler.handler_module_path)
+            if plugin and not plugin.reserved and plugin.name in disabled_plugins:
+                continue
             if event.is_button_interaction() and not any(
                 isinstance(handler_filter, ButtonActionFilter)
                 for handler_filter in handler.event_filters
@@ -213,10 +237,10 @@ class WakingCheckStage(Stage):
             for filter in handler.event_filters:
                 try:
                     if isinstance(filter, PermissionTypeFilter):
-                        if not filter.filter(event, self.ctx.bot_config):
+                        if not filter.filter(event, effective_config):
                             permission_not_pass = True
                             permission_filter_raise_error = filter.raise_error
-                    elif not filter.filter(event, self.ctx.bot_config):
+                    elif not filter.filter(event, effective_config):
                         passed = False
                         break
                 except Exception as e:
@@ -266,10 +290,6 @@ class WakingCheckStage(Stage):
             event._extras.pop("parsed_params", None)
 
         # 根据会话配置过滤插件处理器
-        activated_handlers = await SessionPluginManager.filter_handlers_by_session(
-            event,
-            activated_handlers,
-        )
 
         event.set_extra("activated_handlers", activated_handlers)
         event.set_extra("handlers_parsed_params", handlers_parsed_params)

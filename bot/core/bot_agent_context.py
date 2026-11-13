@@ -1,21 +1,8 @@
-from pydantic import Field
-from pydantic.dataclasses import dataclass
+"""Compatible plugin imports for the built-in agent context."""
 
-from bot.core.agent.run_context import ContextWrapper
-from bot.core.platform.bot_message_event import BotMessageEvent
-from bot.core.star.context import Context
+from bot.core.bot_agent_runtime.context import (
+    AgentContextWrapper,
+    BotAgentContext,
+)
 
-
-@dataclass
-class BotAgentContext:
-    __pydantic_config__ = {"arbitrary_types_allowed": True}
-
-    context: Context
-    """The star context instance"""
-    event: BotMessageEvent
-    """The message event associated with the agent context."""
-    extra: dict[str, str] = Field(default_factory=dict)
-    """Customized extra data."""
-
-
-AgentContextWrapper = ContextWrapper[BotAgentContext]
+__all__ = ["AgentContextWrapper", "BotAgentContext"]

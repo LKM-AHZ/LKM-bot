@@ -9,8 +9,8 @@ from opentelemetry.trace import format_trace_id, get_current_span
 
 from bot.core.log import _log_context, log_context
 from bot.core.pipeline import scheduler as scheduler_module
-from bot.core.platform.bot_message_event import BotMessageEvent, event_context
 from bot.core.platform.bot_message import BotMessage, MessageMember
+from bot.core.platform.bot_message_event import BotMessageEvent, event_context
 from bot.core.platform.message_type import MessageType
 from bot.core.platform.platform_metadata import PlatformMetadata
 from bot.core.utils import trace as trace_module
@@ -215,6 +215,8 @@ async def test_scheduler_uses_event_scope(event, frames, monkeypatch, failure_at
         failure_at: Optional processing step that fails.
     """
     scheduler = object.__new__(scheduler_module.PipelineScheduler)
+    scheduler.ctx = MagicMock()
+    scheduler.ctx.plugin_manager.context.bot_config_mgr._create_message_config.return_value = ({}, frozenset())
 
     async def process(current):
         assert current is event

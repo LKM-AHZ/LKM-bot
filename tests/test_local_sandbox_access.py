@@ -14,16 +14,16 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from bot.core.agent.run_context import ContextWrapper
-from bot.core.computer import process_sandbox
-from bot.core.computer.booters import local
-from bot.core.computer.process_sandbox import (
+from bot.core.bot_agent_runtime.computer import process_sandbox
+from bot.core.bot_agent_runtime.computer.booters import local
+from bot.core.bot_agent_runtime.computer.process_sandbox import (
     SandboxSpec,
     bubblewrap,
     create_process_sandbox,
     seatbelt,
     unix,
 )
-from bot.core.tools.computer_tools import fs, python, shell
+from bot.core.bot_agent_runtime.tools.computer_tools import fs, python, shell
 from bot.dashboard.services import stat_service
 
 requires_local_sandbox = pytest.mark.skipif(

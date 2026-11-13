@@ -10,23 +10,27 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from bot.core import bot_main_agent as ama
-from bot.core import bot_main_agent_resources as agent_resources
-from bot.core.agent.hooks import BaseAgentRunHooks
+from bot.core import agent_input as core_input
+from bot.core import llm_error_messages as agent_errors
 from bot.core.agent.mcp_client import MCPTool
 from bot.core.agent.message import Message, dump_messages_with_checkpoints
 from bot.core.agent.runners.base import AgentState
 from bot.core.agent.tool import FunctionTool, ToolSet
-from bot.core.bot_agent_wakeup import wake_main_agent
-from bot.core.bot_main_agent import builder as builder_build
-from bot.core.bot_main_agent import computer_use as computer_use_build
-from bot.core.bot_main_agent import knowledge_base as knowledge_base_build
-from bot.core.bot_main_agent import persona as persona_build
-from bot.core.bot_main_agent import plugins as plugins_build
-from bot.core.bot_main_agent import providers as providers_build
-from bot.core.bot_main_agent import request as request_build
-from bot.core.bot_main_agent import web_search as web_search_build
-from bot.core.bot_main_agent import workspace as workspace_build
+from bot.core.agent_wakeup import wake_main_agent
+from bot.core.bot_agent_runtime import execution as native_execution
+from bot.core.bot_agent_runtime import main_agent as ama
+from bot.core.bot_agent_runtime.main_agent import builder as builder_build
+from bot.core.bot_agent_runtime.main_agent import (
+    computer_use as computer_use_build,
+)
+from bot.core.bot_agent_runtime.main_agent import (
+    knowledge_base as knowledge_base_build,
+)
+from bot.core.bot_agent_runtime.main_agent import persona as persona_build
+from bot.core.bot_agent_runtime.main_agent import providers as providers_build
+from bot.core.bot_agent_runtime.main_agent import request as request_build
+from bot.core.bot_agent_runtime.main_agent import web_search as web_search_build
+from bot.core.bot_agent_runtime.main_agent import workspace as workspace_build
 from bot.core.config.agent_runner import resolve_context_compression_config
 from bot.core.conversation_mgr import Conversation
 from bot.core.message.components import File, Image, Plain, Record, Reply, Video
@@ -36,10 +40,10 @@ from bot.core.pipeline.process_stage.method.agent_sub_stages import (
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.platform.platform_metadata import PlatformMetadata
 from bot.core.provider import Provider
-from bot.core.provider import manager as provider_manager_module
 from bot.core.provider.entities import ProviderRequest, ProviderType
 from bot.core.provider.manager import ProviderManager
 from bot.core.skills.skill_manager import SkillInfo
+from bot.core.star import agent_capabilities as plugins_build
 from bot.core.star.context import Context
 from bot.core.star.star import StarMetadata
 from bot.core.utils.active_event_registry import active_event_registry
@@ -89,7 +93,7 @@ def mock_context():
     ctx.persona_manager = MagicMock()
     ctx.persona_manager.personas_v3 = []
     ctx.persona_manager.resolve_selected_persona = AsyncMock(
-        return_value=(None, None, None, False)
+        return_value=(None, None, False)
     )
     ctx.persona_manager.get_persona_v3_by_id = MagicMock(return_value=None)
     tool_mgr = MagicMock()
@@ -201,7 +205,7 @@ def test_append_system_reminders_includes_weekday(mock_event):
                 return fixed_now.astimezone(tz)
             return fixed_now
 
-    with patch("bot.core.bot_main_agent.request.datetime.datetime", FixedDateTime):
+    with patch("bot.core.agent_input.datetime.datetime", FixedDateTime):
         request_build.append_system_reminders(
             mock_event,
             req,
@@ -218,7 +222,7 @@ def test_append_system_reminders_includes_weekday(mock_event):
 def test_local_mode_prompt_uses_windows_powershell_51():
     with (
         patch(
-            "bot.core.bot_main_agent.computer_use.platform.system",
+            "bot.core.bot_agent_runtime.main_agent.computer_use.platform.system",
             return_value="Windows",
         ),
         patch.object(
@@ -239,7 +243,7 @@ def test_local_mode_prompt_uses_windows_powershell_51():
 def test_local_mode_prompt_hints_pwsh_when_resolved():
     with (
         patch(
-            "bot.core.bot_main_agent.computer_use.platform.system",
+            "bot.core.bot_agent_runtime.main_agent.computer_use.platform.system",
             return_value="Windows",
         ),
         patch.object(
@@ -259,7 +263,7 @@ def test_local_mode_prompt_hints_pwsh_when_resolved():
 def test_local_mode_prompt_ignores_pwsh_on_non_windows():
     with (
         patch(
-            "bot.core.bot_main_agent.computer_use.platform.system",
+            "bot.core.bot_agent_runtime.main_agent.computer_use.platform.system",
             return_value="Linux",
         ),
         patch.object(
@@ -278,7 +282,7 @@ def test_local_mode_prompt_ignores_pwsh_on_non_windows():
 
 def test_local_mode_prompt_keeps_posix_shell_guidance():
     with patch(
-        "bot.core.bot_main_agent.computer_use.platform.system",
+        "bot.core.bot_agent_runtime.main_agent.computer_use.platform.system",
         return_value="Linux",
     ):
         prompt = computer_use_build._build_local_mode_prompt()
@@ -295,13 +299,11 @@ class TestMainAgentBuildConfig:
         """Keep build settings stable when the source session config changes."""
         source = {
             "provider_settings": {"sandbox": {"booter": "test"}},
-            "agent_runner": {
-                "config": {"model": {"fallback_provider_ids": ["backup"]}}
-            },
+            "agent": {"config": {"model": {"fallback_provider_ids": ["backup"]}}},
         }
         config = ama.MainAgentBuildConfig.from_config(source)
         source["provider_settings"]["sandbox"]["booter"] = "changed"
-        source["agent_runner"]["config"]["model"]["fallback_provider_ids"].clear()
+        source["agent"]["config"]["model"]["fallback_provider_ids"].clear()
 
         assert config.sandbox_cfg == {"booter": "test"}
         assert config.provider_settings["sandbox"] == {"booter": "test"}
@@ -375,7 +377,7 @@ class TestSelectProvider:
 
         assert result is None
         mock_event.set_extra.assert_called_with(
-            agent_resources.LLM_ERROR_MESSAGE_EXTRA_KEY,
+            agent_errors.LLM_ERROR_MESSAGE_EXTRA_KEY,
             "LLM 请求失败：未找到指定的提供商 `non-existent`。请检查提供商配置或重新选择可用模型。",
         )
 
@@ -391,7 +393,7 @@ class TestSelectProvider:
 
         assert result is None
         mock_event.set_extra.assert_called_with(
-            agent_resources.LLM_ERROR_MESSAGE_EXTRA_KEY,
+            agent_errors.LLM_ERROR_MESSAGE_EXTRA_KEY,
             "LLM 请求失败：选择的提供商类型无效（str），已跳过本次请求。",
         )
 
@@ -423,33 +425,27 @@ class TestSelectProvider:
 
         assert result is None
         mock_event.set_extra.assert_called_with(
-            agent_resources.LLM_ERROR_MESSAGE_EXTRA_KEY,
+            agent_errors.LLM_ERROR_MESSAGE_EXTRA_KEY,
             "LLM 请求失败：Test error",
         )
 
 
 @pytest.mark.asyncio
-async def test_provider_manager_async_selection_uses_session_preference(monkeypatch):
+async def test_provider_manager_async_selection_uses_effective_config():
     preferred_provider = object()
     manager = ProviderManager.__new__(ProviderManager)
     manager.inst_map = {"preferred": preferred_provider}
     manager.acm = MagicMock()
-
-    get_async = AsyncMock(return_value="preferred")
-    monkeypatch.setattr(provider_manager_module.sp, "get_async", get_async)
+    manager.acm.get_conf.return_value = {
+        "agent": {"runtime": "bot", "config": {"model": {"provider_id": "preferred"}}}
+    }
 
     result = await manager.get_using_provider_async(
-        ProviderType.CHAT_COMPLETION,
-        "session-1",
+        ProviderType.CHAT_COMPLETION, "session-1"
     )
 
     assert result is preferred_provider
-    get_async.assert_awaited_once_with(
-        "umo",
-        "session-1",
-        "provider_perf_chat_completion",
-        None,
-    )
+    manager.acm.get_conf.assert_called_once_with("session-1")
 
 
 class TestGetSessionConv:
@@ -832,7 +828,7 @@ class TestBuiltinToolInjection:
 
         req.prompt = "Run task"
         with (
-            patch.object(builder_build, "AgentRunner") as runner,
+            patch.object(native_execution, "AgentRunner") as runner,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -866,10 +862,10 @@ class TestApplyFileExtract:
 
         req = ProviderRequest(prompt="Summarize")
 
-        with patch.object(request_build, "extract_file_moonshotai") as mock_extract:
+        with patch.object(core_input, "extract_file_moonshotai") as mock_extract:
             mock_extract.return_value = "File content"
 
-            await request_build._apply_file_extract(mock_event, req, sample_config)
+            await core_input._apply_file_extract(mock_event, req, sample_config)
 
         assert len(req.contexts) == 1
         assert "File Extract Results" in req.contexts[0]["content"]
@@ -880,7 +876,7 @@ class TestApplyFileExtract:
         mock_event.message_obj.message = [Plain(text="Hello")]
         req = ProviderRequest(prompt="Hello")
 
-        await request_build._apply_file_extract(mock_event, req, sample_config)
+        await core_input._apply_file_extract(mock_event, req, sample_config)
 
         assert len(req.contexts) == 0
 
@@ -896,10 +892,10 @@ class TestApplyFileExtract:
 
         req = ProviderRequest(prompt="Summarize")
 
-        with patch.object(request_build, "extract_file_moonshotai") as mock_extract:
+        with patch.object(core_input, "extract_file_moonshotai") as mock_extract:
             mock_extract.return_value = "Reply content"
 
-            await request_build._apply_file_extract(mock_event, req, sample_config)
+            await core_input._apply_file_extract(mock_event, req, sample_config)
 
         assert len(req.contexts) == 1
 
@@ -913,10 +909,10 @@ class TestApplyFileExtract:
 
         req = ProviderRequest(prompt=None)
 
-        with patch.object(request_build, "extract_file_moonshotai") as mock_extract:
+        with patch.object(core_input, "extract_file_moonshotai") as mock_extract:
             mock_extract.return_value = "Content"
 
-            await request_build._apply_file_extract(mock_event, req, sample_config)
+            await core_input._apply_file_extract(mock_event, req, sample_config)
 
         assert req.prompt == "总结一下文件里面讲了什么？"
 
@@ -935,7 +931,7 @@ class TestApplyFileExtract:
 
         req = ProviderRequest(prompt="Summarize")
 
-        await request_build._apply_file_extract(mock_event, req, config)
+        await core_input._apply_file_extract(mock_event, req, config)
 
         assert len(req.contexts) == 0
 
@@ -1025,7 +1021,7 @@ class TestEnsurePersonaAndSkills:
         persona = {"name": "test-persona", "prompt": "You are helpful."}
         mock_context.persona_manager.personas_v3 = [persona]
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("test-persona", persona, "test-persona", False)
+            return_value=("test-persona", persona, False)
         )
         mock_event.trace = MagicMock(record=MagicMock())
         req = ProviderRequest()
@@ -1050,7 +1046,7 @@ class TestEnsurePersonaAndSkills:
         persona = {"name": "conv-persona", "prompt": "Custom persona."}
         mock_context.persona_manager.personas_v3 = [persona]
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("conv-persona", persona, None, False)
+            return_value=("conv-persona", persona, False)
         )
         req = ProviderRequest()
         req.conversation = MagicMock(persona_id="conv-persona")
@@ -1067,7 +1063,7 @@ class TestEnsurePersonaAndSkills:
         """Test inline GenUI instructions are independent of persona selection."""
         persona = {"name": "conv-persona", "prompt": "Custom persona."}
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("conv-persona", persona, None, False)
+            return_value=("conv-persona", persona, False)
         )
         mock_event.get_extra.side_effect = lambda key: key == "enable_inline_genui"
         req = ProviderRequest()
@@ -1100,7 +1096,7 @@ class TestEnsurePersonaAndSkills:
     ):
         """Test the default ChatUI persona prompt honors its request flag."""
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("_chatui_default_", None, None, True)
+            return_value=("_chatui_default_", None, True)
         )
         mock_event.get_extra.side_effect = lambda key: {
             "enable_inline_genui": False,
@@ -1122,7 +1118,7 @@ class TestEnsurePersonaAndSkills:
     ):
         """WebChat implicit default uses the ChatUI prompt, not the DB persona."""
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("_chatui_default_", None, None, True)
+            return_value=("_chatui_default_", None, True)
         )
         mock_event.get_platform_name.return_value = "webchat"
         mock_event.get_extra.side_effect = lambda key: {
@@ -1146,7 +1142,7 @@ class TestEnsurePersonaAndSkills:
         """Non-WebChat implicit default injects the editable DB default persona."""
         persona = {"name": "default", "prompt": "EDITED DEFAULT"}
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("default", persona, None, False)
+            return_value=("default", persona, False)
         )
         mock_event.get_extra.side_effect = lambda key: None
         req = ProviderRequest()
@@ -1166,7 +1162,7 @@ class TestEnsurePersonaAndSkills:
         """Explicitly selecting the default persona uses the record even when the flag is off."""
         persona = {"name": "default", "prompt": "EDITED DEFAULT"}
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("default", persona, None, False)
+            return_value=("default", persona, False)
         )
         mock_event.get_platform_name.return_value = "webchat"
         mock_event.get_extra.side_effect = lambda key: {
@@ -1192,8 +1188,8 @@ class TestEnsurePersonaAndSkills:
         from bot.core.db.po import Persona
 
         conf = {
-            "agent_runner": {
-                "runner_type": "local",
+            "agent": {
+                "runtime": "bot",
                 "config": {"persona": {"persona_id": "default"}},
             },
             "provider_settings": {},
@@ -1230,7 +1226,7 @@ class TestEnsurePersonaAndSkills:
         req = ProviderRequest()
         req.conversation = MagicMock(persona_id=None)
 
-        with patch.object(pm.sp, "get_async", new=AsyncMock(return_value={})):
+        with patch.object(pm, "get_overrides", new=AsyncMock(return_value={})):
             await _apply_persona_capabilities(req, {}, mock_context, mock_event)
 
         assert persona_build.CHATUI_SPECIAL_DEFAULT_PERSONA_PROMPT in req.system_prompt
@@ -1241,7 +1237,7 @@ class TestEnsurePersonaAndSkills:
         """Test that [%None] persona is explicitly set to no persona."""
         mock_context.persona_manager.personas_v3 = []
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("[%None]", None, None, False)
+            return_value=("[%None]", None, False)
         )
         req = ProviderRequest()
         req.conversation = MagicMock(persona_id="[%None]")
@@ -1269,7 +1265,6 @@ class TestEnsurePersonaAndSkills:
         mock_context.persona_manager.resolve_selected_persona.return_value = (
             "persona",
             selected,
-            None,
             False,
         )
         req = ProviderRequest(conversation=MagicMock(persona_id="persona"))
@@ -1414,7 +1409,7 @@ class TestEnsurePersonaAndSkills:
 
         persona = {"name": "no-skills", "prompt": "", "skills": []}
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("no-skills", persona, None, False)
+            return_value=("no-skills", persona, False)
         )
         req = ProviderRequest()
         req.conversation = MagicMock(persona_id="no-skills")
@@ -1497,7 +1492,7 @@ class TestEnsurePersonaAndSkills:
         persona = {"name": "persona", "prompt": "Test", "tools": ["test_tool"]}
         mock_context.persona_manager.personas_v3 = [persona]
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("persona", persona, None, False)
+            return_value=("persona", persona, False)
         )
         tmgr = mock_context.get_llm_tool_manager.return_value
         tmgr.get_func.return_value = mock_tool
@@ -1531,7 +1526,7 @@ class TestEnsurePersonaAndSkills:
     ):
         persona = {"name": "locked", "prompt": "No tools.", "tools": []}
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("locked", persona, None, False)
+            return_value=("locked", persona, False)
         )
         mock_event.platform_meta.support_proactive_message = False
         mock_context.get_config.return_value = {
@@ -1553,7 +1548,7 @@ class TestEnsurePersonaAndSkills:
         req.conversation = MagicMock(persona_id="locked", history="[]")
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -1598,12 +1593,12 @@ class TestEnsurePersonaAndSkills:
         isolation_status,
     ):
         monkeypatch.setattr(
-            "bot.core.tools.computer_tools.util.get_process_sandbox_status",
+            "bot.core.bot_agent_runtime.tools.computer_tools.util.get_process_sandbox_status",
             lambda: {"status": isolation_status},
         )
         persona = {"name": "locked", "prompt": "No tools.", "tools": []}
         mock_context.persona_manager.resolve_selected_persona = AsyncMock(
-            return_value=("locked", persona, None, False)
+            return_value=("locked", persona, False)
         )
         mock_event.platform_meta.support_proactive_message = False
         mock_event.role = role
@@ -1628,7 +1623,7 @@ class TestEnsurePersonaAndSkills:
         req.conversation = MagicMock(persona_id="locked", history="[]")
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -1672,6 +1667,7 @@ class TestEnsurePersonaAndSkills:
 
 
 
+
 @pytest.mark.parametrize(
     ("prefix", "expected"),
     [
@@ -1695,7 +1691,7 @@ class TestPluginToolFix:
         req = ProviderRequest(func_tool=ToolSet())
         mock_event.plugins_name = None
 
-        plugins_build.filter_tools(mock_event, req)
+        req.func_tool = plugins_build.filter_tools(mock_event, req.func_tool)
 
         assert req.func_tool is not None
 
@@ -1722,7 +1718,7 @@ class TestPluginToolFix:
             mock_plugin.reserved = False
             mock_star_map.get.return_value = mock_plugin
 
-            plugins_build.filter_tools(mock_event, req)
+            req.func_tool = plugins_build.filter_tools(mock_event, req.func_tool)
 
         assert "mcp_tool" in req.func_tool.names()
         assert "plugin_tool" in req.func_tool.names()
@@ -1740,7 +1736,7 @@ class TestPluginToolFix:
         mock_event.plugins_name = ["other_plugin"]
 
         with patch.object(plugins_build, "star_map"):
-            plugins_build.filter_tools(mock_event, req)
+            req.func_tool = plugins_build.filter_tools(mock_event, req.func_tool)
 
         assert "mcp_tool" in req.func_tool.names()
 
@@ -1764,7 +1760,7 @@ class TestPluginToolFix:
         mock_event.plugins_name = ["other_plugin"]
 
         with patch.object(plugins_build, "star_map"):
-            plugins_build.filter_tools(mock_event, req)
+            req.func_tool = plugins_build.filter_tools(mock_event, req.func_tool)
 
         assert "tool_without_origin" in req.func_tool.names()
 
@@ -1832,7 +1828,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -1864,7 +1860,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -1902,7 +1898,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(mock_context.conversation_manager)
 
         with (
-            patch.object(builder_build, "AgentRunner") as runner_cls,
+            patch.object(native_execution, "AgentRunner") as runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -1969,7 +1965,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2045,7 +2041,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2115,7 +2111,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2187,7 +2183,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2260,7 +2256,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2329,7 +2325,7 @@ class TestBuildMainAgent:
         mock_context.get_config.return_value = {}
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2382,7 +2378,7 @@ class TestBuildMainAgent:
         mock_context.get_config.return_value = {}
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2431,7 +2427,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2476,7 +2472,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2527,13 +2523,13 @@ class TestBuildMainAgent:
             raise RuntimeError("quoted")
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
                 side_effect=lambda **kwargs: SimpleNamespace(**kwargs),
             ),
-            patch("bot.core.bot_main_agent.media.logger") as mock_logger,
+            patch("bot.core.agent_media.logger") as mock_logger,
             patch.object(
                 Video,
                 "convert_to_file_path",
@@ -2597,7 +2593,7 @@ class TestBuildMainAgent:
             return quoted_path if self.file == "quoted.amr" else direct_path
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2661,7 +2657,7 @@ class TestBuildMainAgent:
             raise Exception(f"not a valid file: {self.file}")
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2713,7 +2709,7 @@ class TestBuildMainAgent:
         _setup_conversation_for_build(conv_mgr)
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2788,7 +2784,7 @@ class TestBuildMainAgent:
             return stop
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2835,7 +2831,7 @@ class TestBuildMainAgent:
         )
 
         with (
-            patch.object(builder_build, "AgentRunner") as mock_runner_cls,
+            patch.object(native_execution, "AgentRunner") as mock_runner_cls,
             patch.object(
                 builder_build,
                 "BotAgentContext",
@@ -2879,7 +2875,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_db.get_platform_session_by_id.assert_called_once_with(
             "webchat-session-123"
@@ -2902,7 +2900,9 @@ class TestHandleWebchat:
 
         with patch("bot.core.db_helper") as mock_db:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         prov.text_chat.assert_not_called()
 
@@ -2919,7 +2919,9 @@ class TestHandleWebchat:
 
         with patch("bot.core.db_helper") as mock_db:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         prov.text_chat.assert_not_called()
 
@@ -2937,7 +2939,9 @@ class TestHandleWebchat:
         with patch("bot.core.db_helper") as mock_db:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         prov.text_chat.assert_not_called()
 
@@ -2952,7 +2956,9 @@ class TestHandleWebchat:
         with patch("bot.core.db_helper") as mock_db:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=None)
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         prov.text_chat.assert_not_called()
 
@@ -2974,7 +2980,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_db.update_platform_session.assert_not_called()
 
@@ -2996,7 +3004,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_db.update_platform_session.assert_not_called()
 
@@ -3016,7 +3026,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_db.update_platform_session.assert_not_called()
 
@@ -3038,7 +3050,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_db.update_platform_session.assert_not_called()
 
@@ -3060,7 +3074,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_db.update_platform_session.assert_called_once_with(
             session_id="webchat-session-123",
@@ -3088,7 +3104,9 @@ class TestHandleWebchat:
             mock_db.get_platform_session_by_id = AsyncMock(return_value=mock_session)
             mock_db.update_platform_session = AsyncMock()
 
-            await webchat_build.generate_conversation_title(mock_event, req, prov)
+            await webchat_build.generate_conversation_title(
+                mock_event, req.prompt, prov
+            )
 
         mock_logger.exception.assert_called_once()
         mock_db.update_platform_session.assert_not_called()
@@ -3386,7 +3404,7 @@ async def test_endpoint_validation_does_not_depend_on_hook_dispatch(
         patch.object(
             builder_build, "call_event_hook", AsyncMock(return_value=False)
         ) as hook,
-        patch.object(builder_build, "AgentRunner") as runner,
+        patch.object(native_execution, "AgentRunner") as runner,
         patch.object(
             builder_build,
             "BotAgentContext",
@@ -3423,7 +3441,7 @@ async def test_stopping_during_history_loading_does_not_initialize_an_agent(
 
     with (
         patch.object(request_build, "_get_session_conv", side_effect=load_conversation),
-        patch.object(builder_build, "AgentRunner") as runner,
+        patch.object(native_execution, "AgentRunner") as runner,
         patch.object(persona_build, "apply_persona", AsyncMock()) as persona,
     ):
         result = await ama.build_main_agent(
@@ -3477,7 +3495,6 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
     mock_context.persona_manager.resolve_selected_persona.return_value = (
         "persona",
         selected,
-        None,
         False,
     )
     mock_event.plugins_name = []
@@ -3495,9 +3512,7 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
     config = ama.MainAgentBuildConfig.from_config(
         {
             "kb_agentic_mode": agentic_kb,
-            "agent_runner": {
-                "config": {"misc": {"tool_schema_mode": tool_schema_mode}}
-            },
+            "agent": {"config": {"misc": {"tool_schema_mode": tool_schema_mode}}},
             "provider_settings": {
                 "computer_use_runtime": runtime,
                 "sandbox": {"booter": booter},
@@ -3526,7 +3541,7 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
     runner = MagicMock()
     runner.reset = AsyncMock()
     with (
-        patch.object(builder_build, "AgentRunner", return_value=runner),
+        patch.object(native_execution, "AgentRunner", return_value=runner),
         patch.object(
             builder_build,
             "BotAgentContext",
@@ -3588,7 +3603,7 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
         assert "Knowledge marker" in req.extra_user_content_parts[1].text
     assert req.contexts[0] == {"role": "assistant", "content": "Opening"}
     markers = [
-        agent_resources.LLM_SAFETY_MODE_SYSTEM_PROMPT,
+        persona_build.LLM_SAFETY_MODE_SYSTEM_PROMPT,
         "Caller marker",
         "<genui_instructions>",
         "</genui_instructions>",
@@ -3611,9 +3626,9 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
             req.system_prompt.count(computer_use_build.LOCAL_NETWORK_POLICY_NOTICE) == 1
         )
     tool_prompt = (
-        agent_resources.TOOL_CALL_PROMPT
+        builder_build.TOOL_CALL_PROMPT
         if tool_schema_mode == "full"
-        else agent_resources.TOOL_CALL_PROMPT_SKILLS_LIKE_MODE
+        else builder_build.TOOL_CALL_PROMPT_SKILLS_LIKE_MODE
     )
     markers.append(tool_prompt)
     markers.append(web_search_build.WEB_SEARCH_CITATION_PROMPT)

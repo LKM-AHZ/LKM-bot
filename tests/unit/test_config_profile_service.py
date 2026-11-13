@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
@@ -40,6 +41,8 @@ async def test_profile_mutations_await_config_manager() -> None:
     )
     lifecycle = SimpleNamespace(
         bot_config_mgr=config_manager,
+        agent_configs=SimpleNamespace(lock=asyncio.Lock()),
+        agent_runtimes={},
         reload_pipeline_scheduler=AsyncMock(),
         pipeline_scheduler_mapping={"profile-id": object()},
     )

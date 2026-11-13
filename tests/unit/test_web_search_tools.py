@@ -3,8 +3,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from bot.core.tools import web_search_tools as tools
-from bot.core.tools.web_search_tools import (
+from bot.core.bot_agent_runtime.tools import web_search_tools as tools
+from bot.core.bot_agent_runtime.tools.web_search_tools import (
     AnySearchWebSearchTool,
     _anysearch_search,
 )
@@ -1884,7 +1884,7 @@ class _BraveCycleSession(_CycleSession):
         ('{"error":{"code":"SUBSCRIPTION_TOKEN_INVALID"}}', True),
         ('{"error":{"code":"VALIDATION"}}', False),
         ('{"error":null}', False),
-        ('[]', False),
+        ("[]", False),
         ("not JSON", False),
     ],
 )

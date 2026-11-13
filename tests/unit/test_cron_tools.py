@@ -6,8 +6,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from bot.core.bot_agent_runtime.tools.cron_tools import FutureTaskTool
 from bot.core.platform.message_type import MessageType
-from bot.core.tools.cron_tools import FutureTaskTool
 
 
 def _context(

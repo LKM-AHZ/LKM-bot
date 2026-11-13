@@ -92,8 +92,8 @@ const actionLabels = {
   handler_end: "handlerEnd",
   agent_start: "agentStart",
   agent_end: "agentEnd",
-  astr_agent_prepare: "agentPrepare",
-  astr_agent_complete: "agentComplete",
+  bot_agent_prepare: "agentPrepare",
+  bot_agent_complete: "agentComplete",
   agent_tool_call: "agentToolCall",
   agent_tool_result: "agentToolResult",
   response_ready: "responseReady",
@@ -108,8 +108,8 @@ const actionIcons = {
   stage_end: Check,
   agent_start: Bot,
   agent_end: Check,
-  astr_agent_prepare: Bot,
-  astr_agent_complete: Check,
+  bot_agent_prepare: Bot,
+  bot_agent_complete: Check,
   agent_tool_call: Workflow,
   agent_tool_result: Check,
   response_ready: Send,
@@ -192,7 +192,7 @@ const selectedStats = computed(() => {
 const selectedTokenUsage = computed(() => {
   const latest = new Map();
   for (const record of selectedEvent.value?.records || []) {
-    if (record.action !== "astr_agent_complete" && record.kind !== "agent") continue;
+    if (record.action !== "bot_agent_complete" && record.kind !== "agent") continue;
     const usage = record.fields?.stats?.token_usage;
     if (!usage || !["input_other", "input_cached", "output"].every((key) => Number.isSafeInteger(usage[key]) && usage[key] >= 0)) continue;
     // Runner stats are cumulative snapshots, not per-request deltas.
@@ -267,7 +267,7 @@ const timelineRows = computed(() => {
     if (!agentMetadata.has(owner)) agentMetadata.set(owner, { models: [], personas: [], toolCalls: 0 });
     const metadata = agentMetadata.get(owner);
     for (const record of group.records) {
-      if (record.action === "astr_agent_prepare") {
+      if (record.action === "bot_agent_prepare") {
         const provider = record.fields.chat_provider;
         if (provider?.model && !metadata.models.some((model) => model.id === provider.model && model.provider === provider.id)) {
           metadata.models.push({ id: provider.model, provider: provider.id || "" });
@@ -344,7 +344,7 @@ function matchesFilter(event, filter) {
   if (filter === "errors") return event.status === "error";
   if (filter === "models") {
     return event.has_models ?? event.records.some((record) => record.kind === "agent" ||
-      ["astr_agent_prepare", "astr_agent_complete"].includes(record.action));
+      ["bot_agent_prepare", "bot_agent_complete"].includes(record.action));
   }
   if (filter === "plugins") {
     return event.has_plugins ?? event.records.some((record) => record.kind === "plugin_handler");
@@ -473,7 +473,7 @@ function processNewTraces(newTraces) {
     let event = eventIndex.get(trace.span_id);
     if (!event) {
       event = reactive({
-        span_id: trace.span_id, name: trace.name || "AstrMessageEvent",
+        span_id: trace.span_id, name: trace.name || "BotMessageEvent",
         umo: trace.umo || "", sender_name: trace.sender_name || "",
         message_outline: trace.message_outline || "",
         platform_id: "", platform_name: "", platform_icon: "",
@@ -801,8 +801,8 @@ function recordSubtitle(record) {
     return "";
   }
   if (record.action === "agent_start") {
-    const runner = fields.runner_type || "local";
-    if (runner === "local") return configTm("aiSettings.localSettingsTitle");
+    const runner = fields.runtime || "bot";
+    if (runner === "bot") return configTm("aiSettings.localSettingsTitle");
     return ["dify", "coze", "dashscope", "deerflow"].includes(runner)
       ? configTm(`aiSettings.runners.${runner}.title`) : runner;
   }

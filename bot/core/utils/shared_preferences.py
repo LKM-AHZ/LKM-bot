@@ -6,6 +6,8 @@ from copy import deepcopy
 from typing import Any, TypeVar, cast, overload
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from deprecated import deprecated
+from sqlmodel import delete
 
 from bot import logger
 from bot.core.db import BaseDatabase
@@ -90,6 +92,12 @@ class SharedPreferences:
                 ]
                 for cache_key in keys:
                     self._cache.pop(cache_key, None)
+            elif action == "replace_scope_key" and key is not None:
+                for cache_key in list(self._cache):
+                    if cache_key[0] == scope and cache_key[2] == key:
+                        self._cache.pop(cache_key)
+                for target_id, target_value in value.items():
+                    self._cache[(scope, target_id, key)] = deepcopy(target_value)
 
     def _schedule_write(self, operation: _WriteOperation) -> None:
         """Schedule a preference write on the owning event loop.
@@ -159,9 +167,34 @@ class SharedPreferences:
                     await self.db_helper.remove_preference(scope, scope_id, key)
                 elif action == "clear":
                     await self.db_helper.clear_preferences(scope, scope_id)
+                elif action == "replace_scope_key" and key is not None:
+                    async with self.db_helper.get_db() as session:
+                        async with session.begin():
+                            await session.execute(
+                                delete(Preference).where(
+                                    Preference.scope == scope, Preference.key == key
+                                )
+                            )
+                            session.add_all(
+                                [
+                                    Preference(
+                                        scope=scope,
+                                        scope_id=target_id,
+                                        key=key,
+                                        value={"val": target_value},
+                                    )
+                                    for target_id, target_value in value.items()
+                                ]
+                            )
                 else:
                     raise ValueError(f"Unknown preference write operation: {action}")
             except Exception as exc:
+                if action == "replace_scope_key":
+                    # Failed replacements must fall back to the committed rows.
+                    with self._cache_lock:
+                        for cache_key in list(self._cache):
+                            if cache_key[0] == scope and cache_key[2] == key:
+                                self._cache.pop(cache_key)
                 logger.error(
                     "Failed to persist shared preference operation %s for %s/%s: %s",
                     action,
@@ -380,6 +413,29 @@ class SharedPreferences:
     async def session_put(self, umo: str, key: str, value: Any) -> None:
         await self.put_async("umo", umo, key, value)
 
+    async def replace_scope_key(
+        self, scope: str, key: str, values: dict[str, Any]
+    ) -> None:
+        """Atomically replace all records for a key within one scope.
+
+        Args:
+            scope: Target resource type.
+            key: Preference key shared by the records.
+            values: Complete mapping of scope IDs to their new values.
+        """
+        await self.initialize()
+        completion = asyncio.get_running_loop().create_future()
+        operation: _WriteOperation = (
+            "replace_scope_key",
+            scope,
+            "",
+            key,
+            deepcopy(values),
+            completion,
+        )
+        self._submit_write(operation)
+        await completion
+
     async def global_put(self, key: str, value: Any) -> None:
         await self.put_async("global", "global", key, value)
 
@@ -423,3 +479,57 @@ class SharedPreferences:
     # ====
     # DEPRECATED METHODS
     # ====
+
+    @deprecated(
+        version="4.0.0",
+        reason="Use get_async() instead. Plugins: use PluginKVStoreMixin.get_kv_data().",
+    )
+    def get(
+        self,
+        key: str,
+        default: _VT = None,
+        scope: str | None = None,
+        scope_id: str | None = "",
+    ) -> _VT:
+        """获取偏好设置（已弃用）"""
+        if scope_id == "":
+            scope_id = "unknown"
+        if scope_id is None or key is None:
+            raise ValueError(
+                "scope_id and key cannot be None when getting a specific preference.",
+            )
+        resolved_scope = scope or "unknown"
+        resolved_scope_id = scope_id or "unknown"
+        with self._cache_lock:
+            value = self._cache.get((resolved_scope, resolved_scope_id, key), _MISSING)
+            if value is not _MISSING:
+                return default if value is None else deepcopy(value)
+        # Overlay miss: fall back to a point query through a dedicated
+        # synchronous database connection. This briefly blocks the calling
+        # thread (unavoidable for a synchronous API), but never touches the
+        # async connection pool, so it cannot deadlock the event loop.
+        get_sync = getattr(self.db_helper, "get_preference_sync", None)
+        if get_sync is None:
+            if not self._warned_sync_read_unsupported:
+                self._warned_sync_read_unsupported = True
+                logger.warning(
+                    "SharedPreferences sync get() is not supported by database "
+                    "backend %s; returning the default. Use get_async() instead.",
+                    type(self.db_helper).__name__,
+                )
+            return default
+        try:
+            stored = get_sync(resolved_scope, resolved_scope_id, key)
+        except Exception as exc:
+            logger.warning(
+                "SharedPreferences sync get() failed for %s/%s/%s: %s",
+                resolved_scope,
+                resolved_scope_id,
+                key,
+                exc,
+            )
+            return default
+        if stored is None:
+            return default
+        value = stored.get("val")
+        return default if value is None else deepcopy(value)

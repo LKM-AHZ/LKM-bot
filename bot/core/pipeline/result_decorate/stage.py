@@ -11,7 +11,6 @@ from bot.core.message.message_event_result import ResultContentType
 from bot.core.pipeline.content_safety_check.stage import ContentSafetyCheckStage
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.platform.message_type import MessageType
-from bot.core.star.session_llm_manager import SessionServiceManager
 from bot.core.star.star import star_map
 from bot.core.star.star_handler import EventType, star_handlers_registry
 
@@ -273,9 +272,12 @@ class ResultDecorateStage(Stage):
             )
 
             should_tts = (
-                bool(self.ctx.bot_config["provider_tts_settings"]["enable"])
+                bool(
+                    self.ctx.plugin_manager.context.get_config(
+                        umo=event.unified_msg_origin
+                    )["provider_tts_settings"]["enable"]
+                )
                 and result.is_llm_result()
-                and await SessionServiceManager.should_process_tts_request(event)
                 and random.random() <= self.tts_trigger_probability
                 and tts_provider
             )

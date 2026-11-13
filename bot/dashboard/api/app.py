@@ -12,6 +12,7 @@ from bot.core.core_lifecycle import BotCoreLifecycle
 from bot.core.db import BaseDatabase
 from bot.core.log import LogManager
 from bot.dashboard.responses import ApiError, error
+from bot.dashboard.services.agent_config_service import AgentConfigService
 from bot.dashboard.services.api_key_service import ApiKeyService
 from bot.dashboard.services.auth_service import AuthService
 from bot.dashboard.services.backup_service import BackupService
@@ -117,6 +118,11 @@ def create_dashboard_asgi_app(
         sessions=SessionManagementService(core_lifecycle, db),
         skills=SkillsService(core_lifecycle),
         stats=stats,
+        agent_configs=AgentConfigService(
+            core_lifecycle.agent_configs,
+            core_lifecycle.agent_runtimes,
+            core_lifecycle.bot_config_mgr,
+        ),
         t2i=T2iService(core_lifecycle),
         tools=ToolsService(core_lifecycle),
         updates=UpdateService(

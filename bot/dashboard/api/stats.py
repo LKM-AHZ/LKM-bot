@@ -50,10 +50,11 @@ def _parse_int(value: object, default: int, name: str) -> int:
 @router.get("/stats")
 async def get_stats(
     offset_sec: int = Query(default=86400),
+    sections: str | None = Query(default=None),
     _auth: AuthContext = Depends(require_system_scope),
     service: StatService = Depends(get_service),
 ):
-    return await _run(service.get_stat(offset_sec))
+    return await _run(service.get_stat(offset_sec, sections=sections))
 
 
 @router.get("/stats/provider-tokens")

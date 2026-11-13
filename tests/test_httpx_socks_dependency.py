@@ -6,9 +6,9 @@
 """
 
 import re
+import tomllib
 from pathlib import Path
 
-import tomllib
 from bot.core.utils.toml_parser import read_pyproject_project_dependencies
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -58,4 +58,3 @@ def test_uv_lock_pins_httpx_socks_extra() -> None:
     assert any(dep.get("name") == "socksio" for dep in socks_extra), (
         "Expected uv.lock's httpx 'socks' extra to pull in socksio"
     )
-

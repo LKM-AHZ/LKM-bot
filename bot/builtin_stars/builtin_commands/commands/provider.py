@@ -6,6 +6,7 @@ from bot import logger
 from bot.api.event import BotMessageEvent, MessageEventResult
 from bot.core import star
 from bot.core.provider.entities import ProviderType
+from bot.core.session_overrides import PROVIDER_PATHS, update_overrides
 from bot.core.utils.error_redaction import safe_error
 
 
@@ -186,6 +187,9 @@ class ProviderCommands:
                 ret += "\nUse /provider stt <idx> to switch STT providers."
 
             event.set_result(MessageEventResult().message(ret))
+        elif idx == "--inherit":
+            await update_overrides(umo, dict.fromkeys(PROVIDER_PATHS.values(), None))
+            event.set_result(MessageEventResult().message("Following profile models."))
         elif idx == "tts":
             if idx2 is None:
                 event.set_result(

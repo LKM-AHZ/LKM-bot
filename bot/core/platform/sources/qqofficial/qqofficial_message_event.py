@@ -533,9 +533,9 @@ class QQOfficialMessageEvent(BotMessageEvent):
         ret = None
 
         match source:
-            case botpy.message.GroupMessage():
+            case botpy.message.GroupMessage() | Interaction(scene="group"):
                 if not source.group_openid:
-                    logger.error("[QQOfficial] GroupMessage 缺少 group_openid")
+                    logger.error("[QQOfficial] Group reply has no group_openid.")
                     return None
 
                 if image_base64:
@@ -592,12 +592,21 @@ class QQOfficialMessageEvent(BotMessageEvent):
                     stream=stream,
                 )
 
-            case botpy.message.C2CMessage():
+            case botpy.message.C2CMessage() | Interaction(scene="c2c"):
+                openid = (
+                    source.user_openid
+                    if isinstance(source, Interaction)
+                    else source.author.user_openid
+                )
+                if not openid:
+                    logger.error("[QQOfficial] C2C reply has no user_openid.")
+                    return None
+
                 if image_base64:
                     media = await self.upload_group_and_c2c_image(
                         image_base64,
                         self.IMAGE_FILE_TYPE,
-                        openid=source.author.user_openid,
+                        openid=openid,
                     )
                     payload["media"] = media
                     payload["msg_type"] = 7
@@ -607,7 +616,7 @@ class QQOfficialMessageEvent(BotMessageEvent):
                     media = await self.upload_group_and_c2c_media(
                         record_file_path,
                         self.VOICE_FILE_TYPE,
-                        openid=source.author.user_openid,
+                        openid=openid,
                     )
                     if media:
                         payload["media"] = media
@@ -618,7 +627,7 @@ class QQOfficialMessageEvent(BotMessageEvent):
                     media = await self.upload_group_and_c2c_media(
                         video_file_source,
                         self.VIDEO_FILE_TYPE,
-                        openid=source.author.user_openid,
+                        openid=openid,
                     )
                     if media:
                         payload["media"] = media
@@ -630,7 +639,7 @@ class QQOfficialMessageEvent(BotMessageEvent):
                         file_source,
                         self.FILE_FILE_TYPE,
                         file_name=file_name,
-                        openid=source.author.user_openid,
+                        openid=openid,
                     )
                     if media:
                         payload["media"] = media
@@ -640,7 +649,7 @@ class QQOfficialMessageEvent(BotMessageEvent):
                 if stream:
                     ret = await self._send_with_markdown_fallback(
                         send_func=lambda retry_payload: self.post_c2c_message(
-                            openid=source.author.user_openid,
+                            openid=openid,
                             **retry_payload,
                             stream=stream,
                         ),
@@ -651,7 +660,7 @@ class QQOfficialMessageEvent(BotMessageEvent):
                 else:
                     ret = await self._send_with_markdown_fallback(
                         send_func=lambda retry_payload: self.post_c2c_message(
-                            openid=source.author.user_openid,
+                            openid=openid,
                             **retry_payload,
                         ),
                         payload=payload,
@@ -660,7 +669,10 @@ class QQOfficialMessageEvent(BotMessageEvent):
                     )
                 logger.debug(f"Message sent to C2C: {ret}")
 
-            case botpy.message.Message():
+            case botpy.message.Message() | Interaction(scene="guild"):
+                if not source.channel_id:
+                    logger.error("[QQOfficial] Channel reply has no channel_id.")
+                    return None
                 if image_path:
                     payload["file_image"] = image_path
                 # Guild text-channel send API (/channels/{channel_id}/messages) does not use v2 msg_type.
@@ -691,50 +703,9 @@ class QQOfficialMessageEvent(BotMessageEvent):
                 )
 
             case Interaction():
-                if any(
-                    (
-                        image_base64,
-                        image_path,
-                        record_file_path,
-                        video_file_source,
-                        file_source,
-                    )
-                ):
-                    logger.warning(
-                        "[QQOfficial] Button interaction replies currently ignore media."
-                    )
-                if source.scene == "group" and source.group_openid:
-                    ret = await self._send_with_markdown_fallback(
-                        send_func=lambda retry_payload: self.bot.api.post_group_message(
-                            group_openid=source.group_openid,
-                            **retry_payload,
-                        ),
-                        payload=payload,
-                        plain_text=plain_text,
-                    )
-                elif source.scene == "c2c" and source.user_openid:
-                    ret = await self._send_with_markdown_fallback(
-                        send_func=lambda retry_payload: self.post_c2c_message(
-                            openid=source.user_openid,
-                            **retry_payload,
-                        ),
-                        payload=payload,
-                        plain_text=plain_text,
-                    )
-                elif source.scene == "guild" and source.channel_id:
-                    payload.pop("msg_type", None)
-                    ret = await self._send_with_markdown_fallback(
-                        send_func=lambda retry_payload: self.bot.api.post_message(
-                            channel_id=source.channel_id,
-                            **retry_payload,
-                        ),
-                        payload=payload,
-                        plain_text=plain_text,
-                    )
-                else:
-                    logger.warning(
-                        "[QQOfficial] Cannot reply to button interaction without a scene target."
-                    )
+                logger.warning(
+                    "[QQOfficial] Cannot reply to button interaction without a scene target."
+                )
 
             case _:
                 pass
@@ -1002,12 +973,11 @@ class QQOfficialMessageEvent(BotMessageEvent):
         keyboard: message.Keyboard | None = None,
         stream: dict | None = None,
     ) -> message.Message | None:
-        payload = locals()
-        payload.pop("self", None)
-        if payload.get("msg_id") is None:
-            payload.pop("msg_id", None)
-        if payload.get("event_id") is None:
-            payload.pop("event_id", None)
+        payload = {
+            key: value
+            for key, value in locals().items()
+            if key != "self" and value is not None
+        }
         # QQ API does not accept stream.id=None; remove it when not yet assigned
         if "stream" in payload and payload["stream"] is not None:
             stream_data = dict(payload["stream"])

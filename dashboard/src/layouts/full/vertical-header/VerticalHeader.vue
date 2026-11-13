@@ -1079,7 +1079,7 @@ onMounted(async () => {
 <template>
   <v-app-bar
     elevation="0"
-    height="40"
+    height="42"
     data-tauri-drag-region
     class="top-header"
     :class="{
@@ -1151,7 +1151,7 @@ onMounted(async () => {
 
       <!-- Bot/Chat mode switch - single button, hidden in chat mobile menu -->
       <v-btn
-        v-if="!isChatPath || !$vuetify.display.smAndDown"
+        v-if="!customizer.chatNavigationInSidebar && (!isChatPath || !$vuetify.display.smAndDown)"
         class="mode-switch-btn"
         :class="{ 'mr-4 hidden-xs': !isChatPath }"
         variant="text"
@@ -1192,8 +1192,10 @@ onMounted(async () => {
         <!-- Bot/Chat 模式切换 - 仅在手机端显示 -->
         <template
           v-if="
-            (isChatPath && $vuetify.display.smAndDown) ||
-            (!isChatPath && $vuetify.display.xs)
+            !customizer.chatNavigationInSidebar && (
+              (isChatPath && $vuetify.display.smAndDown) ||
+              (!isChatPath && $vuetify.display.xs)
+            )
           "
         >
           <div class="mobile-mode-switch-wrapper">
@@ -2553,19 +2555,20 @@ onMounted(async () => {
 
 html {
   /* Keep in sync with the app bar height above. */
-  --lkmbot-toolbar-height: 40px;
+  --lkmbot-toolbar-height: 42px;
 }
 
 .top-header,
 .top-header.chat-mode-header,
 .top-header.chat-mode-header.chat-mode-header--dark {
+  background: var(--lkmbot-chrome-bg, #f2f2f7) !important;
   border-bottom: 0 !important;
   box-shadow: none !important;
 }
 
-html[data-astrbot-desktop-platform='macos'] .top-header,
-html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header,
-html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mode-header--dark {
+html[data-bot-desktop-platform='macos'] .top-header,
+html[data-bot-desktop-platform='macos'] .top-header.chat-mode-header,
+html[data-bot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mode-header--dark {
   background: var(--lkmbot-vibrancy-tint, transparent) !important;
 }
 
@@ -2591,7 +2594,7 @@ html[data-astrbot-desktop-platform='macos'] .top-header.chat-mode-header.chat-mo
 /* On macOS the traffic lights sit over the toolbar's left zone once the sidebar
    is no longer permanent, so the menu button must clear them. */
 @media (max-width: 959.98px) {
-  html[data-astrbot-desktop-platform='macos'] .top-header .v-toolbar__content {
+  html[data-bot-desktop-platform='macos'] .top-header .v-toolbar__content {
     padding-inline-start: 74px !important;
   }
 }

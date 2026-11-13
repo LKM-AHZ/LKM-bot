@@ -6,8 +6,8 @@ from typing import cast
 
 import pytest
 
-from bot.core.computer import computer_client
-from bot.core.computer.booters.base import ComputerBooter
+from bot.core.bot_agent_runtime.computer import computer_client
+from bot.core.bot_agent_runtime.computer.booters.base import ComputerBooter
 
 
 def _extract_embedded_python(command: str) -> str:
@@ -75,7 +75,7 @@ def test_sync_skills_keeps_builtin_skills_when_local_is_empty(
         captured["skills"] = skills
 
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_skills_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
@@ -83,11 +83,11 @@ def test_sync_skills_keeps_builtin_skills_when_local_is_empty(
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_temp_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
+        "bot.core.bot_agent_runtime.computer.computer_client.SkillManager.set_sandbox_skills_cache",
         _fake_set_cache,
     )
 
@@ -124,15 +124,15 @@ def test_sync_skills_uses_managed_strategy_instead_of_wiping_all(
         captured["skills"] = skills
 
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_skills_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_temp_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
+        "bot.core.bot_agent_runtime.computer.computer_client.SkillManager.set_sandbox_skills_cache",
         _fake_set_cache,
     )
 
@@ -177,7 +177,7 @@ def test_sync_skills_includes_plugin_provided_skills(
         captured["skills"] = skills
 
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_skills_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
@@ -185,11 +185,11 @@ def test_sync_skills_includes_plugin_provided_skills(
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_temp_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.SkillManager.set_sandbox_skills_cache",
+        "bot.core.bot_agent_runtime.computer.computer_client.SkillManager.set_sandbox_skills_cache",
         _fake_set_cache,
     )
     monkeypatch.setattr(
@@ -237,7 +237,7 @@ def test_sync_skills_skips_inactive_plugin_provided_skills(
     plugin_skill_dir.joinpath("SKILL.md").write_text("# demo", encoding="utf-8")
 
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_skills_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_skills_path",
         lambda: str(skills_root),
     )
     monkeypatch.setattr(
@@ -245,7 +245,7 @@ def test_sync_skills_skips_inactive_plugin_provided_skills(
         lambda: str(plugins_root),
     )
     monkeypatch.setattr(
-        "bot.core.computer.computer_client.get_bot_temp_path",
+        "bot.core.bot_agent_runtime.computer.computer_client.get_bot_temp_path",
         lambda: str(temp_root),
     )
     monkeypatch.setattr(

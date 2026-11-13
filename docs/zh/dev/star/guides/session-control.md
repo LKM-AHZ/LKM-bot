@@ -22,7 +22,9 @@ LKMBot 提供了开箱即用的会话控制功能：
 
 ```py
 import bot.api.message_components as Comp
-from bot.core.utils.session_waiter import (
+# LKMBot v4.30.0 之前的导入方式：
+# from bot.core.utils.session_waiter import session_waiter, SessionController
+from bot.api.util import (
     session_waiter,
     SessionController,
 )
@@ -105,7 +107,9 @@ async def handle_empty_mention(self, event: BotMessageEvent):
 
 ```py
 import bot.api.message_components as Comp
-from bot.core.utils.session_waiter import (
+# LKMBot v4.30.0 之前的导入方式：
+# from bot.core.utils.session_waiter import session_waiter, SessionFilter, SessionController
+from bot.api.util import (
     session_waiter,
     SessionFilter,
     SessionController,

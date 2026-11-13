@@ -1,18 +1,18 @@
 {
   "ai_group": {
     "name": "AI",
-    "agent_runner": {
-      "description": "Agent 执行方式",
-      "hint": "选择 AI 对话的执行器。切换执行器会使用新类型的默认配置，不保留上一类型的参数。",
+    "agent": {
+      "description": "Agent 配置",
+      "hint": "选择 Agent Runtime。切换后使用对应运行环境的默认配置。",
       "provider_settings": {
         "enable": {
           "description": "启用",
           "hint": "AI 对话总开关"
         }
       },
-      "agent_runner": {
-        "runner_type": {
-          "description": "执行器",
+      "agent": {
+        "runtime": {
+          "description": "Agent Runtime",
           "labels": [
             "内置 Agent",
             "Dify",
@@ -25,73 +25,143 @@
     },
     "dify_runner": {
       "description": "Dify 配置",
-      "agent_runner": {
+      "agent": {
         "config": {
-          "dify_api_type": { "description": "应用类型" },
-          "dify_api_key": { "description": "API Key" },
-          "dify_api_base": { "description": "API Base URL" },
-          "dify_workflow_output_key": { "description": "Workflow 输出变量名" },
-          "dify_query_input_key": { "description": "Prompt 输入变量名" },
-          "variables": { "description": "变量" },
-          "timeout": { "description": "超时时间（秒）" },
-          "proxy": { "description": "代理地址" }
+          "dify_api_type": {
+            "description": "应用类型"
+          },
+          "dify_api_key": {
+            "description": "API Key"
+          },
+          "dify_api_base": {
+            "description": "API Base URL"
+          },
+          "dify_workflow_output_key": {
+            "description": "Workflow 输出变量名"
+          },
+          "dify_query_input_key": {
+            "description": "Prompt 输入变量名"
+          },
+          "variables": {
+            "description": "变量"
+          },
+          "timeout": {
+            "description": "超时时间（秒）"
+          },
+          "proxy": {
+            "description": "代理地址"
+          }
         }
       }
     },
     "coze_runner": {
       "description": "Coze 配置",
-      "agent_runner": {
+      "agent": {
         "config": {
-          "coze_api_key": { "description": "API Key" },
-          "bot_id": { "description": "Bot ID" },
-          "coze_api_base": { "description": "API Base URL" },
-          "auto_save_history": { "description": "由 Coze 管理对话记录" },
-          "timeout": { "description": "超时时间（秒）" },
-          "proxy": { "description": "代理地址" }
+          "coze_api_key": {
+            "description": "API Key"
+          },
+          "bot_id": {
+            "description": "Bot ID"
+          },
+          "coze_api_base": {
+            "description": "API Base URL"
+          },
+          "auto_save_history": {
+            "description": "由 Coze 管理对话记录"
+          },
+          "timeout": {
+            "description": "超时时间（秒）"
+          },
+          "proxy": {
+            "description": "代理地址"
+          }
         }
       }
     },
     "dashscope_runner": {
       "description": "阿里云百炼应用配置",
-      "agent_runner": {
+      "agent": {
         "config": {
-          "dashscope_app_type": { "description": "应用类型" },
-          "dashscope_api_key": { "description": "API Key" },
-          "dashscope_app_id": { "description": "应用 ID" },
-          "rag_options": {
-            "pipeline_ids": { "description": "知识库 Pipeline ID" },
-            "file_ids": { "description": "文件 ID" },
-            "output_reference": { "description": "输出引用" }
+          "dashscope_app_type": {
+            "description": "应用类型"
           },
-          "variables": { "description": "变量" },
-          "timeout": { "description": "超时时间（秒）" },
-          "proxy": { "description": "代理地址" }
+          "dashscope_api_key": {
+            "description": "API Key"
+          },
+          "dashscope_app_id": {
+            "description": "应用 ID"
+          },
+          "rag_options": {
+            "pipeline_ids": {
+              "description": "知识库 Pipeline ID"
+            },
+            "file_ids": {
+              "description": "文件 ID"
+            },
+            "output_reference": {
+              "description": "输出引用"
+            }
+          },
+          "variables": {
+            "description": "变量"
+          },
+          "timeout": {
+            "description": "超时时间（秒）"
+          },
+          "proxy": {
+            "description": "代理地址"
+          }
         }
       }
     },
     "deerflow_runner": {
       "description": "DeerFlow 配置",
-      "agent_runner": {
+      "agent": {
         "config": {
-          "deerflow_api_base": { "description": "API Base URL" },
-          "deerflow_api_key": { "description": "API Key" },
-          "deerflow_auth_header": { "description": "Authorization Header" },
-          "deerflow_assistant_id": { "description": "Assistant ID" },
-          "deerflow_model_name": { "description": "模型名称覆盖" },
-          "deerflow_thinking_enabled": { "description": "启用思考模式" },
-          "deerflow_plan_mode": { "description": "启用计划模式" },
-          "deerflow_subagent_enabled": { "description": "启用子智能体" },
-          "deerflow_max_concurrent_subagents": { "description": "子智能体最大并发数" },
-          "deerflow_recursion_limit": { "description": "递归深度上限" },
-          "timeout": { "description": "超时时间（秒）" },
-          "proxy": { "description": "代理地址" }
+          "deerflow_api_base": {
+            "description": "API Base URL"
+          },
+          "deerflow_api_key": {
+            "description": "API Key"
+          },
+          "deerflow_auth_header": {
+            "description": "Authorization Header"
+          },
+          "deerflow_assistant_id": {
+            "description": "Assistant ID"
+          },
+          "deerflow_model_name": {
+            "description": "模型名称覆盖"
+          },
+          "deerflow_thinking_enabled": {
+            "description": "启用思考模式"
+          },
+          "deerflow_plan_mode": {
+            "description": "启用计划模式"
+          },
+          "deerflow_subagent_enabled": {
+            "description": "启用子智能体"
+          },
+          "deerflow_max_concurrent_subagents": {
+            "description": "子智能体最大并发数"
+          },
+          "deerflow_recursion_limit": {
+            "description": "递归深度上限"
+          },
+          "timeout": {
+            "description": "超时时间（秒）"
+          },
+          "proxy": {
+            "description": "代理地址"
+          }
         }
       }
     },
     "ai": {
       "description": "模型",
       "hint": "配置内置 Agent 使用的对话模型，以及通用的图片转述、语音模型。",
-      "agent_runner": {
+      "agent": {
         "config": {
           "model": {
             "provider_id": {
@@ -147,10 +217,12 @@
     "persona": {
       "description": "人格",
       "hint": "赋予 LKMBot 人格。",
-      "agent_runner": {
+      "agent": {
         "config": {
           "persona": {
-            "persona_id": { "description": "默认采用的人格" },
+            "persona_id": {
+              "description": "默认采用的人格"
+            },
             "safety_mode": {
               "description": "健康模式",
               "hint": "引导模型输出健康、安全的内容，避免有害或敏感话题。"
@@ -279,7 +351,11 @@
         "computer_use_runtime": {
           "description": "运行环境",
           "hint": "允许 Agent 访问的环境。",
-          "labels": ["不允许任何环境", "本机环境", "第三方沙箱环境"]
+          "labels": [
+            "不允许任何环境",
+            "本机环境",
+            "第三方沙箱环境"
+          ]
         },
         "computer_use_local_permissions": {
           "description": "本地权限策略"
@@ -431,7 +507,7 @@
     "truncate_and_compress": {
       "hint": "LKMBot 如何管理工作记忆。详见: [上下文管理策略](https://docs.astrbot.app/use/context-compress.html)。",
       "description": "上下文管理策略",
-      "agent_runner": {
+      "agent": {
         "config": {
           "compression": {
             "max_turns": {
@@ -444,7 +520,10 @@
             },
             "overflow_strategy": {
               "description": "压缩策略",
-              "labels": ["按对话轮数截断", "由 LLM 压缩上下文"],
+              "labels": [
+                "按对话轮数截断",
+                "由 LLM 压缩上下文"
+              ],
               "hint": "模型上下文超限时的处理策略。"
             },
             "instruction": {
@@ -469,14 +548,19 @@
     },
     "others": {
       "description": "其他配置",
-      "agent_runner": {
+      "agent": {
         "config": {
           "misc": {
-            "max_steps": { "description": "工具调用轮数上限" },
+            "max_steps": {
+              "description": "工具调用轮数上限"
+            },
             "tool_schema_mode": {
               "description": "工具调用模式",
               "hint": "skills-like 先下发工具名称与描述，再下发参数；full 一次性下发完整参数。",
-              "labels": ["Skills-like（两阶段）", "Full（完整参数）"]
+              "labels": [
+                "Skills-like（两阶段）",
+                "Full（完整参数）"
+              ]
             },
             "tool_call_timeout": {
               "description": "工具调用超时时间(秒)"
@@ -1139,6 +1223,15 @@
     }
   },
   "access_group": {
+    "blacklist": {
+      "description": "黑名单",
+      "platform_settings": {
+        "id_blacklist": {
+          "description": "黑名单 ID 列表",
+          "hint": "停止处理这些会话的消息。黑名单优先于白名单，管理员也不会豁免。"
+        }
+      }
+    },
     "name": "访问控制",
     "admins": {
       "description": "管理员",
@@ -1556,7 +1649,6 @@
           "工具使用"
         ]
       },
-
       "custom_headers": {
         "description": "自定义请求头",
         "hint": "此处添加的键值对将作为自定义 HTTP 请求头，附加到 LKMBot 发往模型服务商的请求中。值必须为字符串。"
@@ -2020,11 +2112,11 @@
       },
       "dify_workflow_output_key": {
         "description": "Dify Workflow 输出变量名",
-        "hint": "Dify Workflow 输出变量名。当应用类型为 workflow 时才使用。默认为 astrbot_wf_output。"
+        "hint": "Dify Workflow 输出变量名。当应用类型为 workflow 时才使用。默认为 bot_wf_output。"
       },
       "dify_query_input_key": {
         "description": "Prompt 输入变量名",
-        "hint": "发送的消息文本内容对应的输入变量名。默认为 astrbot_text_query。"
+        "hint": "发送的消息文本内容对应的输入变量名。默认为 bot_text_query。"
       },
       "coze_api_key": {
         "description": "Coze API Key",

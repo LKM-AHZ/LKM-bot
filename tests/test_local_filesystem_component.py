@@ -7,9 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from bot.core.computer import process_sandbox
-from bot.core.computer.booters import local as local_booter
-from bot.core.computer.booters.local import LocalFileSystemComponent
+from bot.core.bot_agent_runtime.computer import process_sandbox
+from bot.core.bot_agent_runtime.computer.booters import local as local_booter
+from bot.core.bot_agent_runtime.computer.booters.local import (
+    LocalFileSystemComponent,
+)
 
 
 def _allow_tmp_root(monkeypatch, tmp_path: Path) -> None:

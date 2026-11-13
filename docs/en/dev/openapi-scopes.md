@@ -106,6 +106,12 @@ Manage configuration profiles, system configuration, and shared configuration, e
 
 | Method | Endpoint | Conditional sensitive sub-scope |
 | --- | --- | --- |
+| `GET` | `/api/v1/agent-configs` | — |
+| `POST` | `/api/v1/agent-configs` | — |
+| `GET` | `/api/v1/agent-configs/{config_id}` | — |
+| `PUT` | `/api/v1/agent-configs/{config_id}` | — |
+| `DELETE` | `/api/v1/agent-configs/{config_id}` | — |
+| `GET` | `/api/v1/agent-runtimes` | — |
 | `POST` | `/api/v1/bot-types/{bot_type}/registration` | — |
 | `GET` | `/api/v1/config-profiles` | — |
 | `POST` | `/api/v1/config-profiles` | `config:edit_admin` |
@@ -186,14 +192,12 @@ Manage conversations and platform-session data.
 | `POST` | `/api/v1/session-groups` | — |
 | `PUT` | `/api/v1/session-groups/{group_id}` | — |
 | `DELETE` | `/api/v1/session-groups/{group_id}` | — |
-| `GET` | `/api/v1/sessions` | — |
 | `GET` | `/api/v1/sessions/active-umos` | — |
-| `PATCH` | `/api/v1/sessions/provider` | — |
+| `GET` | `/api/v1/sessions/overrides` | — |
 | `GET` | `/api/v1/sessions/rules` | — |
 | `POST` | `/api/v1/sessions/rules` | — |
 | `POST` | `/api/v1/sessions/rules/delete` | — |
 | `GET` | `/api/v1/sessions/senders` | — |
-| `PATCH` | `/api/v1/sessions/service` | — |
 
 ## `file`
 

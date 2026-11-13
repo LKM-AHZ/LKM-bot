@@ -9,7 +9,7 @@ import urllib.parse
 from collections.abc import AsyncGenerator, Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any
+from typing import Any, TypeVar, overload
 
 import aiohttp
 from deprecated import deprecated
@@ -18,13 +18,15 @@ from bot import logger
 from bot.core import sp
 from bot.core.agent.mcp_client import MCPClient, MCPTool
 from bot.core.agent.tool import FunctionTool, ToolSet
-from bot.core.tools.registry import (
+from bot.core.bot_agent_runtime.tools.registry import (
     ensure_builtin_tools_loaded,
     get_builtin_tool_class,
     get_builtin_tool_name,
     iter_builtin_tool_classes,
 )
 from bot.core.utils.bot_path import get_bot_data_path
+
+BuiltinToolT = TypeVar("BuiltinToolT", bound=FunctionTool)
 
 DEFAULT_MCP_CONFIG = {"mcpServers": {}}
 
@@ -236,6 +238,7 @@ class _PermissionGuardedTool(FunctionTool):
             name=tool.name,
             description=tool.description,
             parameters=getattr(tool, "parameters", {}),
+            execution_timeout=tool.execution_timeout,
         )
         self._wrapped = tool
         self._mgr = manager
@@ -416,7 +419,25 @@ class FunctionToolManager:
             return builtin_tool
         return None
 
+    @overload
+    def get_builtin_tool(self, tool: type[BuiltinToolT]) -> BuiltinToolT: ...
+
+    @overload
+    def get_builtin_tool(self, tool: str) -> FuncTool: ...
+
     def get_builtin_tool(self, tool: str | type[FuncTool]) -> FuncTool:
+        """Resolve a cached builtin, retaining the type of a requested tool class.
+
+        Args:
+            tool: Registered builtin name or concrete tool class.
+
+        Returns:
+            The instance cached under that tool's concrete class.
+
+        Raises:
+            KeyError: If the builtin name or class is not registered.
+            TypeError: If the selector is neither a name nor a tool class.
+        """
         ensure_builtin_tools_loaded()
 
         if isinstance(tool, str):
@@ -484,7 +505,9 @@ class FunctionToolManager:
             event = context.context.event
         except AttributeError:
             event = None
-        if event is None or not event.is_admin():
+        from bot.core.agent.runtime import get_agent_permissions
+
+        if event is None or not get_agent_permissions(context).is_admin:
             sender_id = getattr(event, "get_sender_id", lambda: "unknown")()
             return (
                 f"error: Permission denied. The tool '{tool_name}' requires admin "

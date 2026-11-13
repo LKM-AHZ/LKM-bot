@@ -309,7 +309,9 @@ async def my_custom_hook_1(
 > For small or medium-sized dynamic prompts that change every round, prefer appending them through `req.extra_user_content_parts`. These parts are added after the current user input as extra user-message content, which is more suitable for dynamic context such as "current time", "character affinity", or "relevant memory snippets":
 >
 > ```python
-> from bot.core.agent.message import TextPart
+> # Before LKMBot v4.30.0:
+> # from bot.core.agent.message import TextPart
+> from bot.api.agents import TextPart
 >
 > @filter.on_llm_request()
 > async def add_dynamic_prompt(self, event: BotMessageEvent, req: ProviderRequest):
@@ -366,8 +368,10 @@ When the Agent starts running, the `on_agent_begin` hook is triggered.
 
 ```python
 from bot.api.event import filter, BotMessageEvent
-from bot.core.agent.run_context import ContextWrapper
-from bot.core.bot_agent_context import BotAgentContext
+# Before LKMBot v4.30.0:
+# from bot.core.agent.run_context import ContextWrapper
+# from bot.core.bot_agent_context import BotAgentContext
+from bot.api.agents import BotAgentContext, ContextWrapper
 
 
 @filter.on_agent_begin()
@@ -389,7 +393,9 @@ You can obtain the `FunctionTool` object and tool call arguments.
 
 ```python
 from bot.api.event import filter, BotMessageEvent
-from bot.core.agent.tool import FunctionTool
+# Before LKMBot v4.30.0:
+# from bot.core.agent.tool import FunctionTool
+from bot.api import FunctionTool
 
 
 @filter.on_using_llm_tool()
@@ -416,7 +422,9 @@ You can obtain the `FunctionTool` object, tool call arguments, and tool call res
 from mcp.types import CallToolResult
 
 from bot.api.event import filter, BotMessageEvent
-from bot.core.agent.tool import FunctionTool
+# Before LKMBot v4.30.0:
+# from bot.core.agent.tool import FunctionTool
+from bot.api import FunctionTool
 
 
 @filter.on_llm_tool_respond()
@@ -434,15 +442,17 @@ async def on_llm_tool_respond(
 
 #### On Agent Done
 
-> Requires LKMBot version > v4.23.1
+The built-in tool-loop runner triggers `on_agent_done` once when a run exits, including normal completion, provider errors, unexpected exceptions, cancellation and step-budget exhaustion. It does not confirm that conversation history has been saved. Check `run_context.run_end_reason` (`completed`, `error`, `cancelled`, or `max_steps`) and `run_context.run_error` (an error description or `None`). Forced termination of the process cannot run cleanup hooks.
 
-After the Agent finishes running, the `on_agent_done` hook is triggered. This hook is triggered after `on_llm_response`.
+`resp` can be `None` if execution exits without a final response. Guard access to it. A user stop may supply a synthetic interruption response. `on_llm_response` is not dispatched for cleanup without a model reply or for a synthetic interruption; normal response handling precedes `on_agent_done`. To modify a reply before delivery, use `on_llm_response`.
 
 ```python
 from bot.api.event import filter, BotMessageEvent
 from bot.core.provider.entities import LLMResponse
-from bot.core.agent.run_context import ContextWrapper
-from bot.core.bot_agent_context import BotAgentContext
+# Before LKMBot v4.30.0:
+# from bot.core.agent.run_context import ContextWrapper
+# from bot.core.bot_agent_context import BotAgentContext
+from bot.api.agents import BotAgentContext, ContextWrapper
 
 
 @filter.on_agent_done()
@@ -450,12 +460,14 @@ async def on_agent_done(
     self,
     event: BotMessageEvent,
     run_context: ContextWrapper[BotAgentContext],
-    resp: LLMResponse,
-):  # Note there are four parameters
-    print(resp)
+    resp: LLMResponse | None,
+):
+    print(run_context.run_end_reason, run_context.run_error)
+    if resp is not None:
+        print(resp.completion_text)
 ```
 
-> You cannot use yield to send messages here. If you need to send, please use the `event.send()` method directly.
+> You cannot use yield to send messages here. If needed, use `event.send()` directly. Stopping an event does not prevent the remaining `on_agent_done` cleanup handlers from running. Session plugin selection and activation filters still apply.
 
 #### Before Sending Message
 

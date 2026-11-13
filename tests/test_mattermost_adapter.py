@@ -6,8 +6,8 @@ import pytest
 
 import bot.api.message_components as Comp
 from bot.api.event import MessageChain
-from bot.core.platform import Group
 from bot.core.pipeline.preprocess_stage import stage as preprocess_stage
+from bot.core.platform import Group
 from bot.core.platform.button_interaction import (
     decode_button_callback,
     encode_button_callback,
@@ -314,7 +314,10 @@ async def test_mattermost_attachments_follow_preprocessing_cleanup_rules(
     stage = preprocess_stage.PreProcessStage()
     stage.config = {}
     stage.platform_settings = {}
-    stage.stt_settings = {"enable": False}
+    stage.plugin_manager = MagicMock()
+    stage.plugin_manager.context.get_config.return_value = {
+        "provider_stt_settings": {"enable": False}
+    }
 
     await stage.process(event)
     event.cleanup_temporary_local_files()

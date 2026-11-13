@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import logging
 from asyncio import Queue
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from typing import TYPE_CHECKING, Any, Protocol
 
 from bot.core.agent.hooks import BaseAgentRunHooks
 from bot.core.agent.message import ContentPart, Message
+from bot.core.agent.run_context import ContextWrapper
 from bot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
 from bot.core.agent.tool import ToolSet
+from bot.core.agent_service import AgentService
 from bot.core.bot_config_mgr import BotConfigManager
 from bot.core.config.bot_config import BotConfig
 from bot.core.conversation_mgr import ConversationManager
@@ -46,7 +48,9 @@ from .star import StarMetadata, star_map, star_registry
 logger = logging.getLogger("bot")
 
 if TYPE_CHECKING:
+    from bot.core.agent.runtime import AgentRuntime
     from bot.core.cron.manager import CronJobManager
+    from bot.core.star.star_manager import PluginManager
     from bot.core.utils.t2i.renderer import HtmlRenderer
 
 WebApiHandler = Callable[..., Awaitable[Any]]
@@ -117,7 +121,7 @@ class Context:
 
     # 向后兼容的变量
     _register_tasks: list[Awaitable] = []
-    _star_manager = None
+    _star_manager: PluginManager | None = None
 
     def __init__(
         self,
@@ -132,6 +136,7 @@ class Context:
         bot_config_mgr: BotConfigManager,
         knowledge_base_manager: KnowledgeBaseManager,
         cron_manager: CronJobManager,
+        agent_runtimes: dict[str, AgentRuntime] | None = None,
     ) -> None:
         self._event_queue = event_queue
         """事件队列。消息平台通过事件队列传递消息事件。"""
@@ -157,6 +162,10 @@ class Context:
         """Cron job manager, initialized by core lifecycle."""
         self.decision = DecisionService(provider_manager)
         """Decision service backed by the configured decision provider."""
+        self.agent = AgentService(
+            self, agent_runtimes if agent_runtimes is not None else {}
+        )
+        """Programmatic agent integration; closed by the core lifecycle."""
 
     async def llm_generate(
         self,
@@ -213,7 +222,7 @@ class Context:
         extra_user_content_parts: list[ContentPart] | None = None,
         tools: ToolSet | None = None,
         system_prompt: str | None = None,
-        contexts: list[Message] | None = None,
+        contexts: Sequence[Message | dict[str, Any]] | None = None,
         max_steps: int = 128,
         tool_call_timeout: int = 120,
         **kwargs: Any,
@@ -237,6 +246,7 @@ class Context:
                 stream: bool - whether to stream the LLM response
                 agent_hooks: BaseAgentRunHooks[BotAgentContext] - hooks to run during agent execution
                 agent_context: BotAgentContext - context to use for the agent
+                run_context: ContextWrapper - reuse caller-owned state for this Context and event
 
                 other kwargs will be DIRECTLY passed to the runner.reset() method
 
@@ -248,12 +258,12 @@ class Context:
             Exception: For other errors during LLM generation
         """
         # Import here to avoid circular imports
-        from bot.core.bot_agent_context import (
+        from bot.core.bot_agent_runtime.context import (
             AgentContextWrapper,
             BotAgentContext,
         )
-        from bot.core.bot_agent_tool_exec import FunctionToolExecutor
-        from bot.core.tools.computer_tools.util import (
+        from bot.core.bot_agent_runtime.tool_executor import FunctionToolExecutor
+        from bot.core.bot_agent_runtime.tools.computer_tools.util import (
             LOCAL_NETWORK_POLICY_NOTICE,
             get_local_permission_policy,
             is_local_runtime,
@@ -287,10 +297,18 @@ class Context:
                 context=self,
                 event=event,
             )
-        run_context = AgentContextWrapper(
-            context=agent_context,
-            tool_call_timeout=tool_call_timeout,
-        )
+        run_context = kwargs.get("run_context")
+        if run_context is None:
+            run_context = AgentContextWrapper(
+                context=agent_context,
+                tool_call_timeout=tool_call_timeout,
+            )
+        elif (
+            not isinstance(run_context, ContextWrapper)
+            or run_context.context.context is not self
+            or run_context.context.event is not event
+        ):
+            raise ValueError("run_context must belong to this Context and event")
         if (
             tools
             and any(
@@ -318,7 +336,7 @@ class Context:
         other_kwargs = {
             k: v
             for k, v in kwargs.items()
-            if k not in ["stream", "agent_hooks", "agent_context"]
+            if k not in ["stream", "agent_hooks", "agent_context", "run_context"]
         }
         if request.func_tool and request.func_tool.get_tool("bot_file_read_tool"):
             other_kwargs.setdefault(
@@ -532,16 +550,16 @@ class Context:
         return prov
 
     def get_config(self, umo: str | None = None) -> BotConfig:
-        """获取 LKMBot 的配置。
+        """Read the default profile or a session's effective configuration.
 
         Args:
-            umo: unified_message_origin 值，用于获取特定会话的配置。
+            umo: Unified message origin of the session to resolve.
 
         Returns:
-            LKMBot 配置对象。
+            The shared default profile when umo is omitted. For the active
+            message's UMO, returns its pipeline configuration snapshot; other
+            sessions resolve their current profiles and overrides normally.
 
-        Note:
-            如果不提供 umo 参数，将返回默认配置。
         """
         if not umo:
             # 使用默认配置

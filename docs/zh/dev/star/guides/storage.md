@@ -26,7 +26,9 @@ class Main(star.Star):
 
 ```py
 from pathlib import Path
-from bot.core.utils.bot_path import get_bot_data_path
+# LKMBot v4.30.0 之前的导入方式：
+# from bot.core.utils.bot_path import get_bot_data_path
+from bot.api.util import get_bot_data_path
 
 plugin_data_path = (
     Path(get_bot_data_path()) / "plugin_data" / self.name

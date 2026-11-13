@@ -7,8 +7,11 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 import bot.dashboard.services.stat_service as stat_service
-from bot.core.computer import process_sandbox
-from bot.core.computer.process_sandbox import SandboxRunResult, SandboxTimeoutError
+from bot.core.bot_agent_runtime.computer import process_sandbox
+from bot.core.bot_agent_runtime.computer.process_sandbox import (
+    SandboxRunResult,
+    SandboxTimeoutError,
+)
 from bot.dashboard.services.stat_service import StatService
 
 
@@ -207,6 +210,8 @@ async def test_get_stat_aggregates_platform_stats(temp_db):
         "cpu_percent",
         "thread_count",
         "start_time",
+        "daily_usage",
+        "system",
     }
 
 

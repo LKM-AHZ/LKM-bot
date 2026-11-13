@@ -16,7 +16,9 @@ import certifi
 
 from bot.api import sp
 from bot.core import DEMO_MODE, file_token_service, logger
-from bot.core.computer.computer_client import sync_skills_to_active_sandboxes
+from bot.core.bot_agent_runtime.computer.computer_client import (
+    sync_skills_to_active_sandboxes,
+)
 from bot.core.repository import (
     GitUnavailableError,
     normalize_repository_url,

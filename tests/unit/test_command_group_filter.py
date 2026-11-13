@@ -7,7 +7,6 @@ from bot.core.pipeline.waking_check import stage as waking_stage
 from bot.core.pipeline.waking_check.stage import WakingCheckStage
 from bot.core.star.filter.command_group import CommandGroupFilter
 from bot.core.star.filter.permission import PermissionType, PermissionTypeFilter
-from bot.core.star.session_plugin_manager import SessionPluginManager
 from bot.core.star.star import StarMetadata
 from bot.core.star.star_handler import EventType, StarHandlerMetadata
 
@@ -88,11 +87,6 @@ async def test_admin_group_only_blocks_its_own_commands(message, blocked, monkey
     async def return_handlers(_event, handlers):
         return handlers
 
-    monkeypatch.setattr(
-        SessionPluginManager,
-        "filter_handlers_by_session",
-        return_handlers,
-    )
 
     stage = WakingCheckStage()
     stage.ctx = SimpleNamespace(
@@ -107,6 +101,9 @@ async def test_admin_group_only_blocks_its_own_commands(message, blocked, monkey
     stage.ignore_at_all = False
     stage.disable_builtin_commands = False
     stage.no_permission_reply = True
+    stage.ctx.plugin_manager = SimpleNamespace(
+        context=SimpleNamespace(get_config=lambda **_: stage.ctx.bot_config)
+    )
     stage._umo_auto_name_recorder = MagicMock()
 
     event = MagicMock()

@@ -1152,6 +1152,11 @@ export const useExtensionPage = (initialTab = "installed") => {
     curr_namespace.value = extension_name;
     currentConfigPlugin.value = extension_name;
     configDialog.value = true;
+    // Drop the previous plugin's schema immediately: the dialog keeps rendering the old
+    // metadata while the request is in flight, which would let the user toggle groups of
+    // one plugin under another plugin's namespace.
+    extension_config.metadata = {};
+    extension_config.config = {};
     extension_config.log_level = null;
     try {
       const res = await pluginApi.config(extension_name);
@@ -1880,7 +1885,7 @@ export const useExtensionPage = (initialTab = "installed") => {
     pluginMarketData.value.forEach((plugin) => {
       if (plugin.name) {
         let name = plugin.name.trim().toLowerCase();
-        if (name.startsWith("astrbot_plugin_")) {
+        if (name.startsWith("bot_plugin_")) {
           plugin.trimmedName = name.substring(15);
         } else if (name.startsWith("lkmbot_") || name.startsWith("lkmbot-")) {
           plugin.trimmedName = name.substring(8);
@@ -1935,8 +1940,8 @@ export const useExtensionPage = (initialTab = "installed") => {
         ) {
           plugin.support_platforms = matchedInstalled.support_platforms;
         }
-        if (!plugin.astrbot_version && matchedInstalled.astrbot_version) {
-          plugin.astrbot_version = matchedInstalled.astrbot_version;
+        if (!plugin.bot_version && matchedInstalled.bot_version) {
+          plugin.bot_version = matchedInstalled.bot_version;
         }
       }
 
@@ -2044,14 +2049,14 @@ export const useExtensionPage = (initialTab = "installed") => {
           checked: true,
           supported: false,
           message:
-            "Invalid astrbot_version. Use a PEP 440 range, e.g. >=4.16,<5.",
+            "Invalid bot_version. Use a PEP 440 range, e.g. >=4.16,<5.",
         };
       }
       if (!supported) {
         return {
           checked: true,
           supported: false,
-          message: `LKMBot ${currentVersion} does not satisfy plugin astrbot_version: ${normalizedSpec}`,
+          message: `LKMBot ${currentVersion} does not satisfy plugin bot_version: ${normalizedSpec}`,
         };
       }
     }
@@ -2065,11 +2070,11 @@ export const useExtensionPage = (initialTab = "installed") => {
       (await commonStore.fetchBotVersion().catch(() => ""));
     pluginMarketData.value.forEach((plugin) => {
       const result = checkBotVersionSupport(
-        plugin?.astrbot_version,
+        plugin?.bot_version,
         currentVersion,
       );
       plugin.lkmbot_support_checked = result.checked;
-      plugin.astrbot_version_supported = result.supported;
+      plugin.bot_version_supported = result.supported;
       plugin.lkmbot_support_message = result.message;
     });
   };
@@ -2102,7 +2107,7 @@ export const useExtensionPage = (initialTab = "installed") => {
   const handleInstallResponse = async (resData) => {
     if (
       resData.status === "warning" &&
-      resData.data?.warning_type === "astrbot_version_unsupported"
+      resData.data?.warning_type === "bot_version_unsupported"
     ) {
       toast(resData.message, "warning");
       showVersionSupportWarning(resData.message);
@@ -2310,7 +2315,7 @@ export const useExtensionPage = (initialTab = "installed") => {
     installSupport.message = "";
 
     const plugin = selectedInstallPlugin.value;
-    if (!plugin?.astrbot_version || uploadTab.value !== "url") {
+    if (!plugin?.bot_version || uploadTab.value !== "url") {
       return;
     }
 
@@ -2318,7 +2323,7 @@ export const useExtensionPage = (initialTab = "installed") => {
       commonStore.botVersion ||
       (await commonStore.fetchBotVersion().catch(() => ""));
     const result = checkBotVersionSupport(
-      plugin.astrbot_version,
+      plugin.bot_version,
       currentVersion,
     );
     installSupport.checked = result.checked;

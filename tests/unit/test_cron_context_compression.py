@@ -2,7 +2,7 @@
 
 from dataclasses import replace
 
-from bot.core.bot_main_agent import MainAgentBuildConfig
+from bot.core.bot_agent_runtime.main_agent import MainAgentBuildConfig
 from bot.core.config.agent_runner import (
     resolve_context_compression_config,
 )

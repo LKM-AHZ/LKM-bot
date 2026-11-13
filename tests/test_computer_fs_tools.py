@@ -15,10 +15,10 @@ from mcp.types import CallToolResult, ImageContent
 from PIL import Image
 
 from bot.core.agent.run_context import ContextWrapper
-from bot.core.computer import file_read_utils
-from bot.core.computer.booters.local import LocalBooter
-from bot.core.tools.computer_tools import fs as fs_tools
-from bot.core.tools.computer_tools import util as computer_util
+from bot.core.bot_agent_runtime.computer import file_read_utils
+from bot.core.bot_agent_runtime.computer.booters.local import LocalBooter
+from bot.core.bot_agent_runtime.tools.computer_tools import fs as fs_tools
+from bot.core.bot_agent_runtime.tools.computer_tools import util as computer_util
 
 
 def _make_context(

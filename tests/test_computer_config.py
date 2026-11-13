@@ -9,7 +9,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from bot.core.computer.computer_client import _discover_bay_credentials
+from bot.core.bot_agent_runtime.computer.computer_client import (
+    _discover_bay_credentials,
+)
 from bot.core.config.default import CONFIG_METADATA_2
 from bot.dashboard.services.config_service import (
     _log_computer_config_changes,
@@ -43,7 +45,7 @@ def test_saving_local_permissions_enforces_linked_permissions(
             }
         }
     }
-    payload["agent_runner"] = {"runner_type": "local"}
+    payload["agent"] = {"runtime": "bot"}
     config = Mock(keys=lambda: [])
 
     save_config(payload, config, is_core=True)
@@ -300,7 +302,7 @@ class TestDiscoverBayCredentials:
         result = _discover_bay_credentials("http://127.0.0.1:8114")
         assert result == ""
 
-    @patch("bot.core.computer.computer_client.logger")
+    @patch("bot.core.bot_agent_runtime.computer.computer_client.logger")
     def test_endpoint_mismatch_still_returns_key(
         self, mock_logger, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
@@ -330,7 +332,7 @@ class TestDiscoverBayCredentials:
         )
         monkeypatch.setenv("BAY_DATA_DIR", str(data_dir))
 
-        with patch("bot.core.computer.computer_client.logger") as mock_logger:
+        with patch("bot.core.bot_agent_runtime.computer.computer_client.logger") as mock_logger:
             result = _discover_bay_credentials("http://127.0.0.1:8114")
 
         assert result == "sk-bay-match"
@@ -361,7 +363,7 @@ class TestDiscoverBayCredentials:
         )
         monkeypatch.setenv("BAY_DATA_DIR", str(data_dir))
 
-        with patch("bot.core.computer.computer_client.logger") as mock_logger:
+        with patch("bot.core.bot_agent_runtime.computer.computer_client.logger") as mock_logger:
             result = _discover_bay_credentials("http://127.0.0.1:8114")
 
         assert result == "sk-bay-slash"

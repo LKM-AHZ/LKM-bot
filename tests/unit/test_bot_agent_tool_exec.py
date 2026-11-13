@@ -1,5 +1,4 @@
 import asyncio
-import json
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -9,13 +8,11 @@ import pytest
 from bot.core.agent.run_context import ContextWrapper
 from bot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
 from bot.core.agent.tool import FunctionTool
-from bot.core.bot_agent_tool_exec import FunctionToolExecutor
-from bot.core.message.components import Image
+from bot.core.bot_agent_runtime.tool_executor import FunctionToolExecutor
+from bot.core.bot_agent_runtime.tools.computer_tools.shell import ShellSessionTool
 from bot.core.provider.func_tool_manager import (
     FunctionToolManager,
-    _PermissionGuardedTool,
 )
-from bot.core.tools.computer_tools.shell import ShellSessionTool
 from bot.core.utils.active_event_registry import (
     ActiveEventRegistry,
 )
@@ -56,7 +53,7 @@ def _build_run_context(message_components: list[object] | None = None):
 async def test_shell_session_wait_fits_inside_tool_timeout(
     monkeypatch, action, yield_time_ms, configured_timeout, expected_timeout
 ):
-    from bot.core import bot_agent_tool_exec as tool_exec
+    from bot.core.bot_agent_runtime import tool_executor as tool_exec
 
     tool = ShellSessionTool()
     monkeypatch.setattr(tool, "call", AsyncMock(return_value="output"))
@@ -83,6 +80,7 @@ async def test_shell_session_wait_fits_inside_tool_timeout(
 
 
 @pytest.mark.asyncio
+
 @pytest.mark.parametrize("foreground_done", [False, True])
 @pytest.mark.parametrize("phase", ["tool", "wakeup", "complete", "failure"])
 async def test_background_execution_lifecycle(
@@ -90,7 +88,8 @@ async def test_background_execution_lifecycle(
 ):
     registry = ActiveEventRegistry()
     monkeypatch.setattr(
-        "bot.core.bot_agent_tool_exec.active_event_registry", registry
+        "bot.core.bot_agent_runtime.tool_executor.active_event_registry",
+        registry,
     )
     run_context = _build_run_context()
     event = run_context.context.event
@@ -112,7 +111,9 @@ async def test_background_execution_lifecycle(
         delivered.set()
 
     wakeup = AsyncMock(side_effect=wake)
-    monkeypatch.setattr("bot.core.bot_agent_tool_exec.wake_main_agent", wakeup)
+    monkeypatch.setattr(
+        "bot.core.bot_agent_runtime.tool_executor.wake_main_agent", wakeup
+    )
     monkeypatch.setattr(
         FunctionToolExecutor,
         "_execute_local",
@@ -199,3 +200,28 @@ async def test_external_runner_cancel_closes_pending_tool_executor():
             task.cancel()
         await asyncio.gather(task, return_exceptions=True)
         await results.aclose()
+
+
+@pytest.mark.asyncio
+async def test_tool_specific_timeout_survives_permission_wrapper(monkeypatch):
+    from bot.core.bot_agent_runtime import tool_executor as executor
+
+    manager = FunctionToolManager()
+    tool = FunctionTool(
+        name="waiting",
+        description="Wait",
+        parameters={},
+        handler=AsyncMock(return_value="done"),
+        execution_timeout=65,
+    )
+    manager.func_list = [tool]
+    context = _build_run_context()
+    context.tool_call_timeout = 1
+    waiting = AsyncMock(wraps=asyncio.wait_for)
+    monkeypatch.setattr(executor.asyncio, "wait_for", waiting)
+    guarded = manager.get_full_tool_set().get_tool("waiting")
+    results = [
+        result async for result in FunctionToolExecutor._execute_local(guarded, context)
+    ]
+    assert results[0].content[0].text == "done"
+    assert waiting.await_args_list[0].kwargs["timeout"] == 65

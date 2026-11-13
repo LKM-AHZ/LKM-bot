@@ -8,6 +8,7 @@ These paths use the current default sidebar with a fixed menu order. Extension i
 
 | Previous entry point or name | Current entry point |
 | --- | --- |
+| Welcome / Welcome page | Overview (the `/welcome` URL remains available) |
 | Providers → Add Provider → Agent Runner | Config → Select a profile → AI → `…` beside the AI heading → Change execution mode |
 | Providers → Decision (after Chat Completion) | Providers → Decision (balance-scale icon, between Text to Speech and Embedding) |
 | Data / Dashboard | Data & Logs → Statistics |
@@ -20,20 +21,21 @@ These paths use the current default sidebar with a fixed menu order. Extension i
 | Standalone MCP / Skills entries | Extensions → MCP Servers / Skills |
 | System Settings → General → Cache → Export diagnostics | System Settings → Maintenance → Diagnostics → Export diagnostics |
 | System Settings → Appearance → Customize Sidebar | Removed; the sidebar uses the default menu layout |
-| Custom Rules / Future Tasks / SubAgents | Custom Rules is under the sidebar `System` group; Future Tasks and SubAgents are under the `Extensions` group |
+| Custom Rules / Session Management | Config → Manage session mappings; old links redirect automatically |
+| Future Tasks | Future Tasks remains under Extensions |
 
 Old log, trace, conversation, and statistics URLs still redirect to the corresponding tabs. Agent runners are now saved in each profile; they are no longer created as model providers. See [Agent Execution Mode](./agent-runner.md) for the setup steps.
 
 ## Documentation Navigation
 
-The **Usage → Plugins** documentation group contains Plugins, MCP, and Skills. **Usage → LKMBot Built-in AI** contains Agent Sandbox, SubAgent Orchestration, Proactive Capabilities, Web Search, Knowledge Base, and Context Compression. Their URLs remain unchanged.
+The **Usage → Plugins** documentation group contains Plugins, MCP, and Skills. **Usage → LKMBot Built-in AI** contains Agent Sandbox, Proactive Capabilities, Web Search, Knowledge Base, and Context Compression. Their URLs remain unchanged.
 
 The Usage sidebar order is WebUI, LKMBot CLI, Built-in Commands, Plugins, LKMBot Built-in AI, Custom Rules, Agent Execution Mode, and Unified Webhook Mode.
 
 | Previous documentation entry | Current documentation entry |
 | --- | --- |
 | Usage → Plugins, MCP, Skills | Usage → Plugins → Corresponding guide |
-| Usage → Agent Sandbox, SubAgent Orchestration, Proactive Tasks, Web Search, Knowledge Base, Auto Context Compression | Usage → LKMBot Built-in AI → Corresponding guide |
+| Usage → Agent Sandbox, Proactive Tasks, Web Search, Knowledge Base, Auto Context Compression | Usage → LKMBot Built-in AI → Corresponding guide |
 | Usage → Tool Use / Function Calling | Removed; the Web Search guide explains the required function-calling capability directly |
 | Usage → Agent Runner | Usage → Agent Execution Mode (URL unchanged) |
 | Usage → CLI Commands | Usage → LKMBot CLI (URL unchanged) |
@@ -261,3 +263,4 @@ Modify the `password` in the `dashboard` configuration in the data/cmd_config.js
 
 > [!TIP]
 > For more details, see [FAQ - Forgot Dashboard Password](/en/faq.md#forgot-dashboard-password).
+

@@ -4,16 +4,18 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from bot.core.agent.tool import FunctionTool, ToolSet
+from bot.core.bot_agent_runtime.tools.computer_tools.python import LocalPythonTool
+from bot.core.bot_agent_runtime.tools.computer_tools.shell import (
+    LocalExecuteShellTool,
+    ShellSessionTool,
+)
+from bot.core.bot_agent_runtime.tools.computer_tools.util import (
+    LOCAL_NETWORK_POLICY_NOTICE,
+)
 from bot.core.provider.func_tool_manager import FunctionToolManager
 from bot.core.provider.provider import Provider
 from bot.core.star.context import Context
 from bot.core.star.star import StarMetadata, star_registry
-from bot.core.tools.computer_tools.python import LocalPythonTool
-from bot.core.tools.computer_tools.shell import (
-    LocalExecuteShellTool,
-    ShellSessionTool,
-)
-from bot.core.tools.computer_tools.util import LOCAL_NETWORK_POLICY_NOTICE
 
 
 @pytest.mark.asyncio
@@ -36,7 +38,7 @@ async def test_tool_loop_agent_adds_network_policy_to_system_prompt(
     tool_class, isolation_status,
 ):
     monkeypatch.setattr(
-        "bot.core.tools.computer_tools.util.get_process_sandbox_status",
+        "bot.core.bot_agent_runtime.tools.computer_tools.util.get_process_sandbox_status",
         lambda: {"status": isolation_status},
     )
 

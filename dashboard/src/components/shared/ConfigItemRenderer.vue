@@ -47,7 +47,7 @@
       <KnowledgeBaseSelector :model-value="modelValue" @update:model-value="emitUpdate" />
     </template>
     <template v-else-if="itemMeta?._special === 'select_plugin_set'">
-      <PluginSetSelector :model-value="modelValue" @update:model-value="emitUpdate" />
+      <PluginSetSelector :model-value="modelValue" :selection-only="itemMeta?.selection_only" @update:model-value="emitUpdate" />
     </template>
     <template v-else-if="itemMeta?._special === 't2i_template'">
       <T2ITemplateEditor />
@@ -331,12 +331,12 @@ const { configText } = usePluginI18n()
 async function emitUpdate(val) {
   val = validateNumericConfig(props.itemMeta?.type, val)
   if (
-    props.itemMeta?._special === 'agent_runner_type'
-    && props.configRoot?.agent_runner
-    && props.itemMeta?.runner_defaults?.[val]
+    props.itemMeta?._special === 'agent_runtime'
+    && props.configRoot?.agent
+    && props.itemMeta?.runtime_defaults?.[val]
   ) {
-    props.configRoot.agent_runner.config = JSON.parse(
-      JSON.stringify(props.itemMeta.runner_defaults[val])
+    props.configRoot.agent.config = JSON.parse(
+      JSON.stringify(props.itemMeta.runtime_defaults[val])
     )
   }
   emit('update:modelValue', val)
