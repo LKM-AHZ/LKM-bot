@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from "vue-router";
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, defineAsyncComponent, watch } from "vue";
 import VerticalSidebarVue from "./vertical-sidebar/VerticalSidebar.vue";
 import VerticalHeaderVue from "./vertical-header/VerticalHeader.vue";
-import ReadmeDialog from "@/components/shared/ReadmeDialog.vue";
-import Chat from "@/components/chat/Chat.vue";
 import { useCustomizerStore } from "@/stores/customizer";
 import { useRouterLoadingStore } from "@/stores/routerLoading";
 import { useCommonStore } from "@/stores/common";
 import { useMobileDrawerStore } from "@/stores/mobileDrawer";
 import { statsApi } from "@/api/v1";
 import { useI18n } from "@/i18n/composables";
+
+const Chat = defineAsyncComponent(() => import("@/components/chat/Chat.vue"));
+const ReadmeDialog = defineAsyncComponent(() => import("@/components/shared/ReadmeDialog.vue"));
 
 const FIRST_NOTICE_SEEN_KEY = "lkmbot:first_notice_seen:v1";
 
@@ -43,6 +44,7 @@ const shouldMountChat = ref(isCurrentChatRoute.value);
 
 const showSidebar = computed(() => !isCurrentChatRoute.value);
 
+const hasFirstNotice = ref(false);
 const showFirstNoticeDialog = ref(false);
 
 watch(isCurrentChatRoute, (isChatRoute) => {
@@ -73,6 +75,7 @@ const maybeShowFirstNotice = async () => {
 
     const content = response.data?.data?.content;
     if (typeof content === "string" && content.trim().length > 0) {
+      hasFirstNotice.value = true;
       showFirstNoticeDialog.value = true;
       return;
     }
@@ -163,6 +166,7 @@ onMounted(() => {
       </v-main>
 
       <ReadmeDialog
+        v-if="hasFirstNotice"
         :show="showFirstNoticeDialog"
         mode="first-notice"
         @update:show="onFirstNoticeDialogUpdate"
@@ -254,29 +258,29 @@ onMounted(() => {
   --lkmbot-chrome-bg: rgb(var(--v-theme-background));
 }
 
-:global(html[data-bot-desktop-platform='macos']) {
+:global(html[data-astrbot-desktop-platform='macos']) {
   /* Preserve the shell's gray tint while letting the native window material show through. */
   --lkmbot-vibrancy-tint: rgba(242, 242, 247, 0.6);
 }
 
-:global(html[data-bot-desktop-platform='macos'] .v-application.v-theme--PurpleThemeDark) {
+:global(html[data-astrbot-desktop-platform='macos'] .v-application.v-theme--PurpleThemeDark) {
   --lkmbot-vibrancy-tint: rgba(26, 26, 26, 0.92);
 }
 
 /* Extend the sidebar surface behind every corner and the right/bottom gaps. */
-:global(html:not([data-bot-desktop-platform='macos']) .v-main) {
+:global(html:not([data-astrbot-desktop-platform='macos']) .v-main) {
   background: var(--lkmbot-chrome-bg) !important;
 }
 
-:global(html[data-bot-desktop-platform='macos']),
-:global(html[data-bot-desktop-platform='macos'] body),
-:global(html[data-bot-desktop-platform='macos'] .v-application),
-:global(html[data-bot-desktop-platform='macos'] .v-application__wrap) {
+:global(html[data-astrbot-desktop-platform='macos']),
+:global(html[data-astrbot-desktop-platform='macos'] body),
+:global(html[data-astrbot-desktop-platform='macos'] .v-application),
+:global(html[data-astrbot-desktop-platform='macos'] .v-application__wrap) {
   background: transparent !important;
 }
 
 /* Keep the macOS tint continuous behind the sidebar and the card gaps. */
-:global(html[data-bot-desktop-platform='macos'] .v-main) {
+:global(html[data-astrbot-desktop-platform='macos'] .v-main) {
   background: var(--lkmbot-vibrancy-tint, transparent) !important;
 }
 

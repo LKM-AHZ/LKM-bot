@@ -5,6 +5,7 @@ from bot.core.agent.events import (
     ContextUsage,
     ExecutionMetrics,
     MessageCompleted,
+    OutputReady,
     ReasoningDelta,
     RequestFinished,
     RequestStarted,
@@ -68,6 +69,7 @@ from bot.core.agent.runtime import (
 )
 from bot.core.agent.tool import FunctionTool, ToolExecResult, ToolSet
 from bot.core.agent.tool_executor import BaseFunctionToolExecutor
+from bot.core.agent_output_content import chain_from_content
 from bot.core.agent_service import AgentRun, AgentService, AgentSessionStatus
 from bot.core.bot_agent_context import AgentContextWrapper, BotAgentContext
 from bot.core.db.po import Conversation
@@ -81,6 +83,8 @@ __all__ = [
     "TextDelta",
     "ReasoningDelta",
     "MessageCompleted",
+    "OutputReady",
+    "chain_from_content",
     "RequestStarted",
     "RequestFinished",
     "ToolStarted",

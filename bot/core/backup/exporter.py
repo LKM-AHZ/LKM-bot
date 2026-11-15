@@ -12,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from bot.core import logger
 from bot.core.config.default import VERSION
@@ -213,6 +213,7 @@ class BotExporter:
         export_data: dict[str, list[dict]] = {}
 
         async with self.main_db.get_db() as session:
+            await session.execute(text("BEGIN"))
             for table_name, model_class in MAIN_DB_MODELS.items():
                 try:
                     result = await session.execute(select(model_class))

@@ -22,20 +22,20 @@ These paths use the current default sidebar with a fixed menu order. Extension i
 | System Settings → General → Cache → Export diagnostics | System Settings → Maintenance → Diagnostics → Export diagnostics |
 | System Settings → Appearance → Customize Sidebar | Removed; the sidebar uses the default menu layout |
 | Custom Rules / Session Management | Config → Manage session mappings; old links redirect automatically |
-| Future Tasks | Future Tasks remains under Extensions |
+| Future Tasks / SubAgents | Future Tasks remains under Extensions; subagents are under Config → AI → Capabilities → Subagents |
 
 Old log, trace, conversation, and statistics URLs still redirect to the corresponding tabs. Agent runners are now saved in each profile; they are no longer created as model providers. See [Agent Execution Mode](./agent-runner.md) for the setup steps.
 
 ## Documentation Navigation
 
-The **Usage → Plugins** documentation group contains Plugins, MCP, and Skills. **Usage → LKMBot Built-in AI** contains Agent Sandbox, Proactive Capabilities, Web Search, Knowledge Base, and Context Compression. Their URLs remain unchanged.
+The **Usage → Plugins** documentation group contains Plugins, MCP, and Skills. **Usage → LKMBot Built-in AI** contains Agent Sandbox, SubAgent Orchestration, Proactive Capabilities, Web Search, Knowledge Base, and Context Compression. Their URLs remain unchanged.
 
 The Usage sidebar order is WebUI, LKMBot CLI, Built-in Commands, Plugins, LKMBot Built-in AI, Custom Rules, Agent Execution Mode, and Unified Webhook Mode.
 
 | Previous documentation entry | Current documentation entry |
 | --- | --- |
 | Usage → Plugins, MCP, Skills | Usage → Plugins → Corresponding guide |
-| Usage → Agent Sandbox, Proactive Tasks, Web Search, Knowledge Base, Auto Context Compression | Usage → LKMBot Built-in AI → Corresponding guide |
+| Usage → Agent Sandbox, SubAgent Orchestration, Proactive Tasks, Web Search, Knowledge Base, Auto Context Compression | Usage → LKMBot Built-in AI → Corresponding guide |
 | Usage → Tool Use / Function Calling | Removed; the Web Search guide explains the required function-calling capability directly |
 | Usage → Agent Runner | Usage → Agent Execution Mode (URL unchanged) |
 | Usage → CLI Commands | Usage → LKMBot CLI (URL unchanged) |
@@ -49,7 +49,7 @@ After starting LKMBot, you can access the admin panel by visiting `http://localh
 
 ## Login
 
-For first-time login, LKMBot generates a random initial password and prints it in startup logs. Please read the startup log line containing the WebUI credential and use that password to log in (username is usually `bot`).
+For first-time login, LKMBot generates a random initial password and prints it in startup logs. Please read the startup log line containing the WebUI credential and use that password to log in (username is usually `astrbot`).
 
 ## Two-Factor Authentication
 
@@ -102,6 +102,7 @@ To return to the model configured in the selected profile, open the model select
 Select `Config` in the sidebar, then choose the profile to edit from the selector at the top. Sections appear in this order: `AI`, `Platforms & Messages`, `Access Control`, `Plugin`, and `Ext.`. Use the search control at the top to find a setting. The profile selector, search button, and section navigation stay fixed while only the configuration pane on the right scrolls.
 
 - In `AI`, built-in AI settings have `Model`, `Persona`, `Capabilities`, and `Advanced` tabs. Use `… → Change execution mode` beside the AI heading to connect a third-party agent.
+- In `AI → Capabilities`, settings appear in this order: Web Search, Agent Computer Use, Subagents, Knowledge Base, and Proactive Agent.
 - `Access Control` contains administrator IDs and the session whitelist, including whitelist logs and administrator exemptions.
 - `Platforms & Messages` contains message-trigger, session-isolation, and delivery settings.
 - `Plugin` selects the plugins enabled for this profile. To edit an individual plugin's parameters, open `Extensions` and click that plugin's gear icon (`Extension Config`).
@@ -180,9 +181,9 @@ Click `Export diagnostics` and confirm the content and privacy notice to downloa
 
 The export dialog offers `Last hour`, `Last 12 hours`, `Last day`, `Last 3 days` and `Custom`, with `Last day` selected by default. Preset ranges are calculated when you click download. Select `Custom` to enter start and end times using your browser’s local time. Only disk logs, cached logs and traces within that range are exported. Timestamp-free continuation lines follow the preceding disk-log record; standalone content without a recognized timestamp is excluded. Disk timestamps without an explicit offset use the server’s local time. Traces are selected by start time and retain their complete details, with the existing limit of the latest 50 matching traces and 16 MiB. Configuration, plugin status and environment details remain current snapshots. The selected range is recorded in `manifest.json`.
 
-In the diagnostic bundle, cached logs are stored in `logs/bot.in-memory.log`, cached traces in `traces/history.in-memory.jsonl`, and persisted trace history in `traces/history.jsonl`. The `webui_version` field in `environment.json` records the version declared by the WebUI assets being served, or `null` when unavailable.
+In the diagnostic bundle, cached logs are stored in `logs/astrbot.in-memory.log`, cached traces in `traces/history.in-memory.jsonl`, and persisted trace history in `traces/history.jsonl`. The `webui_version` field in `environment.json` records the version declared by the WebUI assets being served, or `null` when unavailable.
 
-Open `Filters` next to the search box to filter by level, source (System/Plugin), individual plugin, and bot platform, or exclude user-chat logs. Combine these conditions with `Search logs`. The plugin dropdown lists only plugins that appear in the current logs, not every installed plugin, so installed plugins that have not logged anything are absent. Framework logs about a plugin, such as plugin loading or handler failures, are tagged with that plugin's name, so a plugin that fails to load remains selectable while its failure logs are in the current window. Plugin menus prefer display names and show plugin IDs as subtitles; `System` replaces the former Core source label.
+Use `Filters` beside the search box to filter by level, source, plugin, or bot platform, or exclude user-chat logs. Filters work with text search. The plugin list includes plugins named in the current logs, including loading failures; entries show display names and plugin IDs.
 
 The toolbar contains search, fullscreen, font-size controls, and `Install Pip packages`. The default font size is 12px, adjustable from 8–16px in 2px steps. The former auto-scroll switch is replaced by bottom-following behavior: new logs follow when you are at the bottom, without interrupting reading older entries. Top-row filters move into the `Filters` sidebar; closing it preserves selections. Logs remain in memory, without new file-reading or database persistence.
 
@@ -200,7 +201,7 @@ Traces containing Agent calls add a borderless Tokens statistics card. Its total
 
 The Type column precedes UMO. Blue Agent indicates an Agent call; green Command indicates a command-handler call. Neutral Group chat / Private chat chips appear independently alongside them. Ordinary listeners and event hooks do not count as commands. Message type comes from the summary, falling back to UMO for older records; unknown types have no chat chip. Legacy command flags are derived for the current page without opening each trace's details.
 
-New spans identify calls with `bot.kind` and describe execution through timestamps and status. They no longer store `bot.action`, `bot.end_action`, or `bot.duration_ms`; duration is calculated from nanosecond timestamps and `bot.handler_type` remains. Existing trace history stays readable without rewriting stored records.
+New spans identify calls with `astrbot.kind` and describe execution through timestamps and status. They no longer store `astrbot.action`, `astrbot.end_action`, or `astrbot.duration_ms`; duration is calculated from nanosecond timestamps and `astrbot.handler_type` remains. Existing trace history stays readable without rewriting stored records.
 
 Long titles show two lines and received/sent message previews show four lines by default. Overflowing text offers Show full text / Collapse. This only folds the display; recorded content is not truncated.
 
@@ -251,7 +252,7 @@ In the browser WebUI, open `⋮ → Update LKMBot` in the upper-right corner, ex
 
 You can also use the `/dashboard_update` command to manually update the admin panel (admin command).
 
-The panel is built from this repository’s `dashboard/` directory into `bot/dashboard/dist/` and served by the bot process. Rebuild the bot image to update it; source installs run `pnpm --dir dashboard build`. For the LKM prefix, build with `VITE_BASE_PATH=/bot/`. The former website-hosted entry now uses the bot static server, without a website checkout. Explicit `--webui-dir` and `data/dist` overrides take precedence; move stale overrides aside before using a new bundled version.
+Admin panel files are located in the data/dist directory. If you need to manually replace them, download `dist.zip` from https://github.com/AstrBotDevs/AstrBot/releases/ and extract it to the data directory.
 
 ## Customizing WebUI Port
 
@@ -263,4 +264,3 @@ Modify the `password` in the `dashboard` configuration in the data/cmd_config.js
 
 > [!TIP]
 > For more details, see [FAQ - Forgot Dashboard Password](/en/faq.md#forgot-dashboard-password).
-

@@ -51,6 +51,7 @@ from bot.core.bot_agent_runtime.computer.local_file_security import (
     open_file_in_allowed_roots,
 )
 from bot.core.bot_agent_runtime.context import BotAgentContext
+from bot.core.bot_agent_runtime.tools.output import prepare_tool_output
 from bot.core.message.components import File, Image
 from bot.core.utils.bot_path import (
     get_bot_builtin_plugin_path,
@@ -366,13 +367,12 @@ class FileReadTool(FunctionTool):
             raise ValueError("`limit` must be greater than or equal to 1.")
         return offset, limit
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         path: str,
         offset: int | None = None,
         limit: int | None = None,
-        **kwargs: Any,
     ) -> ToolExecResult:
         permission_error = check_local_file_permission(context)
         if permission_error:
@@ -471,12 +471,11 @@ class FileWriteTool(FunctionTool):
         }
     )
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         path: str,
         content: str,
-        **kwargs: Any,
     ) -> ToolExecResult:
         permission_error = check_local_file_permission(context)
         if permission_error:
@@ -587,14 +586,13 @@ class FileEditTool(FunctionTool):
         }
     )
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         path: str,
         old: str,
         new: str,
         replace_all: bool = False,
-        **kwargs: Any,
     ) -> ToolExecResult:
         umo = str(context.context.event.unified_msg_origin)
         permission_error = check_local_file_permission(context)
@@ -857,7 +855,7 @@ class GrepTool(FunctionTool):
 
         return normalized
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         pattern: str,
@@ -923,10 +921,7 @@ class GrepTool(FunctionTool):
                             f"Blocked path: {search_path}."
                         )
                     sandbox_root = str(
-                        max(
-                            matching_roots,
-                            key=lambda root: len(cast(Path, root).parts),
-                        )
+                        max(matching_roots, key=lambda root: len(root.parts))
                     )
                     result = await cast(Any, sb.fs).search_files(
                         pattern=normalized_pattern,
@@ -995,11 +990,10 @@ class FileUploadTool(FunctionTool):
         }
     )
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         local_path: str,
-        **kwargs: Any,
     ) -> str | None:
         if permission_error := check_admin_permission(context, "File upload/download"):
             return permission_error
@@ -1061,12 +1055,11 @@ class FileDownloadTool(FunctionTool):
         }
     )
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         remote_path: str,
         also_send_to_user: bool = True,
-        **kwargs: Any,
     ) -> ToolExecResult:
         if permission_error := check_admin_permission(context, "File upload/download"):
             return permission_error
@@ -1094,9 +1087,13 @@ class FileDownloadTool(FunctionTool):
                     else:
                         message_component = File(name=name, file=local_path)
                         sent_as = "file"
-                    await context.context.event.send(
-                        MessageChain(chain=[message_component])
-                    )
+                    message = MessageChain(chain=[message_component])
+                    if not prepare_tool_output(context.context, message):
+                        return (
+                            f"File downloaded successfully to {local_path} and prepared "
+                            f"as {sent_as} for caller delivery. It has not been sent."
+                        )
+                    await context.context.event.send(message)
                 except Exception as e:
                     logger.error(f"Error sending file message: {e}")
                     return (

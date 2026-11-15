@@ -336,7 +336,7 @@ async function handleDeleteSession(projectId: string, session: ProjectSession) {
   width: 100%;
   min-height: 30px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--lkmbot-radius-navigation);
   background: transparent;
   color: inherit;
   display: flex;

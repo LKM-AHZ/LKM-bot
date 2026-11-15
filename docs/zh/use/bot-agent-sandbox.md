@@ -28,7 +28,7 @@ LKMBot 内置 AI 支持让 Agent 通过执行代码、读写文件等方式访�
 
 ![本地权限策略矩阵](./images/config-local-permissions-zh.jpg)
 
-当勾选 “允许执行代码” 时，LKMBot 会为 Agent 提供 `bot_execute_shell` 和 `bot_execute_python` 两个工具，以让 Agent 在本机环境中执行 Shell 和 Python 代码。
+当勾选 “允许执行代码” 时，LKMBot 会为 Agent 提供 `astrbot_execute_shell` 和 `astrbot_execute_python` 两个工具，以让 Agent 在本机环境中执行 Shell 和 Python 代码。
 
 当勾选 “允许联网” 时，LKMBot 会让 Agent 在执行 Shell/Python 时可以访问网络；否则，Agent 执行 Shell/Python 时会被限制网络访问。
 
@@ -41,13 +41,13 @@ LKMBot 内置 AI 支持让 Agent 通过执行代码、读写文件等方式访�
 - **工作区**：Agent 只能访问对应用户会话（按 UMO 来划分）的以下目录：
   - 工作区目录（在 `data/workspaces/<umo>/` 下）【**读写**】
   - LKMBot 的临时目录（`data/temp/`）【**读写**】
-  - 系统临时目录（`<系统临时目录>/.bot/`）【**读写**】
+  - 系统临时目录（`<系统临时目录>/.astrbot/`）【**读写**】
   - LKMBot 提供给 Agent 的的技能（Skills）目录 (`data/skills/`) 【普通成员**只读**，管理员**读写**】
   - LKMBot 插件提供的技能（Skills）目录 (`data/plugins/<插件名>/skills/`) 【**只读**】
   - LKMBot 内置插件提供的技能（Skills）目录 (`<LKMBot 运行安装目录>/builtin_stars/<插件名>/skills/`) 【**只读**】
 - **整个环境**：Agent 可以访问本机环境内的**所有文件**，文件工具可以在整个环境中操作。
 
-LKMBot 为 Agent 提供的文件工具包括 `bot_file_read_tool`, `bot_file_write_tool`, `bot_file_edit_tool` 和 `bot_grep_tool`，分别对应文件的读取、写入、编辑和搜索功能。Agent 可以通过这些工具访问本机环境内的文件。
+LKMBot 为 Agent 提供的文件工具包括 `astrbot_file_read_tool`, `astrbot_file_write_tool`, `astrbot_file_edit_tool` 和 `astrbot_grep_tool`，分别对应文件的读取、写入、编辑和搜索功能。Agent 可以通过这些工具访问本机环境内的文件。
 
 新安装的 Windows、Linux 和 macOS 使用相同的默认权限：
 
@@ -56,7 +56,7 @@ LKMBot 为 Agent 提供的文件工具包括 `bot_file_read_tool`, `bot_file_wri
 | 普通成员 | 否 | 否 | 工作区 |
 | 管理员 | 是 | 是 | 整个环境 |
 
-这两组默认权限均不依赖本机进程隔离能力。已有配置中保存的权限保持不变。
+这两组默认权限均不依赖本机进程隔离能力。除 [Windows 升级迁移](#local-windows) 外，已有配置中保存的权限保持不变。
 
 已勾选的执行权限暂时无法生效时，复选框保留勾选并显示“未生效”；悬浮或点击“未生效”标签可查看原因。
 
@@ -132,7 +132,7 @@ sudo pacman -S bubblewrap
 如果启动失败：
 
 - **找不到 `bwrap`**：检查是否装在运行 LKMBot 的同一环境，以及进程启动时的 `PATH`。
-- **`Unknown option --size` 之类的报错**：bubblewrap 版本低于 **0.7.0**，不支持 LKMBot 使用的 `--size` 参数，请升级到 0.7.0 或更高版本。只是一般性地运行 bwrap 命令（不使用 `--size`）检测通过并不能代表 LKMBot 中可用。
+- **`Unknown option --size`**：将 bubblewrap 升级到 **0.7.0 或更高版本**，然后重新执行上述检查。
 - **`Operation not permitted` 或用户命名空间错误**：检查用户命名空间限制、AppArmor 和其他系统安全策略。可通过 `sysctl user.max_user_namespaces` 查看命名空间数量上限，通过 `sudo journalctl -k` 查看相关内核日志。
 - **AppArmor 拒绝**：按发行版要求为实际运行环境设置允许创建用户命名空间的策略。不要仅为通过检查而关闭整台机器的安全策略。
 - **容器部署**：继续阅读 [Docker 用户](#local-docker)，宿主机安装 `bwrap` 不能替代容器内安装。
@@ -156,11 +156,9 @@ Windows 10/11（含家庭版）支持本机隔离，可以在本机环境中让 
 3. 需要运行代码时，勾选“允许执行代码”；需要在执行时访问网络，再勾选“允许执行环境联网”。仅需读写文件时，保持执行选项关闭即可。
 4. 保存配置并重启 LKMBot。重启过程中如果出现系统授权提示，选择“是”完成准备。准备完成后，后续启动通常无需再次确认。
 
-设置完成后，就可以在聊天中让 LKMBot 创建文件、处理数据或运行代码。
-
 ![Windows 工作区模式（关闭联网）](/windows-sandbox/workspace-en.jpg)
 
-需要访问工作区以外的文件时，可以选择“整个环境”，LKMBot 将按当前运行账户的权限访问文件。在此范围下执行代码，联网项会显示带锁图标的“始终开启”标签；悬停、聚焦或点击标签可查看说明。要自行开关执行时的联网权限，请选择“工作区”。
+选择 **整个环境** 可按 LKMBot 运行账户的权限访问工作区外的文件，该范围下执行代码始终允许联网。如需控制执行时的联网权限，请选择 **工作区**。
 
 ![Windows 整个环境联网说明](/windows-sandbox/network-zh.png)
 
@@ -168,7 +166,7 @@ Windows 10/11（含家庭版）支持本机隔离，可以在本机环境中让 
 
 ![Windows 沙盒初始化提示](/windows-sandbox/setup-zh.jpg)
 
-从旧版 Windows 配置升级时，如果普通成员的文件访问、代码执行和联网均已关闭，文件访问会调整为“工作区”。如需继续关闭文件访问，请在升级后将其设为“关闭”并保存，后续重启会保留该设置。
+从旧版 Windows 配置升级时，如果普通成员的文件访问、代码执行和联网均已关闭，文件访问会一次性调整为“工作区”，包括手动关闭的配置。如需继续关闭文件访问，请在升级后将其设为“关闭”并保存，后续重启会保留该设置。
 
 ## 第三方沙箱环境 {#third-party-sandbox-environment}
 
@@ -181,7 +179,7 @@ Windows 10/11（含家庭版）支持本机隔离，可以在本机环境中让 
 > [!TIP]
 > 第三方沙箱能力仍处于技术预览阶段。遇到问题可在 [GitHub](https://github.com/AstrBotDevs/AstrBot/issues) 提交 issue。
 
-<span id="配置-bot-使用沙盒环境"></span>
+<span id="配置-astrbot-使用沙盒环境"></span>
 
 ### 启用沙盒环境 {#启用沙盒环境}
 
@@ -484,17 +482,17 @@ Agent 可以在 CUA sandbox 中使用多种能力，请见下表：
 
 | 能力 | 为 Agent 提供的工具名称 | 用途 |
 | --- | --- | --- |
-| Shell 执行 | `bot_execute_shell` | 执行命令、启动程序 |
-| Python 执行 | `bot_execute_ipython` | 执行 Python 代码 |
-| 文件读取 | `bot_file_read_tool` | 读取文件 |
-| 文件写入 | `bot_file_write_tool` | 创建或覆盖文件 |
-| 文件编辑 | `bot_file_edit_tool` | 替换文件中的指定文本 |
-| 文件搜索 | `bot_grep_tool` | 按模式搜索文件内容 |
-| 文件上传 | `bot_upload_file` | 将 LKMBot 所在环境的文件上传到沙箱 |
-| 文件下载 | `bot_download_file` | 从沙箱下载文件，可发送给用户 |
-| 桌面截图 | `bot_cua_screenshot` | 获取截图，供模型查看或发送给用户 |
-| 鼠标点击 | `bot_cua_mouse_click` | 按坐标点击，支持指定鼠标按键 |
-| 键盘输入 | `bot_cua_keyboard_type` | 向当前焦点输入文本 |
+| Shell 执行 | `astrbot_execute_shell` | 执行命令、启动程序 |
+| Python 执行 | `astrbot_execute_ipython` | 执行 Python 代码 |
+| 文件读取 | `astrbot_file_read_tool` | 读取文件 |
+| 文件写入 | `astrbot_file_write_tool` | 创建或覆盖文件 |
+| 文件编辑 | `astrbot_file_edit_tool` | 替换文件中的指定文本 |
+| 文件搜索 | `astrbot_grep_tool` | 按模式搜索文件内容 |
+| 文件上传 | `astrbot_upload_file` | 将 LKMBot 所在环境的文件上传到沙箱 |
+| 文件下载 | `astrbot_download_file` | 从沙箱下载文件，可发送给用户 |
+| 桌面截图 | `astrbot_cua_screenshot` | 获取截图，供模型查看或发送给用户 |
+| 鼠标点击 | `astrbot_cua_mouse_click` | 按坐标点击，支持指定鼠标按键 |
+| 键盘输入 | `astrbot_cua_keyboard_type` | 向当前焦点输入文本 |
 
 > [!WARNING]
 > CUA 是可选运行时，LKMBot 默认安装不会强制安装它。如果您选择了 `CUA` 但当前 LKMBot 的 Python 环境没有安装 `cua` 包，启动沙盒时会提示安装缺失。
@@ -595,23 +593,17 @@ CUA API Key = <your-cua-api-key>
 
 #### 使用 Docker Compose 部署 LKMBot 和 Shipyard
 
-如果您还没有部署 LKMBot，或者想更换为我们推荐的带沙盒环境的部署方式，推荐使用 Docker Compose 来部署 LKMBot。
-
-> [!NOTE]
-> 本仓库是 LKM 定制 fork，**不再自带 `compose-with-shipyard.yml`**：LKM 环境下 LKMBot 与 Shipyard
-> 由根编排仓库 **LKM-Website** 一起管理（`docker-compose.yml` 里的 `--profile bot`，见其
-> `DEPLOYMENT.md` 的「LKM Bot」一节）：
+如果您还没有部署 LKMBot，或者想更换为我们推荐的带沙盒环境的部署方式，推荐使用 Docker Compose 来部署 LKMBot，代码如下：
 
 ```bash
-git clone https://github.com/LKM-AHZ/LKM-Website.git
-cd LKM-Website
-docker compose --profile bot up -d --build
+git clone https://github.com/AstrBotDevs/AstrBot
+cd LKMBot
+# 修改 compose-with-shipyard.yml 文件中的环境变量配置，例如 Shipyard 的 access token 等
+docker compose -f compose-with-shipyard.yml up -d
+docker pull soulter/shipyard-ship:latest
 ```
 
-> 注意两点：①沙箱会挂载 `/var/run/docker.sock`（等价宿主机 root），仅在需要时启用、用完
-> `docker compose --profile bot down` 收掉；②根编排起的是**旧版 Bay**（`soulter/shipyard-bay`），
-> 而 bot 默认 `sandbox.booter=shipyard_neo`，需在面板「配置 → 沙箱」把 booter 改成 `shipyard`、
-> endpoint 填 `http://shipyard:8156` 并填上 access token 才会生效。
+这会启动一个包含 LKMBot 主程序和沙盒环境的 Docker Compose 服务。
 
 #### 单独部署 Shipyard
 
@@ -620,8 +612,8 @@ docker compose --profile bot up -d --build
 代码如下：
 
 ```bash
-mkdir bot-shipyard
-cd bot-shipyard
+mkdir astrbot-shipyard
+cd astrbot-shipyard
 wget https://raw.githubusercontent.com/AstrBotDevs/shipyard/refs/heads/main/pkgs/bay/docker-compose.yml -O docker-compose.yml
 # Update the access token in docker-compose.yml
 docker compose -f docker-compose.yml up -d

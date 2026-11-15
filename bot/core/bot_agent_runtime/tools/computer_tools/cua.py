@@ -17,6 +17,7 @@ from bot.core.bot_agent_runtime.context import BotAgentContext
 from bot.core.bot_agent_runtime.tools.computer_tools.util import (
     check_admin_permission,
 )
+from bot.core.bot_agent_runtime.tools.output import prepare_tool_output
 from bot.core.bot_agent_runtime.tools.registry import builtin_tool
 from bot.core.message.message_event_result import MessageChain
 from bot.core.utils.bot_path import get_bot_temp_path
@@ -79,7 +80,6 @@ class CuaScreenshotTool(FunctionTool):
         context: ContextWrapper[BotAgentContext],
         send_to_user: bool = True,
         return_image_to_llm: bool = True,
-        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Taking CUA screenshots"):
             return err
@@ -89,8 +89,13 @@ class CuaScreenshotTool(FunctionTool):
             result = await gui.screenshot(path)
             payload = {"success": True, **result, "path": path}
             if send_to_user:
-                await context.context.event.send(MessageChain().file_image(path))
-                payload["sent_to_user"] = True
+                message = MessageChain().file_image(path)
+                if prepare_tool_output(context.context, message):
+                    await context.context.event.send(message)
+                    payload["sent_to_user"] = True
+                else:
+                    payload["sent_to_user"] = False
+                    payload["delivery"] = "prepared_for_caller"
             image_data = payload.pop("base64", "")
             content: list[ContentBlock] = [
                 mcp.types.TextContent(type="text", text=_to_json(payload))
@@ -129,13 +134,12 @@ class CuaMouseClickTool(FunctionTool):
         }
     )
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         x: int,
         y: int,
         button: str = "left",
-        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using CUA mouse"):
             return err
@@ -161,11 +165,10 @@ class CuaKeyboardTypeTool(FunctionTool):
         }
     )
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         text: str,
-        **kwargs: Any,
     ) -> ToolExecResult:
         if err := check_admin_permission(context, "Using CUA keyboard"):
             return err

@@ -321,9 +321,9 @@ const localTabGroups = computed(() => {
       ? [{ key: 'persona', metadata: props.metadata.persona }]
       : [],
     capabilities: [
-      'knowledgebase',
       'websearch',
       'agent_computer_use',
+      'knowledgebase',
       'proactive_capability'
     ].filter((key) => props.metadata?.[key]).map((key) => ({
       key,
@@ -496,7 +496,7 @@ function confirmRunnerChange() {
   min-height: 30px;
   padding: 5px 12px;
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--lkmbot-radius-control);
   background: transparent;
   color: rgba(var(--v-theme-on-surface), 0.58);
   cursor: pointer;
@@ -523,7 +523,7 @@ function confirmRunnerChange() {
   min-height: 88px;
   padding: 16px 18px;
   border: 1px solid rgba(17, 24, 39, 0.13);
-  border-radius: 10px;
+  border-radius: var(--lkmbot-radius-card);
   color: rgba(var(--v-theme-on-surface), 0.5);
   background: rgb(var(--v-theme-surface));
 }
@@ -541,7 +541,7 @@ function confirmRunnerChange() {
 }
 
 .runner-dialog-card {
-  border-radius: 14px !important;
+  border-radius: var(--lkmbot-radius-dialog) !important;
 }
 
 .runner-dialog-description {
@@ -554,7 +554,7 @@ function confirmRunnerChange() {
 .runner-option-list {
   overflow: hidden;
   border: 1px solid rgba(17, 24, 39, 0.13);
-  border-radius: 10px;
+  border-radius: var(--lkmbot-radius-card);
 }
 
 .runner-option {

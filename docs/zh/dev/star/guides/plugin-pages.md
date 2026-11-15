@@ -1,7 +1,7 @@
 # 插件可视化视图
 
 
-插件可视化视图允许插件在 LKMBot WebUI 中提供自己的页面。页面文件放在插件目录的 `views/` 下（兼容 `pages/`），由 Dashboard 以受限 iframe 的方式加载；页面里的脚本通过 `window.BotPluginView` bridge（别名 `window.BotPluginPage`）和 Dashboard 通信，再由 Dashboard 转发到插件注册的后端 Web API。
+插件可视化视图允许插件在 LKMBot WebUI 中提供自己的页面。页面文件放在插件目录的 `views/` 下（兼容 `pages/`），由 Dashboard 以受限 iframe 的方式加载；页面里的脚本通过 `window.AstrBotPluginView` bridge（别名 `window.AstrBotPluginPage`）和 Dashboard 通信，再由 Dashboard 转发到插件注册的后端 Web API。
 
 如果只是让用户填写少量配置项，优先使用 [`_conf_schema.json`](./plugin-config.md)。可视化视图更适合复杂表单、运行状态面板、日志查看、文件上传下载、SSE 实时流、图表和其他需要自定义交互的场景。
 
@@ -30,7 +30,7 @@ bot_plugin_view_demo/
 ## 开发流程
 
 1. 在插件目录下创建 `views/<view_name>/index.html`。
-2. 在视图中通过 `window.BotPluginView` bridge 调用后端能力。
+2. 在视图中通过 `window.AstrBotPluginView` bridge 调用后端能力。
 3. 在 `main.py` 中使用 `context.register_web_api()` 注册插件后端 API。
 4. 后端 handler 使用 `bot.api.web` 读取请求并返回响应。
 5. 新增或删除视图目录后重载插件；修改静态资源通常刷新视图即可。
@@ -42,7 +42,7 @@ bot_plugin_view_demo/
 插件后端推荐使用 `bot.api.web`，不要把 FastAPI、Starlette 或 Quart 的原始请求对象作为插件公共 API 暴露给自己的业务代码。
 
 ```python
-from bot.core.star import Context, Star
+from bot.api.star import Context, Star
 from bot.api.web import error_response, json_response, request
 
 PLUGIN_NAME = "bot_plugin_view_demo"
@@ -104,7 +104,7 @@ class MyPlugin(Star):
 `views/bridge-demo/app.js`
 
 ```js
-const bridge = window.BotPluginView;
+const bridge = window.AstrBotPluginView;
 const output = document.getElementById("output");
 
 const context = await bridge.ready();
@@ -116,10 +116,10 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/v1/plugins/page-bridge-sdk.js`。如果内联脚本必须同步访问 `window.BotPluginView`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
+不需要手动引入 bridge SDK。LKMBot 返回 HTML 时会自动插入 `/api/plugin/page/bridge-sdk.js`。如果内联脚本必须同步访问 `window.AstrBotPluginView`，请把脚本改成外部 module 文件，或在自己的脚本前显式引入：
 
 ```html
-<script src="/api/v1/plugins/page-bridge-sdk.js"></script>
+<script src="/api/plugin/page/bridge-sdk.js"></script>
 ```
 
 ## 后端 Web API
@@ -208,8 +208,8 @@ enabled = bool(payload.get("enabled"))
 from pathlib import Path
 
 # LKMBot v4.30.0 之前的导入方式：
-# from bot.core.utils.bot_path import get_bot_plugin_data_path
-from bot.api.util import get_bot_plugin_data_path
+# from bot.core.utils.astrbot_path import get_astrbot_plugin_data_path
+from bot.api.util import get_astrbot_plugin_data_path
 from bot.api.web import PluginUploadFile, error_response, json_response, request
 
 
@@ -221,7 +221,7 @@ async def import_file(self):
         return error_response("missing file")
 
     target_dir = (
-        Path(get_bot_plugin_data_path())
+        Path(get_astrbot_plugin_data_path())
         / (request.plugin_name or "unknown_plugin")
         / "imports"
     )
@@ -292,22 +292,28 @@ async def stream_events(self):
 
 直接返回 `dict`、`list`、`(body, status_code)` 或底层 Response 对象仍然可用；文档和新插件推荐优先使用 `bot.api.web` helper，让插件代码和 Dashboard 内部框架解耦。
 
-### 请求对象
+### Quart 兼容
 
-通过 `context.register_web_api()` 注册的 handler 运行在 Dashboard 原生请求上下文中：
+为了兼容旧插件，通过 `context.register_web_api()` 注册的 handler 仍会进入 Quart 兼容请求上下文。旧代码可以继续使用：
+
+```python
+from quart import jsonify, request
+```
+
+新插件和新文档推荐使用：
 
 ```python
 from bot.api.web import json_response, request
 ```
 
-旧版 Quart 兼容请求上下文已移除，`from quart import request` 不再可用。仍在使用 Quart 写法的插件需要改为 `bot.api.web`。
+不要在同一个 handler 中混用两个 `request` 代理，迁移时按 handler 逐步替换即可。
 
 ## Bridge API
 
-视图 iframe 不能直接访问 Dashboard cookies、LocalStorage 或父页面 DOM。页面脚本必须通过 `window.BotPluginView` bridge 调用后端和读取上下文。
+视图 iframe 不能直接访问 Dashboard cookies、LocalStorage 或父页面 DOM。页面脚本必须通过 `window.AstrBotPluginView` bridge 调用后端和读取上下文。
 
 ```js
-const bridge = window.BotPluginView;
+const bridge = window.AstrBotPluginView;
 ```
 
 ### 上下文
@@ -633,22 +639,22 @@ body {
 
 ### 跟随用户配色
 
-`context.themeColors` 提供当前生效的 `primary`（主色）和 `secondary`（辅助色），值为 CSS 颜色字符串，由 View 自行应用到样式。
-
-通过 `bridge.onContext(handler)` 接收初始配色，以及主题切换、颜色修改和重置后的更新。服务端预注入的初始上下文和旧版 LKMBot 可能没有该字段；缺失时使用 View 的默认配色，不要仅依赖 `ready()` 的首次返回值。
+通过 `bridge.onContext()` 应用初始的 `primary` 和 `secondary` CSS 颜色，并接收后续更新。`themeColors` 缺失时使用默认值：
 
 ```js
-const bridge = window.BotPluginView;
+const bridge = window.AstrBotPluginView;
 
 await bridge.ready();
 const off = bridge.onContext((context) => {
-  const primary = context.themeColors?.primary ?? "#3c96ca";
-  const secondary = context.themeColors?.secondary ?? "#2f86bd";
-  // 将配色应用到视图样式。
+  const style = document.documentElement.style;
+  style.setProperty("--primary", context.themeColors?.primary ?? "#3c96ca");
+  style.setProperty("--secondary", context.themeColors?.secondary ?? "#2f86bd");
 });
 
-// 视图销毁时调用 off() 取消订阅。
+// Call off() when the View is disposed.
 ```
+
+在样式中使用 `var(--primary)` 和 `var(--secondary)` 引用配色。
 
 ## 静态资源路径
 

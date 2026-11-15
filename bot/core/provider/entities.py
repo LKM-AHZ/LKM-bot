@@ -19,7 +19,6 @@ from bot.core.agent.message import (
     ContentPart,
     ToolCall,
     ToolCallMessageSegment,
-    is_checkpoint_message,
 )
 from bot.core.agent.tool import ToolSet
 from bot.core.db.po import Conversation
@@ -251,8 +250,6 @@ class ProviderRequest:
         result_parts = []
 
         for ctx in self.contexts:
-            if is_checkpoint_message(ctx):
-                continue
             role = ctx.get("role", "unknown")
             content = ctx.get("content", "")
 

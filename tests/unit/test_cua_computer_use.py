@@ -8,6 +8,7 @@ import mcp
 import pytest
 
 from bot.core.bot_agent_runtime.computer.booters.cua import CuaShellComponent
+from bot.core.bot_agent_runtime.tool_executor import FunctionToolExecutor
 from bot.core.config.default import CONFIG_METADATA_3
 from bot.core.provider.func_tool_manager import FunctionToolManager
 
@@ -1559,6 +1560,9 @@ def test_cua_tools_are_registered_as_builtin_tools():
     )
 
 
+
+
+
 def test_cua_is_exposed_in_sandbox_config_metadata():
     items = _agent_computer_use_items()
     booter = items["provider_settings.sandbox.booter"]
@@ -1601,7 +1605,9 @@ async def test_screenshot_tool_returns_image_and_sends_file(monkeypatch, tmp_pat
         async def send(self, message):
             sent_messages.append(message)
 
-    class FakeBotContext:
+    class FakeAstrContext:
+        send_to_user = True
+        _output_turn = None
         event = FakeEvent()
         context = FakeContext(
             {
@@ -1614,7 +1620,7 @@ async def test_screenshot_tool_returns_image_and_sends_file(monkeypatch, tmp_pat
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     class FakeGUI:
         async def screenshot(self, path: str):
@@ -1677,7 +1683,9 @@ async def test_screenshot_tool_normalizes_supported_screenshot_shapes(
         async def send(self, message):
             sent_messages.append(message)
 
-    class FakeBotContext:
+    class FakeAstrContext:
+        send_to_user = True
+        _output_turn = None
         event = FakeEvent()
         context = FakeContext(
             {
@@ -1690,7 +1698,7 @@ async def test_screenshot_tool_normalizes_supported_screenshot_shapes(
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     class SaveObject:
         def save(self, output, format):
@@ -1746,14 +1754,14 @@ async def test_screenshot_tool_can_opt_in_to_llm_image_content(monkeypatch, tmp_
         async def send(self, message):
             pass
 
-    class FakeBotContext:
+    class FakeAstrContext:
         event = FakeEvent()
         context = FakeContext(
             {"provider_settings": {"computer_use_require_admin": True}}
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     class FakeGUI:
         async def screenshot(self, path: str):
@@ -1799,14 +1807,14 @@ async def test_screenshot_tool_can_opt_out_of_llm_image_content(monkeypatch, tmp
         async def send(self, message):
             pass
 
-    class FakeBotContext:
+    class FakeAstrContext:
         event = FakeEvent()
         context = FakeContext(
             {"provider_settings": {"computer_use_require_admin": True}}
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     class FakeGUI:
         async def screenshot(self, path: str):
@@ -1856,12 +1864,12 @@ async def test_cua_tools_return_permission_error_without_gui_lookup(monkeypatch)
         async def send(self, message):
             sent_messages.append(message)
 
-    class FakeBotContext:
+    class FakeAstrContext:
         event = FakeEvent()
         context = FakeContext({"provider_settings": {}})
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     async def fail_gui_lookup(context):
         raise AssertionError("GUI lookup should not run after permission failure")
@@ -1890,14 +1898,14 @@ async def test_cua_tools_include_exception_type_for_blank_error(monkeypatch):
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeBotContext:
+    class FakeAstrContext:
         event = FakeEvent()
         context = FakeContext(
             {"provider_settings": {"computer_use_require_admin": True}}
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     async def fail_gui_lookup(context):
         raise BlankError()
@@ -1922,14 +1930,14 @@ async def test_cua_mouse_click_tool_happy_path_forwards_args_and_serializes_json
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeBotContext:
+    class FakeAstrContext:
         event = FakeEvent()
         context = FakeContext(
             {"provider_settings": {"computer_use_require_admin": True}}
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     class FakeGui:
         def __init__(self):
@@ -1975,14 +1983,14 @@ async def test_cua_keyboard_type_tool_happy_path_forwards_args_and_serializes_js
         unified_msg_origin = "umo"
         role = "admin"
 
-    class FakeBotContext:
+    class FakeAstrContext:
         event = FakeEvent()
         context = FakeContext(
             {"provider_settings": {"computer_use_require_admin": True}}
         )
 
     class FakeWrapper:
-        context = FakeBotContext()
+        context = FakeAstrContext()
 
     class FakeGui:
         def __init__(self):

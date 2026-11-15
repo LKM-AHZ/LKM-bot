@@ -20,6 +20,10 @@ from bot.core.message.message_event_result import MessageChain
 from bot.core.provider import Provider
 from bot.core.provider.entities import LLMResponse, TokenUsage
 from bot.core.provider.func_tool_manager import ToolSet
+from bot.core.provider.request_observer import (
+    RequestAttemptObserver,
+    request_recorder_kwargs,
+)
 from bot.core.utils.media_utils import (
     describe_media_ref,
     resolve_media_ref_to_base64_data,
@@ -119,9 +123,7 @@ class ProviderGoogleGenAI(Provider):
             http_options=http_options,
         ).aio
         # The SDK adds its own lower-case UA alongside our explicit header.
-        _headers = self.client._api_client._http_options.headers
-        if _headers is not None:
-            _headers.pop("user-agent", None)
+        self.client._api_client._http_options.headers.pop("user-agent", None)
 
     @asynccontextmanager
     async def _conversation_header(self, conversation_id: str | None):
@@ -686,6 +688,7 @@ class ProviderGoogleGenAI(Provider):
         tools: ToolSet | None,
         *,
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         conversation_id: str | None = None,
     ) -> LLMResponse:
         """非流式请求 Gemini API"""
@@ -713,17 +716,16 @@ class ProviderGoogleGenAI(Provider):
                     system_instruction,
                     modalities,
                 )
-                client = self.client
-                assert client is not None  # terminate() 之后不再发起请求
                 async with self._conversation_header(conversation_id):
                     result = await retry_provider_request(
                         "Gemini",
-                        lambda: client.models.generate_content(
+                        lambda: self.client.models.generate_content(
                             model=model,
                             contents=cast(types.ContentListUnion, conversation),
                             config=config,
                         ),
                         max_attempts=request_max_retries,
+                        request_event_recorder=request_event_recorder,
                     )
                 logger.debug(f"genai result: {result}")
 
@@ -791,6 +793,7 @@ class ProviderGoogleGenAI(Provider):
         tools: ToolSet | None,
         *,
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         conversation_id: str | None = None,
     ) -> AsyncGenerator[LLMResponse, None]:
         """流式请求 Gemini API"""
@@ -810,17 +813,16 @@ class ProviderGoogleGenAI(Provider):
                     payloads.get("tool_choice", "auto"),
                     system_instruction,
                 )
-                client = self.client
-                assert client is not None  # terminate() 之后不再发起请求
                 async with self._conversation_header(conversation_id):
                     result = await retry_provider_request(
                         "Gemini",
-                        lambda: client.models.generate_content_stream(
+                        lambda: self.client.models.generate_content_stream(
                             model=model,
                             contents=cast(types.ContentListUnion, conversation),
                             config=config,
                         ),
                         max_attempts=request_max_retries,
+                        request_event_recorder=request_event_recorder,
                     )
                 break
             except APIError as e:
@@ -958,6 +960,7 @@ class ProviderGoogleGenAI(Provider):
         extra_user_content_parts=None,
         tool_choice: Literal["auto", "required"] = "auto",
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         **kwargs,
     ) -> LLMResponse:
         conversation_id = kwargs.pop("conversation_id", None)
@@ -1007,6 +1010,7 @@ class ProviderGoogleGenAI(Provider):
                     payloads,
                     func_tool,
                     request_max_retries=request_max_retries,
+                    **request_recorder_kwargs(self._query, request_event_recorder),
                     **query_kwargs,
                 )
             except APIError as e:
@@ -1016,7 +1020,7 @@ class ProviderGoogleGenAI(Provider):
 
         raise Exception("Gemini request failed.")
 
-    async def text_chat_stream(  # ty: ignore[invalid-method-override]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），基类与子类的注解各用其一
+    async def text_chat_stream(
         self,
         prompt=None,
         session_id=None,
@@ -1030,6 +1034,7 @@ class ProviderGoogleGenAI(Provider):
         extra_user_content_parts=None,
         tool_choice: Literal["auto", "required"] = "auto",
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         **kwargs,
     ) -> AsyncGenerator[LLMResponse, None]:
         conversation_id = kwargs.pop("conversation_id", None)
@@ -1079,6 +1084,9 @@ class ProviderGoogleGenAI(Provider):
                     payloads,
                     func_tool,
                     request_max_retries=request_max_retries,
+                    **request_recorder_kwargs(
+                        self._query_stream, request_event_recorder
+                    ),
                     **query_kwargs,
                 ):
                     yield response
@@ -1090,11 +1098,9 @@ class ProviderGoogleGenAI(Provider):
 
     async def get_models(self):
         try:
-            client = self.client
-            assert client is not None  # terminate() 之后不再发起请求
             models = await retry_provider_request(
                 "Gemini",
-                lambda: client.models.list(),
+                lambda: self.client.models.list(),
             )
             return [
                 m.name.replace("models/", "")

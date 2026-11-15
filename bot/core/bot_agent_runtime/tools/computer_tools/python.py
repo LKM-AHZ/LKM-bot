@@ -1,6 +1,5 @@
 import platform
 from dataclasses import dataclass, field
-from typing import Any
 
 import mcp
 
@@ -13,7 +12,8 @@ from bot.core.bot_agent_runtime.computer.computer_client import (
     get_booter,
     get_local_booter,
 )
-from bot.core.bot_agent_runtime.context import BotAgentContext, BotMessageEvent
+from bot.core.bot_agent_runtime.context import BotAgentContext
+from bot.core.bot_agent_runtime.tools.output import prepare_tool_output
 from bot.core.message.message_event_result import MessageChain
 
 from ..registry import builtin_tool
@@ -55,8 +55,18 @@ param_schema = {
 
 
 async def handle_result(
-    result: dict, event: BotMessageEvent
+    result: dict, agent_context: BotAgentContext
 ) -> mcp.types.CallToolResult:
+    """Preserve model output and prepare webchat images under the turn policy.
+
+    Args:
+        result: Python execution result, including text, images, and errors.
+        agent_context: Execution context owning image delivery.
+
+    Returns:
+        Model-visible execution output and any caller-owned delivery notice.
+    """
+    event = agent_context.event
     data = result.get("data", {})
     output = data.get("output", {})
     error = data.get("error", "")
@@ -77,7 +87,16 @@ async def handle_result(
             )
 
             if event.get_platform_name() == "webchat":
-                await event.send(message=MessageChain().base64_image(img["image/png"]))
+                message = MessageChain().base64_image(img["image/png"])
+                if prepare_tool_output(agent_context, message):
+                    await event.send(message=message)
+        if event.get_platform_name() == "webchat" and not agent_context.send_to_user:
+            resp.content.append(
+                mcp.types.TextContent(
+                    type="text",
+                    text="Images prepared for caller delivery. They have not been sent.",
+                )
+            )
     if text:
         resp.content.append(mcp.types.TextContent(type="text", text=text))
 
@@ -94,13 +113,12 @@ class PythonTool(FunctionTool):
     description: str = f"Run codes in an IPython shell. Current OS: {_OS_NAME}."
     parameters: dict = field(default_factory=lambda: param_schema)
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         code: str,
         silent: bool = False,
         timeout: int = 30,
-        **kwargs: Any,
     ) -> ToolExecResult:
         if permission_error := check_admin_permission(context, "Python execution"):
             return permission_error
@@ -119,7 +137,7 @@ class PythonTool(FunctionTool):
                 timeout=effective_timeout,
                 silent=silent,
             )
-            return await handle_result(result, context.context.event)
+            return await handle_result(result, context.context)
         except Exception as e:
             return f"Error executing code: {str(e)}"
 
@@ -136,13 +154,12 @@ class LocalPythonTool(FunctionTool):
 
     parameters: dict = field(default_factory=lambda: param_schema)
 
-    async def call(  # ty: ignore[invalid-method-override]  # 工具参数的必填性由 FunctionTool.parameters 的 JSON Schema 声明（调用方按 schema 传参）；子类把必填参数写成无默认值，是为了缺参时立刻报错而非静默取默认值
+    async def call(
         self,
         context: ContextWrapper[BotAgentContext],
         code: str,
         silent: bool = False,
         timeout: int = 30,
-        **kwargs: Any,
     ) -> ToolExecResult:
         local_policy, permission_error = check_local_execution_permission(
             context,
@@ -166,7 +183,7 @@ class LocalPythonTool(FunctionTool):
         try:
             current_workspace_root = await workspace_root_for_context(context)
             current_workspace_root.mkdir(parents=True, exist_ok=True)
-            sandbox_roots: dict[str, Any] = {}
+            sandbox_roots = {}
             if sandboxed and local_policy.filesystem_scope == "workspace":
                 umo = context.context.event.unified_msg_origin
                 sandbox_roots = {
@@ -188,6 +205,6 @@ class LocalPythonTool(FunctionTool):
                 filesystem_scope=local_policy.filesystem_scope,
                 **sandbox_roots,
             )
-            return await handle_result(result, context.context.event)
+            return await handle_result(result, context.context)
         except Exception as e:
             return f"Error executing code: {str(e)}"

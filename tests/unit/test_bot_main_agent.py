@@ -1,4 +1,4 @@
-"""Tests for bot_main_agent module."""
+"""Tests for bot_main_agent ama."""
 
 import asyncio
 import datetime
@@ -13,7 +13,7 @@ import pytest
 from bot.core import agent_input as core_input
 from bot.core import llm_error_messages as agent_errors
 from bot.core.agent.mcp_client import MCPTool
-from bot.core.agent.message import Message, dump_messages_with_checkpoints
+from bot.core.agent.message import Message, dump_messages
 from bot.core.agent.runners.base import AgentState
 from bot.core.agent.tool import FunctionTool, ToolSet
 from bot.core.agent_wakeup import wake_main_agent
@@ -90,6 +90,7 @@ def mock_context():
         side_effect=lambda *args, **kwargs: ctx.get_using_provider(*args, **kwargs)
     )
     ctx.conversation_manager = MagicMock()
+    ctx.conversation_manager.to_legacy_conversation.side_effect = lambda record: record
     ctx.persona_manager = MagicMock()
     ctx.persona_manager.personas_v3 = []
     ctx.persona_manager.resolve_selected_persona = AsyncMock(
@@ -113,7 +114,7 @@ def mock_event():
     message_obj = MagicMock()
     message_obj.message = [Plain(text="Hello")]
     message_obj.sender = MagicMock(user_id="user123", nickname="TestUser")
-    message_obj.set_group(None)
+    message_obj.group_id = None
     message_obj.group = None
 
     event = MagicMock(spec=BotMessageEvent)
@@ -139,6 +140,7 @@ def mock_conversation():
     conv.cid = "conv-id"
     conv.persona_id = None
     conv.history = "[]"
+    conv.content = []
     return conv
 
 
@@ -175,6 +177,7 @@ def _new_mock_conversation(cid: str = "conv-id") -> MagicMock:
     conv.cid = cid
     conv.persona_id = None
     conv.history = "[]"
+    conv.content = []
     return conv
 
 
@@ -182,7 +185,7 @@ def _setup_conversation_for_build(conv_mgr, cid: str = "conv-id") -> MagicMock:
     conv_mgr.get_curr_conversation_id = AsyncMock(return_value=None)
     conv_mgr.new_conversation = AsyncMock(return_value=cid)
     conversation = _new_mock_conversation(cid=cid)
-    conv_mgr.get_conversation = AsyncMock(return_value=conversation)
+    conv_mgr.db.get_conversation_by_id = AsyncMock(return_value=conversation)
     return conversation
 
 
@@ -458,7 +461,7 @@ class TestGetSessionConv:
         """Test getting existing conversation."""
         conv_mgr = mock_context.conversation_manager
         conv_mgr.get_curr_conversation_id = AsyncMock(return_value="existing-conv-id")
-        conv_mgr.get_conversation = AsyncMock(return_value=mock_conversation)
+        conv_mgr.db.get_conversation_by_id = AsyncMock(return_value=mock_conversation)
 
         result = await request_build._get_session_conv(mock_event, mock_context)
 
@@ -466,8 +469,8 @@ class TestGetSessionConv:
         conv_mgr.get_curr_conversation_id.assert_called_once_with(
             mock_event.unified_msg_origin
         )
-        conv_mgr.get_conversation.assert_called_once_with(
-            mock_event.unified_msg_origin, "existing-conv-id"
+        conv_mgr.db.get_conversation_by_id.assert_called_once_with(
+            "existing-conv-id"
         )
 
     @pytest.mark.asyncio
@@ -480,7 +483,7 @@ class TestGetSessionConv:
         mock_conversation.cid = "new-conv-id"
         mock_conversation.persona_id = None
         mock_conversation.history = "[]"
-        conv_mgr.get_conversation = AsyncMock(return_value=mock_conversation)
+        conv_mgr.db.get_conversation_by_id = AsyncMock(return_value=mock_conversation)
 
         result = await request_build._get_session_conv(mock_event, mock_context)
 
@@ -494,19 +497,19 @@ class TestGetSessionConv:
         """Test retrying conversation creation after failure."""
         conv_mgr = mock_context.conversation_manager
         conv_mgr.get_curr_conversation_id = AsyncMock(return_value="conv-id")
-        conv_mgr.get_conversation = AsyncMock(return_value=None)
+        conv_mgr.db.get_conversation_by_id = AsyncMock(return_value=None)
         conv_mgr.new_conversation = AsyncMock(return_value="retry-conv-id")
         mock_conversation = MagicMock(spec=Conversation)
         mock_conversation.cid = "retry-conv-id"
         mock_conversation.persona_id = None
         mock_conversation.history = "[]"
-        conv_mgr.get_conversation.side_effect = [None, mock_conversation]
+        conv_mgr.db.get_conversation_by_id.side_effect = [None, mock_conversation]
 
         result = await request_build._get_session_conv(mock_event, mock_context)
 
         assert result == mock_conversation
         assert conv_mgr.new_conversation.call_count == 1
-        assert conv_mgr.get_conversation.call_count == 2
+        assert conv_mgr.db.get_conversation_by_id.call_count == 2
 
     @pytest.mark.asyncio
     async def test_get_session_conv_failure(self, mock_event, mock_context):
@@ -514,7 +517,7 @@ class TestGetSessionConv:
         conv_mgr = mock_context.conversation_manager
         conv_mgr.get_curr_conversation_id = AsyncMock(return_value=None)
         conv_mgr.new_conversation = AsyncMock(return_value="new-conv-id")
-        conv_mgr.get_conversation = AsyncMock(return_value=None)
+        conv_mgr.db.get_conversation_by_id = AsyncMock(return_value=None)
 
         with pytest.raises(RuntimeError, match="无法创建新的对话。"):
             await request_build._get_session_conv(mock_event, mock_context)
@@ -547,7 +550,7 @@ class TestApplyKb:
         assert isinstance(message.content, list)
         assert message.content[0].text == "test question"
         assert message.content[1].text == "[Related Knowledge Base Results]:\nKB result"
-        assert dump_messages_with_checkpoints([message]) == [
+        assert dump_messages([message]) == [
             {"role": "user", "content": [{"type": "text", "text": "test question"}]}
         ]
 
@@ -946,12 +949,12 @@ class TestEnsurePersonaAndSkills:
             [
                 StarMetadata(
                     name="allowed_plugin",
-                    root_dir_name="bot_plugin_allowed",
+                    root_dir_name="astrbot_plugin_allowed",
                     activated=True,
                 ),
                 StarMetadata(
                     name="blocked_plugin",
-                    root_dir_name="bot_plugin_blocked",
+                    root_dir_name="astrbot_plugin_blocked",
                     activated=True,
                 ),
             ],
@@ -964,7 +967,7 @@ class TestEnsurePersonaAndSkills:
                 path="allowed/SKILL.md",
                 active=True,
                 source_type="plugin",
-                plugin_name="bot_plugin_allowed",
+                plugin_name="astrbot_plugin_allowed",
             ),
             SkillInfo(
                 name="blocked-skill",
@@ -972,7 +975,7 @@ class TestEnsurePersonaAndSkills:
                 path="blocked/SKILL.md",
                 active=True,
                 source_type="plugin",
-                plugin_name="bot_plugin_blocked",
+                plugin_name="astrbot_plugin_blocked",
             ),
         ]
 
@@ -992,7 +995,7 @@ class TestEnsurePersonaAndSkills:
             [
                 StarMetadata(
                     name="inactive_plugin",
-                    root_dir_name="bot_plugin_inactive",
+                    root_dir_name="astrbot_plugin_inactive",
                     activated=False,
                 )
             ],
@@ -1004,7 +1007,7 @@ class TestEnsurePersonaAndSkills:
                 path="inactive/SKILL.md",
                 active=True,
                 source_type="plugin",
-                plugin_name="bot_plugin_inactive",
+                plugin_name="astrbot_plugin_inactive",
             )
         ]
 
@@ -1570,7 +1573,6 @@ class TestEnsurePersonaAndSkills:
         assert result.provider_request.func_tool is not None
         assert result.provider_request.func_tool.names() == tool_names
         assert "<execution_environment" not in result.provider_request.system_prompt
-        assert "<tool_use_instructions>" in result.provider_request.system_prompt
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize("role", ["admin", "member"])
@@ -1665,7 +1667,63 @@ class TestEnsurePersonaAndSkills:
             not in result.provider_request.system_prompt
         )
 
+    @pytest.mark.asyncio
+    async def test_legacy_plugin_experts_are_not_mounted_by_main(
+        self, mock_event, mock_context
+    ):
+        """The plugin compatibility entry does not activate native main routing."""
+        mock_context.persona_manager.resolve_selected_persona = AsyncMock(
+            return_value=(None, None, False)
+        )
+        mock_context.persona_manager.get_persona_v3_by_id = MagicMock(
+            return_value={"name": "default", "tools": ["tool_a"]}
+        )
 
+        tool_a = FunctionTool(
+            name="tool_a",
+            parameters={"type": "object", "properties": {}},
+            description="tool a",
+        )
+        tool_b = FunctionTool(
+            name="tool_b",
+            parameters={"type": "object", "properties": {}},
+            description="tool b",
+        )
+        tmgr = mock_context.get_llm_tool_manager.return_value
+        tmgr.func_list = [tool_a, tool_b]
+        tmgr.get_full_tool_set.return_value = ToolSet([tool_a, tool_b])
+        tmgr.get_func.side_effect = lambda name: {
+            "tool_a": tool_a,
+            "tool_b": tool_b,
+        }.get(name)
+
+        handoff = MagicMock()
+        handoff.name = "transfer_to_planner"
+        mock_context.get_config.return_value = {
+            "subagent_orchestrator": {
+                "main_enable": True,
+                "remove_main_duplicate_tools": True,
+                "router_system_prompt": "Legacy expert routing.",
+                "agents": [
+                    {
+                        "name": "planner",
+                        "enabled": True,
+                        "persona_id": "default",
+                    }
+                ],
+            }
+        }
+
+        req = ProviderRequest()
+        req.conversation = MagicMock(persona_id=None)
+
+        await _apply_persona_capabilities(req, {}, mock_context, mock_event)
+
+        assert req.func_tool is not None
+        assert "transfer_to_planner" not in req.func_tool.names()
+        assert "tool_a" in req.func_tool.names()
+        assert "tool_b" in req.func_tool.names()
+        assert "Legacy expert routing." not in req.system_prompt
 
 
 @pytest.mark.parametrize(
@@ -1744,17 +1802,16 @@ class TestPluginToolFix:
         self, mock_event
     ):
         """Tools without handler_module_path should not be filtered out."""
-        module = ama
-        orphan_tool = FunctionTool(
-            name="tool_without_origin",
-            description="A tool without plugin origin metadata",
+        handoff_tool = FunctionTool(
+            name="transfer_to_demo_agent",
+            description="Delegate to demo agent",
             parameters={"type": "object", "properties": {}},
             handler_module_path=None,
             active=True,
         )
 
         tool_set = ToolSet()
-        tool_set.add_tool(orphan_tool)
+        tool_set.add_tool(handoff_tool)
 
         req = ProviderRequest(func_tool=tool_set)
         mock_event.plugins_name = ["other_plugin"]
@@ -1762,7 +1819,7 @@ class TestPluginToolFix:
         with patch.object(plugins_build, "star_map"):
             req.func_tool = plugins_build.filter_tools(mock_event, req.func_tool)
 
-        assert "tool_without_origin" in req.func_tool.names()
+        assert "transfer_to_demo_agent" in req.func_tool.names()
 
 
 class TestBuildMainAgent:
@@ -1782,7 +1839,7 @@ class TestBuildMainAgent:
         mock_context.mock_add_spec(Context)
         req = ProviderRequest(prompt="Original input")
 
-        async def hook(event, kind, request):
+        async def hook(event, kind, request, *, context_observer=None):
             request.prompt = "Plugin input"
             request.system_prompt = "Plugin instructions"
             return False
@@ -2777,7 +2834,7 @@ class TestBuildMainAgent:
         conv_mgr = mock_context.conversation_manager
         _setup_conversation_for_build(conv_mgr)
 
-        async def request_hook(event, kind, req):
+        async def request_hook(event, kind, req, *, context_observer=None):
             assert kind is builder_build.EventType.OnLLMRequestEvent
             mock_runner.reset.assert_not_called()
             req.prompt = "Changed by the plugin"
@@ -3508,7 +3565,14 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
     (workspace_root / "EXTRA_PROMPT.md").write_text(
         "Workspace marker", encoding="utf-8"
     )
-    mock_context.get_config.return_value = {}
+    mock_context.get_config.return_value = {
+        "subagent_orchestrator": {
+            "main_enable": True,
+            "remove_main_duplicate_tools": True,
+            "router_system_prompt": "Router marker",
+            "agents": [{"tools": ["delegated", "send_message_to_user"]}],
+        },
+    }
     config = ama.MainAgentBuildConfig.from_config(
         {
             "kb_agentic_mode": agentic_kb,
@@ -3586,9 +3650,9 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
         )
     assert result is not None
     names = req.func_tool.names()
-    assert "caller" in names
-    assert "kept" in names
-    assert "disabled_plugin" not in names
+    assert names[:4] == ["caller", "send_message_to_user", "kept", "delegated"]
+    assert not {"disabled_plugin", "transfer_to_worker"}.intersection(names)
+    assert "Router marker" not in req.system_prompt
     assert {
         "web_search_tavily",
         "bot_execute_shell",
@@ -3625,12 +3689,6 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
         assert (
             req.system_prompt.count(computer_use_build.LOCAL_NETWORK_POLICY_NOTICE) == 1
         )
-    tool_prompt = (
-        builder_build.TOOL_CALL_PROMPT
-        if tool_schema_mode == "full"
-        else builder_build.TOOL_CALL_PROMPT_SKILLS_LIKE_MODE
-    )
-    markers.append(tool_prompt)
     markers.append(web_search_build.WEB_SEARCH_CITATION_PROMPT)
     positions = [req.system_prompt.index(marker) for marker in markers]
     assert positions == sorted(positions)
@@ -3651,18 +3709,7 @@ async def test_feature_composition_preserves_tool_scope_and_instruction_order(
     environment = req.system_prompt.split(environment_start, 1)[1].split(
         "</execution_environment>", 1
     )[0]
-    instructions = req.system_prompt.split("<tool_use_instructions>", 1)[1].split(
-        "</tool_use_instructions>", 1
-    )[0]
-    assert (
-        f"<tool_use_instructions>{instructions}</tool_use_instructions>" == tool_prompt
-    )
     assert req.system_prompt.count("</execution_environment>") == 1
-    assert req.system_prompt.count("<tool_use_instructions>") == 1
-    assert req.system_prompt.count("</tool_use_instructions>") == 1
-    assert req.system_prompt.index(
-        "</execution_environment>"
-    ) < req.system_prompt.index("<tool_use_instructions>")
     assert "Persona marker" not in environment
     assert "Workspace marker" not in environment
     if runtime == "local":
@@ -3723,10 +3770,11 @@ async def test_wakeup_collects_current_conversation_without_an_explicit_request(
     from bot.core.platform.message_session import MessageSession
 
     history = [{"role": "user", "content": "Existing context"}]
-    conversation = SimpleNamespace(cid="conversation", history=json.dumps(history))
+    conversation = SimpleNamespace(cid="conversation", history=json.dumps(history), content=history)
     manager = SimpleNamespace(
         get_curr_conversation_id=AsyncMock(return_value="conversation"),
-        get_conversation=AsyncMock(return_value=conversation),
+        db=SimpleNamespace(get_conversation_by_id=AsyncMock(return_value=conversation)),
+        to_legacy_conversation=lambda record: record,
     )
     context = SimpleNamespace(conversation_manager=manager)
     event = AgentWakeupEvent(
@@ -3752,6 +3800,4 @@ async def test_wakeup_collects_current_conversation_without_an_explicit_request(
     assert request.contexts == history
     assert request.session_id == event.unified_msg_origin
     manager.get_curr_conversation_id.assert_awaited_once_with(event.unified_msg_origin)
-    manager.get_conversation.assert_awaited_once_with(
-        event.unified_msg_origin, "conversation"
-    )
+    manager.db.get_conversation_by_id.assert_awaited_once_with("conversation")

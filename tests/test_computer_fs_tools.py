@@ -65,7 +65,9 @@ def _make_sandbox_context(
         unified_msg_origin=umo,
         send=AsyncMock(),
     )
-    bot_ctx = SimpleNamespace(context=config_holder, event=event)
+    bot_ctx = SimpleNamespace(
+        context=config_holder, event=event, send_to_user=True, _output_turn=None
+    )
     return ContextWrapper(context=bot_ctx)
 
 
@@ -314,7 +316,7 @@ async def test_restricted_local_member_can_read_plugin_provided_skill(
     plugin_skill = (
         tmp_path
         / "plugins"
-        / "bot_plugin_demo"
+        / "astrbot_plugin_demo"
         / "skills"
         / "demo-skill"
         / "SKILL.md"
@@ -364,7 +366,7 @@ async def test_restricted_local_member_can_read_plugin_skill_inventory_even_if_p
     plugin_skill = (
         tmp_path
         / "plugins"
-        / "bot_plugin_demo"
+        / "astrbot_plugin_demo"
         / "skills"
         / "demo-skill"
         / "SKILL.md"
@@ -453,7 +455,7 @@ async def test_restricted_local_member_cannot_write_plugin_provided_skill(
     plugin_skill = (
         tmp_path
         / "plugins"
-        / "bot_plugin_demo"
+        / "astrbot_plugin_demo"
         / "skills"
         / "demo-skill"
         / "SKILL.md"

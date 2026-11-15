@@ -14,14 +14,16 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from PIL import Image as PILImage
 
+from bot.core.agent.events import ExecutionMetrics, TextDelta
 from bot.core.agent.message import (
     ImageURLPart,
     Message,
     TextPart,
-    bind_checkpoint_messages,
-    dump_messages_with_checkpoints,
+    dump_messages,
+    load_messages,
 )
 from bot.core.agent.output import PlainOutput
+from bot.core.agent.tool import FunctionTool, ToolSet
 from bot.core.bot_agent_runtime import BotAgentRuntime
 from bot.core.bot_agent_runtime import main_agent as main
 from bot.core.bot_agent_runtime import session as native_session
@@ -39,8 +41,8 @@ from bot.core.pipeline.process_stage.method.agent_sub_stages import (
     internal,
 )
 from bot.core.pipeline.process_stage.stage import ProcessStage
-from bot.core.platform.bot_message import BotMessage, MessageMember
 from bot.core.platform.bot_message_event import BotMessageEvent
+from bot.core.platform.bot_message import BotMessage, MessageMember
 from bot.core.platform.message_type import MessageType
 from bot.core.platform.platform_metadata import PlatformMetadata
 from bot.core.provider.entities import LLMResponse, ProviderRequest
@@ -123,6 +125,7 @@ def harness(tmp_path, monkeypatch):
         user_id="test:FriendMessage:images",
         persona_id=None,
         history="[]",
+        content=[],
         token_usage=None,
     )
     context.conversation_manager.get_curr_conversation_id = AsyncMock(
@@ -134,6 +137,34 @@ def harness(tmp_path, monkeypatch):
 
     context.conversation_manager.get_conversation = AsyncMock(
         side_effect=get_conversation, return_value=conversation
+    )
+    context.conversation_manager.db.get_conversation_by_id = AsyncMock(
+        side_effect=lambda cid: SimpleNamespace(
+            **{
+                **vars(conversation),
+                "cid": cid,
+                "conversation_id": cid,
+                "user_id": cid.removeprefix("conv:")
+                if cid.startswith("conv:")
+                else conversation.user_id,
+            }
+        )
+    )
+
+    async def read_metadata(cid):
+        record = await context.conversation_manager.db.get_conversation_by_id(cid)
+        record.umo = record.user_id
+        return record
+
+    async def read_execution(cid):
+        return await read_metadata(cid), None
+
+    context.conversation_manager.db.conversation_store = SimpleNamespace(
+        get_metadata=AsyncMock(side_effect=read_metadata),
+        read_for_execution=AsyncMock(side_effect=read_execution),
+    )
+    context.conversation_manager.to_legacy_conversation.side_effect = lambda record: (
+        record
     )
     context.conversation_manager.update_conversation = AsyncMock()
     provider = MagicMock(spec=Provider)
@@ -163,7 +194,7 @@ def harness(tmp_path, monkeypatch):
     captured = []
     hooks = []
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         hooks.append(kind)
         return False
 
@@ -181,6 +212,9 @@ def harness(tmp_path, monkeypatch):
 
     async def run(runner, turn, max_steps):
         captured.append(runner)
+        # This harness bypasses step() to inspect prepared input before execution.
+        runner._message_parts = []
+        runner._message_indices = {}
         async for response in runner._iter_llm_responses_with_fallback():
             runner.final_llm_resp = response
         return TurnResult(
@@ -392,10 +426,8 @@ async def test_persistent_animation_guidance_survives_history_reload(harness, tm
 
     message = Message.model_validate(await req.assemble_context())
     sent = Provider._ensure_message_to_dicts(harness.provider, [message])
-    saved = dump_messages_with_checkpoints([message])
-    replayed = Provider._ensure_message_to_dicts(
-        harness.provider, bind_checkpoint_messages(saved)
-    )
+    saved = dump_messages([message])
+    replayed = Provider._ensure_message_to_dicts(harness.provider, load_messages(saved))
 
     assert any(
         "Images labeled as animation montages" in part.get("text", "")
@@ -443,10 +475,7 @@ async def test_profile_reload_and_concurrent_requests(harness, tmp_path):
     with PILImage.open(results["other"].image_urls[0]) as image:
         assert max(image.size) == 60
     assert harness.provider.provider_config == before
-
-
 @pytest.mark.asyncio
-
 async def test_plugin_request_extra_metadata_hook_and_history(
     harness, tmp_path, monkeypatch
 ):
@@ -492,7 +521,7 @@ async def test_plugin_request_extra_metadata_hook_and_history(
     monkeypatch.setattr(image_input, "prepare_model_image", convert)
     seen = []
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         seen.append(kind)
         if kind == EventType.OnLLMRequestEvent:
             req = args[0]
@@ -518,7 +547,7 @@ async def test_plugin_request_extra_metadata_hook_and_history(
     assert detail["image_url"]["url"] == str(source)
     assert req.extra_user_content_parts[2]["image_url"]["detail"] == "high"
     assert req.extra_user_content_parts[2]["_no_save"]
-    saved = dump_messages_with_checkpoints(harness.captured[0].run_context.messages)
+    saved = dump_messages(harness.captured[0].run_context.messages)
     old_user = next(message for message in saved if message["role"] == "user")
     assert (
         old_user["content"][0]["image_url"]["url"]
@@ -592,7 +621,7 @@ async def test_provider_and_history_keep_bounded_previews_and_original_paths(
             event.set_extra("provider_request", original_request)
         else:
 
-            async def hook(event, kind, *args):
+            async def hook(event, kind, *args, context_observer=None):
                 if kind == EventType.OnLLMRequestEvent:
                     request = args[0]
                     request.image_urls = original_request.image_urls
@@ -804,7 +833,7 @@ async def test_oversized_images_explain_omission_and_keep_original_path(
         )
     else:
 
-        async def hook(event, kind, *args):
+        async def hook(event, kind, *args, context_observer=None):
             if kind == EventType.OnLLMRequestEvent:
                 args[0].image_urls.extend(refs)
             return False
@@ -1145,7 +1174,7 @@ async def test_plugin_and_hook_image_list_normalization(harness, tmp_path, monke
     )
     event.set_extra("provider_request", original)
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnLLMRequestEvent and event.session_id == "images":
             args[0].image_urls.extend([None, "  ", "  " + str(source) + "  "])
         return False
@@ -1194,7 +1223,7 @@ async def test_attachment_sources_survive_event_cleanup(
     async def download(url, target):
         Path(target).write_bytes(original)
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnWaitingLLMRequestEvent:
             event.message_obj.message.append(attachment)
         return False
@@ -1247,7 +1276,7 @@ async def test_stage_failure_preserves_sources_and_cleans_working_files(
     await preprocess_stage.initialize(harness.ctx)
     await preprocess_stage.process(event)
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnLLMRequestEvent:
             raise failure("request interrupted")
         return False
@@ -1385,7 +1414,7 @@ async def test_final_image_labels_follow_mixed_visuals_after_hook(
     convert = AsyncMock(wraps=image_input.prepare_model_image)
     monkeypatch.setattr(image_input, "prepare_model_image", convert)
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnLLMRequestEvent:
             req = args[0]
             if rewrite_text_parts:
@@ -1479,7 +1508,7 @@ async def test_captioned_quote_has_status_without_visual_index(
     event = make_event([Reply(id="quoted", chain=[Image(file=str(source))])])
     inserted = source_image(tmp_path, "JPEG")
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnLLMRequestEvent and add_uncaptioned_image:
             args[0].image_urls.append(str(inserted))
         return False
@@ -1528,7 +1557,7 @@ async def test_temporary_skipped_image_does_not_persist_its_path(harness, tmp_pa
     )
     context = await req.assemble_context()
     assert any(str(source) in part.get("text", "") for part in context["content"])
-    saved = dump_messages_with_checkpoints([Message.model_validate(context)])
+    saved = dump_messages([Message.model_validate(context)])
     assert saved[0]["content"] == [{"type": "text", "text": "describe"}]
 
 
@@ -1582,7 +1611,7 @@ async def test_hook_only_new_refs_receive_full_image_policy(
     convert = AsyncMock(wraps=image_input.prepare_model_image)
     monkeypatch.setattr(image_input, "prepare_model_image", convert)
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnLLMRequestEvent:
             req = args[0]
             assert convert.await_count == 1
@@ -1719,7 +1748,7 @@ async def test_only_actually_captioned_images_receive_caption_status(
         ),
     )
 
-    async def hook(event, kind, *args):
+    async def hook(event, kind, *args, context_observer=None):
         if kind == EventType.OnLLMRequestEvent and drop_extra_in_hook:
             req = args[0]
             req.extra_user_content_parts = [

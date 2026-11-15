@@ -17,6 +17,10 @@ from bot.core.exceptions import EmptyModelOutputError
 from bot.core.provider import Provider
 from bot.core.provider.entities import LLMResponse, TokenUsage
 from bot.core.provider.func_tool_manager import ToolSet
+from bot.core.provider.request_observer import (
+    RequestAttemptObserver,
+    request_recorder_kwargs,
+)
 from bot.core.utils.media_utils import (
     describe_media_ref,
     resolve_media_ref_to_base64_data,
@@ -123,7 +127,7 @@ class ProviderAnthropic(Provider):
             timeout=self.timeout,
             base_url=self.base_url,
             default_headers=default_headers,
-            http_client=self._create_http_client(provider_config),  # ty: ignore[invalid-argument-type]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），运行时同对象
+            http_client=self._create_http_client(provider_config),
         )
 
     def _create_http_client(self, provider_config: dict) -> httpx.AsyncClient | None:
@@ -522,6 +526,7 @@ class ProviderAnthropic(Provider):
         tools: ToolSet | None,
         *,
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         conversation_id: str | None = None,
     ) -> LLMResponse:
         if tools:
@@ -567,6 +572,7 @@ class ProviderAnthropic(Provider):
                     extra_headers=build_conversation_headers(conversation_id),
                 ),
                 max_attempts=request_max_retries,
+                request_event_recorder=request_event_recorder,
             )
         except httpx.RequestError as e:
             proxy = self.provider_config.get("proxy", "")
@@ -642,6 +648,7 @@ class ProviderAnthropic(Provider):
         tools: ToolSet | None,
         *,
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         conversation_id: str | None = None,
     ) -> AsyncGenerator[LLMResponse, None]:
         if tools:
@@ -652,10 +659,10 @@ class ProviderAnthropic(Provider):
                 )
 
         # 用于累积工具调用信息
-        tool_use_buffer: dict[int, dict[str, Any]] = {}
+        tool_use_buffer = {}
         # 用于累积最终结果
         final_text = ""
-        final_tool_calls: list[dict[str, Any]] = []
+        final_tool_calls = []
         id = None
         usage = TokenUsage()
         extra_body = self.provider_config.get("custom_extra_body") or {}
@@ -689,6 +696,7 @@ class ProviderAnthropic(Provider):
                 extra_headers=build_conversation_headers(conversation_id),
             ),
             max_attempts=request_max_retries,
+            request_event_recorder=request_event_recorder,
         ) as stream:
             assert isinstance(stream, anthropic.AsyncMessageStream)
             async for event in stream:
@@ -820,7 +828,7 @@ class ProviderAnthropic(Provider):
         )
         yield final_response
 
-    async def text_chat(  # ty: ignore[invalid-method-override]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），基类与子类的注解各用其一
+    async def text_chat(
         self,
         prompt=None,
         session_id=None,
@@ -834,6 +842,7 @@ class ProviderAnthropic(Provider):
         extra_user_content_parts=None,
         tool_choice: Literal["auto", "any", "tool", "none"] | dict[str, str] = "auto",
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         **kwargs,
     ) -> LLMResponse:
         conversation_id = kwargs.pop("conversation_id", None)
@@ -891,6 +900,7 @@ class ProviderAnthropic(Provider):
                 payloads,
                 func_tool,
                 request_max_retries=request_max_retries,
+                **request_recorder_kwargs(self._query, request_event_recorder),
                 **query_kwargs,
             )
         except Exception as e:
@@ -898,7 +908,7 @@ class ProviderAnthropic(Provider):
 
         return llm_response
 
-    async def text_chat_stream(  # ty: ignore[invalid-method-override]  # anthropic SDK 自带 httpx2（与 httpx 为同一实现的两个包名），基类与子类的注解各用其一
+    async def text_chat_stream(
         self,
         prompt=None,
         session_id=None,
@@ -912,6 +922,7 @@ class ProviderAnthropic(Provider):
         extra_user_content_parts=None,
         tool_choice: Literal["auto", "any", "tool", "none"] | dict[str, str] = "auto",
         request_max_retries: int | None = None,
+        request_event_recorder: RequestAttemptObserver | None = None,
         **kwargs,
     ):
         conversation_id = kwargs.pop("conversation_id", None)
@@ -966,6 +977,7 @@ class ProviderAnthropic(Provider):
             payloads,
             func_tool,
             request_max_retries=request_max_retries,
+            **request_recorder_kwargs(self._query_stream, request_event_recorder),
             **query_kwargs,
         ):
             yield llm_response

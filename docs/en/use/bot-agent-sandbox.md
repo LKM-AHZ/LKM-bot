@@ -28,7 +28,7 @@ Permissions are configured separately for members and administrators in the matr
 
 ![Local permission policy matrix](./images/config-local-permissions-en.jpg)
 
-Enabling **Execute code** gives the Agent the `bot_execute_shell` and `bot_execute_python` tools to execute Shell commands and Python code in the local environment.
+Enabling **Execute code** gives the Agent the `astrbot_execute_shell` and `astrbot_execute_python` tools to execute Shell commands and Python code in the local environment.
 
 Enabling **Allow network during execution** permits network access during Shell/Python execution. Otherwise, network access during execution is restricted.
 
@@ -41,13 +41,13 @@ Enabling **Allow network during execution** permits network access during Shell/
 - **Workspace**: Filesystem tools are limited to the current user session's workspace (identified by UMO) and the following directories:
   - Workspace directory, under `data/workspaces/<normalized_umo>/`: **read/write**. ChatUI projects can also use a shared project workspace or a custom workspace.
   - LKMBot temporary directory, `data/temp/`: **read/write**.
-  - Tool temporary directory, `<system temporary directory>/.bot/`: **read/write**.
+  - Tool temporary directory, `<system temporary directory>/.astrbot/`: **read/write**.
   - Installed Agent skills, `data/skills/`: **read-only for members; read/write for administrators**.
   - Plugin-provided skills, `data/plugins/<plugin_name>/skills/`: **read-only**.
-  - Built-in plugin skills, `<LKMBot source or installation directory>/bot/builtin_stars/<plugin_name>/skills/`: **read-only**.
+  - Built-in plugin skills, `<LKMBot source or installation directory>/astrbot/builtin_stars/<plugin_name>/skills/`: **read-only**.
 - **Entire environment**: The Agent can access files throughout the local environment, subject to the permissions of the account running LKMBot.
 
-LKMBot provides `bot_file_read_tool`, `bot_file_write_tool`, `bot_file_edit_tool`, and `bot_grep_tool` for file reading, writing, editing, and content searching, respectively. When restricted code execution is enabled, the isolation backend also exposes the system tools, libraries, and Python runtime needed to execute code.
+LKMBot provides `astrbot_file_read_tool`, `astrbot_file_write_tool`, `astrbot_file_edit_tool`, and `astrbot_grep_tool` for file reading, writing, editing, and content searching, respectively. When restricted code execution is enabled, the isolation backend also exposes the system tools, libraries, and Python runtime needed to execute code.
 
 New installations use the same default permissions on Windows, Linux, and macOS:
 
@@ -56,7 +56,7 @@ New installations use the same default permissions on Windows, Linux, and macOS:
 | Member | No | No | Workspace |
 | Administrator | Yes | Yes | Entire environment |
 
-These defaults do not require Local process isolation. Existing saved permissions are preserved, with one upgrade exception: on Windows, an older member policy with execution disabled, execution networking disabled, and file access disabled is migrated once to workspace file access. The old default and a manually disabled policy have identical saved values, so both matching policies are migrated. This applies to the global configuration and configuration profiles. Disabling member file access again after the upgrade is respected on subsequent restarts; administrator and other member policies are unchanged.
+These defaults do not require Local process isolation. Existing saved permissions are preserved, except for the [Windows upgrade migration](#local-windows).
 
 The permission matrix applies these dependencies:
 
@@ -140,7 +140,7 @@ sudo pacman -S bubblewrap
 If startup fails:
 
 - **`bwrap` not found**: check that it is installed in the environment running LKMBot and is on the process's startup `PATH`.
-- **`Unknown option --size` or similar errors**: the bubblewrap version is older than **0.7.0** and does not support the `--size` option that LKMBot uses; upgrade to 0.7.0 or later. Running a generic bwrap check without `--size` may pass even though bubblewrap is not usable by LKMBot.
+- **`Unknown option --size`**: upgrade bubblewrap to **0.7.0 or later**, then repeat the check above.
 - **`Operation not permitted` or user namespace errors**: inspect user namespace limits, AppArmor, and other system security policies. Use `sysctl user.max_user_namespaces` to check the namespace limit and `sudo journalctl -k` for relevant kernel logs.
 - **AppArmor denial**: follow your distribution's instructions to permit user namespace creation for the actual runtime. Do not disable security policies across the entire machine merely to pass the check.
 - **Container deployment**: follow [Docker users](#local-docker). Installing `bwrap` on the host does not install it inside the container.
@@ -157,26 +157,24 @@ Installing bwrap is only one part of the setup. Enabling local isolation inside 
 
 ### Windows users {#local-windows}
 
-Windows supports workspace-scoped file reading, writing, and editing through native file handles using Python standard-library modules. File operations reject symbolic links, directory junctions, and multiply linked files. Ordinary members can use workspace file tools without an execution sandbox.
-
-On Windows 10/11, including Home editions, LKMBot supports local isolation for code execution.
+Windows 10/11, including Home editions, supports local isolation for file access and code execution.
 
 1. Open **Config → AI → Capabilities → Agent Computer Use** and set **Computer Use Runtime** to **Local machine**.
 2. Under **Local Permission Policies**, select **Workspace** for the role that needs computer access.
 3. Check **Allow code execution** to let that role run code. Check **Allow execution network access** if the code needs network access. Leave execution unchecked if only file access is needed.
 4. Save the configuration and restart LKMBot. If Windows asks for permission during startup, select **Yes** to complete setup. Later startups usually need no further confirmation.
 
-Once setup is complete, you can ask LKMBot in chat to create files, process data, or run code.
-
 ![Windows workspace with networking disabled](/windows-sandbox/workspace-en.jpg)
 
-To access files outside the workspace, select **Entire environment**. LKMBot will access files using the permissions of the account running it. Code execution with this scope shows an **Always on** networking badge with a lock icon. Hover over, focus, or select the badge for an explanation. Choose **Workspace** to turn execution networking on or off yourself.
+Select **Entire environment** to access files outside the workspace with the LKMBot account’s permissions. Execution networking is always enabled in this scope. Select **Workspace** to control execution network access.
 
 ![Windows entire-environment networking explanation](/windows-sandbox/network-en.png)
 
 If you see a sandbox setup message or an **Inactive** badge, select the badge or expand **View diagnostic details** to see the cause. If you previously declined the Windows permission prompt, restart LKMBot and approve it to complete setup.
 
 ![Windows sandbox initialization prompt](/windows-sandbox/setup-zh.jpg)
+
+On upgrade, a Windows member policy with file access, execution, and networking all disabled is migrated once to **Workspace** file access. This includes manually disabled policies. To keep file access disabled, select **Disabled** and save after upgrading; later restarts preserve that choice.
 
 ## Third-party sandbox environment {#third-party-sandbox-environment}
 
@@ -189,7 +187,7 @@ Third-party sandboxes are an optional LKMBot capability. They let the Agent exec
 > [!TIP]
 > Third-party sandbox capabilities remain in technical preview. Report problems on [GitHub](https://github.com/AstrBotDevs/AstrBot/issues).
 
-<span id="configuring-bot-to-use-the-sandbox-environment"></span>
+<span id="configuring-astrbot-to-use-the-sandbox-environment"></span>
 
 ### Enabling the Sandbox Environment {#enabling-the-sandbox-environment}
 
@@ -495,17 +493,17 @@ The Agent can use the following tools in a CUA sandbox. Actual availability depe
 
 | Capability | Tool exposed to the Agent | Purpose |
 | --- | --- | --- |
-| Shell execution | `bot_execute_shell` | Execute commands and launch programs |
-| Python execution | `bot_execute_ipython` | Execute Python code |
-| File reading | `bot_file_read_tool` | Read files |
-| File writing | `bot_file_write_tool` | Create or overwrite files |
-| File editing | `bot_file_edit_tool` | Replace specified text in files |
-| File searching | `bot_grep_tool` | Search file contents by pattern |
-| File upload | `bot_upload_file` | Upload files from the environment running LKMBot to the sandbox |
-| File download | `bot_download_file` | Download files from the sandbox, optionally sending them to the user |
-| Desktop screenshot | `bot_cua_screenshot` | Capture a screenshot for model inspection or send it to the user |
-| Mouse click | `bot_cua_mouse_click` | Click at coordinates with a specified mouse button |
-| Keyboard input | `bot_cua_keyboard_type` | Type text into the currently focused control |
+| Shell execution | `astrbot_execute_shell` | Execute commands and launch programs |
+| Python execution | `astrbot_execute_ipython` | Execute Python code |
+| File reading | `astrbot_file_read_tool` | Read files |
+| File writing | `astrbot_file_write_tool` | Create or overwrite files |
+| File editing | `astrbot_file_edit_tool` | Replace specified text in files |
+| File searching | `astrbot_grep_tool` | Search file contents by pattern |
+| File upload | `astrbot_upload_file` | Upload files from the environment running LKMBot to the sandbox |
+| File download | `astrbot_download_file` | Download files from the sandbox, optionally sending them to the user |
+| Desktop screenshot | `astrbot_cua_screenshot` | Capture a screenshot for model inspection or send it to the user |
+| Mouse click | `astrbot_cua_mouse_click` | Click at coordinates with a specified mouse button |
+| Keyboard input | `astrbot_cua_keyboard_type` | Type text into the currently focused control |
 
 > [!WARNING]
 > CUA is optional and is not installed by default with LKMBot. If you select CUA without installing the `cua` package in LKMBot's Python environment, sandbox startup reports the missing dependency.
@@ -602,33 +600,25 @@ The following content describes the older `Shipyard` driver. It is kept for comp
 
 #### Deploying LKMBot and Shipyard with Docker Compose
 
-If you have not deployed LKMBot yet, or want to use the older recommended deployment method with sandbox support, you can still deploy LKMBot with Docker Compose.
-
-> [!NOTE]
-> This repository is the LKM fork and **no longer ships `compose-with-shipyard.yml`**: in the LKM
-> environment LKMBot and Shipyard are managed together by the root orchestration repository
-> **LKM-Website** (the `--profile bot` services in its `docker-compose.yml`; see the "LKM Bot" section
-> of its `DEPLOYMENT.md`):
+If you have not deployed LKMBot yet, or want to use the older recommended deployment method with sandbox support, you can still deploy LKMBot with Docker Compose using the following commands:
 
 ```bash
-git clone https://github.com/LKM-AHZ/LKM-Website.git
-cd LKM-Website
-docker compose --profile bot up -d --build
+git clone https://github.com/AstrBotDevs/AstrBot
+cd LKMBot
+# Modify the environment variables in compose-with-shipyard.yml, such as the Shipyard access token
+docker compose -f compose-with-shipyard.yml up -d
+docker pull soulter/shipyard-ship:latest
 ```
 
-> Two things to note: (1) the sandbox mounts `/var/run/docker.sock` (equivalent to host root), so enable
-> it only when needed and tear it down with `docker compose --profile bot down`; (2) the root stack runs
-> the **legacy Bay** (`soulter/shipyard-bay`) while LKMBot defaults to `sandbox.booter=shipyard_neo` —
-> set the booter to `shipyard` in the dashboard (Configuration → Sandbox), point the endpoint at
-> `http://shipyard:8156` and fill in the access token for it to take effect.
+This starts a Docker Compose stack containing the LKMBot main program and the sandbox environment.
 
 #### Deploying Shipyard Separately
 
 If LKMBot is already deployed but the sandbox environment is not, you can deploy Shipyard separately.
 
 ```bash
-mkdir bot-shipyard
-cd bot-shipyard
+mkdir astrbot-shipyard
+cd astrbot-shipyard
 wget https://raw.githubusercontent.com/AstrBotDevs/shipyard/refs/heads/main/pkgs/bay/docker-compose.yml -O docker-compose.yml
 # Modify the environment variables in docker-compose.yml, such as the Shipyard access token
 docker compose -f docker-compose.yml up -d

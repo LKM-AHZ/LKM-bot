@@ -18,9 +18,11 @@ from bot.core.agent.output import PlainOutput
 from bot.core.agent.run_context import ContextWrapper
 from bot.core.agent.runtime import AgentTurn, TurnResult, TurnStatus
 from bot.core.agent_output_content import content_from_chain
+from bot.core.bot_agent_runtime.history import ConversationHistoryObserver
 from bot.core.bot_agent_runtime.runner import AgentRunner, _watch_agent_stop_signal
 
 if TYPE_CHECKING:
+    from bot.core.agent.conversation_events import ConversationEventWriter
     from bot.core.bot_agent_runtime.context import BotAgentContext
     from bot.core.bot_agent_runtime.main_agent.config import MainAgentBuildConfig
     from bot.core.provider.entities import ProviderRequest
@@ -36,6 +38,7 @@ async def create_native_runner(
     agent_context: "BotAgentContext",
     *,
     fallback_providers: list["Provider"] | None = None,
+    writer: "ConversationEventWriter | None" = None,
 ) -> AgentRunner:
     """Initialize the native loop identically for main and delegated requests.
 
@@ -46,6 +49,7 @@ async def create_native_runner(
         config: Effective execution settings for this session.
         agent_context: Current permissions, event and session identity.
         fallback_providers: Already-selected image-compatible fallbacks, if any.
+        writer: Host-owned writer for this conversation, when bound.
 
     Returns:
         A runner ready for the shared native execution lifecycle.
@@ -66,7 +70,9 @@ async def create_native_runner(
         )
     runner = AgentRunner()
     read_tool = (
-        request.func_tool.get_tool("bot_file_read_tool") if request.func_tool else None
+        request.func_tool.get_tool("bot_file_read_tool")
+        if request.func_tool
+        else None
     )
     compression_provider = await providers.resolve_compression_provider(config, context)
     if (
@@ -74,6 +80,7 @@ async def create_native_runner(
         and compression_provider is None
     ):
         compression_provider = provider
+    context_observer = ConversationHistoryObserver(writer, request) if writer else None
     await runner.reset(
         provider=provider,
         request=request,
@@ -81,7 +88,8 @@ async def create_native_runner(
             context=agent_context, tool_call_timeout=config.tool_call_timeout
         ),
         tool_executor=FunctionToolExecutor(),
-        agent_hooks=MainAgentHooks(request),
+        agent_hooks=MainAgentHooks(request, context_observer=context_observer),
+        conversation_event_sink=writer.consume if writer else None,
         streaming=config.streaming_response,
         max_context_tokens=max_context_tokens,
         llm_compress_instruction=config.llm_compress_instruction,
@@ -99,6 +107,8 @@ async def create_native_runner(
         tool_result_overflow_dir=get_bot_system_tmp_path() if read_tool else None,
         read_tool=read_tool,
     )
+    if context_observer is not None:
+        context_observer.runtime_context = runner.run_context
     return runner
 
 

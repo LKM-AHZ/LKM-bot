@@ -1,7 +1,7 @@
 # Plugin Views
 
 
-Plugin Views let a plugin ship its own pages inside the LKMBot WebUI. View files live under `views/` in the plugin directory (`pages/` is still accepted) and are loaded by the Dashboard in a restricted iframe. Scripts in a view talk to the Dashboard through the `window.BotPluginView` bridge (alias `window.BotPluginPage`), which the Dashboard forwards to the plugin's registered backend Web APIs.
+Plugin Views let a plugin ship its own pages inside the LKMBot WebUI. View files live under `views/` in the plugin directory (`pages/` is still accepted) and are loaded by the Dashboard in a restricted iframe. Scripts in a view talk to the Dashboard through the `window.AstrBotPluginView` bridge (alias `window.AstrBotPluginPage`), which the Dashboard forwards to the plugin's registered backend Web APIs.
 
 If you only need a small set of editable settings, prefer [`_conf_schema.json`](./plugin-config.md). Views are a better fit for complex forms, runtime dashboards, logs, file upload/download, SSE streams, charts, and other custom workflows.
 
@@ -30,7 +30,7 @@ Users open views from the plugin detail page in the WebUI.
 ## Development Flow
 
 1. Create `views/<view_name>/index.html` in the plugin directory.
-2. Use the `window.BotPluginView` bridge from the View.
+2. Use the `window.AstrBotPluginView` bridge from the View.
 3. Register backend APIs with `context.register_web_api()` in `main.py`.
 4. Read requests and return responses with `bot.api.web`.
 5. Reload the plugin after adding or removing View directories; refreshing the View is usually enough for static asset edits.
@@ -42,7 +42,7 @@ Users open views from the plugin detail page in the WebUI.
 Plugin backend code should use `bot.api.web`. Avoid exposing raw FastAPI, Starlette, or Quart request objects as the public API for your plugin business logic.
 
 ```python
-from bot.core.star import Context, Star
+from bot.api.star import Context, Star
 from bot.api.web import error_response, json_response, request
 
 PLUGIN_NAME = "bot_plugin_view_demo"
@@ -104,7 +104,7 @@ class MyPlugin(Star):
 `views/bridge-demo/app.js`
 
 ```js
-const bridge = window.BotPluginView;
+const bridge = window.AstrBotPluginView;
 const output = document.getElementById("output");
 
 const context = await bridge.ready();
@@ -116,10 +116,10 @@ document.getElementById("ping").addEventListener("click", async () => {
 });
 ```
 
-You do not need to import the bridge SDK manually. LKMBot injects `/api/v1/plugins/page-bridge-sdk.js` into returned HTML. If an inline script must access `window.BotPluginView` synchronously, move it to an external module file or explicitly include the SDK before your script:
+You do not need to import the bridge SDK manually. LKMBot injects `/api/plugin/page/bridge-sdk.js` into returned HTML. If an inline script must access `window.AstrBotPluginView` synchronously, move it to an external module file or explicitly include the SDK before your script:
 
 ```html
-<script src="/api/v1/plugins/page-bridge-sdk.js"></script>
+<script src="/api/plugin/page/bridge-sdk.js"></script>
 ```
 
 ## Backend Web APIs
@@ -208,8 +208,8 @@ Upload example:
 from pathlib import Path
 
 # Before LKMBot v4.30.0:
-# from bot.core.utils.bot_path import get_bot_plugin_data_path
-from bot.api.util import get_bot_plugin_data_path
+# from bot.core.utils.astrbot_path import get_astrbot_plugin_data_path
+from bot.api.util import get_astrbot_plugin_data_path
 from bot.api.web import PluginUploadFile, error_response, json_response, request
 
 
@@ -221,7 +221,7 @@ async def import_file(self):
         return error_response("missing file")
 
     target_dir = (
-        Path(get_bot_plugin_data_path())
+        Path(get_astrbot_plugin_data_path())
         / (request.plugin_name or "unknown_plugin")
         / "imports"
     )
@@ -292,22 +292,28 @@ async def stream_events(self):
 
 Returning a `dict`, `list`, `(body, status_code)`, or a lower-level Response object still works. New plugins should prefer `bot.api.web` helpers so plugin code remains decoupled from the Dashboard's internal web framework.
 
-### Request Object
+### Quart Compatibility
 
-Handlers registered through `context.register_web_api()` run in the Dashboard's native request context:
+For backward compatibility, handlers registered through `context.register_web_api()` still run inside a Quart-compatible request context. Existing plugins can continue to use:
+
+```python
+from quart import jsonify, request
+```
+
+New plugins and new documentation should use:
 
 ```python
 from bot.api.web import json_response, request
 ```
 
-The legacy Quart-compatible request context has been removed, so `from quart import request` no longer works. Plugins still using it must migrate to `bot.api.web`.
+Do not mix the two `request` proxies in the same handler. Migrate one handler at a time.
 
 ## Bridge API
 
-The View iframe cannot directly access Dashboard cookies, LocalStorage, or the parent DOM. View scripts must use `window.BotPluginView` to call backend APIs and read context.
+The View iframe cannot directly access Dashboard cookies, LocalStorage, or the parent DOM. View scripts must use `window.AstrBotPluginView` to call backend APIs and read context.
 
 ```js
-const bridge = window.BotPluginView;
+const bridge = window.AstrBotPluginView;
 ```
 
 ### Context
@@ -633,22 +639,22 @@ The server injects `data-theme` into returned HTML to reduce initial flashing. I
 
 ### Following user-selected colors
 
-`context.themeColors` exposes the effective `primary` and `secondary` colors as CSS color strings. The View decides how to apply them.
-
-Use `bridge.onContext(handler)` to receive the initial palette and updates after theme switches, color edits, or resets. Server-injected initial contexts and older LKMBot versions may omit this field; fall back to the View's default colors rather than relying only on the first `ready()` result.
+Subscribe with `bridge.onContext()` to apply the initial `primary` and `secondary` CSS colors and receive updates. Use defaults when `themeColors` is absent:
 
 ```js
-const bridge = window.BotPluginView;
+const bridge = window.AstrBotPluginView;
 
 await bridge.ready();
 const off = bridge.onContext((context) => {
-  const primary = context.themeColors?.primary ?? "#3c96ca";
-  const secondary = context.themeColors?.secondary ?? "#2f86bd";
-  // Apply the colors to your View.
+  const style = document.documentElement.style;
+  style.setProperty("--primary", context.themeColors?.primary ?? "#3c96ca");
+  style.setProperty("--secondary", context.themeColors?.secondary ?? "#2f86bd");
 });
 
 // Call off() when the View is disposed.
 ```
+
+Use `var(--primary)` and `var(--secondary)` in your styles.
 
 ## Static Asset Paths
 

@@ -27,11 +27,11 @@ from bot.core.message.message_event_result import MessageChain
 from bot.core.pipeline.context import PipelineContext
 from bot.core.pipeline.scheduler import PipelineScheduler
 from bot.core.platform.agent_wakeup_event import AgentWakeupEvent
-from bot.core.platform.bot_message import BotMessage, MessageMember
 from bot.core.platform.bot_message_event import (
     BotMessageEvent,
     current_message_event,
 )
+from bot.core.platform.bot_message import BotMessage, MessageMember
 from bot.core.platform.message_type import MessageType
 from bot.core.platform.platform_metadata import PlatformMetadata
 from bot.core.provider.entities import LLMResponse
@@ -80,7 +80,9 @@ async def runtime(monkeypatch):
         get_event_queue=lambda: queue,
         get_platform_inst=lambda _: SimpleNamespace(meta=lambda: metadata),
         get_config=lambda **_: config,
-        bot_config_mgr=SimpleNamespace(_create_message_config=lambda _: (copy.deepcopy(config), frozenset())),
+        bot_config_mgr=SimpleNamespace(
+            _create_message_config=lambda _: (copy.deepcopy(config), frozenset())
+        ),
         conversation_manager=SimpleNamespace(
             get_curr_conversation_id=AsyncMock(return_value=conversation.cid),
             get_conversation=AsyncMock(side_effect=get_conversation),
@@ -90,6 +92,32 @@ async def runtime(monkeypatch):
         get_llm_tool_manager=lambda: FunctionToolManager(),
         send_message=AsyncMock(return_value=True),
     )
+
+    async def read_history(cid):
+        event = current_message_event.get()
+        umo = event.unified_msg_origin if event else conversation.user_id
+        record = await context.conversation_manager.get_conversation(umo, cid)
+        if record is None:
+            return None
+        return SimpleNamespace(
+            **vars(record),
+            conversation_id=record.cid,
+            umo=record.user_id,
+            content=json.loads(record.history),
+        )
+
+    async def read_execution(cid):
+        record = await read_history(cid)
+        return (record, None) if record is not None else None
+
+    context.conversation_manager.db = SimpleNamespace(
+        get_conversation_by_id=AsyncMock(side_effect=read_history),
+        conversation_store=SimpleNamespace(
+            get_metadata=AsyncMock(side_effect=read_history),
+            read_for_execution=AsyncMock(side_effect=read_execution),
+        ),
+    )
+    context.conversation_manager.to_legacy_conversation = lambda record: record
 
     async def respond(**kwargs):
         event = current_message_event.get()
@@ -138,7 +166,9 @@ async def runtime(monkeypatch):
         await runner.reset(
             provider=provider,
             request=prepared.request,
-            run_context=ContextWrapper(context=SimpleNamespace(event=event)),
+            run_context=ContextWrapper(
+                context=SimpleNamespace(event=event, send_to_user=True, _output_turn=None)
+            ),
             tool_executor=MagicMock(),
             agent_hooks=BaseAgentRunHooks(),
             streaming=config.streaming_response,
@@ -158,7 +188,9 @@ async def runtime(monkeypatch):
     native = BotAgentRuntime(context, agent_configs=MagicMock())
     runtimes = {"bot": native}
     scheduler = PipelineScheduler(
-        PipelineContext(config, SimpleNamespace(context=context), "profile", agent_runtimes=runtimes)
+        PipelineContext(
+            config, SimpleNamespace(context=context), "profile", agent_runtimes=runtimes
+        )
     )
     await scheduler.initialize()
     bus = EventBus(

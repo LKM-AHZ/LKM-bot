@@ -2,7 +2,12 @@ from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 from bot.core.agent.run_context import ContextWrapper
-from bot.core.agent.runtime import AgentPermissions, AgentRuntime, AgentSessionRef
+from bot.core.agent.runtime import (
+    AgentPermissions,
+    AgentRuntime,
+    AgentSessionRef,
+    AgentTurn,
+)
 from bot.core.agent.tool import ToolSet
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.skills.skill_manager import SkillInfo
@@ -29,6 +34,10 @@ class BotAgentContext:
     """The current agent's runtime address, retained when it delegates work."""
     _runtime: AgentRuntime | None = None
     """Internal owner used by native delegation tools."""
+    send_to_user: bool = True
+    """Whether runtime-managed tools may deliver messages to platforms."""
+    _output_turn: AgentTurn | None = None
+    """Turn collecting prepared tool output, retained across native handoffs."""
 
     def __post_init__(self) -> None:
         """Resolve legacy SDK callers through the same authorization boundary."""
