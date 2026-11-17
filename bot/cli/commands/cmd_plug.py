@@ -5,7 +5,6 @@ from pathlib import Path
 import click
 
 from ..utils import (
-    PluginStatus,
     build_plug_list,
     check_bot_root,
     download_repository,
@@ -104,42 +103,14 @@ def new(name: str) -> None:
 
 
 @plug.command()
-@click.option("--all", "-a", is_flag=True, help="List uninstalled plugins")
-def list(all: bool) -> None:
-    """List plugins"""
+def list() -> None:
+    """List installed plugins"""
     base_path = _get_data_path()
     plugins = build_plug_list(base_path / "plugins")
 
-    # Unpublished plugins
-    not_published_plugins = [
-        p for p in plugins if p["status"] == PluginStatus.NOT_PUBLISHED
-    ]
-    if not_published_plugins:
-        display_plugins(not_published_plugins, "Unpublished Plugins", "red")
-
-    # Plugins needing update
-    need_update_plugins = [
-        p for p in plugins if p["status"] == PluginStatus.NEED_UPDATE
-    ]
-    if need_update_plugins:
-        display_plugins(need_update_plugins, "Plugins Needing Update", "yellow")
-
-    # Installed plugins
-    installed_plugins = [p for p in plugins if p["status"] == PluginStatus.INSTALLED]
-    if installed_plugins:
-        display_plugins(installed_plugins, "Installed Plugins", "green")
-
-    # Uninstalled plugins
-    not_installed_plugins = [
-        p for p in plugins if p["status"] == PluginStatus.NOT_INSTALLED
-    ]
-    if not_installed_plugins and all:
-        display_plugins(not_installed_plugins, "Uninstalled Plugins", "blue")
-
-    if (
-        not any([not_published_plugins, need_update_plugins, installed_plugins])
-        and not all
-    ):
+    if plugins:
+        display_plugins(plugins, "Installed Plugins", "green")
+    else:
         click.echo("No plugins installed")
 
 
@@ -152,9 +123,8 @@ def list(all: bool) -> None:
     type=click.Path(exists=True, file_okay=False, path_type=Path),
     help="Install a plugin from a local directory as a symlink",
 )
-@click.option("--proxy", help="Proxy server address")
-def install(name: str | None, local_path: Path | None, proxy: str | None) -> None:
-    """Install a plugin"""
+def install(name: str | None, local_path: Path | None) -> None:
+    """Install a plugin from a local directory"""
     base_path = _get_data_path()
     plug_path = base_path / "plugins"
 
@@ -163,28 +133,16 @@ def install(name: str | None, local_path: Path | None, proxy: str | None) -> Non
         return
 
     if name is None:
-        raise click.ClickException("Missing plugin name or local plugin path")
+        raise click.ClickException("Missing local plugin path")
 
     local_name_path = Path(name).expanduser()
     if local_name_path.exists() and local_name_path.is_dir():
         install_local_plugin(local_name_path, plug_path, editable=False)
         return
 
-    plugins = build_plug_list(base_path / "plugins")
-
-    plugin = next(
-        (
-            p
-            for p in plugins
-            if p["name"] == name and p["status"] == PluginStatus.NOT_INSTALLED
-        ),
-        None,
+    raise click.ClickException(
+        f"Local plugin directory {name} not found. Use the dashboard to install from a repository."
     )
-
-    if not plugin:
-        raise click.ClickException(f"Plugin {name} not found or already installed")
-
-    manage_plugin(plugin, plug_path, is_update=False, proxy=proxy)
 
 
 @plug.command()
@@ -221,35 +179,20 @@ def update(name: str, proxy: str | None) -> None:
     plugins = build_plug_list(base_path / "plugins")
 
     if name:
-        plugin = next(
-            (
-                p
-                for p in plugins
-                if p["name"] == name and p["status"] == PluginStatus.NEED_UPDATE
-            ),
-            None,
-        )
-
+        plugin = next((p for p in plugins if p["name"] == name), None)
         if not plugin:
-            raise click.ClickException(
-                f"Plugin {name} does not need updating or cannot be updated"
-            )
-
-        manage_plugin(plugin, plug_path, is_update=True, proxy=proxy)
+            raise click.ClickException(f"Plugin {name} is not installed")
+        plugins_to_update = [plugin]
     else:
-        need_update_plugins = [
-            p for p in plugins if p["status"] == PluginStatus.NEED_UPDATE
-        ]
+        plugins_to_update = plugins
 
-        if not need_update_plugins:
-            click.echo("No plugins need updating")
-            return
+    if not plugins_to_update:
+        click.echo("No plugins to update")
+        return
 
-        click.echo(f"Found {len(need_update_plugins)} plugin(s) needing update")
-        for plugin in need_update_plugins:
-            plugin_name = plugin["name"]
-            click.echo(f"Updating plugin {plugin_name}...")
-            manage_plugin(plugin, plug_path, is_update=True, proxy=proxy)
+    for plugin in plugins_to_update:
+        click.echo(f"Updating plugin {plugin['name']}...")
+        manage_plugin(plugin, plug_path, is_update=True, proxy=proxy)
 
 
 @plug.command()

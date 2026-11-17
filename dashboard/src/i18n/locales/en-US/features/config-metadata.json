@@ -1380,22 +1380,6 @@
       },
       "t2i_word_threshold": {
         "description": "Text-to-Image Word Count Threshold"
-      },
-      "t2i_strategy": {
-        "description": "Text-to-Image Strategy",
-        "hint": "Text-to-image strategy. `remote` uses a remote HTML-based rendering service, `local` uses PIL for local rendering. When using local, place a TTF font named 'font.ttf' in the data/ directory to customize the font."
-      },
-      "t2i_endpoint": {
-        "description": "Text-to-Image Service API Endpoint",
-        "hint": "Empty means no service is called: remote text-to-image needs a renderer you host or trust (e.g. https://your-host/text2img), or switch the strategy to local for local rendering."
-      },
-      "t2i_template": {
-        "description": "Text-to-Image Custom Template",
-        "hint": "When enabled, you can customize HTML templates for text-to-image rendering."
-      },
-      "t2i_active_template": {
-        "description": "Currently Active Text-to-Image Rendering Template",
-        "hint": "This value is maintained by the text-to-image template management page."
       }
     }
   },

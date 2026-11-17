@@ -128,14 +128,6 @@ outline: deep
 | `PUT` | `/api/v1/system-config` | `config:edit_admin` |
 | `GET` | `/api/v1/system-config/runtime` | — |
 | `GET` | `/api/v1/system-config/schema` | — |
-| `GET` | `/api/v1/t2i/templates` | — |
-| `POST` | `/api/v1/t2i/templates` | — |
-| `GET` | `/api/v1/t2i/templates/active` | — |
-| `PUT` | `/api/v1/t2i/templates/active` | — |
-| `POST` | `/api/v1/t2i/templates/default/reset` | — |
-| `GET` | `/api/v1/t2i/templates/{name}` | — |
-| `PUT` | `/api/v1/t2i/templates/{name}` | — |
-| `DELETE` | `/api/v1/t2i/templates/{name}` | — |
 
 ## `chat`
 
@@ -224,11 +216,6 @@ outline: deep
 
 | 方法 | 接口 | 条件性敏感子权限 |
 | --- | --- | --- |
-| `GET` | `/api/v1/plugin-sources` | — |
-| `POST` | `/api/v1/plugin-sources` | — |
-| `PUT` | `/api/v1/plugin-sources` | — |
-| `DELETE` | `/api/v1/plugin-sources/by-id` | — |
-| `DELETE` | `/api/v1/plugin-sources/{source_id}` | — |
 | `GET` | `/api/v1/plugins` | — |
 | `GET` | `/api/v1/plugins/by-id` | — |
 | `DELETE` | `/api/v1/plugins/by-id` | — |
@@ -252,8 +239,6 @@ outline: deep
 | `POST` | `/api/v1/plugins/install/github` | — |
 | `POST` | `/api/v1/plugins/install/upload` | — |
 | `POST` | `/api/v1/plugins/install/url` | — |
-| `GET` | `/api/v1/plugins/market` | — |
-| `GET` | `/api/v1/plugins/market/categories` | — |
 | `GET` | `/api/v1/plugins/readme` | — |
 | `POST` | `/api/v1/plugins/reload` | — |
 | `POST` | `/api/v1/plugins/update` | — |
@@ -274,7 +259,6 @@ outline: deep
 | `PUT` | `/api/v1/plugins/{plugin_id}/log-level` | — |
 | `GET` | `/api/v1/plugins/{plugin_id}/readme` | — |
 | `POST` | `/api/v1/plugins/{plugin_id}/reload` | — |
-| `POST` | `/api/v1/plugins/{plugin_id}/source` | — |
 | `POST` | `/api/v1/plugins/{plugin_id}/update` | — |
 | `GET` | `/api/v1/plugins/{plugin_id}/views` | — |
 | `GET` | `/api/v1/plugins/{plugin_id}/views/{view_name}` | — |

@@ -78,11 +78,6 @@
       </section>
     </div>
 
-    <section v-if="showAnnouncement" class="overview-panel announcement-panel">
-      <h2 class="text-h3 font-weight-bold mb-4">{{ tm('announcement.title') }}</h2>
-      <MarkdownRender :content="welcomeAnnouncement" :is-dark="theme.global.current.value.dark" :typewriter="false" class="welcome-announcement-markdown markdown-content" />
-    </section>
-
     <v-dialog v-model="showComputerAccessDialog" max-width="540">
       <v-card>
         <v-card-title class="text-h3 pa-4 pb-0 pl-6">{{ tm('onboard.step3Title') }}</v-card-title>
@@ -128,8 +123,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
-import { useTheme } from 'vuetify';
-import axios from 'axios';
 import OverviewStatus from '@/components/overview/OverviewStatus.vue';
 import OverviewSystemStats from '@/components/overview/OverviewSystemStats.vue';
 import type { StatsDailyUsage, StatsSystemResources as SystemStats } from '@/api/generated/openapi-v1';
@@ -138,14 +131,11 @@ import ProviderConfigDialog from '@/components/chat/ProviderConfigDialog.vue';
 import { configProfileApi, providerApi, systemConfigApi, statsApi } from '@/api/v1';
 import { useI18n, useModuleI18n } from '@/i18n/composables';
 import { useToast } from '@/utils/toast';
-import { MarkdownRender } from 'markstream-vue';
-import 'markstream-vue/index.css';
 
 type StepState = 'pending' | 'completed' | 'skipped';
 type ComputerAccessRuntime = 'local' | 'none';
 
 const { tm } = useModuleI18n('features/welcome');
-const theme = useTheme();
 const { locale } = useI18n();
 const { success: showSuccess, error: showError } = useToast();
 
@@ -153,34 +143,8 @@ const showComputerAccessDialog = ref(false);
 const overview = ref<{ daily_usage: { today: StatsDailyUsage; yesterday: StatsDailyUsage }; system: SystemStats } | null>(null);
 const statsLoading = ref(false);
 const statsFailed = ref(false);
-const welcomeAnnouncementRaw = ref<unknown>(null);
 let overviewTimer: ReturnType<typeof setInterval>;
 
-function resolveWelcomeAnnouncement(raw: unknown, currentLocale: string) {
-  if (typeof raw === 'string') {
-    return raw.trim();
-  }
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-    return '';
-  }
-  const localeMap = raw as Record<string, unknown>;
-  const normalized = currentLocale.replace('-', '_');
-  const preferredKeys = normalized.startsWith('zh')
-    ? [normalized, 'zh_CN', 'zh-CN', 'zh', 'en_US', 'en-US', 'en']
-    : [normalized, 'en_US', 'en-US', 'en', 'zh_CN', 'zh-CN', 'zh'];
-  for (const key of preferredKeys) {
-    const value = localeMap[key];
-    if (typeof value === 'string' && value.trim().length > 0) {
-      return value.trim();
-    }
-  }
-  return '';
-}
-
-const welcomeAnnouncement = computed(() =>
-  resolveWelcomeAnnouncement(welcomeAnnouncementRaw.value, locale.value)
-);
-const showAnnouncement = computed(() => welcomeAnnouncement.value.length > 0);
 const metrics = computed(() => [
   { key: 'tokens' as const, icon: 'mdi-layers-triple-outline', tone: 'primary' },
   { key: 'messages' as const, icon: 'mdi-chat-outline', tone: 'info' },
@@ -440,18 +404,7 @@ async function saveComputerAccessRuntime() {
   }
 }
 
-async function loadWelcomeAnnouncement() {
-  try {
-    const res = await axios.get('https://cloud.astrbot.app/api/v1/announcement');
-    welcomeAnnouncementRaw.value = res?.data?.data?.notice?.welcome_page ?? null;
-  } catch (e) {
-    welcomeAnnouncementRaw.value = null;
-    console.error(e);
-  }
-}
-
 onMounted(async () => {
-  void loadWelcomeAnnouncement();
   void loadOverview();
   overviewTimer = setInterval(() => { if (!document.hidden) void loadOverview(); }, 30000);
 
@@ -586,8 +539,6 @@ watch(computerAccessRuntime, async (value, oldValue) => {
 .resource-card--github .resource-icon { color: rgb(var(--v-theme-on-surface)); }
 .resource-card--afdian .resource-icon { color: rgb(var(--v-theme-error)); }
 .resource-card h3 { font-size: 15px; font-weight: 600; }
-.announcement-panel { margin-top: 24px; }
-.welcome-announcement-markdown { line-height: 1.7; }
 .computer-access-help-list { margin: 0; padding-left: 1.25rem; }
 @media (max-width: 1200px) {
   .welcome-page { padding: 24px 16px; }

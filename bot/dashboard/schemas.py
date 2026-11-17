@@ -352,15 +352,6 @@ class ModelScopeSyncRequest(BaseModel):
     access_token: str | None = None
 
 
-class T2iTemplateRequest(BaseModel):
-    name: str | None = None
-    content: str | None = None
-
-
-class T2iActiveTemplateRequest(BaseModel):
-    name: str
-
-
 class PersonaRequest(OpenModel):
     persona_id: str | None = None
     system_prompt: str | None = None
@@ -596,12 +587,6 @@ class PluginValidateRepoRequest(OpenModel):
     proxy: str | None = None
 
 
-class PluginSourceBindRequest(OpenModel):
-    install_method: str | None = None
-    registry_url: str | None = None
-    market_plugin_id: str | None = None
-
-
 class PluginUpdateRequest(OpenModel):
     plugin_id: str | None = None
     plugin_ids: list[str] | None = None
@@ -631,13 +616,6 @@ class PluginConfigPayload(OpenModel):
 class PluginLogLevelPayload(OpenModel):
     level: str | None = None
     """Log level name (DEBUG/INFO/WARNING/ERROR/CRITICAL), or null to follow the global level."""
-
-
-class PluginSourceRequest(OpenModel):
-    id: str | None = None
-    name: str | None = None
-    url: str | None = None
-    sources: list[Any] | None = None
 
 
 class PluginUninstallRequest(OpenModel):

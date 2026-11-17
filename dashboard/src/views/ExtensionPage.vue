@@ -7,7 +7,6 @@ import UninstallConfirmDialog from "@/components/shared/UninstallConfirmDialog.v
 import { useExtensionPage } from "./extension/useExtensionPage";
 import { computed, defineAsyncComponent } from "vue";
 import defaultPluginIcon from "/favicon.svg";
-import { usePluginI18n } from "@/utils/pluginI18n";
 
 const props = defineProps({
   initialTab: {
@@ -19,167 +18,62 @@ const props = defineProps({
 const InstalledPluginsTab = defineAsyncComponent(
   () => import("./extension/InstalledPluginsTab.vue"),
 );
-const MarketPluginsTab = defineAsyncComponent(
-  () => import("./extension/MarketPluginsTab.vue"),
-);
 const PluginDetailPage = defineAsyncComponent(
   () => import("./extension/PluginDetailPage.vue"),
 );
 
 const pageState = useExtensionPage(props.initialTab);
-const { pluginName, pluginDesc } = usePluginI18n();
 
 const {
-  commonStore,
-  t,
   tm,
   router,
   route,
-  getSelectedGitHubProxy,
   conflictDialog,
-  checkAndPromptConflicts,
   handleConflictConfirm,
   fileInput,
   activeTab,
   extension_data,
-  getInitialShowReserved,
-  showReserved,
   snack_message,
   snack_show,
   snack_success,
   configDialog,
   extension_config,
-  pluginMarketData,
   loadingDialog,
   curr_namespace,
   updatingAll,
   readmeDialog,
-  forceUpdateDialog,
   updateConfirmDialog,
   updateAllConfirmDialog,
   changelogDialog,
-  getInitialListViewMode,
-  isListView,
-  pluginSearch,
   loading_,
-  currentPage,
-  dangerConfirmDialog,
-  selectedDangerPlugin,
-  selectedMarketInstallPlugin,
-  installSupport,
   installUrlValidation,
   versionSupportDialog,
   showUninstallDialog,
-  uninstallTarget,
-  showSourceDialog,
-  showSourceManagerDialog,
-  sourceName,
-  sourceUrl,
-  sourceResolving,
-  sourceResolveVisible,
-  sourceMarketMeta,
-  sourceResolveCurrent,
-  customSources,
-  selectedSource,
-  showRemoveSourceDialog,
-  sourceToRemove,
-  editingSource,
-  originalSourceUrl,
   extension_url,
   dialog,
   upload_file,
   uploadTab,
-  showPluginFullName,
-  marketSearch,
-  debouncedMarketSearch,
-  refreshingMarket,
-  sortBy,
-  sortOrder,
-  randomPluginNames,
-  normalizeStr,
-  toPinyinText,
-  toInitials,
-  pluginHeaders,
-  filteredExtensions,
-  filteredPlugins,
-  filteredMarketPlugins,
-  getMarketPluginKey,
-  sortedPlugins,
-  RANDOM_PLUGINS_COUNT,
-  randomPlugins,
-  shufflePlugins,
-  refreshRandomPlugins,
-  displayItemsPerPage,
-  totalPages,
-  paginatedPlugins,
   updatableExtensions,
-  toggleShowReserved,
-  toast,
   resetLoadingDialog,
-  onLoadingDialogResult,
-  failedPluginsDict,
-  getExtensions,
-  handleReloadAllFailed,
-  checkUpdate,
-  uninstallExtension,
   handleUninstallConfirm,
-  updateExtension,
   closeUpdateConfirmDialog,
   confirmUpdatePlugin,
-  showUpdateAllConfirm,
   confirmUpdateAll,
   cancelUpdateAll,
-  confirmForceUpdate,
-  updateAllExtensions,
-  pluginOn,
-  pluginOff,
   openExtensionConfig,
   updateConfig,
   updatePluginLogLevel,
   pluginLogLevelSaving,
-  showPluginInfo,
-  reloadPlugin,
-  viewReadme,
-  viewChangelog,
-  openInstallDialog,
   closeInstallDialog,
-  handleInstallPlugin,
-  confirmDangerInstall,
-  cancelDangerInstall,
-  loadCustomSources,
-  saveCustomSources,
-  addCustomSource,
-  openSourceManagerDialog,
-  selectPluginSource,
-  editCustomSource,
-  removeCustomSource,
-  confirmRemoveSource,
-  resolveCustomSource,
-  saveCustomSource,
-  trimExtensionName,
-  checkAlreadyInstalled,
-  showVersionSupportWarning,
   continueInstallIgnoringVersionWarning,
   cancelInstallOnVersionWarning,
   newExtension,
-  normalizePlatformList,
-  getPlatformDisplayList,
-  resolveSelectedInstallPlugin,
-  selectedInstallPlugin,
-  selectedInstallDownloadUrl,
-  selectedInstallSourceUrl,
+  selectedUpdateExtension,
+  selectedUpdateSourceUrl,
   installUsesRepositorySource,
   installUsesGithubArchiveSource,
-  selectedUpdateExtension,
-  selectedUpdateMarketPlugin,
-  selectedUpdateDownloadUrl,
-  selectedUpdateSourceUrl,
   updateUsesRepositorySource,
   updateUsesGithubArchiveSource,
-  checkInstallVersionSupport,
-  refreshPluginMarket,
-  handleLocaleChange,
-  searchDebounceTimer,
 } = pageState;
 
 const logLevelItems = computed(() => [
@@ -196,105 +90,25 @@ const selectedPluginId = computed(() => {
   return Array.isArray(pluginId) ? pluginId[0] : pluginId || "";
 });
 
-const selectedDetailTab = computed(() =>
-  props.initialTab === "market" ? "market" : "installed",
-);
-
 const selectedInstalledPlugin = computed(() => {
   if (!selectedPluginId.value) return null;
   const data = Array.isArray(extension_data?.data) ? extension_data.data : [];
   return data.find((plugin) => plugin.name === selectedPluginId.value) || null;
 });
 
-const normalizeRepoUrl = (value) =>
-  String(value || "")
-    .trim()
-    .replace(/\/+$/, "")
-    .toLowerCase()
-    .replace(/\.git$/, "");
+const selectedDetailPlugin = computed(() => selectedInstalledPlugin.value);
 
-const selectedMarketPlugin = computed(() => {
-  const market = Array.isArray(pluginMarketData.value)
-    ? pluginMarketData.value
-    : [];
-  const installedPlugin = selectedInstalledPlugin.value;
-  // Resolve by the unique market plugin key first; the `name` match is a
-  // fallback for legacy deep links, since multiple market entries can share
-  // the same metadata name.
-  const marketKeyMatch =
-    market.find((item) => getMarketPluginKey(item) === selectedPluginId.value) ||
-      null;
-  const marketNameMatch =
-    market.find((item) => item.name === selectedPluginId.value) || null;
-  const marketMatch = marketKeyMatch || marketNameMatch;
-
-  if (selectedDetailTab.value === "market" || !installedPlugin) {
-    return marketMatch;
-  }
-
-  const repo = normalizeRepoUrl(installedPlugin.repo);
-  if (!repo) return null;
-
-  return (
-    market.find((item) => normalizeRepoUrl(item?.repo) === repo) || null
-  );
+const updateDialogPluginName = computed(() => {
+  const plugin = selectedUpdateExtension.value;
+  return plugin ? String(plugin.display_name || plugin.name || "") : "";
 });
-
-const selectedDetailPlugin = computed(() => {
-  if (selectedDetailTab.value === "market" && selectedMarketPlugin.value) {
-    return selectedMarketPlugin.value;
-  }
-  return selectedInstalledPlugin.value || selectedMarketPlugin.value;
-});
-
-const installDialogPluginName = computed(() =>
-  selectedInstallPlugin.value ? pluginName(selectedInstallPlugin.value) : "",
-);
-
-const installDialogPluginDesc = computed(() =>
-  String(
-    selectedInstallPlugin.value
-      ? pluginDesc(
-          selectedInstallPlugin.value,
-          selectedInstallPlugin.value.desc ||
-            selectedInstallPlugin.value.description ||
-            "",
-        )
-      : "",
-  ).trim(),
-);
-
-const installDialogPluginAuthor = computed(() => {
-  const author = selectedInstallPlugin.value?.author;
-  if (Array.isArray(author)) return author.join(", ");
-  if (author && typeof author === "object") return author.name || "";
-  return typeof author === "string" ? author.trim() : "";
-});
-
-const installDialogPluginLogo = computed(() => {
-  const logo = selectedInstallPlugin.value?.logo;
-  return typeof logo === "string" && logo.trim() ? logo : defaultPluginIcon;
-});
-
-const updateDialogPlugin = computed(
-  () => selectedUpdateMarketPlugin.value || selectedUpdateExtension.value,
-);
-
-const updateDialogPluginName = computed(() =>
-  updateDialogPlugin.value ? pluginName(updateDialogPlugin.value) : "",
-);
 
 const updateDialogCurrentVersion = computed(() =>
   String(selectedUpdateExtension.value?.version || "").trim(),
 );
 
-const updateDialogTargetVersion = computed(() =>
-  String(selectedUpdateMarketPlugin.value?.version || "").trim(),
-);
-
 const updateDialogPluginLogo = computed(() => {
-  const logo =
-    selectedUpdateMarketPlugin.value?.logo || selectedUpdateExtension.value?.logo;
+  const logo = selectedUpdateExtension.value?.logo;
   return typeof logo === "string" && logo.trim() ? logo : defaultPluginIcon;
 });
 </script>
@@ -303,8 +117,6 @@ const updateDialogPluginLogo = computed(() => {
   <PluginDetailPage
     v-if="selectedPluginId && selectedDetailPlugin"
     :plugin="selectedDetailPlugin"
-    :market-plugin="selectedMarketPlugin"
-    :source-tab="selectedDetailTab"
     :state="pageState"
   />
 
@@ -318,21 +130,10 @@ const updateDialogPluginLogo = computed(() => {
         icon="mdi-arrow-left"
         variant="text"
         density="comfortable"
-        @click="
-          router.push({
-            name:
-              selectedDetailTab === 'market'
-                ? 'ExtensionMarketplace'
-                : 'Extensions',
-          })
-        "
+        @click="router.push({ name: 'Extensions' })"
       />
       <h2 class="text-h3 mb-0 ml-2">
-        {{
-          selectedDetailTab === "market"
-            ? tm("tabs.market")
-            : tm("titles.installedBotPlugins")
-        }}
+        {{ tm("titles.installedBotPlugins") }}
         <v-icon icon="mdi-chevron-right" size="24" class="mx-1" />
         {{ selectedPluginId }}
       </h2>
@@ -351,42 +152,8 @@ const updateDialogPluginLogo = computed(() => {
             v-if="activeTab === 'installed'"
             :state="pageState"
           />
-          <MarketPluginsTab v-else :state="pageState" />
         </v-card-text>
       </v-card>
-    </v-col>
-
-    <v-col v-if="activeTab === 'market'" cols="12" md="12">
-      <div class="d-flex align-center justify-center mt-4 mb-4 gap-4">
-        <v-btn
-          variant="text"
-          prepend-icon="mdi-book-open-variant"
-          href="https://docs.astrbot.app/dev/star/plugin-new.html"
-          rel="noopener noreferrer"
-          target="_blank"
-          color="primary"
-          class="text-none"
-        >
-          {{ tm("market.devDocs") }}
-        </v-btn>
-        <div
-          style="
-            height: 24px;
-            width: 1px;
-            background-color: rgba(var(--v-theme-on-surface), 0.12);
-          "
-        ></div>
-        <v-btn
-          variant="text"
-          prepend-icon="mdi-upload"
-          href="https://cloud.astrbot.app/publish"
-          target="_blank"
-          color="primary"
-          class="text-none"
-        >
-          {{ tm("market.submitRepo") }}
-        </v-btn>
-      </div>
     </v-col>
   </v-row>
 
@@ -608,28 +375,6 @@ const updateDialogPluginLogo = computed(() => {
     </v-card>
   </v-dialog>
 
-  <!-- 危险插件确认对话框 -->
-  <v-dialog v-model="dangerConfirmDialog" width="500" persistent>
-    <v-card>
-      <v-card-title class="text-h3 pa-4 pb-0 pl-6 d-flex align-center">
-        <v-icon color="warning" class="mr-2">mdi-alert-circle</v-icon>
-        {{ tm("dialogs.danger_warning.title") }}
-      </v-card-title>
-      <v-card-text>
-        <div>{{ tm("dialogs.danger_warning.message") }}</div>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="grey" variant="text" @click="cancelDangerInstall">
-          {{ tm("dialogs.danger_warning.cancel") }}
-        </v-btn>
-        <v-btn color="warning" variant="tonal" @click="confirmDangerInstall">
-          {{ tm("dialogs.danger_warning.confirm") }}
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-
   <!-- 版本不兼容警告对话框 -->
   <v-dialog v-model="versionSupportDialog.show" width="520" persistent>
     <v-card>
@@ -665,120 +410,10 @@ const updateDialogPluginLogo = computed(() => {
       </v-card-title>
 
       <div class="v-card-text">
-        <div v-if="selectedMarketInstallPlugin" class="market-install-confirm">
-          <div class="market-install-confirm__header">
-            <img
-              :src="installDialogPluginLogo"
-              :alt="installDialogPluginName"
-              class="market-install-confirm__logo"
-            />
-            <div class="market-install-confirm__meta">
-              <div class="market-install-confirm__name">
-                {{ installDialogPluginName }}
-              </div>
-              <div
-                v-if="installDialogPluginAuthor"
-                class="market-install-confirm__author"
-              >
-                {{ tm("detail.info.author") }}: {{ installDialogPluginAuthor }}
-              </div>
-            </div>
-          </div>
-
-          <v-divider class="my-4" />
-
-          <div
-            v-if="installDialogPluginDesc"
-            class="market-install-confirm__section"
-          >
-            <div class="market-install-confirm__section-title">
-              {{ tm("table.headers.description") }}
-            </div>
-            <div class="market-install-confirm__desc">
-              {{ installDialogPluginDesc }}
-            </div>
-          </div>
-
-          <div v-if="selectedInstallPlugin" class="mt-4">
-            <v-chip
-              v-if="selectedInstallPlugin.bot_version"
-              size="small"
-              color="secondary"
-              variant="outlined"
-              class="mr-2 mb-2"
-            >
-              {{ tm("card.status.botVersion") }}:
-              {{ selectedInstallPlugin.bot_version }}
-            </v-chip>
-            <v-chip
-              v-if="
-                normalizePlatformList(selectedInstallPlugin.support_platforms)
-                  .length
-              "
-              size="small"
-              color="info"
-              variant="outlined"
-              class="mb-2"
-            >
-              {{ tm("card.status.supportPlatform") }}:
-              {{
-                getPlatformDisplayList(
-                  selectedInstallPlugin.support_platforms,
-                ).join(", ")
-              }}
-            </v-chip>
-            <v-alert
-              v-if="
-                selectedInstallPlugin.bot_version &&
-                installSupport.checked &&
-                !installSupport.supported
-              "
-              type="warning"
-              variant="tonal"
-              density="comfortable"
-              class="market-install-alert mt-2 mb-3"
-            >
-              {{ installSupport.message }}
-            </v-alert>
-          </div>
-
-          <div
-            v-if="selectedInstallSourceUrl"
-            class="market-install-confirm__section-title mt-4"
-          >
-            {{ tm("dialogs.install.sectionTitle") }}
-          </div>
-          <div
-            v-if="selectedInstallSourceUrl"
-            class="market-install-source text-caption text-medium-emphasis mb-3"
-          >
-            <div>{{ tm("dialogs.install.downloadSource") }}</div>
-            <div class="market-install-source__url">
-              {{ selectedInstallSourceUrl }}
-            </div>
-          </div>
-
-          <v-alert
-            v-if="installUsesRepositorySource"
-            type="warning"
-            variant="tonal"
-            density="comfortable"
-            class="market-install-alert mt-4 mb-4"
-          >
-            {{ tm("dialogs.install.repositorySecurityWarning") }}
-          </v-alert>
-
-          <ProxySelector
-            v-if="installUsesGithubArchiveSource"
-            class="mt-4"
-          />
-        </div>
-
-        <template v-else>
-          <v-tabs v-model="uploadTab" color="primary">
-            <v-tab value="file">{{ tm("dialogs.install.fromFile") }}</v-tab>
-            <v-tab value="url">{{ tm("dialogs.install.fromUrl") }}</v-tab>
-          </v-tabs>
+        <v-tabs v-model="uploadTab" color="primary">
+          <v-tab value="file">{{ tm("dialogs.install.fromFile") }}</v-tab>
+          <v-tab value="url">{{ tm("dialogs.install.fromUrl") }}</v-tab>
+        </v-tabs>
 
           <v-window v-model="uploadTab" class="mt-4">
             <v-window-item value="file">
@@ -837,66 +472,6 @@ const updateDialogPluginLogo = computed(() => {
                   placeholder="https://github.com/owner/repo or git@host:owner/repo.git"
                 ></v-text-field>
 
-                <div v-if="selectedInstallPlugin" class="mb-3">
-                  <v-chip
-                    v-if="selectedInstallPlugin.bot_version"
-                    size="small"
-                    color="secondary"
-                    variant="outlined"
-                    class="mr-2 mb-2"
-                  >
-                    {{ tm("card.status.botVersion") }}:
-                    {{ selectedInstallPlugin.bot_version }}
-                  </v-chip>
-                  <v-chip
-                    v-if="
-                      normalizePlatformList(
-                        selectedInstallPlugin.support_platforms,
-                      ).length
-                    "
-                    size="small"
-                    color="info"
-                    variant="outlined"
-                    class="mb-2"
-                  >
-                    {{ tm("card.status.supportPlatform") }}:
-                    {{
-                      getPlatformDisplayList(
-                        selectedInstallPlugin.support_platforms,
-                      ).join(", ")
-                    }}
-                  </v-chip>
-                  <v-alert
-                    v-if="
-                      selectedInstallPlugin.bot_version &&
-                      installSupport.checked &&
-                      !installSupport.supported
-                    "
-                    type="warning"
-                    variant="tonal"
-                    density="comfortable"
-                    class="market-install-alert mt-2 mb-3"
-                  >
-                    {{ installSupport.message }}
-                  </v-alert>
-                </div>
-
-                <div
-                  v-if="selectedInstallSourceUrl"
-                  class="market-install-confirm__section-title mt-4"
-                >
-                  {{ tm("dialogs.install.sectionTitle") }}
-                </div>
-                <div
-                  v-if="selectedInstallSourceUrl"
-                  class="market-install-source text-caption text-medium-emphasis mb-3"
-                >
-                  <div>{{ tm("dialogs.install.downloadSource") }}</div>
-                  <div class="market-install-source__url">
-                    {{ selectedInstallSourceUrl }}
-                  </div>
-                </div>
-
                 <v-alert
                   v-if="installUrlValidation.status === 'error'"
                   type="error"
@@ -952,7 +527,6 @@ const updateDialogPluginLogo = computed(() => {
               </div>
             </v-window-item>
           </v-window>
-        </template>
       </div>
 
       <div class="v-card-actions">
@@ -970,201 +544,6 @@ const updateDialogPluginLogo = computed(() => {
         >
       </div>
     </div>
-  </v-dialog>
-
-  <!-- 插件源管理对话框 -->
-  <v-dialog v-model="showSourceManagerDialog" width="640">
-    <v-card>
-      <v-card-title class="text-h3 pa-4 pb-0 pl-6">{{
-        tm("market.sourceManagement")
-      }}</v-card-title>
-      <v-card-text>
-        <div class="d-flex align-center justify-space-between mb-2">
-          <div class="text-subtitle-2">{{ tm("market.availableSources") }}</div>
-          <v-btn
-            size="small"
-            color="primary"
-            variant="tonal"
-            prepend-icon="mdi-plus"
-            @click="addCustomSource"
-          >
-            {{ tm("market.addSource") }}
-          </v-btn>
-        </div>
-
-        <v-list density="compact" nav class="pa-0">
-          <v-list-item
-            rounded="md"
-            color="primary"
-            :active="selectedSource === null"
-            @click="selectPluginSource(null)"
-          >
-            <template v-slot:prepend>
-              <v-icon
-                icon="mdi-shield-check"
-                size="small"
-                class="mr-2"
-              ></v-icon>
-            </template>
-            <v-list-item-title>{{
-              tm("market.defaultSource")
-            }}</v-list-item-title>
-          </v-list-item>
-
-          <v-list-item
-            v-for="source in customSources"
-            :key="source.url"
-            rounded="md"
-            color="primary"
-            :active="selectedSource === source.url"
-            @click="selectPluginSource(source.url)"
-          >
-            <template v-slot:prepend>
-              <v-icon
-                icon="mdi-link-variant"
-                size="small"
-                class="mr-2"
-              ></v-icon>
-            </template>
-            <v-list-item-title>{{ source.name }}</v-list-item-title>
-            <v-list-item-subtitle class="text-caption">{{
-              source.url
-            }}</v-list-item-subtitle>
-            <template v-slot:append>
-              <v-btn
-                icon="mdi-pencil-outline"
-                size="small"
-                variant="text"
-                color="medium-emphasis"
-                @click.stop="editCustomSource(source)"
-              ></v-btn>
-              <v-btn
-                icon="mdi-trash-can-outline"
-                size="small"
-                variant="text"
-                color="error"
-                @click.stop="removeCustomSource(source)"
-              ></v-btn>
-            </template>
-          </v-list-item>
-        </v-list>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          variant="text"
-          @click="showSourceManagerDialog = false"
-          >{{ tm("buttons.close") }}</v-btn
-        >
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-
-  <!-- 添加/编辑自定义插件源对话框 -->
-  <v-dialog v-model="showSourceDialog" width="500">
-    <v-card>
-      <v-card-title class="text-h3 pa-4 pb-0 pl-6">{{
-        editingSource ? tm("market.editSource") : tm("market.addSource")
-      }}</v-card-title>
-      <v-card-text>
-        <div class="pa-2">
-          <v-text-field
-            v-model="sourceUrl"
-            :label="tm('market.sourceUrl')"
-            variant="outlined"
-            prepend-inner-icon="mdi-link"
-            hide-details
-            placeholder="https://example.com/plugins.json"
-          ></v-text-field>
-
-          <div class="text-caption text-medium-emphasis mt-2">
-            {{ tm("messages.enterJsonUrl") }}
-          </div>
-
-          <v-alert
-            v-if="sourceResolveVisible && sourceResolveCurrent"
-            type="success"
-            variant="tonal"
-            density="compact"
-            class="mt-4"
-          >
-            <div class="text-body-2">{{ tm("market.sourceResolved") }}</div>
-            <div
-              v-if="sourceMarketMeta?.name || sourceMarketMeta?.version"
-              class="text-caption mt-1"
-            >
-              <span v-if="sourceMarketMeta?.name">{{
-                sourceMarketMeta.name
-              }}</span>
-              <span v-if="sourceMarketMeta?.version">
-                v{{ sourceMarketMeta.version }}
-              </span>
-            </div>
-          </v-alert>
-
-          <v-text-field
-            v-if="editingSource || sourceResolveCurrent"
-            v-model="sourceName"
-            :label="tm('market.sourceName')"
-            variant="outlined"
-            prepend-inner-icon="mdi-rename-box"
-            hide-details
-            class="mt-4"
-            placeholder="我的插件源"
-          ></v-text-field>
-        </div>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn color="grey" variant="text" @click="showSourceDialog = false">{{
-          tm("buttons.cancel")
-        }}</v-btn>
-        <v-btn
-          color="primary"
-          variant="tonal"
-          :loading="sourceResolving"
-          :disabled="
-            sourceResolving || (!sourceResolveCurrent && !sourceUrl.trim())
-          "
-          @click="
-            sourceResolveCurrent ? saveCustomSource() : resolveCustomSource()
-          "
-          >{{
-            sourceResolveCurrent ? tm("buttons.save") : tm("buttons.next")
-          }}</v-btn
-        >
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
-
-  <!-- 删除插件源确认对话框 -->
-  <v-dialog v-model="showRemoveSourceDialog" width="400">
-    <v-card>
-      <v-card-title class="text-h3 pa-4 pb-0 pl-6 d-flex align-center">
-        <v-icon color="warning" class="mr-2">mdi-alert-circle</v-icon>
-        {{ tm("dialogs.uninstall.title") }}
-      </v-card-title>
-      <v-card-text>
-        <div>{{ tm("market.confirmRemoveSource") }}</div>
-        <div v-if="sourceToRemove" class="mt-2">
-          <strong>{{ sourceToRemove.name }}</strong>
-          <div class="text-caption">{{ sourceToRemove.url }}</div>
-        </div>
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn
-          color="grey"
-          variant="text"
-          @click="showRemoveSourceDialog = false"
-          >{{ tm("buttons.cancel") }}</v-btn
-        >
-        <v-btn color="error" variant="tonal" @click="confirmRemoveSource">{{
-          tm("buttons.deleteSource")
-        }}</v-btn>
-      </v-card-actions>
-    </v-card>
   </v-dialog>
 
   <!-- Update plugin confirmation dialog -->
@@ -1186,18 +565,11 @@ const updateDialogPluginLogo = computed(() => {
                 {{ updateDialogPluginName }}
               </div>
               <div
-                v-if="updateDialogCurrentVersion || updateDialogTargetVersion"
+                v-if="updateDialogCurrentVersion"
                 class="market-install-confirm__author"
               >
-                <template v-if="updateDialogTargetVersion">
-                  {{ updateDialogCurrentVersion || tm("status.unknown") }}
-                  <v-icon icon="mdi-arrow-right" size="14" class="mx-1" />
-                  {{ updateDialogTargetVersion }}
-                </template>
-                <template v-else>
-                  {{ tm("detail.info.version") }}:
-                  {{ updateDialogCurrentVersion || tm("status.unknown") }}
-                </template>
+                {{ tm("detail.info.version") }}:
+                {{ updateDialogCurrentVersion }}
               </div>
             </div>
           </div>
@@ -1252,27 +624,6 @@ const updateDialogPluginLogo = computed(() => {
     </v-card>
   </v-dialog>
 
-  <!-- 强制更新确认对话框 -->
-  <v-dialog v-model="forceUpdateDialog.show" max-width="420">
-    <v-card class="rounded-lg">
-      <v-card-title class="text-h3 pa-4 pb-0 pl-6 d-flex align-center">
-        <v-icon color="info" class="mr-2">mdi-information-outline</v-icon>
-        {{ tm("dialogs.forceUpdate.title") }}
-      </v-card-title>
-      <v-card-text>
-        {{ tm("dialogs.forceUpdate.message") }}
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer></v-spacer>
-        <v-btn variant="text" @click="forceUpdateDialog.show = false">{{
-          tm("buttons.cancel")
-        }}</v-btn>
-        <v-btn color="primary" variant="tonal" @click="confirmForceUpdate">{{
-          tm("dialogs.forceUpdate.confirm")
-        }}</v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
 </template>
 
 <style scoped>

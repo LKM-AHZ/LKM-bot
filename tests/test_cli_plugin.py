@@ -188,4 +188,4 @@ def test_plugin_install_requires_name_or_editable_path(
     result = CliRunner().invoke(plug, ["install"])
 
     assert result.exit_code != 0
-    assert "Missing plugin name or local plugin path" in result.output
+    assert "Missing local plugin path" in result.output

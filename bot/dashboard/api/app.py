@@ -41,7 +41,6 @@ from bot.dashboard.services.session_management_service import (
 )
 from bot.dashboard.services.skills_service import SkillsService
 from bot.dashboard.services.stat_service import StatService
-from bot.dashboard.services.t2i_service import T2iService
 from bot.dashboard.services.tools_service import ToolsService
 from bot.dashboard.services.update_service import (
     UpdateService,
@@ -123,7 +122,6 @@ def create_dashboard_asgi_app(
             core_lifecycle.agent_runtimes,
             core_lifecycle.bot_config_mgr,
         ),
-        t2i=T2iService(core_lifecycle),
         tools=ToolsService(core_lifecycle),
         updates=UpdateService(
             core_lifecycle.bot_updater,

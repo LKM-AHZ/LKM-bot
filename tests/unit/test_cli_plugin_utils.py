@@ -7,41 +7,6 @@ import pytest
 from bot.cli.utils.plugin import PluginStatus, build_plug_list, download_repository
 
 
-class FakeResponse:
-    def raise_for_status(self):
-        return None
-
-    def json(self):
-        return {
-            "local-plugin": {
-                "desc": "remote description",
-                "version": "2.0.0",
-                "author": "remote-author",
-                "repo": "https://example.com/local-plugin",
-            },
-            "remote-only": {
-                "desc": "remote only",
-                "version": "1.0.0",
-                "author": "remote-author",
-                "repo": "https://example.com/remote-only",
-            },
-        }
-
-
-class FakeClient:
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc, tb):
-        return False
-
-    def get(self, url):
-        assert url == (
-            "https://github.com/AstrBotDevs/AstrBot_Plugins_Collection/raw/refs/heads/main/plugin_cache_original.json"
-        )
-        return FakeResponse()
-
-
 def test_download_repository_uses_head_without_metadata_lookup(
     monkeypatch, tmp_path, capsys
 ):
@@ -94,66 +59,37 @@ repo: https://example.com/{name}
     )
 
 
-def test_build_plug_list_merges_local_and_remote_plugins(monkeypatch, tmp_path):
+def test_build_plug_list_returns_local_plugins(tmp_path):
     write_metadata(tmp_path / "local-plugin", "local-plugin", "1.0.0")
-    write_metadata(tmp_path / "unpublished-plugin", "unpublished-plugin", "1.0.0")
     tmp_path.joinpath("ignored-file").write_text("not a plugin", encoding="utf-8")
-
-    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
 
     plugins = build_plug_list(tmp_path)
     plugins_by_name = {plugin["name"]: plugin for plugin in plugins}
 
-    assert plugins_by_name["local-plugin"]["status"] == PluginStatus.NEED_UPDATE
-    assert plugins_by_name["unpublished-plugin"]["status"] == PluginStatus.NOT_PUBLISHED
-    assert plugins_by_name["remote-only"]["status"] == PluginStatus.NOT_INSTALLED
-    assert len(plugins) == 3
+    assert list(plugins_by_name) == ["local-plugin"]
+    assert plugins_by_name["local-plugin"]["status"] == PluginStatus.INSTALLED
+    assert plugins_by_name["local-plugin"]["local_path"].endswith("local-plugin")
 
 
 @pytest.mark.parametrize("path_kind", ["file", "missing"])
-def test_build_plug_list_treats_unusable_path_as_empty_local_set(
-    monkeypatch, tmp_path, path_kind
-):
+def test_build_plug_list_treats_unusable_path_as_empty_local_set(tmp_path, path_kind):
     plugins_path = tmp_path / "plugins"
     if path_kind == "file":
         plugins_path.write_text("not a directory", encoding="utf-8")
     else:
         plugins_path = tmp_path / "completely_non_existent_path"
 
-    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
-
     plugins = build_plug_list(plugins_path)
 
-    assert [plugin["name"] for plugin in plugins] == ["local-plugin", "remote-only"]
-    assert all(plugin["status"] == PluginStatus.NOT_INSTALLED for plugin in plugins)
+    assert plugins == []
 
 
-def test_build_plug_list_local_version_equal_or_newer(monkeypatch, tmp_path):
-    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
+def test_build_plug_list_skips_metadata_without_repo(tmp_path):
+    plugin_dir = tmp_path / "incomplete-plugin"
+    plugin_dir.mkdir()
+    plugin_dir.joinpath("metadata.yaml").write_text(
+        "name: incomplete\ndesc: missing repo\nversion: 1.0.0\nauthor: a\n",
+        encoding="utf-8",
+    )
 
-    # 1. test if local version == remote version
-    dir_equal = tmp_path / "dir_equal"
-    write_metadata(dir_equal / "local-plugin", "local-plugin", "2.0.0")
-
-    plugins_equal = build_plug_list(dir_equal)
-    plugins_equal_by_name = {p["name"]: p for p in plugins_equal}
-    assert plugins_equal_by_name["local-plugin"]["status"] == PluginStatus.INSTALLED
-
-    # 2. test if local version > remote version
-    dir_newer = tmp_path / "dir_newer"
-    write_metadata(dir_newer / "local-plugin", "local-plugin", "3.0.0")
-
-    plugins_newer = build_plug_list(dir_newer)
-    plugins_newer_by_name = {p["name"]: p for p in plugins_newer}
-    assert plugins_newer_by_name["local-plugin"]["status"] == PluginStatus.INSTALLED
-
-
-def test_build_plug_list_non_existent_path(monkeypatch, tmp_path):
-    non_existent_dir = tmp_path / "completely_non_existent_path"
-
-    monkeypatch.setattr("bot.cli.utils.plugin.httpx.Client", FakeClient)
-
-    plugins = build_plug_list(non_existent_dir)
-
-    assert [plugin["name"] for plugin in plugins] == ["local-plugin", "remote-only"]
-    assert all(plugin["status"] == PluginStatus.NOT_INSTALLED for plugin in plugins)
+    assert build_plug_list(tmp_path) == []

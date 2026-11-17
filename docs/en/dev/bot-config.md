@@ -111,10 +111,6 @@ The default LKMBot configuration is as follows:
     "admins_id": ["bot"],
     "t2i": False,
     "t2i_word_threshold": 150,
-    "t2i_strategy": "remote",
-    "t2i_endpoint": "",
-    "t2i_use_file_service": False,
-    "t2i_active_template": "base",
     "http_proxy": "",
     "no_proxy": ["localhost", "127.0.0.1", "::1"],
     "dashboard": {
@@ -489,21 +485,6 @@ Whether to enable Text-to-Image (T2I) functionality. Default is `false`. When en
 ### `t2i_word_threshold`
 
 Character threshold for T2I. Default is `150`. When a message exceeds this count, the bot renders it as an image.
-
-### `t2i_strategy`
-
-Rendering strategy for T2I. Options are `local` and `remote`. Default is `remote`.
-
-- `local`: Uses LKMBot's local T2I service for rendering. Lower quality but doesn't depend on external services.
-- `remote`: Uses a remote T2I service for rendering. Uses the official LKMBot service by default, which offers better quality.
-
-### `t2i_endpoint`
-
-LKMBot API address. Used for rendering Markdown images. Effective when `t2i_strategy` is `remote`. Default is empty, meaning the official LKMBot service is used.
-
-### `t2i_use_file_service`
-
-Whether to enable the file service. Default is `false`. When enabled, the bot provides the rendered image as an external HTTP link to the message platform. This depends on the `callback_api_base` configuration.
 
 ### `http_proxy`
 

@@ -37,7 +37,6 @@ const MainRoutes = {
           redirect: (to: RouteLocationNormalized) => {
             const legacyTab = String(to.hash || '').replace(/^#/, '');
             const routeNames: Record<string, string> = {
-              market: 'ExtensionMarketplace',
               mcp: 'ExtensionMcp',
               skills: 'ExtensionSkills',
               components: 'ExtensionComponents'
@@ -54,13 +53,6 @@ const MainRoutes = {
           component: () => import('@/views/ExtensionPage.vue'),
           props: { initialTab: 'installed' },
           meta: { extensionTab: 'installed', pluginView: 'installed' }
-        },
-        {
-          name: 'ExtensionMarketplace',
-          path: 'plugins/market',
-          component: () => import('@/views/ExtensionPage.vue'),
-          props: { initialTab: 'market' },
-          meta: { extensionTab: 'installed', pluginView: 'market' }
         },
         {
           name: 'ExtensionMcp',
@@ -87,13 +79,6 @@ const MainRoutes = {
           props: { initialTab: 'installed' },
           meta: { extensionTab: 'installed', pluginView: 'installed' }
         },
-        {
-          name: 'ExtensionMarketDetails',
-          path: 'plugins/market/:pluginId',
-          component: () => import('@/views/ExtensionPage.vue'),
-          props: { initialTab: 'market' },
-          meta: { extensionTab: 'installed', pluginView: 'market' }
-        }
       ]
     },
     {
@@ -158,30 +143,11 @@ const MainRoutes = {
     {
       path: '/extension/:pluginId',
       redirect: (to: RouteLocationNormalized) => ({
-        name:
-          String(to.hash || '').replace(/^#/, '') === 'market'
-            ? 'ExtensionMarketDetails'
-            : EXTENSION_DETAILS_ROUTE_NAME,
+        name: EXTENSION_DETAILS_ROUTE_NAME,
         params: { pluginId: to.params.pluginId },
         query: to.query,
         hash: to.hash === '#plugin-components' ? to.hash : ''
       })
-    },
-    {
-      path: '/extension/market',
-      redirect: { name: 'ExtensionMarketplace' }
-    },
-    {
-      path: '/extension/market/:pluginId',
-      redirect: (to: RouteLocationNormalized) => ({
-        name: 'ExtensionMarketDetails',
-        params: { pluginId: to.params.pluginId },
-        query: to.query
-      })
-    },
-    {
-      path: '/extension-marketplace',
-      redirect: { name: 'ExtensionMarketplace' }
     },
     {
       name: 'Platforms',

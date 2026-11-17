@@ -55,7 +55,6 @@ import {
   type SessionRuleRequest,
   type UmoListRequest,
   type SuccessEnvelope,
-  type T2iTemplateRequest,
   type TotpSetupRequest,
   type TraceSettingsRequest,
   type UpdateAccountRequest,
@@ -1105,46 +1104,6 @@ export const mcpApi = {
   },
 };
 
-export const t2iApi = {
-  listTemplates() {
-    return typed<OpenConfig[]>(openApiV1.listT2iTemplates());
-  },
-  getTemplate(name: string) {
-    return typed<{ name: string; content: string }>(
-      openApiV1.getT2iTemplate({ path: { name } }),
-    );
-  },
-  createTemplate(payload: T2iTemplateRequest) {
-    return typed<OpenConfig>(
-      openApiV1.createT2iTemplate({ body: payload }),
-    );
-  },
-  updateTemplate(name: string, content: string) {
-    return typed<OpenConfig>(
-      openApiV1.updateT2iTemplate({
-        path: { name },
-        body: { content },
-      }),
-    );
-  },
-  deleteTemplate(name: string) {
-    return typed<OpenConfig>(
-      openApiV1.deleteT2iTemplate({ path: { name } }),
-    );
-  },
-  getActiveTemplate() {
-    return typed<{ active_template?: string }>(openApiV1.getActiveT2iTemplate());
-  },
-  setActiveTemplate(name: string) {
-    return typed<OpenConfig>(
-      openApiV1.setActiveT2iTemplate({ body: { name } }),
-    );
-  },
-  resetDefaultTemplate() {
-    return typed<OpenConfig>(openApiV1.resetDefaultT2iTemplate());
-  },
-};
-
 export const logApi = {
   history() {
     return typed<{ logs?: OpenConfig[] }>(openApiV1.getLogHistory());
@@ -1284,25 +1243,6 @@ export const pluginApi = {
       openApiV1.getPluginChangelogById({ query: { plugin_id: pluginId } }),
     );
   },
-  market(params?: {
-    page?: number;
-    page_size?: number;
-    category?: string;
-    sort?: 'recommended' | 'downloads' | 'updated' | 'name';
-    keyword?: string;
-    force_refresh?: boolean;
-    custom_registry?: string;
-  }) {
-    return typed<any>(openApiV1.listPluginMarket({ query: params }));
-  },
-  sources() {
-    return typed<any>(openApiV1.listPluginSources());
-  },
-  replaceSources(sources: OpenConfig[]) {
-    return typed<OpenConfig>(
-      openApiV1.replacePluginSources({ body: { sources: sources as any } }),
-    );
-  },
   async installUpload(formData: FormData) {
     // fetchWithAuth 也会补前缀，这里显式包一层以保持"直连 URL 一律 apiUrl"的一致读法。
     const response = await fetchWithAuth(apiUrl('/api/v1/plugins/install/upload'), {
@@ -1335,14 +1275,6 @@ export const pluginApi = {
   validateRepo(body: PluginValidateRepoRequest) {
     return typed<OpenConfig>(
       openApiV1.validatePluginRepo({ body }),
-    );
-  },
-  bindSource(pluginId: string, body: OpenConfig) {
-    return typed<OpenConfig>(
-      openApiV1.bindPluginSource({
-        path: { plugin_id: pluginId },
-        body: body as any,
-      }),
     );
   },
   page(pluginId: string, pageName: string) {

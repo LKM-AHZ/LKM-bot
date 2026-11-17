@@ -30,7 +30,6 @@ from .providers import router as providers_router
 from .sessions import router as sessions_router
 from .skills import router as skills_router
 from .stats import router as stats_router
-from .t2i import router as t2i_router
 from .tools import router as tools_router
 from .updates import router as updates_router
 
@@ -63,7 +62,6 @@ def build_api_router() -> APIRouter:
         stats_router,
         tools_router,
         platform_router,
-        t2i_router,
         personas_router,
         updates_router,
         open_api_router,

@@ -49,9 +49,6 @@
     <template v-else-if="itemMeta?._special === 'select_plugin_set'">
       <PluginSetSelector :model-value="modelValue" :selection-only="itemMeta?.selection_only" @update:model-value="emitUpdate" />
     </template>
-    <template v-else-if="itemMeta?._special === 't2i_template'">
-      <T2ITemplateEditor />
-    </template>
     <template v-else-if="itemMeta?._special === 'dashboard_totp_manager'">
       <DashboardTotpManager
         :model-value="Boolean(modelValue)"
@@ -277,7 +274,6 @@ import ProviderSelector from './ProviderSelector.vue'
 import PersonaSelector from './PersonaSelector.vue'
 import KnowledgeBaseSelector from './KnowledgeBaseSelector.vue'
 import PluginSetSelector from './PluginSetSelector.vue'
-import T2ITemplateEditor from './T2ITemplateEditor.vue'
 import DashboardTotpManager from './DashboardTotpManager.vue'
 import LocalPermissionMatrix from './LocalPermissionMatrix.vue'
 import { computed, ref } from 'vue'

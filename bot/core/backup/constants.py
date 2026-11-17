@@ -38,7 +38,6 @@ from bot.core.utils.bot_path import (
     get_bot_plugin_data_path,
     get_bot_plugin_path,
     get_bot_skills_path,
-    get_bot_t2i_templates_path,
     get_bot_temp_path,
     get_bot_webchat_path,
 )
@@ -96,7 +95,6 @@ def get_backup_directories() -> dict[str, str]:
         "plugins": get_bot_plugin_path(),  # 插件本体
         "plugin_data": get_bot_plugin_data_path(),  # 插件数据
         "config": get_bot_config_path(),  # 配置目录
-        "t2i_templates": get_bot_t2i_templates_path(),  # T2I 模板
         "webchat": get_bot_webchat_path(),  # WebChat 数据
         "temp": get_bot_temp_path(),  # 临时文件
         "skills": get_bot_skills_path(),  # Skills

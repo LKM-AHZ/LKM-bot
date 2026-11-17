@@ -3,7 +3,6 @@
   "subtitle": "管理和配置系统插件",
   "tabs": {
     "installedPlugins": "插件",
-    "market": "插件市场",
     "installedMcpServers": "MCP",
     "skills": "技能",
     "handlersOperation": "管理行为"
@@ -20,15 +19,10 @@
     }
   },
   "search": {
-    "placeholder": "搜索插件...",
-    "marketPlaceholder": "搜索市场插件..."
+    "placeholder": "搜索插件..."
   },
   "filters": {
     "all": "全部"
-  },
-  "views": {
-    "card": "卡片视图",
-    "list": "列表视图"
   },
   "buttons": {
     "showSystemPlugins": "显示系统插件",
@@ -59,9 +53,7 @@
     "refresh": "刷新",
     "updateAll": "更新全部插件",
     "pin": "置顶",
-    "unpin": "取消置顶",
-    "deleteSource": "删除源",
-    "reshuffle": "随机一发"
+    "unpin": "取消置顶"
   },
   "status": {
     "enabled": "启用",
@@ -88,14 +80,10 @@
   "table": {
     "headers": {
       "name": "名称",
-      "description": "描述",
       "version": "版本",
       "author": "作者",
       "status": "状态",
       "actions": "操作",
-      "stars": "Star数",
-      "lastUpdate": "最近更新",
-      "tags": "标签",
       "eventType": "行为类型",
       "specificType": "具体类型",
       "trigger": "触发方式"
@@ -132,66 +120,12 @@
       "author": "作者",
       "category": "类别",
       "stars": "Star数",
-      "updatedAt": "更新时间",
       "tags": "标签",
       "botVersion": "LKMBot 版本要求",
       "supportPlatforms": "支持平台",
       "authorWebsite": "作者网站",
       "repository": "仓库"
     }
-  },
-  "market": {
-    "recommended": "🥳 推荐",
-    "allPlugins": "📦 全部插件",
-    "category": "分类",
-    "categories": {
-      "all": "全部",
-      "ai_tools": "AI 增强",
-      "entertainment": "娱乐",
-      "productivity": "效率",
-      "integrations": "外部集成",
-      "utilities": "生活实用",
-      "other": "其他"
-    },
-    "showFullName": "完整名称",
-    "devDocs": "插件开发文档",
-    "submitRepo": "提交我的插件",
-    "customSource": "自定义插件源",
-    "source": "插件源",
-    "availableSources": "可用源",
-    "sourceManagement": "插件源管理",
-    "addSource": "添加插件源",
-    "sourceName": "源名称",
-    "sourceUrl": "源地址",
-    "defaultSource": "默认插件源",
-    "removeSource": "删除插件源",
-    "confirmRemoveSource": "确定要删除此插件源吗？",
-    "sourceAdded": "插件源添加成功",
-    "sourceRemoved": "插件源删除成功",
-    "sourceError": "操作失败",
-    "selectSource": "选择插件源",
-    "currentSource": "当前插件源",
-    "editSource": "编辑插件源",
-    "sourceUpdated": "插件源更新成功",
-    "defaultOfficialSource": "默认官方源",
-    "sourceExists": "该插件源已存在",
-    "sourceResolved": "插件源可用",
-    "installPlugin": "安装插件",
-    "randomPlugins": "🎲 随机插件",
-    "sourceSafetyWarning": "即使是默认插件源，我们也不能完全保证插件的稳定性和安全性，使用前请谨慎核查。"
-  },
-  "sort": {
-    "by": "排序方式",
-    "default": "默认排序",
-    "installTime": "最后修改时间",
-    "name": "名称",
-    "stars": "Star数",
-    "downloads": "下载量",
-    "author": "作者名",
-    "updated": "更新时间",
-    "updateStatus": "更新状态",
-    "ascending": "升序",
-    "descending": "降序"
   },
   "tags": {
     "danger": "危险"
@@ -226,9 +160,6 @@
       "title": "安装插件",
       "fromFile": "从文件安装",
       "fromUrl": "从链接安装",
-      "supportPlatformsCount": "支持 {count} 个平台",
-      "sectionTitle": "安装",
-      "downloadSource": "将从以下位置安装插件包体：",
       "repositorySecurityWarning": "LKMBot 不能保证从代码仓库下载的插件的安全性。请确认你信任该插件来源后再安装。"
     },
     "update": {
@@ -237,37 +168,16 @@
       "downloadSource": "将从以下位置安装更新包体：",
       "confirm": "确认更新"
     },
-    "danger_warning": {
-      "title": "警告",
-      "message": "该插件可能包含不安全的代码或功能，可能导致系统异常或数据损失等。请确认是否继续安装？",
-      "confirm": "继续",
-      "cancel": "取消"
-    },
     "versionSupport": {
       "title": "版本兼容性警告",
       "message": "该插件声明的 LKMBot 版本范围与当前版本不匹配。你可以无视警告继续安装，但可能无法正常运行。",
       "confirm": "无视警告，继续安装",
       "cancel": "取消安装"
     },
-    "forceUpdate": {
-      "title": "未检测到新版本",
-      "message": "当前插件未检测到新版本，是否强制重新安装？这将从远程仓库拉取最新代码。",
-      "confirm": "强制更新"
-    },
     "updateAllConfirm": {
       "title": "确认更新全部插件",
       "message": "确定要更新全部 {count} 个插件吗？此操作可能需要一些时间。",
       "confirm": "确认更新"
-    },
-    "sourceBinding": {
-      "title": "更换插件源",
-      "selectTitle": "选择插件安装源",
-      "noCandidates": "未在已配置的插件源中找到匹配记录，且当前插件缺少可用仓库地址。",
-      "repoOption": "直接使用仓库地址",
-      "repoOptionId": "通过 repo 重新安装",
-      "installDestination": "安装目的地",
-      "confirm": "使用该插件源",
-      "confirmAndContinue": "使用并继续"
     }
   },
   "messages": {
@@ -286,7 +196,6 @@
     "installing": "正在从文件安装插件",
     "installingFromUrl": "正在从链接安装插件...",
     "installFailed": "安装插件失败:",
-    "getMarketDataFailed": "获取插件市场数据失败:",
     "hasUpdate": "有新版本:",
     "confirmDelete": "确定要删除插件吗？",
     "fillUrlOrFile": "请填写插件链接或上传插件文件",
@@ -296,20 +205,11 @@
     "updateAllFailed": "有 {failed}/{total} 个插件更新失败:",
     "noUpdatesAvailable": "当前没有可更新的插件",
     "updateDisabled": "该插件缺少可用的安装源或仓库地址，无法更新或重新安装",
-    "changeSourceDisabled": "当前插件缺少可用仓库地址，无法更换插件源",
-    "fillSourceUrl": "请填写插件源地址",
-    "fillSourceName": "请填写插件源名称",
-    "resolveSourceFirst": "请先解析并校验插件源地址",
-    "sourceResolveFailed": "插件源解析失败",
-    "invalidUrl": "请输入有效的URL地址",
     "invalidRepositoryUrl": "请输入有效的 Git 仓库链接",
-    "enterJsonUrl": "请输入返回插件列表JSON数据的URL地址",
     "pluginNotFound": "未找到该插件",
     "pluginDisabled": "该插件当前已关闭，请先打开后再访问视图",
     "pluginViewNotFound": "未找到该插件可视化视图",
     "pluginViewLoadFailed": "加载插件可视化视图失败",
-    "missingMarketPluginId": "缺少合法的插件标识，无法从该插件市场源安装",
-    "sourceBindSuccess": "插件源已更新",
     "validatingPlugin": "正在校验插件...",
     "pluginValidateSuccess": "插件校验通过",
     "pluginValidateFailed": "插件校验失败"
@@ -452,8 +352,7 @@
       "togglePlugin": "插件",
       "viewHandlers": "查看行为",
       "updateTo": "更新到",
-      "reinstall": "重新安装",
-      "changeSource": "更换插件源"
+      "reinstall": "重新安装"
     },
     "status": {
       "hasUpdate": "有新版本可用",

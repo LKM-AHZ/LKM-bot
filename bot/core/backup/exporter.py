@@ -49,7 +49,6 @@ class BotExporter:
     - 插件目录（data/plugins）
     - 插件数据目录（data/plugin_data）
     - 配置目录（data/config）
-    - T2I 模板目录（data/t2i_templates）
     - WebChat 数据目录（data/webchat）
     - 临时文件目录（data/temp）
     """

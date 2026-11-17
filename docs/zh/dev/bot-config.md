@@ -111,10 +111,6 @@ LKMBot 默认配置如下：
     "admins_id": ["bot"],
     "t2i": False,
     "t2i_word_threshold": 150,
-    "t2i_strategy": "remote",
-    "t2i_endpoint": "",
-    "t2i_use_file_service": False,
-    "t2i_active_template": "base",
     "http_proxy": "",
     "no_proxy": ["localhost", "127.0.0.1", "::1"],
     "dashboard": {
@@ -489,21 +485,6 @@ Added in `v4.3.5`
 ### `t2i_word_threshold`
 
 文本转图像的字数阈值。默认为 `150`。当用户发送的消息超过此字数时，机器人会将消息渲染成图片发送给用户。
-
-### `t2i_strategy`
-
-文本转图像的渲染策略。可选值为 `local` 和 `remote`。默认为 `remote`。
-
-- `local`: 使用 LKMBot 本地的文本转图像服务进行渲染。效果较差，但不依赖外部服务。
-- `remote`: 使用远程的文本转图像服务进行渲染。默认使用 LKMBot 官方提供的服务，效果较好。
-
-### `t2i_endpoint`
-
-LKMBot API 的地址。用于渲染 Markdown 图片。当 `t2i_strategy` 为 `remote` 时生效。默认为空，表示使用 LKMBot 官方提供的服务。
-
-### `t2i_use_file_service`
-
-是否启用文件服务。默认为 `false`。启用后，机器人会将渲染的图片以 HTTP 文件外链的形式提供给消息平台。此配置项依赖于 `callback_api_base` 的配置。
 
 ### `http_proxy`
 

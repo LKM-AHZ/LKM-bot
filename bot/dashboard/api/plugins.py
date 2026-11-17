@@ -26,8 +26,6 @@ from bot.dashboard.schemas import (
     PluginEnabledRequest,
     PluginInstallRequest,
     PluginLogLevelPayload,
-    PluginSourceBindRequest,
-    PluginSourceRequest,
     PluginUninstallRequest,
     PluginUpdateRequest,
     PluginValidateRepoRequest,
@@ -522,15 +520,6 @@ async def install_plugin_from_repository(
         "proxy": body.get("proxy"),
         "ignore_version_check": body.get("ignore_version_check", False),
         "repository_transport": repository_transport,
-        **{
-            key: body[key]
-            for key in (
-                "install_method",
-                "registry_url",
-                "market_plugin_id",
-            )
-            if key in body
-        },
     }
     if body.get("download_url"):
         install_payload["download_url"] = body["download_url"]
@@ -556,15 +545,6 @@ async def install_plugin_from_url(
                 "download_url": download_url,
                 "proxy": body.get("proxy"),
                 "ignore_version_check": body.get("ignore_version_check", False),
-                **{
-                    key: body[key]
-                    for key in (
-                        "install_method",
-                        "registry_url",
-                        "market_plugin_id",
-                    )
-                    if key in body
-                },
             }
         ),
         log_label="/api/plugin/install",
@@ -581,84 +561,6 @@ async def install_plugin_from_upload(
         request,
         service,
         log_label="/api/plugin/install-upload",
-    )
-
-
-@router.get("/plugins/market")
-async def list_plugin_market(
-    request: Request,
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    return await _run_service(
-        service.get_online_plugins_from_dashboard_query(
-            custom_registry=request.query_params.get("custom_registry"),
-            force_refresh=request.query_params.get("force_refresh", "false"),
-        ),
-        log_label="/api/plugin/market_list",
-    )
-
-
-@router.get("/plugins/market/categories")
-async def list_plugin_market_categories(
-    _auth: AuthContext = Depends(require_plugin_scope),
-):
-    return ok({"categories": []})
-
-
-@router.get("/plugin-sources")
-async def list_plugin_sources(
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    return ok({"sources": await service.get_custom_sources()})
-
-
-@router.post("/plugin-sources")
-async def create_plugin_source(
-    payload: PluginSourceRequest,
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    return ok(
-        {"sources": await service.create_custom_source(_model_dict(payload))},
-        message="保存成功",
-    )
-
-
-@router.put("/plugin-sources")
-async def replace_plugin_sources(
-    payload: PluginSourceRequest,
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    return ok(
-        {"sources": await service.replace_custom_sources(_model_dict(payload))},
-        message="保存成功",
-    )
-
-
-@router.delete("/plugin-sources/by-id")
-async def delete_plugin_source_by_id(
-    source_id: str = Query(...),
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    return ok(
-        {"sources": await service.delete_custom_source(source_id)},
-        message="保存成功",
-    )
-
-
-@router.delete("/plugin-sources/{source_id}")
-async def delete_plugin_source(
-    source_id: str,
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    return ok(
-        {"sources": await service.delete_custom_source(source_id)},
-        message="保存成功",
     )
 
 
@@ -1095,20 +997,6 @@ async def reload_plugin(
     return await _run_service(
         service.reload_plugin({"name": plugin_id}),
         log_label="/api/plugin/reload",
-    )
-
-
-@router.post("/plugins/{plugin_id}/source")
-async def bind_plugin_source(
-    plugin_id: str,
-    payload: PluginSourceBindRequest,
-    _auth: AuthContext = Depends(require_plugin_scope),
-    service: PluginService = Depends(get_service),
-):
-    body = _model_dict(payload)
-    return await _run_service(
-        service.bind_plugin_market_source({"name": plugin_id, **body}),
-        log_label="/api/plugin/source",
     )
 
 

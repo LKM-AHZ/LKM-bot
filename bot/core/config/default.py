@@ -243,10 +243,6 @@ DEFAULT_CONFIG = {
     "admins_id": ["lkmbot"],
     "t2i": False,
     "t2i_word_threshold": 150,
-    "t2i_strategy": "remote",
-    "t2i_endpoint": "",
-    "t2i_use_file_service": False,
-    "t2i_active_template": "base",
     "http_proxy": "",
     "no_proxy": ["localhost", "127.0.0.1", "::1", "10.*", "192.168.*"],
     "dashboard": {
@@ -3371,16 +3367,6 @@ CONFIG_METADATA_2 = {
             "trace_db_path": {"type": "string"},
             "trace_db_max_mb": {"type": "int"},
             "trace_retention_days": {"type": "int"},
-            "t2i_strategy": {
-                "type": "string",
-                "options": ["remote", "local"],
-            },
-            "t2i_endpoint": {
-                "type": "string",
-            },
-            "t2i_use_file_service": {
-                "type": "bool",
-            },
             "pip_install_arg": {
                 "type": "string",
             },
@@ -4916,40 +4902,6 @@ CONFIG_METADATA_3 = {
                         "condition": {
                             "t2i": True,
                         },
-                    },
-                    "t2i_strategy": {
-                        "description": "文本转图像策略",
-                        "type": "string",
-                        "hint": "文本转图像策略。`remote` 为使用远程基于 HTML 的渲染服务，`local` 为使用 PIL 本地渲染。当使用 local 时，将 ttf 字体命名为 'font.ttf' 放在 data/ 目录下可自定义字体。",
-                        "options": ["remote", "local"],
-                        "condition": {
-                            "t2i": True,
-                        },
-                    },
-                    "t2i_endpoint": {
-                        "description": "文本转图像服务 API 地址",
-                        "type": "string",
-                        "hint": "为空时使用 LKMBot API 服务",
-                        "condition": {
-                            "t2i": True,
-                            "t2i_strategy": "remote",
-                        },
-                    },
-                    "t2i_template": {
-                        "description": "文本转图像自定义模版",
-                        "type": "bool",
-                        "hint": "启用后可自定义 HTML 模板用于文转图渲染。",
-                        "condition": {
-                            "t2i": True,
-                            "t2i_strategy": "remote",
-                        },
-                        "_special": "t2i_template",
-                    },
-                    "t2i_active_template": {
-                        "description": "当前应用的文转图渲染模板",
-                        "type": "string",
-                        "hint": "此处的值由文转图模板管理页面进行维护。",
-                        "invisible": True,
                     },
                 },
             },

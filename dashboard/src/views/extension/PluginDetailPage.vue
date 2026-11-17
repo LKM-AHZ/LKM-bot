@@ -7,12 +7,10 @@ import {
   ref,
   watch,
 } from "vue";
-import axios from "axios";
 import DOMPurify from "dompurify";
 import MarkdownIt from "markdown-it-ts";
 import defaultPluginIcon from "/favicon.svg";
 import { pluginApi } from "@/api/v1";
-import { useI18n } from "@/i18n/composables";
 import { usePluginI18n } from "@/utils/pluginI18n";
 import PluginPlatformChip from "@/components/shared/PluginPlatformChip.vue";
 
@@ -21,14 +19,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  marketPlugin: {
-    type: Object,
-    default: null,
-  },
-  sourceTab: {
-    type: String,
-    default: "installed",
-  },
   state: {
     type: Object,
     required: true,
@@ -36,7 +26,6 @@ const props = defineProps({
 });
 
 const { tm, router } = props.state;
-const { locale } = useI18n();
 const {
   pluginName,
   pluginDesc: resolvePluginDesc,
@@ -104,29 +93,16 @@ const pluginDetail = ref(null);
 
 const pluginData = computed(() => pluginDetail.value || props.plugin);
 const displayName = computed(() => pluginName(pluginData.value));
-const detailSourceTab = computed(() =>
-  props.sourceTab === "market" ? "market" : "installed",
-);
-const isMarketDetail = computed(() => detailSourceTab.value === "market");
-const detailParentTitle = computed(() =>
-  isMarketDetail.value
-    ? tm("tabs.market")
-    : tm("titles.installedBotPlugins"),
-);
+const detailParentTitle = computed(() => tm("titles.installedBotPlugins"));
 
 const pluginDesc = computed(() => {
   const plugin = pluginData.value || {};
-  const desc =
-    plugin.desc ||
-    plugin.description ||
-    props.marketPlugin?.desc ||
-    props.marketPlugin?.description ||
-    "";
+  const desc = plugin.desc || plugin.description || "";
   return String(resolvePluginDesc(plugin, desc) || "").trim();
 });
 
 const logoSrc = computed(() => {
-  const logo = pluginData.value?.logo || props.marketPlugin?.logo || "";
+  const logo = pluginData.value?.logo || "";
   if (logoLoadFailed.value) {
     return defaultPluginIcon;
   }
@@ -137,14 +113,7 @@ const logoSrc = computed(() => {
 
 const authorDisplay = computed(() => {
   const plugin = pluginData.value || {};
-  const marketPlugin = props.marketPlugin || {};
-  const author =
-    plugin.author ||
-    marketPlugin.author ||
-    plugin.author_name ||
-    marketPlugin.author_name ||
-    plugin.owner ||
-    marketPlugin.owner;
+  const author = plugin.author || plugin.author_name || plugin.owner;
 
   if (Array.isArray(author)) {
     return author.join(", ");
@@ -155,34 +124,16 @@ const authorDisplay = computed(() => {
   return typeof author === "string" ? author.trim() : "";
 });
 
-const categoryDisplay = computed(() => {
-  const rawCategory =
-    pluginData.value?.category || props.marketPlugin?.category || "";
-  const category = String(rawCategory || "").trim();
-  if (!category) return "";
-
-  const normalized = category.toLowerCase().replace(/\s+/g, "_");
-  const label = tm(`market.categories.${normalized}`);
-  return label === `market.categories.${normalized}` ? category : label;
-});
+const categoryDisplay = computed(() =>
+  String(pluginData.value?.category || "").trim(),
+);
 
 const authorWebsite = computed(() => {
   const plugin = pluginData.value || {};
-  const marketPlugin = props.marketPlugin || {};
-  return (
-    plugin.social_link ||
-    marketPlugin.social_link ||
-    plugin.author_url ||
-    marketPlugin.author_url ||
-    plugin.homepage ||
-    marketPlugin.homepage ||
-    ""
-  );
+  return plugin.social_link || plugin.author_url || plugin.homepage || "";
 });
 
-const repoUrl = computed(
-  () => pluginData.value?.repo || props.marketPlugin?.repo || "",
-);
+const repoUrl = computed(() => pluginData.value?.repo || "");
 
 const firstPresentValue = (...values) =>
   values.find(
@@ -194,68 +145,28 @@ const firstPresentValue = (...values) =>
   );
 
 const versionDisplay = computed(() =>
-  String(
-    firstPresentValue(pluginData.value?.version, props.marketPlugin?.version) ||
-      "",
-  ).trim(),
+  String(firstPresentValue(pluginData.value?.version) || "").trim(),
 );
 
 const starsDisplay = computed(() => {
-  const value = firstPresentValue(
-    pluginData.value?.stars,
-    props.marketPlugin?.stars,
-  );
+  const value = firstPresentValue(pluginData.value?.stars);
   return value === undefined ? "" : String(value);
 });
 
 const tagsDisplay = computed(() => {
-  const tags = firstPresentValue(
-    pluginData.value?.tags,
-    props.marketPlugin?.tags,
-  );
+  const tags = firstPresentValue(pluginData.value?.tags);
   if (!Array.isArray(tags)) return [];
   return tags.filter((tag) => typeof tag === "string" && tag.trim().length > 0);
 });
 
 const botVersionDisplay = computed(() =>
-  String(
-    firstPresentValue(
-      pluginData.value?.astrbot_version,
-      props.marketPlugin?.astrbot_version,
-    ) || "",
-  ).trim(),
+  String(firstPresentValue(pluginData.value?.astrbot_version) || "").trim(),
 );
 
 const supportPlatformsDisplay = computed(() => {
-  const platforms = firstPresentValue(
-    pluginData.value?.support_platforms,
-    props.marketPlugin?.support_platforms,
-  );
+  const platforms = firstPresentValue(pluginData.value?.support_platforms);
   if (!Array.isArray(platforms)) return [];
   return platforms.filter((platform) => typeof platform === "string");
-});
-
-const updatedAtDisplay = computed(() => {
-  if (!isMarketDetail.value) return "";
-
-  const value = firstPresentValue(
-    pluginData.value?.updated_at,
-    props.marketPlugin?.updated_at,
-  );
-  if (!value) return "";
-
-  const updatedAt = new Date(value);
-  if (Number.isNaN(updatedAt.getTime())) return "";
-
-  return new Intl.DateTimeFormat(locale.value, {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(updatedAt);
 });
 
 const infoRows = computed(() => {
@@ -274,11 +185,6 @@ const infoRows = computed(() => {
     {
       label: tm("detail.info.stars"),
       value: starsDisplay.value,
-      optional: true,
-    },
-    {
-      label: tm("detail.info.updatedAt"),
-      value: updatedAtDisplay.value,
       optional: true,
     },
     {
@@ -429,11 +335,7 @@ const normalizeComponentList = (source) => {
   }));
 };
 
-const components = computed(() => {
-  const pluginComponents = normalizeComponentList(pluginData.value);
-  if (pluginComponents.length > 0) return pluginComponents;
-  return normalizeComponentList(props.marketPlugin);
-});
+const components = computed(() => normalizeComponentList(pluginData.value));
 
 const groupedComponentSections = computed(() => {
   const groups = new Map(componentGroupOrder.map((key) => [key, []]));
@@ -560,12 +462,7 @@ const openExternal = (url) => {
 };
 
 const goBack = () => {
-  router.push({
-    name:
-      detailSourceTab.value === "market"
-        ? "ExtensionMarketplace"
-        : "Extensions",
-  });
+  router.push({ name: "Extensions" });
 };
 
 const renderMarkdown = (source) => {
@@ -665,7 +562,7 @@ const scrollToHashTarget = async () => {
 
 const fetchPluginDetail = async () => {
   pluginDetail.value = null;
-  if (isMarketDetail.value || !props.plugin?.name) return;
+  if (!props.plugin?.name) return;
 
   try {
     const res = await pluginApi.get(props.plugin.name);
@@ -678,20 +575,6 @@ const fetchPluginDetail = async () => {
   }
 };
 
-const getDocumentUrl = (fieldName) => {
-  const plugin = pluginData.value || {};
-  const marketPlugin = props.marketPlugin || {};
-  return String(plugin[fieldName] || marketPlugin[fieldName] || "").trim();
-};
-
-const fetchRemoteMarkdown = async (url) => {
-  const res = await axios.get(url, {
-    responseType: "text",
-    transformResponse: [(data) => data],
-  });
-  return typeof res.data === "string" ? res.data : String(res.data || "");
-};
-
 const fetchReadme = async () => {
   const plugin = pluginData.value || {};
   if (!plugin?.name) return;
@@ -701,39 +584,8 @@ const fetchReadme = async () => {
   readmeEmpty.value = false;
   renderedReadme.value = "";
 
-  if (isMarketDetail.value) {
-    const readmeUrl = getDocumentUrl("readme_url");
-    if (!readmeUrl) {
-      readmeEmpty.value = true;
-      readmeLoading.value = false;
-      return;
-    }
-
-    try {
-      const content = await fetchRemoteMarkdown(readmeUrl);
-      if (!content.trim()) {
-        readmeEmpty.value = true;
-        return;
-      }
-      renderedReadme.value = renderMarkdown(content);
-    } catch (err) {
-      readmeError.value = err?.message || String(err);
-    } finally {
-      readmeLoading.value = false;
-    }
-    return;
-  }
-
   const inlineReadme =
-    plugin.readme ||
-    plugin.README ||
-    plugin.readme_content ||
-    plugin.docs ||
-    props.marketPlugin?.readme ||
-    props.marketPlugin?.README ||
-    props.marketPlugin?.readme_content ||
-    props.marketPlugin?.docs ||
-    "";
+    plugin.readme || plugin.README || plugin.readme_content || plugin.docs || "";
 
   if (inlineReadme) {
     renderedReadme.value = renderMarkdown(inlineReadme);
@@ -772,29 +624,6 @@ const fetchChangelog = async () => {
   changelogEmpty.value = false;
   renderedChangelog.value = "";
 
-  if (isMarketDetail.value) {
-    const changelogUrl = getDocumentUrl("changelog_url");
-    if (!changelogUrl) {
-      changelogEmpty.value = true;
-      changelogLoading.value = false;
-      return;
-    }
-
-    try {
-      const content = await fetchRemoteMarkdown(changelogUrl);
-      if (!content.trim()) {
-        changelogEmpty.value = true;
-        return;
-      }
-      renderedChangelog.value = renderMarkdown(content);
-    } catch (err) {
-      changelogError.value = err?.message || String(err);
-    } finally {
-      changelogLoading.value = false;
-    }
-    return;
-  }
-
   try {
     const res = await pluginApi.changelog(plugin.name);
 
@@ -817,21 +646,8 @@ const fetchChangelog = async () => {
   }
 };
 
-const showDocsSection = computed(
-  () => !isMarketDetail.value || !!getDocumentUrl("readme_url"),
-);
-
-const showChangelogSection = computed(
-  () => !isMarketDetail.value || !!getDocumentUrl("changelog_url"),
-);
-
 watch(
-  () => [
-    props.plugin?.name,
-    props.sourceTab,
-    props.marketPlugin?.readme_url,
-    props.marketPlugin?.changelog_url,
-  ],
+  () => [props.plugin?.name],
   async () => {
     logoLoadFailed.value = false;
     await fetchPluginDetail();
@@ -1084,7 +900,7 @@ onBeforeUnmount(() => {
       </v-card>
     </section>
 
-    <section v-if="showDocsSection" class="detail-section">
+    <section class="detail-section">
       <h3 class="detail-section__title">{{ tm("detail.docsTitle") }}</h3>
       <v-card class="rounded-lg docs-card" variant="outlined">
         <v-card-text>
@@ -1107,7 +923,7 @@ onBeforeUnmount(() => {
       </v-card>
     </section>
 
-    <section v-if="showChangelogSection" class="detail-section">
+    <section class="detail-section">
       <h3 class="detail-section__title">
         {{ tm("detail.changelogTitle") }}
       </h3>

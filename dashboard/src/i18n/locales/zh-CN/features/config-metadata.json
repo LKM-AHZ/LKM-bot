@@ -1380,22 +1380,6 @@
       },
       "t2i_word_threshold": {
         "description": "文本转图像字数阈值"
-      },
-      "t2i_strategy": {
-        "description": "文本转图像策略",
-        "hint": "文本转图像策略。`remote` 为使用远程基于 HTML 的渲染服务,`local` 为使用 PIL 本地渲染。当使用 local 时,将 ttf 字体命名为 'font.ttf' 放在 data/ 目录下可自定义字体。"
-      },
-      "t2i_endpoint": {
-        "description": "文本转图像服务 API 地址",
-        "hint": "为空时不会调用任何服务：远程文转图需要在此填写你自建或信任的渲染服务地址（形如 https://your-host/text2img），或把「文本转图像策略」改为 local 使用本地渲染。"
-      },
-      "t2i_template": {
-        "description": "文本转图像自定义模版",
-        "hint": "启用后可自定义 HTML 模板用于文转图渲染。"
-      },
-      "t2i_active_template": {
-        "description": "当前应用的文转图渲染模板",
-        "hint": "此处的值由文转图模板管理页面进行维护。"
       }
     }
   },

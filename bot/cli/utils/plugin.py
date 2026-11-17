@@ -14,9 +14,6 @@ import yaml
 
 class PluginStatus(str, Enum):
     INSTALLED = "installed"
-    NEED_UPDATE = "needs-update"
-    NOT_INSTALLED = "not-installed"
-    NOT_PUBLISHED = "unpublished"
 
 
 LOCAL_PLUGIN_COPY_IGNORE = shutil.ignore_patterns(
@@ -117,18 +114,15 @@ def load_yaml_metadata(plugin_dir: Path) -> dict:
 
 
 def build_plug_list(plugins_dir: Path) -> list:
-    """Build plugin list containing local and online plugin information
+    """Build a list of locally installed plugins.
 
     Args:
         plugins_dir (Path): Plugin directory path
 
     Returns:
-        list: List of dicts containing plugin information
+        list: List of dicts containing local plugin information
 
     """
-    from bot.core.utils.version_comparator import VersionComparator
-
-    # Get local plugin info
     result: list[dict[str, Any]] = []
     if plugins_dir.is_dir():
         for plugin_dir in plugins_dir.iterdir():
@@ -156,48 +150,6 @@ def build_plug_list(plugins_dir: Path) -> list:
                         "local_path": str(plugin_dir),
                     },
                 )
-
-    # Get online plugin list
-    online_plugins_dict: dict[str, dict[str, Any]] = {}
-    try:
-        with httpx.Client() as client:
-            resp = client.get(
-                "https://github.com/AstrBotDevs/AstrBot_Plugins_Collection/raw/refs/heads/main/plugin_cache_original.json"
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            for plugin_id, plugin_info in data.items():
-                online_plugins_dict[str(plugin_id)] = {
-                    "name": str(plugin_id),
-                    "desc": str(plugin_info.get("desc", "")),
-                    "version": str(plugin_info.get("version", "")),
-                    "author": str(plugin_info.get("author", "")),
-                    "repo": str(plugin_info.get("repo", "")),
-                    "status": PluginStatus.NOT_INSTALLED,
-                    "local_path": None,
-                }
-    except Exception as e:
-        click.echo(f"Failed to get online plugin list: {e}", err=True)
-
-    # Compare with online plugins and update status
-    for local_plugin in result:
-        online_plugin = online_plugins_dict.pop(local_plugin["name"], None)
-        if online_plugin is None:
-            # Local plugin is not published online
-            local_plugin["status"] = PluginStatus.NOT_PUBLISHED
-            continue
-
-        if (
-            VersionComparator.compare_version(
-                local_plugin["version"],
-                online_plugin["version"],
-            )
-            < 0
-        ):
-            local_plugin["status"] = PluginStatus.NEED_UPDATE
-
-    # Add uninstalled online plugins
-    result.extend(online_plugins_dict.values())
 
     return result
 

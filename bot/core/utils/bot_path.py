@@ -61,11 +61,6 @@ def get_bot_plugin_data_path() -> str:
     return os.path.realpath(os.path.join(get_bot_data_path(), "plugin_data"))
 
 
-def get_bot_t2i_templates_path() -> str:
-    """Return the LKMBot T2I templates directory path."""
-    return os.path.realpath(os.path.join(get_bot_data_path(), "t2i_templates"))
-
-
 def get_bot_webchat_path() -> str:
     """Return the LKMBot WebChat data directory path."""
     return os.path.realpath(os.path.join(get_bot_data_path(), "webchat"))

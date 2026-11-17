@@ -63,11 +63,11 @@ _SPEED_SAMPLE_MAX_BYTES = 4 * 1024 * 1024
 # it can grow without bound on a misbehaving or hostile mirror.
 _PACKAGE_PAGE_MAX_BYTES = 8 * 1024 * 1024
 _PIP_USER_AGENT = "pip/24.3.1"
-# A real repository asset the dashboard downloads (the t2i runtime bundle),
-# large enough to produce a meaningful throughput number.
+# A real repository asset the dashboard downloads, large enough to produce a
+# meaningful throughput number without depending on the upstream project.
 _GITHUB_SPEED_TARGET_URL = (
-    "https://github.com/AstrBotDevs/AstrBot/raw/refs/heads/master/"
-    "bot/core/utils/t2i/template/shiki_runtime.iife.js"
+    "https://github.com/Alma1314/LKM-bot/raw/refs/heads/master/"
+    "dashboard/pnpm-lock.yaml"
 )
 
 

@@ -13,10 +13,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  marketMode: {
-    type: Boolean,
-    default: false,
-  },
   highlight: {
     type: Boolean,
     default: false,
@@ -39,7 +35,6 @@ const emit = defineEmits([
   "view-changelog",
   "toggle-pin",
   "open-view",
-  "change-source",
 ]);
 
 const attrs = useAttrs();
@@ -66,9 +61,7 @@ const hasKnownInstallSource = computed(() => {
     .trim()
     .toLowerCase();
   return Boolean(
-    source &&
-      source.implicit !== true &&
-      ["market", "repository"].includes(installMethod),
+    source && source.implicit !== true && installMethod === "repository",
   );
 });
 
@@ -79,14 +72,9 @@ const hasUsableRepo = computed(() => {
 
 const canUpdateExtension = computed(() => {
   return (
-    props.marketMode ||
-    (!props.extension?.reserved &&
-      (hasKnownInstallSource.value || hasUsableRepo.value))
+    !props.extension?.reserved &&
+    (hasKnownInstallSource.value || hasUsableRepo.value)
   );
-});
-
-const canChangePluginSource = computed(() => {
-  return hasUsableRepo.value;
 });
 
 const showUninstallDialog = ref(false);
@@ -143,11 +131,6 @@ const reloadExtension = () => {
   emit("reload", props.extension);
 };
 
-const changePluginSource = () => {
-  if (!canChangePluginSource.value) return;
-  emit("change-source", props.extension);
-};
-
 const uninstallExtension = async () => {
   showUninstallDialog.value = true;
 };
@@ -195,13 +178,7 @@ const openView = () => {
     :style="{
       position: 'relative',
       backgroundColor:
-        useCustomizerStore().uiTheme === 'PurpleTheme'
-          ? marketMode
-            ? '#f8f0dd'
-            : '#ffffff'
-          : marketMode
-          ? '#3a3425'
-          : '#282833',
+        useCustomizerStore().uiTheme === 'PurpleTheme' ? '#ffffff' : '#282833',
       color:
         useCustomizerStore().uiTheme === 'PurpleTheme'
           ? '#000000dd'
@@ -253,7 +230,6 @@ const openView = () => {
                 {{ tm("status.system") }}
               </v-chip>
               <v-chip
-                v-if="!marketMode"
                 :color="extension.activated ? 'success' : 'default'"
                 :prepend-icon="
                   extension.activated
@@ -270,10 +246,7 @@ const openView = () => {
                     : tm("status.stopped")
                 }}
               </v-chip>
-              <v-tooltip
-                location="top"
-                v-if="extension?.has_update && !marketMode"
-              >
+              <v-tooltip location="top" v-if="extension?.has_update">
                 <template v-slot:activator="{ props: tooltipProps }">
                   <v-icon
                     v-bind="tooltipProps"
@@ -292,37 +265,33 @@ const openView = () => {
               </v-tooltip>
             </p>
 
-            <template v-if="!marketMode">
-              <v-tooltip location="left">
-                <template v-slot:activator="{ props: tooltipProps }">
-                  <div class="extension-switch-wrap" @click.stop>
-                    <div
-                      v-bind="tooltipProps"
-                      style="display: inline-flex; align-items: center"
-                    >
-                      <v-switch
-                        :model-value="extension.activated"
-                        :aria-label="
-                          extension.activated
-                            ? tm('buttons.stop')
-                            : tm('buttons.load')
-                        "
-                        color="success"
-                        density="compact"
-                        hide-details
-                        inset
-                        @update:model-value="toggleActivation"
-                      ></v-switch>
-                    </div>
+            <v-tooltip location="left">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <div class="extension-switch-wrap" @click.stop>
+                  <div
+                    v-bind="tooltipProps"
+                    style="display: inline-flex; align-items: center"
+                  >
+                    <v-switch
+                      :model-value="extension.activated"
+                      :aria-label="
+                        extension.activated
+                          ? tm('buttons.stop')
+                          : tm('buttons.load')
+                      "
+                      color="success"
+                      density="compact"
+                      hide-details
+                      inset
+                      @update:model-value="toggleActivation"
+                    ></v-switch>
                   </div>
-                </template>
-                <span>{{
-                  extension.activated
-                    ? tm("buttons.stop")
-                    : tm("buttons.load")
-                }}</span>
-              </v-tooltip>
-            </template>
+                </div>
+              </template>
+              <span>{{
+                extension.activated ? tm("buttons.stop") : tm("buttons.load")
+              }}</span>
+            </v-tooltip>
           </div>
 
           <div class="extension-chip-group d-flex flex-wrap">
@@ -369,7 +338,6 @@ const openView = () => {
     </v-card-text>
 
     <v-card-actions class="extension-actions">
-      <template v-if="!marketMode">
         <v-spacer></v-spacer>
         <v-tooltip location="top">
           <template v-slot:activator="{ props: pinTooltipProps }">
@@ -489,27 +457,6 @@ const openView = () => {
             </template>
           </v-tooltip>
 
-          <v-tooltip
-            location="left"
-            :disabled="canChangePluginSource"
-            :text="tm('messages.changeSourceDisabled')"
-          >
-            <template v-slot:activator="{ props: tooltipProps }">
-              <div v-bind="tooltipProps">
-                <v-list-item
-                  class="styled-menu-item"
-                  prepend-icon="mdi-source-branch"
-                  :disabled="!canChangePluginSource"
-                  @click.stop="changePluginSource"
-                >
-                  <v-list-item-title>{{
-                    tm("card.actions.changeSource")
-                  }}</v-list-item-title>
-                </v-list-item>
-              </div>
-            </template>
-          </v-tooltip>
-
           <v-list-item
             class="styled-menu-item"
             prepend-icon="mdi-delete"
@@ -520,12 +467,6 @@ const openView = () => {
             }}</v-list-item-title>
           </v-list-item>
         </StyledMenu>
-      </template>
-      <template v-else>
-        <v-btn color="primary" size="small" @click.stop="viewReadme">
-          {{ tm("buttons.viewDocs") }}
-        </v-btn>
-      </template>
     </v-card-actions>
   </v-card>
 

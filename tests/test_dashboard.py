@@ -10,7 +10,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from urllib.parse import parse_qs, urlsplit
 
 import jwt
@@ -2494,7 +2494,7 @@ async def test_plugins(
     core_lifecycle_td: BotCoreLifecycle,
     monkeypatch,
 ):
-    """Test plugin endpoints with mocked marketplace and repository operations."""
+    """Test plugin endpoints with mocked repository operations."""
     test_client = app.test_client()
 
     # 已经安装的插件
@@ -2510,27 +2510,6 @@ async def test_plugins(
             continue
         assert isinstance(installed_at, str)
         datetime.fromisoformat(installed_at)
-
-    # Keep marketplace requests independent of external services and local caches.
-    market_plugins = {
-        "test/market-plugin": {
-            "name": "market-plugin",
-            "repo": "https://github.com/test/market-plugin",
-        }
-    }
-    get_online_plugins = AsyncMock(return_value=(market_plugins, None))
-    monkeypatch.setattr(PluginService, "get_online_plugins", get_online_plugins)
-    response = await test_client.get(
-        "/api/v1/plugins/market",
-        headers=authenticated_header,
-    )
-    assert response.status_code == 200
-    data = await response.get_json()
-    assert data["status"] == "ok"
-    assert data["data"] == market_plugins
-    get_online_plugins.assert_awaited_once_with(
-        custom_registry=None, force_refresh=False
-    )
 
     # 使用 MockPluginBuilder 创建测试插件
     plugin_store_path = core_lifecycle_td.plugin_manager.plugin_store_path
@@ -2689,221 +2668,6 @@ async def test_commands_api(app: FastAPIAppAdapter, authenticated_header: dict):
     assert data["status"] == "ok"
     # conflicts is a list
     assert isinstance(data["data"], list)
-
-
-@pytest.mark.asyncio
-async def test_t2i_set_active_template_syncs_all_configs(
-    app: FastAPIAppAdapter,
-    authenticated_header: dict,
-    core_lifecycle_td: BotCoreLifecycle,
-):
-    test_client = app.test_client()
-    template_name = f"sync_tpl_{uuid.uuid4().hex[:8]}"
-    created_conf_ids: list[str] = []
-
-    try:
-        for name in ("sync-a", "sync-b"):
-            response = await test_client.post(
-                "/api/v1/config-profiles",
-                json={"name": name},
-                headers=authenticated_header,
-            )
-            assert response.status_code == 200
-            data = await response.get_json()
-            assert data["status"] == "ok"
-            created_conf_ids.append(data["data"]["conf_id"])
-
-        response = await test_client.post(
-            "/api/v1/t2i/templates",
-            json={
-                "name": template_name,
-                "content": "<html><body>{{ text }}</body></html>",
-            },
-            headers=authenticated_header,
-        )
-        assert response.status_code == 201
-        data = await response.get_json()
-        assert data["status"] == "ok"
-
-        response = await test_client.put(
-            "/api/v1/t2i/templates/active",
-            json={"name": template_name},
-            headers=authenticated_header,
-        )
-        assert response.status_code == 200
-        data = await response.get_json()
-        assert data["status"] == "ok"
-
-        conf_ids = set(core_lifecycle_td.bot_config_mgr.confs.keys())
-        assert "default" in conf_ids
-        for conf_id in conf_ids:
-            conf = core_lifecycle_td.bot_config_mgr.confs[conf_id]
-            assert conf.get("t2i_active_template") == template_name
-            assert conf_id in core_lifecycle_td.pipeline_scheduler_mapping
-    finally:
-        await test_client.put(
-            "/api/v1/t2i/templates/active",
-            json={"name": "base"},
-            headers=authenticated_header,
-        )
-        await test_client.delete(
-            f"/api/v1/t2i/templates/{template_name}",
-            headers=authenticated_header,
-        )
-        for conf_id in created_conf_ids:
-            await test_client.delete(
-                f"/api/v1/config-profiles/{conf_id}",
-                headers=authenticated_header,
-            )
-
-
-@pytest.mark.asyncio
-async def test_t2i_reset_default_template_syncs_all_configs(
-    app: FastAPIAppAdapter,
-    authenticated_header: dict,
-    core_lifecycle_td: BotCoreLifecycle,
-):
-    test_client = app.test_client()
-    template_name = f"reset_tpl_{uuid.uuid4().hex[:8]}"
-    created_conf_ids: list[str] = []
-
-    try:
-        for name in ("reset-a", "reset-b"):
-            response = await test_client.post(
-                "/api/v1/config-profiles",
-                json={"name": name},
-                headers=authenticated_header,
-            )
-            assert response.status_code == 200
-            data = await response.get_json()
-            assert data["status"] == "ok"
-            created_conf_ids.append(data["data"]["conf_id"])
-
-        response = await test_client.post(
-            "/api/v1/t2i/templates",
-            json={
-                "name": template_name,
-                "content": "<html><body>{{ text }} reset</body></html>",
-            },
-            headers=authenticated_header,
-        )
-        assert response.status_code == 201
-        data = await response.get_json()
-        assert data["status"] == "ok"
-
-        response = await test_client.put(
-            "/api/v1/t2i/templates/active",
-            json={"name": template_name},
-            headers=authenticated_header,
-        )
-        assert response.status_code == 200
-
-        response = await test_client.post(
-            "/api/v1/t2i/templates/default/reset",
-            headers=authenticated_header,
-        )
-        assert response.status_code == 200
-        data = await response.get_json()
-        assert data["status"] == "ok"
-
-        conf_ids = set(core_lifecycle_td.bot_config_mgr.confs.keys())
-        assert "default" in conf_ids
-        for conf_id in conf_ids:
-            conf = core_lifecycle_td.bot_config_mgr.confs[conf_id]
-            assert conf.get("t2i_active_template") == "base"
-            assert conf_id in core_lifecycle_td.pipeline_scheduler_mapping
-    finally:
-        await test_client.put(
-            "/api/v1/t2i/templates/active",
-            json={"name": "base"},
-            headers=authenticated_header,
-        )
-        await test_client.delete(
-            f"/api/v1/t2i/templates/{template_name}",
-            headers=authenticated_header,
-        )
-        for conf_id in created_conf_ids:
-            await test_client.delete(
-                f"/api/v1/config-profiles/{conf_id}",
-                headers=authenticated_header,
-            )
-
-
-@pytest.mark.asyncio
-async def test_t2i_update_active_template_reloads_all_schedulers(
-    app: FastAPIAppAdapter,
-    authenticated_header: dict,
-    core_lifecycle_td: BotCoreLifecycle,
-):
-    test_client = app.test_client()
-    template_name = f"update_tpl_{uuid.uuid4().hex[:8]}"
-    created_conf_ids: list[str] = []
-
-    try:
-        for name in ("update-a", "update-b"):
-            response = await test_client.post(
-                "/api/v1/config-profiles",
-                json={"name": name},
-                headers=authenticated_header,
-            )
-            assert response.status_code == 200
-            data = await response.get_json()
-            assert data["status"] == "ok"
-            created_conf_ids.append(data["data"]["conf_id"])
-
-        response = await test_client.post(
-            "/api/v1/t2i/templates",
-            json={
-                "name": template_name,
-                "content": "<html><body>{{ text }} v1</body></html>",
-            },
-            headers=authenticated_header,
-        )
-        assert response.status_code == 201
-
-        response = await test_client.put(
-            "/api/v1/t2i/templates/active",
-            json={"name": template_name},
-            headers=authenticated_header,
-        )
-        assert response.status_code == 200
-
-        conf_ids = list(core_lifecycle_td.bot_config_mgr.confs.keys())
-        old_schedulers = {
-            conf_id: core_lifecycle_td.pipeline_scheduler_mapping[conf_id]
-            for conf_id in conf_ids
-        }
-
-        response = await test_client.put(
-            f"/api/v1/t2i/templates/{template_name}",
-            json={"content": "<html><body>{{ text }} v2</body></html>"},
-            headers=authenticated_header,
-        )
-        assert response.status_code == 200
-        data = await response.get_json()
-        assert data["status"] == "ok"
-
-        for conf_id in conf_ids:
-            assert conf_id in core_lifecycle_td.pipeline_scheduler_mapping
-            assert (
-                core_lifecycle_td.pipeline_scheduler_mapping[conf_id]
-                is not old_schedulers[conf_id]
-            )
-    finally:
-        await test_client.put(
-            "/api/v1/t2i/templates/active",
-            json={"name": "base"},
-            headers=authenticated_header,
-        )
-        await test_client.delete(
-            f"/api/v1/t2i/templates/{template_name}",
-            headers=authenticated_header,
-        )
-        for conf_id in created_conf_ids:
-            await test_client.delete(
-                f"/api/v1/config-profiles/{conf_id}",
-                headers=authenticated_header,
-            )
 
 
 @pytest.mark.asyncio

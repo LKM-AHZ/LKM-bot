@@ -125,9 +125,6 @@
       "name": "Plugins"
     },
     {
-      "name": "Plugin Sources"
-    },
-    {
       "name": "Plugin Views"
     },
     {
@@ -144,9 +141,6 @@
     },
     {
       "name": "Conversations"
-    },
-    {
-      "name": "T2I"
     },
     {
       "name": "Agent Configurations"
@@ -3681,37 +3675,6 @@
         "description": "**Required scope:** `plugin`"
       }
     },
-    "/api/v1/plugins/{plugin_id}/source": {
-      "post": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "Bind an installed plugin to a marketplace source",
-        "operationId": "bindPluginSource",
-        "x-bot-scope": "plugin",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/PluginId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PluginSourceBindRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      }
-    },
     "/api/v1/plugins/{plugin_id}/enabled": {
       "patch": {
         "tags": [
@@ -4025,209 +3988,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      }
-    },
-    "/api/v1/plugins/market": {
-      "get": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "List plugin marketplace entries",
-        "operationId": "listPluginMarket",
-        "x-bot-scope": "plugin",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/Page"
-          },
-          {
-            "$ref": "#/components/parameters/PageSize"
-          },
-          {
-            "name": "category",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "recommended",
-                "downloads",
-                "updated",
-                "name"
-              ]
-            }
-          },
-          {
-            "name": "keyword",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "force_refresh",
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "custom_registry",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      }
-    },
-    "/api/v1/plugins/market/categories": {
-      "get": {
-        "tags": [
-          "Plugins"
-        ],
-        "summary": "List plugin marketplace categories",
-        "operationId": "listPluginMarketCategories",
-        "x-bot-scope": "plugin",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      }
-    },
-    "/api/v1/plugin-sources": {
-      "get": {
-        "tags": [
-          "Plugin Sources"
-        ],
-        "summary": "List plugin sources",
-        "operationId": "listPluginSources",
-        "x-bot-scope": "plugin",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      },
-      "post": {
-        "tags": [
-          "Plugin Sources"
-        ],
-        "summary": "Add a plugin source",
-        "operationId": "createPluginSource",
-        "x-bot-scope": "plugin",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PluginSourceRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      },
-      "put": {
-        "tags": [
-          "Plugin Sources"
-        ],
-        "summary": "Replace plugin sources",
-        "operationId": "replacePluginSources",
-        "x-bot-scope": "plugin",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "sources"
-                ],
-                "properties": {
-                  "sources": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/PluginSourceRequest"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      }
-    },
-    "/api/v1/plugin-sources/{source_id}": {
-      "delete": {
-        "tags": [
-          "Plugin Sources"
-        ],
-        "summary": "Delete a plugin source",
-        "operationId": "deletePluginSource",
-        "x-bot-scope": "plugin",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/SourceId"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `plugin`"
-      }
-    },
-    "/api/v1/plugin-sources/by-id": {
-      "delete": {
-        "tags": [
-          "Plugin Sources"
-        ],
-        "summary": "Delete a plugin source by query ID",
-        "operationId": "deletePluginSourceById",
-        "x-bot-scope": "plugin",
-        "parameters": [
-          {
-            "name": "source_id",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "$ref": "#/components/responses/Ok"
@@ -6534,171 +6294,6 @@
         "description": "**Required scope:** `data`"
       }
     },
-    "/api/v1/t2i/templates": {
-      "get": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "List text-to-image templates",
-        "operationId": "listT2iTemplates",
-        "x-bot-scope": "config",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      },
-      "post": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Create a text-to-image template",
-        "operationId": "createT2iTemplate",
-        "x-bot-scope": "config",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/T2iTemplateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      }
-    },
-    "/api/v1/t2i/templates/active": {
-      "get": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Get active text-to-image template",
-        "operationId": "getActiveT2iTemplate",
-        "x-bot-scope": "config",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      },
-      "put": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Set active text-to-image template",
-        "operationId": "setActiveT2iTemplate",
-        "x-bot-scope": "config",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NameRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      }
-    },
-    "/api/v1/t2i/templates/default/reset": {
-      "post": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Reset the default text-to-image template",
-        "operationId": "resetDefaultT2iTemplate",
-        "x-bot-scope": "config",
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      }
-    },
-    "/api/v1/t2i/templates/{name}": {
-      "get": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Get a text-to-image template",
-        "operationId": "getT2iTemplate",
-        "x-bot-scope": "config",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/Name"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      },
-      "put": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Update a text-to-image template",
-        "operationId": "updateT2iTemplate",
-        "x-bot-scope": "config",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/Name"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/T2iTemplateContentRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      },
-      "delete": {
-        "tags": [
-          "T2I"
-        ],
-        "summary": "Delete a text-to-image template",
-        "operationId": "deleteT2iTemplate",
-        "x-bot-scope": "config",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/Name"
-          }
-        ],
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/Ok"
-          }
-        },
-        "description": "**Required scope:** `config`"
-      }
-    },
     "/api/v1/agent-configs": {
       "get": {
         "tags": [
@@ -6940,14 +6535,6 @@
           "type": "string"
         }
       },
-      "Name": {
-        "name": "name",
-        "in": "path",
-        "required": true,
-        "schema": {
-          "type": "string"
-        }
-      },
       "Page": {
         "name": "page",
         "in": "query",
@@ -7125,18 +6712,6 @@
         "additionalProperties": false
       },
       "RenameRequest": {
-        "type": "object",
-        "required": [
-          "name"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "NameRequest": {
         "type": "object",
         "required": [
           "name"
@@ -7630,24 +7205,6 @@
         },
         "additionalProperties": false
       },
-      "PluginSourceBindRequest": {
-        "type": "object",
-        "properties": {
-          "install_method": {
-            "type": "string"
-          },
-          "registry_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "market_plugin_id": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
       "PluginBatchUpdateRequest": {
         "type": "object",
         "properties": {
@@ -7703,18 +7260,6 @@
           },
           "ignore_version_check": {
             "type": "boolean"
-          },
-          "install_method": {
-            "type": "string"
-          },
-          "registry_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "market_plugin_id": {
-            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7739,18 +7284,6 @@
           },
           "ignore_version_check": {
             "type": "boolean"
-          },
-          "install_method": {
-            "type": "string"
-          },
-          "registry_url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "market_plugin_id": {
-            "type": "string"
           }
         },
         "additionalProperties": false
@@ -7790,25 +7323,6 @@
         "properties": {
           "path": {
             "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "PluginSourceRequest": {
-        "type": "object",
-        "required": [
-          "url"
-        ],
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string",
-            "format": "uri"
           }
         },
         "additionalProperties": false
@@ -8261,34 +7775,6 @@
             "format": "binary"
           }
         }
-      },
-      "T2iTemplateRequest": {
-        "type": "object",
-        "required": [
-          "name",
-          "content"
-        ],
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "content": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": true
-      },
-      "T2iTemplateContentRequest": {
-        "type": "object",
-        "required": [
-          "content"
-        ],
-        "properties": {
-          "content": {
-            "type": "string"
-          }
-        },
-        "additionalProperties": true
       }
     }
   }

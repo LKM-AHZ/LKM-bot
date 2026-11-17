@@ -1,18 +1,11 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 import os
-import ssl
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
-import aiohttp
-import certifi
 
 from bot.api import sp
 from bot.core import DEMO_MODE, file_token_service, logger
@@ -35,15 +28,14 @@ from bot.core.star.star_manager import (
     PluginManager,
     PluginVersionUnsupportedError,
 )
-from bot.core.utils.bot_path import get_bot_data_path, get_bot_temp_path
+from bot.core.utils.bot_path import get_bot_temp_path
 
 PLUGIN_UPDATE_CONCURRENCY = 3
 PLUGIN_OPERATION_FAILED_MESSAGE = "插件操作失败，请查看服务端日志。"
 PLUGIN_UPDATE_FAILED_MESSAGE = "更新失败，请查看服务端日志。"
 PLUGIN_INSTALL_SOURCES_KEY = "plugin_install_sources"
-PLUGIN_DEFAULT_REGISTRY_NAME = "Default"
-PLUGIN_UPDATE_DISABLED_MESSAGE = "该插件不是通过插件市场安装，无法检测或执行更新。"
-PLUGIN_UPDATE_SOURCE_REQUIRED_MESSAGE = "请先选择插件安装源后再更新。"
+PLUGIN_UPDATE_DISABLED_MESSAGE = "该插件没有可用的仓库安装源，无法更新。"
+PLUGIN_UPDATE_SOURCE_REQUIRED_MESSAGE = "该插件缺少安装源记录，无法更新。"
 PLUGIN_COMPONENT_TYPE_ORDER = {
     "page": 0,
     "skill": 1,
@@ -59,11 +51,6 @@ PluginPagesResolver = Callable[[StarMetadata], Awaitable[list]]
 PluginPagesSerializer = Callable[[StarMetadata], Awaitable[list[dict]]]
 
 
-@dataclass
-class RegistrySource:
-    urls: list[str]
-    cache_file: str
-    md5_url: str | None
 
 
 class PluginServiceError(Exception):
@@ -335,34 +322,6 @@ class PluginService:
             return None
 
     @staticmethod
-    def get_market_plugin_id(
-        data: dict[str, Any] | None,
-        fallback_name: str | None = None,
-    ) -> str:
-        """Return a marketplace plugin ID from explicit fields or author/name.
-
-        Args:
-            data: Marketplace entry or persisted source record.
-            fallback_name: Marketplace root key to use as name for legacy entries.
-
-        Returns:
-            The marketplace plugin ID, or an empty string.
-        """
-        if not isinstance(data, dict):
-            return ""
-        market_plugin_id = str(data.get("market_plugin_id") or "").strip()
-        if market_plugin_id:
-            return market_plugin_id
-        author_name = str(data.get("author") or "").strip()
-        plugin_name = str(data.get("name") or "").strip()
-        fallback_name = str(fallback_name or "").strip()
-        if not plugin_name and fallback_name and "/" not in fallback_name:
-            plugin_name = fallback_name
-        if author_name and plugin_name:
-            return f"{author_name}/{plugin_name}"
-        return ""
-
-    @staticmethod
     async def get_plugin_install_sources() -> dict[str, dict[str, Any]]:
         """Return persisted plugin installation source records.
 
@@ -430,9 +389,7 @@ class PluginService:
         implicit_record = {
             "schema_version": 1,
             "root_dir_name": plugin.root_dir_name,
-            "install_method": "market",
-            "registry_url": None,
-            "registry_name": PLUGIN_DEFAULT_REGISTRY_NAME,
+            "install_method": "repository",
             "repo": str(plugin.repo or "").strip(),
             "download_url": "",
             "implicit": True,
@@ -462,42 +419,6 @@ class PluginService:
         return None
 
     @staticmethod
-    def normalize_registry_url(value: object) -> str | None:
-        """Normalize a plugin registry URL for persistence.
-
-        Args:
-            value: Raw registry URL value.
-
-        Returns:
-            The normalized URL, or None for the default registry.
-        """
-        text = str(value or "").strip().rstrip("/")
-        return text or None
-
-    async def resolve_registry_name(self, registry_url: object) -> str:
-        """Resolve a registry display name from configured plugin sources.
-
-        Args:
-            registry_url: Registry URL, or None for the default source.
-
-        Returns:
-            A display name for the registry.
-        """
-        normalized_url = self.normalize_registry_url(registry_url)
-        if not normalized_url:
-            return PLUGIN_DEFAULT_REGISTRY_NAME
-
-        for source in await self.get_custom_sources():
-            if not isinstance(source, dict):
-                continue
-            source_url = self.normalize_registry_url(source.get("url"))
-            if source_url != normalized_url:
-                continue
-            source_name = str(source.get("name") or "").strip()
-            return source_name or "Custom"
-        return "Custom"
-
-    @staticmethod
     def repo_identifier_from_url(repo_url: object) -> str:
         """Build an owner/repo identifier from a supported repository URL.
 
@@ -524,7 +445,6 @@ class PluginService:
         fallback_method: str,
         repo_url: str,
         download_url: str,
-        registry_name: str,
     ) -> dict[str, Any]:
         """Build a persisted installation source record.
 
@@ -534,34 +454,19 @@ class PluginService:
             fallback_method: Method to use when the request did not declare one.
             repo_url: Repository URL used for installation.
             download_url: Download URL used for installation.
-            registry_name: Resolved registry display name.
 
         Returns:
             A serializable installation source record.
         """
-        requested_method = str(payload.get("install_method") or "").strip().lower()
-        install_method = requested_method or fallback_method
-        if install_method != "market":
-            install_method = fallback_method
-
-        record = {
+        del payload
+        return {
             "schema_version": 1,
             "root_dir_name": plugin.root_dir_name,
-            "install_method": install_method,
-            "registry_url": self.normalize_registry_url(payload.get("registry_url")),
-            "registry_name": registry_name,
+            "install_method": fallback_method,
             "repo": str(repo_url or plugin.repo or "").strip(),
-            "download_url": str(
-                download_url or payload.get("download_url") or ""
-            ).strip(),
+            "download_url": str(download_url or "").strip(),
             "installed_at": datetime.now(timezone.utc).isoformat(),
         }
-
-        market_plugin_id = self.get_market_plugin_id(payload)
-        if market_plugin_id:
-            record["market_plugin_id"] = market_plugin_id
-
-        return record
 
     async def persist_plugin_install_source(
         self,
@@ -577,7 +482,7 @@ class PluginService:
         Args:
             plugin_info: Plugin information returned by PluginManager.
             payload: Installation request payload.
-            fallback_method: Method to use for non-market installs.
+            fallback_method: Installation method to persist.
             repo_url: Repository URL used for installation.
             download_url: Download URL used for installation.
         """
@@ -592,7 +497,6 @@ class PluginService:
             )
             return
 
-        registry_name = await self.resolve_registry_name(payload.get("registry_url"))
         records = await self.get_plugin_install_sources()
         records[plugin.root_dir_name] = self.build_install_source_record(
             plugin,
@@ -600,7 +504,6 @@ class PluginService:
             fallback_method=fallback_method,
             repo_url=repo_url,
             download_url=download_url,
-            registry_name=registry_name,
         )
         await self.save_plugin_install_sources(records)
 
@@ -643,9 +546,7 @@ class PluginService:
             if isinstance(install_source, dict)
             else ""
         )
-        updates_enabled = (
-            install_method in {"market", "repository"} and not plugin.reserved
-        )
+        updates_enabled = install_method == "repository" and not plugin.reserved
         return {
             "name": plugin.name,
             "marketplace_name": (plugin.name or "").replace("_", "-"),
@@ -985,364 +886,17 @@ class PluginService:
                 continue
             self._merge_command_component(existing, source_subcommand)
 
-    async def get_online_plugins(
-        self,
-        *,
-        custom_registry: str | None,
-        force_refresh: bool,
-    ) -> tuple[Any, str | None]:
-        source = self.build_registry_source(custom_registry)
-
-        cached_data = None
-        if not force_refresh and await self.is_cache_valid(source):
-            cached_data = self.load_plugin_cache(source.cache_file)
-            if cached_data:
-                logger.debug(
-                    "The cached MD5 matches; using cached plugin marketplace data."
-                )
-                return cached_data, None
-
-        remote_data = None
-        ssl_context = ssl.create_default_context(cafile=certifi.where())
-        connector = aiohttp.TCPConnector(ssl=ssl_context)
-
-        for url in source.urls:
-            try:
-                async with (
-                    aiohttp.ClientSession(
-                        trust_env=True,
-                        connector=connector,
-                    ) as session,
-                    session.get(url) as response,
-                ):
-                    if response.status == 200:
-                        try:
-                            remote_data = await response.json()
-                        except aiohttp.ContentTypeError:
-                            remote_text = await response.text()
-                            remote_data = json.loads(remote_text)
-
-                        if not remote_data or (
-                            isinstance(remote_data, dict) and len(remote_data) == 0
-                        ):
-                            logger.warning(
-                                f"Remote plugin marketplace data is empty: {url}"
-                            )
-                            continue
-
-                        logger.info(
-                            "Fetched remote plugin marketplace data successfully; "
-                            f"received {len(remote_data)} plugins."
-                        )
-                        current_md5 = await self.fetch_remote_md5(source.md5_url)
-                        self.save_plugin_cache(
-                            source.cache_file,
-                            remote_data,
-                            current_md5,
-                        )
-                        return remote_data, None
-                    logger.error(
-                        f"Request to {url} failed with status {response.status}."
-                    )
-            except Exception as exc:
-                logger.error(f"Request to {url} failed: {exc}")
-
-        if not cached_data:
-            cached_data = self.load_plugin_cache(source.cache_file)
-
-        if cached_data:
-            logger.warning(
-                "Failed to fetch remote plugin marketplace data; using cached data."
-            )
-            return cached_data, "使用缓存数据，可能不是最新版本"
-
-        raise PluginServiceError("获取插件列表失败，且没有可用的缓存数据")
-
-    async def get_online_plugins_from_dashboard_query(
-        self,
-        *,
-        custom_registry: str | None,
-        force_refresh,
-    ) -> tuple[Any, str | None]:
-        return await self.get_online_plugins(
-            custom_registry=custom_registry,
-            force_refresh=self._to_bool(force_refresh),
-        )
-
-    @staticmethod
-    def build_registry_source(custom_url: str | None) -> RegistrySource:
-        data_dir = get_bot_data_path()
-        if custom_url:
-            url_hash = hashlib.md5(custom_url.encode()).hexdigest()[:8]
-            cache_file = os.path.join(data_dir, f"plugins_custom_{url_hash}.json")
-            md5_url = (
-                custom_url[:-5] + "-md5.json"
-                if custom_url.endswith(".json")
-                else custom_url + "-md5.json"
-            )
-            urls = [custom_url]
-        else:
-            # Default marketplace: the public plugin registry repo only. The upstream project's
-            # mirror endpoints (api.soulter.top) are not used by this fork, and the md5 shortcut
-            # they provided has no equivalent here — the cache then just refreshes on its TTL.
-            cache_file = os.path.join(data_dir, "plugins.json")
-            md5_url = None
-            urls = [
-                "https://github.com/AstrBotDevs/AstrBot_Plugins_Collection/raw/refs/heads/main/plugin_cache_original.json",
-            ]
-        return RegistrySource(urls=urls, cache_file=cache_file, md5_url=md5_url)
-
-    @staticmethod
-    def load_cached_md5(cache_file: str) -> str | None:
-        if not os.path.exists(cache_file):
-            return None
-
-        try:
-            with open(cache_file, encoding="utf-8") as file:
-                cache_data = json.load(file)
-            return cache_data.get("md5")
-        except Exception as exc:
-            logger.warning(f"Failed to load cached MD5: {exc}")
-            return None
-
-    @staticmethod
-    async def fetch_remote_md5(md5_url: str | None) -> str | None:
-        if not md5_url:
-            return None
-
-        try:
-            ssl_context = ssl.create_default_context(cafile=certifi.where())
-            connector = aiohttp.TCPConnector(ssl=ssl_context)
-
-            async with (
-                aiohttp.ClientSession(
-                    trust_env=True,
-                    connector=connector,
-                ) as session,
-                session.get(md5_url) as response,
-            ):
-                if response.status == 200:
-                    data = await response.json()
-                    return data.get("md5", "")
-        except Exception as exc:
-            logger.debug(f"Failed to fetch remote MD5: {exc}")
-        return None
-
-    async def is_cache_valid(self, source: RegistrySource) -> bool:
-        try:
-            cached_md5 = self.load_cached_md5(source.cache_file)
-            if not cached_md5:
-                logger.debug("MD5 not found in cache, treating cache as invalid")
-                return False
-
-            remote_md5 = await self.fetch_remote_md5(source.md5_url)
-            if remote_md5 is None:
-                logger.warning(
-                    "Cannot fetch remote MD5, using cache without validation"
-                )
-                return True
-
-            is_valid = cached_md5 == remote_md5
-            logger.debug(
-                f"Plugin cache: local={cached_md5}, remote={remote_md5}, effective={is_valid}",
-            )
-            return is_valid
-
-        except Exception as exc:
-            logger.warning(f"Failed to validate the plugin marketplace cache: {exc}")
-            return False
-
-    @staticmethod
-    def load_plugin_cache(cache_file: str):
-        try:
-            if os.path.exists(cache_file):
-                with open(cache_file, encoding="utf-8") as file:
-                    cache_data = json.load(file)
-                    if "data" in cache_data and "timestamp" in cache_data:
-                        logger.debug(
-                            f"Loading cached file: {cache_file}, Cache time: {cache_data['timestamp']}",
-                        )
-                        return cache_data["data"]
-        except Exception as exc:
-            logger.warning(f"Failed to load plugin market cache: {exc}")
-        return None
-
-    @staticmethod
-    def save_plugin_cache(cache_file: str, data, md5: str | None = None) -> None:
-        try:
-            os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-
-            cache_data = {
-                "timestamp": datetime.now().isoformat(),
-                "data": data,
-                "md5": md5 or "",
-            }
-
-            with open(cache_file, "w", encoding="utf-8") as file:
-                json.dump(cache_data, file, ensure_ascii=False, indent=2)
-            logger.debug(f"Cached plugin market data: {cache_file}, MD5: {md5}")
-        except Exception as exc:
-            logger.warning(f"Failed to save plugin market cache: {exc}")
-
-    @staticmethod
-    def iter_market_plugin_entries(market_data: object):
-        """Iterate market entries with their market identifiers.
-
-        Args:
-            market_data: Raw marketplace data from a registry.
-
-        Yields:
-            Tuples of market identifier and plugin entry.
-        """
-        if isinstance(market_data, dict):
-            for key, value in market_data.items():
-                if key == "$meta":
-                    continue
-                if isinstance(value, dict):
-                    entry = value
-                    if "/" not in str(key) and not str(value.get("name") or "").strip():
-                        entry = {**value, "name": str(key)}
-                    yield PluginService.get_market_plugin_id(entry, str(key)), entry
-            return
-        if isinstance(market_data, list):
-            for value in market_data:
-                if not isinstance(value, dict):
-                    continue
-                identifier = PluginService.get_market_plugin_id(value)
-                yield identifier, value
-
-    def resolve_market_plugin_entry(
-        self,
-        market_data: object,
-        record: dict[str, Any],
-    ) -> dict[str, Any] | None:
-        """Resolve a source registry plugin entry for a source record.
-
-        Args:
-            market_data: Raw marketplace data from a registry.
-            record: Persisted install source record.
-
-        Returns:
-            The matching marketplace entry, if found.
-        """
-        record_identifier = self.get_market_plugin_id(record)
-        record_repo_identifier = self.repo_identifier_from_url(record.get("repo"))
-        record_repo = str(record.get("repo") or "").strip().rstrip("/").lower()
-        record_names = {
-            str(record.get("name") or "").strip(),
-            str(record.get("marketplace_name") or "").strip(),
-        }
-        record_names = {name for name in record_names if name}
-
-        for plugin_identifier, plugin in self.iter_market_plugin_entries(market_data):
-            if record_identifier and plugin_identifier == record_identifier:
-                return plugin
-            if record_repo_identifier and plugin_identifier == record_repo_identifier:
-                return plugin
-            plugin_repo_identifier = self.repo_identifier_from_url(plugin.get("repo"))
-            if (
-                record_repo_identifier
-                and plugin_repo_identifier
-                and plugin_repo_identifier == record_repo_identifier
-            ):
-                return plugin
-            plugin_repo = str(plugin.get("repo") or "").strip().rstrip("/").lower()
-            if record_repo and plugin_repo == record_repo:
-                return plugin
-            plugin_name = str(plugin.get("name") or "").strip()
-            if plugin_name and plugin_name in record_names:
-                return plugin
-        return None
-
-    def resolve_market_plugin_entry_by_id(
-        self,
-        market_data: object,
-        market_plugin_id: str,
-    ) -> dict[str, Any] | None:
-        """Resolve a marketplace entry by its exact market plugin ID.
-
-        Args:
-            market_data: Raw marketplace data from a registry.
-            market_plugin_id: Market plugin ID, usually owner/repo.
-
-        Returns:
-            The matching marketplace entry, if found.
-        """
-        normalized_plugin_id = str(market_plugin_id or "").strip()
-        if not normalized_plugin_id:
-            return None
-
-        for plugin_id, plugin in self.iter_market_plugin_entries(market_data):
-            if plugin_id == normalized_plugin_id:
-                return plugin
-        return None
-
-    async def resolve_market_install_info(
-        self,
-        payload: dict[str, Any],
-    ) -> dict[str, str] | None:
-        """Validate a marketplace install request and resolve install URLs.
-
-        Args:
-            payload: Installation request payload.
-
-        Returns:
-            Marketplace install information, or None for non-market installs.
-
-        Raises:
-            PluginServiceError: If the marketplace entry cannot be resolved.
-        """
-        install_method = str(payload.get("install_method") or "").strip().lower()
-        if install_method != "market":
-            return None
-
-        market_plugin_id = self.get_market_plugin_id(payload)
-        if not market_plugin_id:
-            raise PluginServiceError(
-                "缺少插件市场标识，无法安装。",
-                public_message="缺少插件市场标识，无法安装。",
-            )
-
-        registry_url = self.normalize_registry_url(payload.get("registry_url"))
-        market_data, _ = await self.get_online_plugins(
-            custom_registry=registry_url,
-            force_refresh=False,
-        )
-        market_plugin = self.resolve_market_plugin_entry_by_id(
-            market_data,
-            market_plugin_id,
-        )
-        if not market_plugin:
-            raise PluginServiceError(
-                "插件源中未找到该插件，无法安装。",
-                public_message="插件源中未找到该插件，无法安装。",
-            )
-
-        repo_url = str(market_plugin.get("repo") or "").strip()
-        if not repo_url:
-            raise PluginServiceError(
-                "插件市场记录缺少仓库地址，无法安装。",
-                public_message="插件市场记录缺少仓库地址，无法安装。",
-            )
-
-        return {
-            "registry_url": registry_url or "",
-            "market_plugin_id": market_plugin_id,
-            "repo": repo_url,
-            "download_url": str(market_plugin.get("download_url") or "").strip(),
-        }
-
-    async def resolve_market_update_info(self, plugin_name: str) -> dict[str, Any]:
-        """Resolve update information from the original marketplace source.
+    async def resolve_plugin_update_info(self, plugin_name: str) -> dict[str, Any]:
+        """Resolve update information from the recorded repository source.
 
         Args:
             plugin_name: Installed plugin metadata name.
 
         Returns:
-            Update information from the original registry entry.
+            Update information containing the recorded repository URL.
 
         Raises:
-            PluginServiceError: If the plugin cannot be updated from a marketplace.
+            PluginServiceError: If the plugin cannot be updated from a repository.
         """
         plugin = self.find_plugin_by_name(plugin_name)
         if not plugin:
@@ -1355,204 +909,22 @@ class PluginService:
                 public_message=PLUGIN_UPDATE_SOURCE_REQUIRED_MESSAGE,
             )
 
-        install_method = str(record.get("install_method") or "").strip().lower()
-        if install_method == "repository":
-            repo_url = str(record.get("repo") or plugin.repo or "").strip()
-            if not repo_url:
-                raise PluginServiceError(
-                    PLUGIN_UPDATE_DISABLED_MESSAGE,
-                    public_message=PLUGIN_UPDATE_DISABLED_MESSAGE,
-                )
-            return {
-                "record": record,
-                "market_plugin": None,
-                "download_url": "",
-                "repo": repo_url,
-            }
-
-        if install_method != "market":
+        repo_url = str(record.get("repo") or plugin.repo or "").strip()
+        if not repo_url:
             raise PluginServiceError(
                 PLUGIN_UPDATE_DISABLED_MESSAGE,
                 public_message=PLUGIN_UPDATE_DISABLED_MESSAGE,
             )
-
-        registry_url = self.normalize_registry_url(record.get("registry_url"))
-        market_data, _ = await self.get_online_plugins(
-            custom_registry=registry_url,
-            force_refresh=False,
-        )
-        market_plugin = self.resolve_market_plugin_entry(market_data, record)
-        if not market_plugin:
-            raise PluginServiceError(
-                "原插件源中未找到该插件，无法更新。",
-                public_message="原插件源中未找到该插件，无法更新。",
-            )
-
-        return {
-            "record": record,
-            "market_plugin": market_plugin,
-            "download_url": str(
-                market_plugin.get("download_url") or record.get("download_url") or ""
-            ).strip(),
-            "repo": str(market_plugin.get("repo") or record.get("repo") or "").strip(),
-        }
-
-    async def bind_plugin_market_source(self, data: object) -> tuple[dict, str]:
-        """Bind an installed plugin to a marketplace source for future updates.
-
-        Args:
-            data: Binding request payload.
-
-        Returns:
-            The persisted install source record and a success message.
-
-        Raises:
-            PluginServiceError: If the plugin or marketplace entry cannot be matched.
-        """
-        self._ensure_not_demo()
-        payload = data if isinstance(data, dict) else {}
-        plugin_name = str(payload.get("name") or "").strip()
-        plugin = self.find_plugin_by_name(plugin_name)
-        if not plugin or not plugin.root_dir_name:
-            raise PluginServiceError(
-                "插件不存在",
-                public_message="插件不存在",
-            )
-
-        plugin_repo = str(plugin.repo or "").strip()
-        if not plugin_repo:
-            raise PluginServiceError(
-                "当前插件缺少仓库地址，无法更换插件源。",
-                public_message="当前插件缺少仓库地址，无法更换插件源。",
-            )
-
-        install_method = str(payload.get("install_method") or "market").strip().lower()
-        if install_method == "repository":
-            records = await self.get_plugin_install_sources()
-            old_record = self.resolve_plugin_install_source(plugin, records)
-            installed_at = (
-                old_record.get("installed_at")
-                if isinstance(old_record, dict) and old_record.get("installed_at")
-                else self.get_plugin_installed_at(plugin)
-                or datetime.now(timezone.utc).isoformat()
-            )
-            record = {
-                "schema_version": 1,
-                "root_dir_name": plugin.root_dir_name,
-                "install_method": "repository",
-                "registry_url": None,
-                "registry_name": "Repository",
-                "repo": plugin_repo,
-                "download_url": "",
-                "installed_at": installed_at,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }
-            plugin_name_value = str(plugin.name or "").strip()
-            if plugin_name_value:
-                record["name"] = plugin_name_value
-                record["marketplace_name"] = plugin_name_value.replace("_", "-")
-
-            for key in (plugin.root_dir_name, plugin.name):
-                if key:
-                    records.pop(key, None)
-            records[plugin.root_dir_name] = record
-            await self.save_plugin_install_sources(records)
-            return record, "插件源已更新。"
-
-        if install_method != "market":
-            raise PluginServiceError(
-                "不支持的插件源类型。",
-                public_message="不支持的插件源类型。",
-            )
-
-        market_plugin_id = self.get_market_plugin_id(payload)
-        if not market_plugin_id:
-            raise PluginServiceError(
-                "缺少插件市场标识，无法更换插件源。",
-                public_message="缺少插件市场标识，无法更换插件源。",
-            )
-
-        registry_url = self.normalize_registry_url(payload.get("registry_url"))
-        market_data, _ = await self.get_online_plugins(
-            custom_registry=registry_url,
-            force_refresh=False,
-        )
-        market_plugin = self.resolve_market_plugin_entry_by_id(
-            market_data,
-            market_plugin_id,
-        )
-        if not market_plugin:
-            raise PluginServiceError(
-                "插件源中未找到该插件，无法更换插件源。",
-                public_message="插件源中未找到该插件，无法更换插件源。",
-            )
-
-        repo_url = str(market_plugin.get("repo") or "").strip()
-        if not repo_url:
-            raise PluginServiceError(
-                "插件市场记录缺少仓库地址，无法更换插件源。",
-                public_message="插件市场记录缺少仓库地址，无法更换插件源。",
-            )
-
-        plugin_repo_identifier = self.repo_identifier_from_url(plugin_repo)
-        market_repo_identifier = self.repo_identifier_from_url(repo_url)
-        repo_matches = False
-        if plugin_repo_identifier or market_repo_identifier:
-            repo_matches = (
-                bool(plugin_repo_identifier)
-                and bool(market_repo_identifier)
-                and plugin_repo_identifier == market_repo_identifier
-            )
-        else:
-            repo_matches = (
-                plugin_repo.strip().rstrip("/").lower()
-                == repo_url.strip().rstrip("/").lower()
-            )
-        if not repo_matches:
-            raise PluginServiceError(
-                "插件仓库地址与所选插件源不一致，无法更换插件源。",
-                public_message="插件仓库地址与所选插件源不一致，无法更换插件源。",
-            )
-
-        registry_name = await self.resolve_registry_name(registry_url)
-        records = await self.get_plugin_install_sources()
-        old_record = self.resolve_plugin_install_source(plugin, records)
-        installed_at = (
-            old_record.get("installed_at")
-            if isinstance(old_record, dict) and old_record.get("installed_at")
-            else self.get_plugin_installed_at(plugin)
-            or datetime.now(timezone.utc).isoformat()
-        )
-        record = {
-            "schema_version": 1,
-            "root_dir_name": plugin.root_dir_name,
-            "install_method": "market",
-            "registry_url": registry_url,
-            "registry_name": registry_name,
-            "market_plugin_id": market_plugin_id,
-            "repo": repo_url,
-            "download_url": str(market_plugin.get("download_url") or "").strip(),
-            "installed_at": installed_at,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-
-        for key in (plugin.root_dir_name, plugin.name):
-            if key:
-                records.pop(key, None)
-        records[plugin.root_dir_name] = record
-        await self.save_plugin_install_sources(records)
-        return record, "插件源已更新。"
+        return {"repo": repo_url}
 
     async def refresh_plugin_install_source_after_update(
         self,
         plugin_name: str,
-        update_info: dict[str, Any],
     ) -> None:
-        """Refresh stored source fields after a successful plugin update.
+        """Refresh the recorded install source timestamp after an update.
 
         Args:
             plugin_name: Installed plugin metadata name.
-            update_info: Marketplace update information.
         """
         plugin = self.find_plugin_by_name(plugin_name)
         if not plugin or not plugin.root_dir_name:
@@ -1560,25 +932,7 @@ class PluginService:
         records = await self.get_plugin_install_sources()
         record = records.get(plugin.root_dir_name)
         if not isinstance(record, dict):
-            update_record = update_info.get("record")
-            if not isinstance(update_record, dict):
-                return
-            record = dict(update_record)
-        market_plugin = update_info.get("market_plugin")
-        if isinstance(market_plugin, dict):
-            market_plugin_id = self.get_market_plugin_id(market_plugin)
-            if market_plugin_id:
-                record["market_plugin_id"] = market_plugin_id
-            record["repo"] = str(
-                market_plugin.get("repo") or record.get("repo") or ""
-            ).strip()
-            record["download_url"] = str(
-                market_plugin.get("download_url")
-                or update_info.get("download_url")
-                or record.get("download_url")
-                or ""
-            ).strip()
-        record["root_dir_name"] = plugin.root_dir_name
+            return
         record["updated_at"] = datetime.now(timezone.utc).isoformat()
         records[plugin.root_dir_name] = record
         await self.save_plugin_install_sources(records)
@@ -1589,15 +943,6 @@ class PluginService:
         repo_url = str(payload.get("url") or "").strip()
         download_url = str(payload.get("download_url") or "").strip()
         ignore_version_check = bool(payload.get("ignore_version_check", False))
-        market_install_info = await self.resolve_market_install_info(payload)
-        if market_install_info:
-            repo_url = market_install_info["repo"]
-            download_url = market_install_info["download_url"]
-            payload = {
-                **payload,
-                "registry_url": market_install_info["registry_url"] or None,
-                "market_plugin_id": market_install_info["market_plugin_id"],
-            }
         if not repo_url:
             raise PluginServiceError("缺少插件仓库地址")
 
@@ -1800,7 +1145,7 @@ class PluginService:
         payload = data if isinstance(data, dict) else {}
         plugin_name = payload["name"]
         proxy: str | None = payload.get("proxy", None)
-        update_info = await self.resolve_market_update_info(plugin_name)
+        update_info = await self.resolve_plugin_update_info(plugin_name)
         download_url = str(update_info.get("download_url") or "").strip()
         repo_url = str(update_info.get("repo") or "").strip()
         logger.info(f"Updating plugin {plugin_name}")
@@ -1810,7 +1155,7 @@ class PluginService:
             download_url=download_url,
             repo_url=repo_url,
         )
-        await self.refresh_plugin_install_source_after_update(plugin_name, update_info)
+        await self.refresh_plugin_install_source_after_update(plugin_name)
         await self.plugin_manager.reload(plugin_name)
         await self.sync_skills_after_plugin_change()
         logger.info(f"Updated plugin {plugin_name} successfully.")
@@ -1832,7 +1177,7 @@ class PluginService:
             async with sem:
                 try:
                     logger.info(f"Updating plugin {name} as part of a batch update.")
-                    update_info = await self.resolve_market_update_info(name)
+                    update_info = await self.resolve_plugin_update_info(name)
                     download_url = str(update_info.get("download_url") or "").strip()
                     repo_url = str(update_info.get("repo") or "").strip()
                     await self.plugin_manager.update_plugin(
@@ -1841,10 +1186,7 @@ class PluginService:
                         download_url=download_url,
                         repo_url=repo_url,
                     )
-                    await self.refresh_plugin_install_source_after_update(
-                        name,
-                        update_info,
-                    )
+                    await self.refresh_plugin_install_source_after_update(name)
                     return {"name": name, "status": "ok", "message": "更新成功"}
                 except PluginServiceError as exc:
                     logger.error(
@@ -2009,61 +1351,6 @@ class PluginService:
         return self.get_plugin_changelog(plugin_name)
 
     @staticmethod
-    async def get_custom_sources() -> list:
-        return PluginService._normalize_custom_sources(
-            await sp.global_get("custom_plugin_sources", [])
-        )
-
-    @staticmethod
-    async def save_custom_sources(data: object) -> tuple[None, str]:
-        payload = data if isinstance(data, dict) else {}
-        sources = PluginService._custom_sources_from_payload(payload)
-        await sp.global_put("custom_plugin_sources", sources)
-        return None, "保存成功"
-
-    @staticmethod
-    def _normalize_custom_sources(raw_sources: object) -> list:
-        return raw_sources if isinstance(raw_sources, list) else []
-
-    @staticmethod
-    def _custom_sources_from_payload(payload: dict[str, Any]) -> list:
-        sources = payload.get("sources", [])
-        if not isinstance(sources, list):
-            raise PluginServiceError("sources fields must be a list")
-        return sources
-
-    @staticmethod
-    async def create_custom_source(data: object) -> list:
-        source = data if isinstance(data, dict) else {}
-        sources = await PluginService.get_custom_sources()
-        sources.append(source)
-        await sp.global_put("custom_plugin_sources", sources)
-        return sources
-
-    @staticmethod
-    async def replace_custom_sources(data: object) -> list:
-        payload = data if isinstance(data, dict) else {}
-        sources = PluginService._custom_sources_from_payload(payload)
-        await sp.global_put("custom_plugin_sources", sources)
-        return sources
-
-    @staticmethod
-    async def delete_custom_source(source_id: str) -> list:
-        sources = await PluginService.get_custom_sources()
-        filtered = [
-            source
-            for source in sources
-            if not (
-                isinstance(source, dict)
-                and str(source.get("id") or source.get("url") or source.get("name"))
-                == source_id
-            )
-            and not (isinstance(source, str) and source == source_id)
-        ]
-        await sp.global_put("custom_plugin_sources", filtered)
-        return filtered
-
-    @staticmethod
     def _to_bool(value: object, default: bool = False) -> bool:
         if value is None:
             return default
@@ -2083,5 +1370,4 @@ __all__ = [
     "PluginService",
     "PluginServiceError",
     "PluginServiceWarning",
-    "RegistrySource",
 ]

@@ -33,9 +33,6 @@ class ResultDecorateStage(Stage):
             self.t2i_word_threshold = max(self.t2i_word_threshold, 50)
         except BaseException:
             self.t2i_word_threshold = 150
-        self.t2i_strategy = ctx.bot_config["t2i_strategy"]
-        self.t2i_use_network = self.t2i_strategy == "remote"
-        self.t2i_active_template = ctx.bot_config["t2i_active_template"]
 
         self.forward_threshold = ctx.bot_config["platform_settings"][
             "forward_threshold"
@@ -378,9 +375,6 @@ class ResultDecorateStage(Stage):
                         url = await html_renderer.render_t2i(
                             plain_str,
                             return_url=True,
-                            use_network=self.t2i_use_network,
-                            template_name=self.t2i_active_template,
-                            endpoint=self.ctx.bot_config.get("t2i_endpoint") or None,
                         )
                     except BaseException:
                         logger.error(
@@ -393,15 +387,7 @@ class ResultDecorateStage(Stage):
                             "text-to-image mode in the WebUI if it is too slow.",
                         )
                     if url:
-                        if url.startswith("http"):
-                            result.chain = [Image.fromURL(url)]
-                        elif self.ctx.bot_config["t2i_use_file_service"] and (
-                            media_url := await public_media_url(url, source="t2i")
-                        ):
-                            logger.debug(f"Registered media: {media_url}")
-                            result.chain = [Image.fromURL(media_url)]
-                        else:
-                            result.chain = [Image.fromFileSystem(url)]
+                        result.chain = [Image.fromFileSystem(url)]
 
             # 触发转发消息
             if event.get_platform_name() == "aiocqhttp":

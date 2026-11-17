@@ -1541,26 +1541,7 @@ class MarkdownRenderer:
 
 
 class LocalRenderStrategy(RenderStrategy):
-    """Render Markdown locally with Pillow when remote T2I is unavailable."""
-
-    async def render_custom_template(
-        self,
-        tmpl_str: str,
-        tmpl_data: dict,
-        return_url: bool = True,
-    ) -> str:
-        """Reject HTML templates because the local backend is Markdown-only.
-
-        Args:
-            tmpl_str: HTML template source.
-            tmpl_data: Template variables.
-            return_url: Whether the caller requested a URL.
-
-        Raises:
-            NotImplementedError: Always, because Pillow cannot render HTML templates.
-        """
-        del tmpl_str, tmpl_data, return_url
-        raise NotImplementedError
+    """Render Markdown locally with Pillow."""
 
     async def render(self, text: str, return_url: bool = False) -> str:
         """Render Markdown locally and save it as a temporary image.
