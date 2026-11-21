@@ -4,6 +4,7 @@ import io
 import json
 import os
 import stat
+import sys
 import time
 import zipfile
 from dataclasses import dataclass
@@ -981,9 +982,7 @@ def fake_core_lifecycle():
         bot_config=config,
         bot_updater=FakeBotUpdater(),
         start_time=1234567890,
-        bot_config_mgr=SimpleNamespace(
-            confs={"default": config}, default_conf=config
-        ),
+        bot_config_mgr=SimpleNamespace(confs={"default": config}, default_conf=config),
         reload_pipeline_scheduler=reload_pipeline_scheduler,
         reloaded_config_ids=reloaded_config_ids,
         platform_reload_configs=platform_reload_configs,
@@ -1019,7 +1018,7 @@ def fake_core_lifecycle():
             get_all_stars=lambda: [demo_plugin],
             registered_web_apis=[
                 ("/<path:plugin_path>", plugin_extension, ["GET", "POST"], "demo")
-            ]
+            ],
         ),
         kb_manager=None,
     )
@@ -1934,8 +1933,7 @@ async def test_v1_system_config_update_preserves_independent_bot_provider_sectio
     assert response.json()["status"] == "ok"
     assert fake_core_lifecycle.bot_config["platform"] == original_platform
     assert (
-        fake_core_lifecycle.bot_config["provider_sources"]
-        == original_provider_sources
+        fake_core_lifecycle.bot_config["provider_sources"] == original_provider_sources
     )
     assert fake_core_lifecycle.bot_config["provider"] == original_providers
     assert fake_core_lifecycle.bot_config["provider_settings"] == {
@@ -1995,7 +1993,9 @@ async def test_config_update_revokes_only_affected_shell_sessions(
             )
             result = json.loads(
                 await shell_tools.LocalExecuteShellTool().call(
-                    context, command='python -u -c "input()"', yield_time_ms=0
+                    context,
+                    command=f'"{sys.executable}" -u -c "input()"',
+                    yield_time_ms=0,
                 )
             )
             sessions.append(booter.shell._sessions[result["session_id"]])
@@ -3119,9 +3119,7 @@ async def test_agent_runtimes_require_config_scope(
         headers={"Authorization": "ApiKey plugin-test"},
     )
     assert response.status_code == 403
-    response = await asgi_client.get(
-        "/api/v1/agent-runtimes", headers=_jwt_headers()
-    )
+    response = await asgi_client.get("/api/v1/agent-runtimes", headers=_jwt_headers())
     assert response.status_code == 200
     assert response.json()["data"] == []
 
@@ -4306,9 +4304,7 @@ async def test_diagnostic_export_time_range_filters_logs_and_persisted_traces(
                 else selected
             )
             assert archive.read("logs/undated.log") == b""
-            assert (
-                archive.read("logs/bot.in-memory.log") == b"selected memory log\n"
-            )
+            assert archive.read("logs/bot.in-memory.log") == b"selected memory log\n"
             assert (
                 json.loads(archive.read("traces/history.in-memory.jsonl"))["data"]
                 == "selected"
@@ -4431,9 +4427,7 @@ async def test_v1_log_export_keeps_archive_names_unique(
     monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     data_dir = tmp_path / "data"
     (data_dir / "logs").mkdir(parents=True)
-    (data_dir / "logs" / "bot.in-memory.log").write_text(
-        "file log", encoding="utf-8"
-    )
+    (data_dir / "logs" / "bot.in-memory.log").write_text("file log", encoding="utf-8")
     (data_dir / "traces").mkdir()
     (data_dir / "traces" / "history.in-memory.jsonl").write_text(
         "file trace", encoding="utf-8"
@@ -4638,9 +4632,7 @@ async def test_diagnostic_export_respects_redaction_for_every_section(
             assert (private not in all_text) is redact
         assert "binary-private-data" not in all_text
         if not redact:
-            assert (
-                archive.read("logs/bot.log") == (logs / "bot.log").read_bytes()
-            )
+            assert archive.read("logs/bot.log") == (logs / "bot.log").read_bytes()
         exported = json.loads(archive.read("config.json"))["profiles"]["default"]
         if redact:
             assert (
@@ -4691,9 +4683,7 @@ async def test_diagnostic_export_without_trace_does_not_create_or_enable_it(
     monkeypatch.setenv("BOT_ROOT", str(tmp_path))
     asgi_app.state.services.logs.config["trace_enable"] = False
     getter = Mock(side_effect=AssertionError("No database should be opened"))
-    monkeypatch.setattr(
-        "bot.dashboard.services.log_service.get_trace_store", getter
-    )
+    monkeypatch.setattr("bot.dashboard.services.log_service.get_trace_store", getter)
     response = await asgi_client.get("/api/v1/logs/export", headers=_jwt_headers())
     assert response.status_code == 200
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
@@ -4900,16 +4890,56 @@ async def test_bot_delete_cleanup_query_is_validated(asgi_app, asgi_client, rout
 
 
 @pytest.mark.asyncio
-async def test_session_binding_distinguishes_follow_from_omitted_profile(asgi_client, monkeypatch):
+async def test_session_binding_distinguishes_follow_from_omitted_profile(
+    asgi_client, monkeypatch
+):
     from bot.dashboard.services.session_management_service import (
         SessionManagementService,
     )
 
     update = AsyncMock(return_value={})
     monkeypatch.setattr(SessionManagementService, "update_session_rule", update)
-    payload = {"umo": "test:GroupMessage:42", "rule_key": "config_overrides", "rule_value": {}}
+    payload = {
+        "umo": "test:GroupMessage:42",
+        "rule_key": "config_overrides",
+        "rule_value": {},
+    }
     for selection in ({}, {"profile_id": None}, {"profile_id": "default"}):
-        response = await asgi_client.post("/api/v1/sessions/rules", headers=_jwt_headers(), json={**payload, **selection})
+        response = await asgi_client.post(
+            "/api/v1/sessions/rules",
+            headers=_jwt_headers(),
+            json={**payload, **selection},
+        )
         assert response.status_code == 200
         assert response.json()["status"] == "ok"
         assert update.await_args.args[0] == {**payload, **selection}
+
+
+@pytest.mark.asyncio
+async def test_chat_transcription_requires_auth_and_passes_selected_provider(
+    asgi_client, asgi_app
+):
+    service = asgi_app.state.services.chat
+    received = []
+
+    async def transcribe(file, provider_id):
+        received.append((await file.read(), provider_id))
+        return {"text": "dictated words", "provider_id": provider_id}
+
+    service.transcribe_audio = transcribe
+    response = await asgi_client.post(
+        "/api/v1/chat/transcriptions",
+        files={"file": ("voice.webm", b"recording", "audio/webm")},
+        data={"provider_id": "stt-2"},
+    )
+    assert response.status_code == 401
+    assert received == []
+    response = await asgi_client.post(
+        "/api/v1/chat/transcriptions",
+        headers=_jwt_headers(),
+        files={"file": ("voice.webm", b"recording", "audio/webm")},
+        data={"provider_id": "stt-2"},
+    )
+    assert response.status_code == 200
+    assert response.json()["data"] == {"text": "dictated words", "provider_id": "stt-2"}
+    assert received == [(b"recording", "stt-2")]

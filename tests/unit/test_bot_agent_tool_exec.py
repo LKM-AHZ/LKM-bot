@@ -7,9 +7,11 @@ import pytest
 
 from bot.core.agent.run_context import ContextWrapper
 from bot.core.agent.runners.tool_loop_agent_runner import ToolLoopAgentRunner
+from bot.core.agent.runtime import AgentPermissions, AgentRole, AgentSessionRef
 from bot.core.agent.tool import FunctionTool
 from bot.core.bot_agent_runtime.tool_executor import FunctionToolExecutor
 from bot.core.bot_agent_runtime.tools.computer_tools.shell import ShellSessionTool
+from bot.core.platform.platform_metadata import PlatformMetadata
 from bot.core.provider.func_tool_manager import (
     FunctionToolManager,
 )
@@ -21,7 +23,13 @@ from bot.core.utils.active_event_registry import (
 class _DummyEvent:
     def __init__(self, message_components: list[object] | None = None) -> None:
         self.unified_msg_origin = "webchat:FriendMessage:webchat!user!session"
-        self.message_obj = SimpleNamespace(message=message_components or [])
+        self.message_obj = SimpleNamespace(
+            message=message_components or [],
+            sender=SimpleNamespace(user_id="alice", nickname="Alice"),
+            self_id="bot",
+            group=None,
+        )
+        self.plugins_name = None
         self.role = "member"
         self.extras: dict[str, object] = {}
 
@@ -42,6 +50,96 @@ def _build_run_context(message_components: list[object] | None = None):
     event = _DummyEvent(message_components=message_components)
     ctx = SimpleNamespace(event=event, context=SimpleNamespace())
     return ContextWrapper(context=ctx)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["detach", "tool"])
+@pytest.mark.parametrize("authorization", ["restricted_key", "runtime_member", "admin"])
+async def test_background_wakeup_preserves_effective_permissions(
+    monkeypatch, kind, authorization
+):
+    """Background completion must keep the initiating turn's permission ceiling."""
+    registry = ActiveEventRegistry()
+    monkeypatch.setattr(
+        "bot.core.bot_agent_runtime.tool_executor.active_event_registry", registry
+    )
+    run_context = _build_run_context()
+    context = run_context.context
+    event = context.event
+    event.message_obj.group = SimpleNamespace(group_id="group-id")
+    event.plugins_name = ["allowed_plugin"]
+    event.role = "admin"
+    if authorization == "restricted_key":
+        event.set_extra("_api_key_allow_admin_role", False)
+    elif authorization == "runtime_member":
+        context.permissions = AgentPermissions()
+    context.agent_session = AgentSessionRef("bot", "original")
+    queue = asyncio.Queue()
+    context.context = SimpleNamespace(
+        get_platform_inst=lambda _: SimpleNamespace(
+            meta=lambda: PlatformMetadata(
+                id="webchat", name="webchat", description="Test"
+            )
+        ),
+        get_event_queue=lambda: queue,
+    )
+
+    async def execute(*args, **kwargs):
+        # Another input may replace the live context before the tool finishes.
+        context.permissions = AgentPermissions(AgentRole.ADMIN)
+        event.set_extra("_api_key_allow_admin_role", True)
+        yield mcp.types.CallToolResult(
+            content=[
+                mcp.types.TextContent(type="text", text="first chunk"),
+                mcp.types.ImageContent(
+                    type="image", data="dGVzdA==", mimeType="image/png"
+                ),
+            ]
+        )
+        yield mcp.types.CallToolResult(
+            content=[mcp.types.TextContent(type="text", text="second chunk")],
+            structuredContent={"status": "done"},
+        )
+
+    if kind == "detach":
+        executor = execute()
+        pending = asyncio.create_task(anext(executor))
+        FunctionToolExecutor.detach(
+            tool=_DummyTool(),
+            run_context=run_context,
+            executor=executor,
+            pending_result=pending,
+            task_id="permission-test",
+            arguments={},
+        )
+    else:
+        monkeypatch.setattr(
+            FunctionToolExecutor,
+            "_execute_local" if kind == "tool" else "_execute_handoff",
+            execute,
+        )
+        method = (
+            FunctionToolExecutor._execute_background
+            if kind == "tool"
+            else FunctionToolExecutor._do_handoff_background
+        )
+        await method(_DummyTool(), run_context, "permission-test")
+
+    wakeup = await asyncio.wait_for(queue.get(), timeout=1)
+    expected = AgentRole.ADMIN if authorization == "admin" else AgentRole.MEMBER
+    assert AgentPermissions.from_event(wakeup).role == expected
+    assert wakeup.get_sender_id() == "alice"
+    assert wakeup.get_sender_name() == "Alice"
+    assert wakeup.get_group_id() == "group-id"
+    assert wakeup.plugins_name == ["allowed_plugin"]
+    name, result = wakeup.tool_result
+    assert name == _DummyTool().name
+    assert [block.type for block in result.content] == ["text", "image", "text"]
+    assert result.content[0].text == "first chunk"
+    assert result.content[1].data == "dGVzdA=="
+    assert result.content[2].text == "second chunk"
+    assert result.structuredContent == {"status": "done"}
+    assert "dGVzdA==" not in wakeup.message_str
 
 
 @pytest.mark.asyncio
@@ -80,12 +178,9 @@ async def test_shell_session_wait_fits_inside_tool_timeout(
 
 
 @pytest.mark.asyncio
-
 @pytest.mark.parametrize("foreground_done", [False, True])
 @pytest.mark.parametrize("phase", ["tool", "wakeup", "complete", "failure"])
-async def test_background_execution_lifecycle(
-    monkeypatch, foreground_done, phase
-):
+async def test_background_execution_lifecycle(monkeypatch, foreground_done, phase):
     registry = ActiveEventRegistry()
     monkeypatch.setattr(
         "bot.core.bot_agent_runtime.tool_executor.active_event_registry",
@@ -154,7 +249,9 @@ async def test_background_execution_lifecycle(
                 "\n</system_reminder>"
             )
         if phase == "failure":
-            assert "tool failed" in wakeup.call_args.kwargs["user_prompt"]
+            result = wakeup.call_args.kwargs["tool_result"][1]
+            assert result.isError
+            assert "tool failed" in result.content[0].text
         assert not registry._background_tasks
         if cancelled:
             assert [

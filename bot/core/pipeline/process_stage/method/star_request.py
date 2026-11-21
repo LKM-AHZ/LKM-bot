@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 from typing import Any
 
 from bot.core import logger
+from bot.core.i18n import get_config_locale, translate
 from bot.core.message.message_event_result import MessageEventResult
 from bot.core.platform.bot_message_event import BotMessageEvent
 from bot.core.star.filter.command import CommandFilter
@@ -89,6 +90,18 @@ class StarRequestSubStage(Stage):
                     break
                 event.clear_result()  # 清除上一个 handler 的结果
             except Exception as e:
+                if event.get_ui_interaction() is not None:
+                    event.set_extra(
+                        "ui_action_error",
+                        {
+                            "code": "INVALID_INPUT"
+                            if type(e).__name__ == "ValidationError"
+                            else "ACTION_FAILED",
+                            "message": "Invalid action input."
+                            if type(e).__name__ == "ValidationError"
+                            else "The plugin action failed.",
+                        },
+                    )
                 traceback_text = traceback.format_exc()
                 plugin_name = md.name or handler.handler_module_path
                 # Keep handler failures on the plugin's side of the log filter.
@@ -123,7 +136,13 @@ class StarRequestSubStage(Stage):
                 )
 
                 if not event.is_stopped() and event.is_at_or_wake_command:
-                    ret = f":(\n\n在调用插件 {md.name} 的处理函数 {handler.handler_name} 时出现异常：{e}"
+                    ret = translate(
+                        "plugin_handler_error",
+                        get_config_locale(self.ctx.bot_config),
+                        plugin=md.name,
+                        handler=handler.handler_name,
+                        detail=str(e),
+                    )
                     event.set_result(MessageEventResult().message(ret))
                     yield
                     event.clear_result()

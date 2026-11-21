@@ -323,6 +323,10 @@ export type GhproxyTestRequest = {
     proxy_url: string;
 };
 
+export type HTTPValidationError = {
+    detail?: Array<ValidationError>;
+};
+
 export type ImMessageRequest = {
     umo: string;
     message: (string | Array<MessagePart>);
@@ -553,21 +557,6 @@ export type PluginRepositoryInstallRequest = {
     download_url?: string;
     proxy?: string;
     ignore_version_check?: boolean;
-    install_method?: string;
-    registry_url?: (string) | null;
-    market_plugin_id?: string;
-};
-
-export type PluginSourceBindRequest = {
-    install_method?: string;
-    registry_url?: (string) | null;
-    market_plugin_id?: string;
-};
-
-export type PluginSourceRequest = {
-    id?: string;
-    name?: string;
-    url: string;
 };
 
 export type PluginUpdateRequest = {
@@ -586,9 +575,6 @@ export type PluginUrlInstallRequest = {
     download_url?: string;
     proxy?: string;
     ignore_version_check?: boolean;
-    install_method?: string;
-    registry_url?: (string) | null;
-    market_plugin_id?: string;
 };
 
 export type PluginValidateRepoRequest = {
@@ -743,17 +729,6 @@ export type SuccessEnvelope = {
     data: unknown;
 };
 
-export type T2iTemplateContentRequest = {
-    content: string;
-    [key: string]: unknown | string;
-};
-
-export type T2iTemplateRequest = {
-    name: string;
-    content: string;
-    [key: string]: unknown | string;
-};
-
 export type ToolPermissionPatch = {
     permission: 'admin' | 'member';
 };
@@ -796,6 +771,26 @@ export type UpdateRequest = {
     proxy?: string;
     reboot?: boolean;
     progress_id?: string;
+};
+
+export type ValidationError = {
+    loc: Array<(string | number)>;
+    msg: string;
+    type: string;
+    input?: unknown;
+    ctx?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * Untrusted input submitted by a view through the authenticated host.
+ */
+export type ViewActionRequest = {
+    action_id: string;
+    interaction_id: string;
+    expected_revision: number;
+    data?: unknown;
 };
 
 export type LoginData = {
@@ -1449,6 +1444,27 @@ export type SendChatMessageData = {
 export type SendChatMessageResponse = (SuccessEnvelope);
 
 export type SendChatMessageError = unknown;
+
+export type TranscribeChatAudioData = {
+    body: {
+        file: (Blob | File);
+        /**
+         * STT provider ID; defaults to the first available provider.
+         */
+        provider_id?: string;
+    };
+};
+
+export type TranscribeChatAudioResponse = ({
+    status: 'ok' | 'error';
+    message?: string;
+    data?: {
+        text: string;
+        provider_id: string;
+    };
+});
+
+export type TranscribeChatAudioError = unknown;
 
 export type OpenChatWebSocketData = {
     query?: {
@@ -2163,17 +2179,6 @@ export type ReloadPluginResponse = (SuccessEnvelope);
 
 export type ReloadPluginError = unknown;
 
-export type BindPluginSourceData = {
-    body: PluginSourceBindRequest;
-    path: {
-        plugin_id: string;
-    };
-};
-
-export type BindPluginSourceResponse = (SuccessEnvelope);
-
-export type BindPluginSourceError = unknown;
-
 export type SetPluginEnabledData = {
     body: EnabledPatch;
     path: {
@@ -2280,68 +2285,6 @@ export type InstallPluginFromUploadData = {
 export type InstallPluginFromUploadResponse = (SuccessEnvelope);
 
 export type InstallPluginFromUploadError = unknown;
-
-export type ListPluginMarketData = {
-    query?: {
-        category?: string;
-        custom_registry?: string;
-        force_refresh?: boolean;
-        keyword?: string;
-        page?: number;
-        page_size?: number;
-        sort?: 'recommended' | 'downloads' | 'updated' | 'name';
-    };
-};
-
-export type ListPluginMarketResponse = (SuccessEnvelope);
-
-export type ListPluginMarketError = unknown;
-
-export type ListPluginMarketCategoriesResponse = (SuccessEnvelope);
-
-export type ListPluginMarketCategoriesError = unknown;
-
-export type ListPluginSourcesResponse = (SuccessEnvelope);
-
-export type ListPluginSourcesError = unknown;
-
-export type CreatePluginSourceData = {
-    body: PluginSourceRequest;
-};
-
-export type CreatePluginSourceResponse = (SuccessEnvelope);
-
-export type CreatePluginSourceError = unknown;
-
-export type ReplacePluginSourcesData = {
-    body: {
-        sources: Array<PluginSourceRequest>;
-    };
-};
-
-export type ReplacePluginSourcesResponse = (SuccessEnvelope);
-
-export type ReplacePluginSourcesError = unknown;
-
-export type DeletePluginSourceData = {
-    path: {
-        source_id: string;
-    };
-};
-
-export type DeletePluginSourceResponse = (SuccessEnvelope);
-
-export type DeletePluginSourceError = unknown;
-
-export type DeletePluginSourceByIdData = {
-    query: {
-        source_id: string;
-    };
-};
-
-export type DeletePluginSourceByIdResponse = (SuccessEnvelope);
-
-export type DeletePluginSourceByIdError = unknown;
 
 export type ListPluginViewsByIdData = {
     query: {
@@ -3858,65 +3801,6 @@ export type UpdateTraceSettingsResponse = (SuccessEnvelope);
 
 export type UpdateTraceSettingsError = unknown;
 
-export type ListT2iTemplatesResponse = (SuccessEnvelope);
-
-export type ListT2iTemplatesError = unknown;
-
-export type CreateT2iTemplateData = {
-    body: T2iTemplateRequest;
-};
-
-export type CreateT2iTemplateResponse = (SuccessEnvelope);
-
-export type CreateT2iTemplateError = unknown;
-
-export type GetActiveT2iTemplateResponse = (SuccessEnvelope);
-
-export type GetActiveT2iTemplateError = unknown;
-
-export type SetActiveT2iTemplateData = {
-    body: NameRequest;
-};
-
-export type SetActiveT2iTemplateResponse = (SuccessEnvelope);
-
-export type SetActiveT2iTemplateError = unknown;
-
-export type ResetDefaultT2iTemplateResponse = (SuccessEnvelope);
-
-export type ResetDefaultT2iTemplateError = unknown;
-
-export type GetT2iTemplateData = {
-    path: {
-        name: string;
-    };
-};
-
-export type GetT2iTemplateResponse = (SuccessEnvelope);
-
-export type GetT2iTemplateError = unknown;
-
-export type UpdateT2iTemplateData = {
-    body: T2iTemplateContentRequest;
-    path: {
-        name: string;
-    };
-};
-
-export type UpdateT2iTemplateResponse = (SuccessEnvelope);
-
-export type UpdateT2iTemplateError = unknown;
-
-export type DeleteT2iTemplateData = {
-    path: {
-        name: string;
-    };
-};
-
-export type DeleteT2iTemplateResponse = (SuccessEnvelope);
-
-export type DeleteT2iTemplateError = unknown;
-
 export type ListAgentConfigsResponse = (SuccessEnvelope);
 
 export type ListAgentConfigsError = unknown;
@@ -3984,3 +3868,50 @@ export type ReceivePlatformWebhookData = {
 export type ReceivePlatformWebhookResponse = (unknown);
 
 export type ReceivePlatformWebhookError = unknown;
+
+export type ListWorkbenchViewsResponse = (SuccessEnvelope);
+
+export type ListWorkbenchViewsError = unknown;
+
+export type GetWorkbenchViewData = {
+    path: {
+        plugin_name: string;
+        view_name: string;
+    };
+};
+
+export type GetWorkbenchViewResponse = (SuccessEnvelope);
+
+export type GetWorkbenchViewError = (unknown);
+
+export type GetChatViewApiV1ChatViewsViewIdGetData = {
+    path: {
+        view_id: string;
+    };
+};
+
+export type GetChatViewApiV1ChatViewsViewIdGetResponse = (unknown);
+
+export type GetChatViewApiV1ChatViewsViewIdGetError = (HTTPValidationError);
+
+export type RunChatViewActionApiV1ChatViewsViewIdActionsPostData = {
+    body: ViewActionRequest;
+    path: {
+        view_id: string;
+    };
+};
+
+export type RunChatViewActionApiV1ChatViewsViewIdActionsPostResponse = (unknown);
+
+export type RunChatViewActionApiV1ChatViewsViewIdActionsPostError = (HTTPValidationError);
+
+export type GetChatViewActionApiV1ChatViewsViewIdActionsInteractionIdGetData = {
+    path: {
+        interaction_id: string;
+        view_id: string;
+    };
+};
+
+export type GetChatViewActionApiV1ChatViewsViewIdActionsInteractionIdGetResponse = (unknown);
+
+export type GetChatViewActionApiV1ChatViewsViewIdActionsInteractionIdGetError = (HTTPValidationError);

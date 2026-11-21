@@ -66,8 +66,7 @@ _PIP_USER_AGENT = "pip/24.3.1"
 # A real repository asset the dashboard downloads, large enough to produce a
 # meaningful throughput number without depending on the upstream project.
 _GITHUB_SPEED_TARGET_URL = (
-    "https://github.com/Alma1314/LKM-bot/raw/refs/heads/master/"
-    "dashboard/pnpm-lock.yaml"
+    "https://github.com/Alma1314/LKM-bot/raw/refs/heads/master/dashboard/pnpm-lock.yaml"
 )
 
 

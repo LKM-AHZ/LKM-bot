@@ -35,5 +35,7 @@ class ContextConfig:
     """Custom token counting method. If None, the default method is used."""
     custom_compressor: ContextCompressor | None = None
     """Custom context compression method. If None, the default method is used."""
-    request_event_emitter: Callable[[AgentResponse], Awaitable[None]] | None = None
+    request_event_emitter: Callable[[AgentResponse], Awaitable[bool | None]] | None = (
+        None
+    )
     """Optional runtime event sink for summary model requests."""

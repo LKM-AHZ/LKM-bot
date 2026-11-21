@@ -5,6 +5,7 @@ from typing import cast
 from bot.core import logger
 from bot.core.config.runtime import MessageConfig, current_message_config
 from bot.core.log import log_context
+from bot.core.message.components import UIInteraction
 from bot.core.platform import BotMessageEvent
 from bot.core.platform.bot_message_event import event_context
 from bot.core.platform.sources.webchat.webchat_event import WebChatMessageEvent
@@ -107,7 +108,34 @@ class PipelineScheduler:
                 event_context(event),
                 trace_execution(event.trace),
             ):
-                await self._process_stages(event)
+                try:
+                    await self._process_stages(event)
+                finally:
+                    interaction = event.get_ui_interaction()
+                    if isinstance(interaction, UIInteraction):
+                        import asyncio
+
+                        from bot.core.chatui import view_store
+                        from bot.core.message.components import Json
+                        from bot.core.message.message_event_result import (
+                            MessageChain,
+                        )
+
+                        receipt = await asyncio.to_thread(
+                            view_store.finish,
+                            interaction.view.id,
+                            interaction.interaction_id,
+                            error={
+                                "code": "ACTION_FAILED",
+                                "message": "The action was not completed.",
+                            },
+                        )
+                        if not event.get_extra("ui_action_acknowledged"):
+                            await event.send(
+                                MessageChain(
+                                    chain=[Json(receipt)], type="ui_action_result"
+                                )
+                            )
 
                 # Send the closing frame before the event is marked complete.
                 if isinstance(event, WebChatMessageEvent | WecomAIBotMessageEvent):

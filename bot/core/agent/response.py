@@ -5,8 +5,10 @@ from bot.core.message.message_event_result import MessageChain
 from bot.core.provider.entities import TokenUsage
 
 
-class AgentResponseData(T.TypedDict):
+class AgentResponseData(T.TypedDict, total=False):
     chain: MessageChain
+    message: dict[str, T.Any]
+    messages: list[dict[str, T.Any]]
 
 
 @dataclass
@@ -29,10 +31,6 @@ class AgentResponse:
         "tool_call_result",
         "turn.started",
         "turn.finished",
-        "request.started",
-        "request.finished",
-        "tool.started",
-        "tool.finished",
         "context.updated",
         "context.appended",
         "message.appended",

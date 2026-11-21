@@ -31,3 +31,11 @@
     transition: none;
   }
 }
+
+.chat-ui,
+.top-header {
+  --lkmbot-workbench-width: min(
+    var(--lkmbot-workbench-preferred-width, clamp(360px, 44vw, 780px)),
+    max(320px, calc(100vw - var(--lkmbot-chat-sidebar-width, 0px) - 326px))
+  );
+}

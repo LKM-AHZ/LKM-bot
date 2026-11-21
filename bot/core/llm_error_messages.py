@@ -28,6 +28,7 @@ LLM_ERROR_MESSAGES = {
 
 
 LLM_ERROR_MESSAGE_EXTRA_KEY = "_llm_error_message"
+LLM_ERROR_CODE_EXTRA_KEY = "_llm_error_code"
 
 
 def set_llm_error_message(event: BotMessageEvent, key: str, **params: str) -> None:
@@ -42,4 +43,5 @@ def set_llm_error_message(event: BotMessageEvent, key: str, **params: str) -> No
     if not isinstance(locale, str):
         locale = "zh-CN"
     messages = LLM_ERROR_MESSAGES.get(locale, LLM_ERROR_MESSAGES["zh-CN"])
+    event.set_extra(LLM_ERROR_CODE_EXTRA_KEY, key)
     event.set_extra(LLM_ERROR_MESSAGE_EXTRA_KEY, messages[key].format(**params))

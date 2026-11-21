@@ -15,6 +15,7 @@ from bot.core.bot_config_mgr import BotConfigManager
 from bot.core.config.bot_config import BotConfig
 from bot.core.conversation_mgr import ConversationManager
 from bot.core.db import BaseDatabase
+from bot.core.i18n import get_config_locale
 from bot.core.knowledge_base.kb_mgr import KnowledgeBaseManager
 from bot.core.llm_error_messages import LLM_ERROR_MESSAGES
 from bot.core.message.message_event_result import MessageChain
@@ -567,6 +568,19 @@ class Context:
             # 使用默认配置
             return self._config
         return self.bot_config_mgr.get_conf(umo)
+
+    def locale(self, umo: str | None = None) -> str:
+        """Resolve the bot reply language for a session.
+
+        Args:
+            umo: Unified message origin. Omit to use the default profile.
+
+        Returns:
+            ``zh-CN`` or ``en-US`` from the effective configuration, falling
+            back to ``zh-CN`` when missing or unsupported. This is independent
+            of the WebUI display language.
+        """
+        return get_config_locale(self.get_config(umo=umo))
 
     async def send_message(
         self,

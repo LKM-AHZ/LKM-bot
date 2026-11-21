@@ -83,7 +83,7 @@ jobs:
         run: |
           chmod +x scripts/run_pytests_ci.sh
           if [ "${{ runner.os }}" = "Linux" ]; then
-            bash ./scripts/run_pytests_ci.sh ./tests --cov=astrbot --cov-report=xml
+            bash ./scripts/run_pytests_ci.sh ./tests --cov=bot --cov-report=xml
           else
             bash ./scripts/run_pytests_ci.sh ./tests
           fi

@@ -511,6 +511,14 @@ class PluginManager:
                 _PluginUpdater.validate_plugin_metadata(metadata, metadata_label)
             except ValueError as exc:
                 raise Exception(f"插件元数据校验失败：{exc!s}") from exc
+            from bot.core.chatui import ViewSpec
+
+            raw_views = metadata.get("views", metadata.get("pages", []))
+            if not isinstance(raw_views, list):
+                raise ValueError("Plugin views must be a list of declarations.")
+            views = [ViewSpec.model_validate(view) for view in raw_views]
+            if len({view.name for view in views}) != len(views):
+                raise ValueError("Plugin view names must be unique.")
             metadata = StarMetadata(
                 name=metadata["name"],
                 author=metadata["author"],
@@ -537,12 +545,7 @@ class PluginManager:
                     if isinstance(metadata.get("astrbot_version"), str)
                     else None
                 ),
-                # "views" is the preferred key; "pages" stays as an alias.
-                views=metadata["views"]
-                if isinstance(metadata.get("views"), list)
-                else metadata["pages"]
-                if isinstance(metadata.get("pages"), list)
-                else [],
+                views=views,
                 i18n=PluginManager._load_plugin_i18n(plugin_path),
             )
 
@@ -1212,6 +1215,29 @@ class PluginManager:
                                 raw_handler,
                                 metadata.star_cls,
                             )
+
+                    if not plugin_disabled and metadata.star_cls is not None:
+                        from bot.core.chatui import resolve_view
+                        from bot.core.star.filter.ui_action import UIActionFilter
+
+                        action_filters = [
+                            item
+                            for handler in related_handlers
+                            for item in handler.event_filters
+                            if isinstance(item, UIActionFilter)
+                        ]
+                        for spec in metadata.views:
+                            resolve_view(
+                                metadata.module_path, spec.name, target=spec.target
+                            )
+                            for action in spec.actions:
+                                if not any(
+                                    item.action_id in (None, action)
+                                    for item in action_filters
+                                ):
+                                    raise ValueError(
+                                        f"No UI handler registered for {action}."
+                                    )
 
                     # Apply the same idempotent binding lifecycle to LLM tools.
                     for ft in llm_tools.func_list:

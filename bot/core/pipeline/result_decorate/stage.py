@@ -5,6 +5,7 @@ import traceback
 from collections.abc import AsyncGenerator
 
 from bot.core import html_renderer, logger
+from bot.core.i18n import get_config_locale, translate
 from bot.core.media_storage import public_media_url
 from bot.core.message.components import At, Image, Json, Node, Plain, Record, Reply
 from bot.core.message.message_event_result import ResultContentType
@@ -309,7 +310,14 @@ class ResultDecorateStage(Stage):
                     )
                 else:
                     result.chain.insert(
-                        0, Plain(f"🤔 思考: {reasoning_content}\n\n────\n")
+                        0,
+                        Plain(
+                            translate(
+                                "reasoning",
+                                get_config_locale(self.ctx.bot_config),
+                                content=reasoning_content,
+                            )
+                        ),
                     )
 
             if should_tts and tts_provider:

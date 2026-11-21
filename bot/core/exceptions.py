@@ -13,6 +13,10 @@ class EmptyModelOutputError(BotError):
     """Raised when the model response contains no usable assistant output."""
 
 
+class ConversationPersistenceError(RuntimeError):
+    """A journal write failed; provider or tool retries cannot repair it."""
+
+
 class KnowledgeBaseUploadError(BotError):
     """Raised when knowledge base upload fails with a user-facing message."""
 

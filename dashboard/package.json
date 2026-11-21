@@ -51,7 +51,7 @@
   "devDependencies": {
     "@hey-api/openapi-ts": "0.60.0",
     "@lobehub/icons-static-svg": "^1.101.0",
-    "@mdi/font": "7.2.96",
+    "@mdi/font": "7.4.47",
     "@ricky0123/vad-web": "0.0.29",
     "@rushstack/eslint-patch": "1.3.3",
     "@types/chance": "1.1.3",

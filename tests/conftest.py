@@ -4,11 +4,14 @@ LKMBot 测试配置
 提供共享的 pytest fixtures 和测试工具。
 """
 
+import asyncio
+import copy
 import json
 import os
 import sys
 from asyncio import Queue
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -24,6 +27,12 @@ if str(PROJECT_ROOT) not in sys.path:
 # 设置测试环境变量
 os.environ.setdefault("TESTING", "true")
 os.environ.setdefault("BOT_TEST_MODE", "true")
+
+# Nested conftests can import bot.core before pytest_configure runs.
+# Its global config reads and may write cmd_config.json during import.
+_test_root = TemporaryDirectory(prefix="bot-pytest-")
+_test_env = pytest.MonkeyPatch()
+_test_env.setenv("BOT_ROOT", _test_root.name)
 
 
 # ============================================================
@@ -89,6 +98,9 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """注册自定义标记。"""
+    config.add_cleanup(_test_root.cleanup)
+    config.add_cleanup(_test_env.undo)
+
     config.addinivalue_line("markers", "unit: 单元测试")
     config.addinivalue_line("markers", "integration: 集成测试")
     config.addinivalue_line("markers", "slow: 慢速测试")
@@ -97,6 +109,12 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "db: 数据库相关测试")
     config.addinivalue_line("markers", "tier_c: C-tier tests (optional / non-blocking)")
     config.addinivalue_line("markers", "tier_d: D-tier tests (extended / integration)")
+
+
+def pytest_sessionfinish():
+    """Release pooled connections before Windows removes the isolated data root."""
+    if core := sys.modules.get("bot.core"):
+        asyncio.run(core.db_helper.engine.dispose())
 
 
 # ============================================================
@@ -292,9 +310,17 @@ def bot_config(temp_config_file: Path):
     """创建 BotConfig 实例。"""
     from bot.core.config.bot_config import BotConfig
 
-    config = BotConfig()
-    config._config_path = str(temp_config_file)  # noqa: SLF001
-    return config
+    return BotConfig(str(temp_config_file))
+
+
+@pytest.fixture(scope="module")
+def dashboard_test_config(tmp_path_factory):
+    """Create a separate persisted configuration for each dashboard test module."""
+    from bot.core.config.bot_config import BotConfig
+    from bot.core.config.default import DEFAULT_CONFIG
+
+    path = tmp_path_factory.mktemp("dashboard-config") / "cmd_config.json"
+    return BotConfig(str(path), default_config=copy.deepcopy(DEFAULT_CONFIG))
 
 
 @pytest.fixture

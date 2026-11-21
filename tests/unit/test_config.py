@@ -234,7 +234,10 @@ class TestBotConfigLoad:
         assert config2.check_exist() is True
         assert os.path.exists(non_existent_path)
 
-    def test_empty_dashboard_password_generates_random_password(self, temp_config_path):
+    @pytest.mark.parametrize("existing_empty_file", [False, True])
+    def test_empty_dashboard_password_generates_random_password(
+        self, temp_config_path, existing_empty_file
+    ):
         """Test that an empty dashboard password is replaced with a random password."""
         default_config = {
             "dashboard": {
@@ -243,11 +246,15 @@ class TestBotConfigLoad:
             },
         }
 
+        if existing_empty_file:
+            Path(temp_config_path).write_text("{}", encoding="utf-8")
+
         config = BotConfig(
             config_path=temp_config_path,
             default_config=default_config,
         )
 
+        assert default_config["dashboard"] == {"username": "bot", "password": ""}
         generated_password = getattr(config, "_generated_dashboard_password", None)
         assert isinstance(generated_password, str)
         validate_dashboard_password(generated_password)

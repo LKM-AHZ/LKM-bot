@@ -1,7 +1,7 @@
 """Tests for CronJobManager."""
 
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
@@ -260,7 +260,7 @@ class TestAddActiveJob:
         sample_cron_job.run_once = True
         mock_db.create_cron_job.return_value = sample_cron_job
 
-        run_at = datetime.now(timezone.utc) + timedelta(days=30)
+        run_at = datetime.now(UTC) + timedelta(days=30)
 
         with pytest.raises(CronJobSchedulingError, match="Invalid isoformat string"):
             await cron_manager.add_active_job(
@@ -621,7 +621,7 @@ class TestScheduleJob:
     @pytest.mark.asyncio
     async def test_schedule_job_run_once(self, cron_manager, mock_context):
         """Test scheduling a run-once job."""
-        future_date = datetime.now(timezone.utc) + timedelta(days=30)
+        future_date = datetime.now(UTC) + timedelta(days=30)
         job = CronJob(
             job_id="run-once-job",
             name="Run Once",
@@ -669,6 +669,40 @@ class TestRunActiveAgentJob:
     """Tests for active agent cron job execution."""
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("allow_admin_role", [None, False, True])
+    @pytest.mark.parametrize("still_admin", [False, True])
+    async def test_job_respects_saved_permission_ceiling(
+        self,
+        cron_manager,
+        sample_cron_job,
+        mock_context,
+        monkeypatch,
+        allow_admin_role,
+        still_admin,
+    ):
+        """Saved restrictions cap the role resolved from current administrator IDs."""
+        wake = AsyncMock()
+        monkeypatch.setattr("bot.core.agent_wakeup.wake_main_agent", wake)
+        cron_manager.ctx = mock_context
+        mock_context.get_config.return_value = {
+            "admins_id": ["alice"] if still_admin else [],
+        }
+        sample_cron_job.payload = {
+            "session": "target:GroupMessage:group-id",
+            "sender_id": "alice",
+            "origin": "tool",
+        }
+        if allow_admin_role is not None:
+            sample_cron_job.payload["allow_admin_role"] = allow_admin_role
+        await cron_manager._run_active_agent_job(
+            sample_cron_job, datetime(2026, 11, 1, tzinfo=UTC)
+        )
+        expected = (
+            "admin" if still_admin and allow_admin_role is not False else "member"
+        )
+        assert wake.await_args.kwargs["role"] == expected
+
+    @pytest.mark.asyncio
     @pytest.mark.parametrize("session", [None, "", "   "])
     async def test_job_requires_a_target_umo(
         self, cron_manager, sample_cron_job, mock_context, monkeypatch, session
@@ -688,7 +722,7 @@ class TestRunActiveAgentJob:
         sample_cron_job.payload = {"session": session}
         with pytest.raises(ValueError, match="has no target UMO"):
             await cron_manager._run_active_agent_job(
-                sample_cron_job, datetime(2026, 11, 1, tzinfo=timezone.utc)
+                sample_cron_job, datetime(2026, 11, 1, tzinfo=UTC)
             )
         wake.assert_not_awaited()
         mock_context.get_config.assert_not_called()

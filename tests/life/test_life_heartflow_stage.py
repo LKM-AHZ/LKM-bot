@@ -79,6 +79,9 @@ class FakeEvent:
     def get_button_interaction(self):
         return None
 
+    def get_ui_interaction(self):
+        return None
+
     def get_platform_name(self) -> str:
         return "aiocqhttp"
 

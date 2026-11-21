@@ -9,6 +9,7 @@ from bot import logger
 from ..entities import ProviderType
 from ..provider import EmbeddingProvider
 from ..register import register_provider_adapter
+from .gemini_api_common import gemini_api_version
 
 
 @register_provider_adapter(
@@ -27,7 +28,9 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
         timeout: int = int(provider_config.get("timeout", 20))
 
         http_options = types.HttpOptions(
-            timeout=timeout * 1000, headers=self.request_headers
+            api_version=gemini_api_version(),
+            timeout=timeout * 1000,
+            headers=self.request_headers,
         )
         if api_base:
             api_base = api_base.removesuffix("/")
@@ -38,10 +41,11 @@ class GeminiEmbeddingProvider(EmbeddingProvider):
             logger.info(f"[Gemini Embedding] 使用代理: {proxy}")
 
         self.client = genai.Client(api_key=api_key, http_options=http_options).aio
-        # The SDK adds its own lower-case UA alongside our explicit header.
-        _headers = self.client._api_client._http_options.headers
-        if _headers is not None:
-            _headers.pop("user-agent", None)
+        # Keep only LKMBot's UA across SDK versions that merge header case variants.
+        headers = self.client._api_client._http_options.headers
+        if headers is not None:
+            headers["user-agent"] = self.request_headers["User-Agent"]
+            headers.pop("User-Agent", None)
 
         self.model = provider_config.get(
             "embedding_model",

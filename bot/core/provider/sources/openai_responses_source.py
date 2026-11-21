@@ -13,7 +13,6 @@ from bot.core.agent.tool import ToolSet
 from bot.core.exceptions import EmptyModelOutputError
 from bot.core.message.message_event_result import MessageChain
 from bot.core.provider.entities import LLMResponse, TokenUsage, ToolCallsResult
-from bot.core.provider.request_observer import RequestAttemptObserver
 
 from ..headers import build_conversation_headers
 from ..register import register_provider_adapter
@@ -302,7 +301,6 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
         tools: ToolSet | None,
         *,
         request_max_retries: int | None = None,
-        request_event_recorder: RequestAttemptObserver | None = None,
         conversation_id: str | None = None,
     ) -> LLMResponse:
         """Send a non-streaming Responses API request.
@@ -358,7 +356,6 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
                 extra_headers=build_conversation_headers(conversation_id),
             ),
             max_attempts=request_max_retries,
-            request_event_recorder=request_event_recorder,
         )
         if not isinstance(response, Response):
             raise TypeError(
@@ -375,7 +372,6 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
         tools: ToolSet | None,
         *,
         request_max_retries: int | None = None,
-        request_event_recorder: RequestAttemptObserver | None = None,
         conversation_id: str | None = None,
     ) -> AsyncGenerator[LLMResponse, None]:
         """Send a streaming Responses API request.
@@ -431,7 +427,6 @@ class ProviderOpenAIResponses(ProviderOpenAIOfficial):
                 extra_headers=build_conversation_headers(conversation_id),
             ),
             max_attempts=request_max_retries,
-            request_event_recorder=request_event_recorder,
         )
 
         response_id: str | None = None

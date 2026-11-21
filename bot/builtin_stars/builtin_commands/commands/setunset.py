@@ -2,6 +2,8 @@ from bot.api import sp
 from bot.api.event import BotMessageEvent, MessageEventResult
 from bot.core import star
 
+from ..i18n import translate
+
 
 class SetUnsetCommands:
     def __init__(self, context: star.Context) -> None:
@@ -10,28 +12,32 @@ class SetUnsetCommands:
     async def set_variable(self, event: BotMessageEvent, key: str, value: str) -> None:
         """设置会话变量"""
         uid = event.unified_msg_origin
+        locale = self.context.locale(uid)
         session_var = await sp.session_get(uid, "session_variables", {})
         session_var[key] = value
         await sp.session_put(uid, "session_variables", session_var)
 
         event.set_result(
             MessageEventResult().message(
-                f"会话 {uid} 变量 {key} 存储成功。使用 /unset 移除。",
+                translate("variable_set", locale, umo=uid, name=key),
             ),
         )
 
     async def unset_variable(self, event: BotMessageEvent, key: str) -> None:
         """移除会话变量"""
         uid = event.unified_msg_origin
+        locale = self.context.locale(uid)
         session_var = await sp.session_get(uid, "session_variables", {})
 
         if key not in session_var:
             event.set_result(
-                MessageEventResult().message("没有那个变量名。格式 /unset 变量名。"),
+                MessageEventResult().message(translate("variable_missing", locale)),
             )
         else:
             del session_var[key]
             await sp.session_put(uid, "session_variables", session_var)
             event.set_result(
-                MessageEventResult().message(f"会话 {uid} 变量 {key} 移除成功。"),
+                MessageEventResult().message(
+                    translate("variable_unset", locale, umo=uid, name=key)
+                ),
             )

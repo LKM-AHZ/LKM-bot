@@ -8,6 +8,7 @@ import mcp
 from bot import logger
 from bot.core.agent.mcp_client import MCPTool
 from bot.core.agent.run_context import ContextWrapper
+from bot.core.agent.runtime import get_agent_permissions
 from bot.core.agent.tool import FunctionTool
 from bot.core.agent.tool_executor import BaseFunctionToolExecutor
 from bot.core.agent_wakeup import wake_main_agent
@@ -15,6 +16,7 @@ from bot.core.bot_agent_runtime.context import BotAgentContext
 from bot.core.bot_agent_runtime.tools.computer_tools import (
     ShellSessionTool,
 )
+from bot.core.chatui import ViewResult, emit_view
 from bot.core.message.message_event_result import (
     MessageChain,
 )
@@ -103,20 +105,24 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[BotAgentContext]):
         **tool_args,
     ) -> None:
         # run the tool
-        result_text = ""
+        permissions = get_agent_permissions(run_context)
+        result = mcp.types.CallToolResult(content=[])
         try:
             async for r in cls._execute_local(
                 tool, run_context, tool_call_timeout=3600, **tool_args
             ):
-                # collect results, currently we just collect the text results
                 if isinstance(r, mcp.types.CallToolResult):
-                    result_text = ""
-                    for content in r.content:
-                        if isinstance(content, mcp.types.TextContent):
-                            result_text += content.text + "\n"
+                    result.content.extend(r.content)
+                    result.isError = result.isError or r.isError
+                    if r.structuredContent is not None:
+                        result.structuredContent = r.structuredContent
         except Exception as e:
-            result_text = (
-                f"error: Background task execution failed, internal error: {e!s}"
+            result.isError = True
+            result.content.append(
+                mcp.types.TextContent(
+                    type="text",
+                    text=f"error: Background task execution failed, internal error: {e!s}",
+                )
             )
 
         event = run_context.context.event
@@ -131,14 +137,15 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[BotAgentContext]):
                     {
                         "task_id": task_id,
                         "tool_name": tool.name,
-                        "result": result_text,
                         "tool_args": tool_args,
                         "note": event.get_extra("background_note"),
                     },
                     ensure_ascii=False,
                 )
             ),
-            role=event.role,
+            role=permissions.role.value,
+            tool_result=(tool.name, result),
+            source_event=event,
             stop_signal=active_event_registry.get_background_stop_signal(event),
         )
 
@@ -207,6 +214,18 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[BotAgentContext]):
                         timeout=effective_timeout,
                     )
                     if resp is not None:
+                        if isinstance(resp, ViewResult):
+                            if resp.name is None:
+                                raise ValueError(
+                                    "Tools must create named views, not update a UI action."
+                                )
+                            await emit_view(
+                                event,
+                                tool.handler_module_path
+                                or getattr(awaitable, "func", awaitable).__module__,
+                                resp,
+                            )
+                            resp = resp.text
                         if isinstance(resp, mcp.types.CallToolResult):
                             yield resp
                         else:
@@ -252,3 +271,101 @@ class FunctionToolExecutor(BaseFunctionToolExecutor[BotAgentContext]):
         if not res:
             return
         yield res
+
+    @classmethod
+    def detach(cls, *, tool, run_context, executor, pending_result, task_id, arguments):
+        """Continue an in-flight tool in the background and wake its original session.
+
+        Args:
+            tool: Tool already executing.
+            run_context: Context of the initiating turn.
+            executor: Owned iterator, resumed after the pending read completes.
+            pending_result: Existing in-flight read; never execute the tool again.
+            task_id: Execution identity linking submission and completion.
+            arguments: Actual tool arguments included in the completion notice.
+
+        Returns:
+            A submission result, or None when no native session can receive completion.
+        """
+        context = run_context.context
+        session = getattr(context, "agent_session", None)
+        if session is None:
+            return None
+        event = context.event
+        permissions = get_agent_permissions(run_context)
+        stop_signal = active_event_registry.get_background_stop_signal(event)
+        if stop_signal.is_set():
+            return None
+
+        async def complete() -> None:
+            result = mcp.types.CallToolResult(content=[])
+            error = None
+            try:
+                # Register after starting so cancellation always runs iterator cleanup.
+                task = asyncio.current_task()
+                assert task is not None
+                active_event_registry.register_background_task(event, task)
+                try:
+                    item = await pending_result
+                    while True:
+                        if isinstance(item, mcp.types.CallToolResult):
+                            result.content.extend(item.content)
+                            result.isError = result.isError or item.isError
+                            if item.structuredContent is not None:
+                                result.structuredContent = item.structuredContent
+                        item = await anext(executor)
+                except StopAsyncIteration:
+                    pass
+                except Exception as exc:
+                    error = {"code": type(exc).__name__, "message": str(exc)}
+            finally:
+                if not pending_result.done():
+                    pending_result.cancel()
+                await asyncio.gather(pending_result, return_exceptions=True)
+                try:
+                    await executor.aclose()
+                except Exception as exc:
+                    error = {"code": type(exc).__name__, "message": str(exc)}
+            if error is not None:
+                result.isError = True
+                result.content.append(
+                    mcp.types.TextContent(
+                        type="text", text=f"{error['code']}: {error['message']}"
+                    )
+                )
+            try:
+                await wake_main_agent(
+                    ctx=context.context,
+                    umo=event.unified_msg_origin,
+                    source="background_task",
+                    source_id=task_id,
+                    user_prompt=BACKGROUND_TASK_RESULT_WOKE_USER_PROMPT.format(
+                        background_task_result=json.dumps(
+                            {
+                                "task_id": task_id,
+                                "tool_name": tool.name,
+                                "tool_args": arguments,
+                            },
+                            ensure_ascii=False,
+                        )
+                    ),
+                    role=permissions.role.value,
+                    stop_signal=stop_signal,
+                    agent_session=session,
+                    tool_result=(tool.name, result),
+                    source_event=event,
+                )
+            except Exception:
+                logger.exception("Unable to deliver background tool result %s", task_id)
+
+        asyncio.create_task(complete(), name=f"background-tool:{task_id}")
+        return mcp.types.CallToolResult(
+            content=[
+                mcp.types.TextContent(
+                    type="text",
+                    text=f"Tool continues in background. task_id={task_id}. "
+                    "Its result will arrive in a separate wakeup; do not repeat the tool call.",
+                )
+            ],
+            structuredContent={"background_task_id": task_id, "status": "running"},
+        )

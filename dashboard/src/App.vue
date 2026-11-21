@@ -11,8 +11,12 @@
       <v-icon v-if="toastIcon" :icon="toastIcon" size="24" />
       <span>{{ toastStore.current.message }}</span>
     </div>
-    <template #actions v-if="toastStore.current.closable">
-      <v-btn icon="mdi-close" variant="text" size="small" aria-label="Close notification" @click="snackbarShow = false" />
+    <template #actions v-if="toastStore.current.closable || toastStore.current.action">
+      <v-btn v-if="toastStore.current.action" variant="text"
+        @click="toastStore.current.action.onClick(); snackbarShow = false">
+        {{ toastStore.current.action.label }}
+      </v-btn>
+      <v-btn v-if="toastStore.current.closable" icon="mdi-close" variant="text" size="small" aria-label="Close notification" @click="snackbarShow = false" />
     </template>
   </v-snackbar>
 </template>
@@ -38,18 +42,18 @@ const onScrollbarScroll = (event) => {
   const previous = scrollbarAnimations.get(element)
   clearTimeout(previous?.timer)
   cancelAnimationFrame(previous?.frame)
-  element.style.setProperty('--bot-scrollbar-opacity', '1')
+  element.style.setProperty('--lkmbot-scrollbar-opacity', '1')
   const animation = { timer: 0, frame: 0 }
   animation.timer = setTimeout(() => {
     const started = performance.now()
     // Scrollbar pseudo-elements do not reliably support CSS transitions.
     animation.frame = requestAnimationFrame(function fadeScrollbar(now) {
       const opacity = reducedMotion.matches ? 0 : Math.max(0, Math.min(1, 1 - (now - started) / 250))
-      element.style.setProperty('--bot-scrollbar-opacity', String(opacity))
+      element.style.setProperty('--lkmbot-scrollbar-opacity', String(opacity))
       if (opacity > 0) {
         animation.frame = requestAnimationFrame(fadeScrollbar)
       } else {
-        element.style.removeProperty('--bot-scrollbar-opacity')
+        element.style.removeProperty('--lkmbot-scrollbar-opacity')
         scrollbarAnimations.delete(element)
       }
     })
@@ -93,7 +97,7 @@ onBeforeUnmount(() => {
   for (const [element, animation] of scrollbarAnimations) {
     clearTimeout(animation.timer)
     cancelAnimationFrame(animation.frame)
-    element.style.removeProperty('--bot-scrollbar-opacity')
+    element.style.removeProperty('--lkmbot-scrollbar-opacity')
   }
   scrollbarAnimations.clear()
   if (disposeTrayRestartListener) {
